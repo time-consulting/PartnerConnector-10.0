@@ -112,6 +112,116 @@ export default function Landing() {
       <CommissionTiers />
       <HowItWorks />
 
+      {/* Trust Center - Accountant Reviews */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-foreground mb-4" data-testid="text-trust-title">
+              Trusted by Professional Accountants
+            </h2>
+            <p className="text-xl text-foreground max-w-3xl mx-auto">
+              See why accountants recommend our payment solutions to their clients with confidence.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Review 1 */}
+            <div className="bg-white border border-border rounded-xl p-6 shadow-sm" data-testid="card-review-1">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                  <i className="fas fa-user-tie text-primary text-xl"></i>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Sarah Mitchell</h4>
+                  <p className="text-sm text-muted-foreground">Chartered Accountant, Birmingham</p>
+                </div>
+              </div>
+              <div className="flex mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <i key={i} className="fas fa-star text-yellow-400 text-sm"></i>
+                ))}
+              </div>
+              <p className="text-foreground italic mb-4">
+                "I was initially worried about how my client would be treated during the switch, but the 1-to-1 account manager made everything seamless. My client actually called to thank me for the recommendation!"
+              </p>
+              <div className="text-sm text-primary font-medium">
+                Client saved 35% on processing fees
+              </div>
+            </div>
+
+            {/* Review 2 */}
+            <div className="bg-white border border-border rounded-xl p-6 shadow-sm" data-testid="card-review-2">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                  <i className="fas fa-user-tie text-primary text-xl"></i>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">James Thompson</h4>
+                  <p className="text-sm text-muted-foreground">Senior Partner, Manchester</p>
+                </div>
+              </div>
+              <div className="flex mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <i key={i} className="fas fa-star text-yellow-400 text-sm"></i>
+                ))}
+              </div>
+              <p className="text-foreground italic mb-4">
+                "The transition was so smooth I barely had to get involved. The dedicated support team handled everything professionally and my restaurant client couldn't be happier with the service."
+              </p>
+              <div className="text-sm text-primary font-medium">
+                Earned £1,200 commission
+              </div>
+            </div>
+
+            {/* Review 3 */}
+            <div className="bg-white border border-border rounded-xl p-6 shadow-sm" data-testid="card-review-3">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                  <i className="fas fa-user-tie text-primary text-xl"></i>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Emma Roberts</h4>
+                  <p className="text-sm text-muted-foreground">Practice Manager, London</p>
+                </div>
+              </div>
+              <div className="flex mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <i key={i} className="fas fa-star text-yellow-400 text-sm"></i>
+                ))}
+              </div>
+              <p className="text-foreground italic mb-4">
+                "I've referred multiple clients and each time the service has been exceptional. The account managers really understand business needs and provide genuine value, not just sales pitches."
+              </p>
+              <div className="text-sm text-primary font-medium">
+                5 successful referrals this year
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Stats */}
+          <div className="mt-16 bg-primary/5 rounded-xl p-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">98%</div>
+                <div className="text-sm font-medium text-foreground">Client Satisfaction</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">24h</div>
+                <div className="text-sm font-medium text-foreground">Average Setup Time</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">1:1</div>
+                <div className="text-sm font-medium text-foreground">Dedicated Support</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">0</div>
+                <div className="text-sm font-medium text-foreground">Service Complaints</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-primary text-primary-foreground py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

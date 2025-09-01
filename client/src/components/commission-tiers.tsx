@@ -27,30 +27,18 @@ export default function CommissionTiers() {
               
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center">
-                  <span className="text-foreground">Commission</span>
-                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-small">£150+</span>
+                  <span className="text-foreground">Commission Range</span>
+                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-small">£150-£500</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Monthly Volume</span>
-                  <span className="font-semibold">£5K - £50K</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-foreground">Processing Time</span>
-                  <span className="font-semibold">24-48 hours</span>
+                  <span className="font-semibold text-foreground">£5K - £50K</span>
                 </div>
               </div>
               
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Quick approval process
-                </li>
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Same-day setup
-                </li>
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Mobile payment solutions
-                </li>
-              </ul>
+              <p className="text-sm text-foreground leading-relaxed">
+                Perfect for independent businesses looking for competitive payment processing rates with flexible terms.
+              </p>
             </CardContent>
           </Card>
 
@@ -66,36 +54,24 @@ export default function CommissionTiers() {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <i className="fas fa-utensils text-primary text-2xl"></i>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-2">Restaurants</h3>
-                <p className="text-muted-foreground">Restaurants, bars, hospitality venues</p>
+                <h3 className="text-2xl font-bold text-foreground mb-2">Restaurants & Hospitality</h3>
+                <p className="text-muted-foreground">Restaurants, bars, hotels, hospitality venues</p>
               </div>
               
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center">
-                  <span className="text-foreground">Commission</span>
-                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-restaurant">£500+</span>
+                  <span className="text-foreground">Commission Range</span>
+                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-restaurant">£500-£5,000</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Monthly Volume</span>
-                  <span className="font-semibold">£50K - £500K</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-foreground">Processing Time</span>
-                  <span className="font-semibold">48-72 hours</span>
+                  <span className="font-semibold text-foreground">£50K - £500K</span>
                 </div>
               </div>
               
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Integrated POS systems
-                </li>
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Table service solutions
-                </li>
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Analytics dashboard
-                </li>
-              </ul>
+              <p className="text-sm text-foreground leading-relaxed">
+                Specialized solutions for hospitality businesses with high transaction volumes and specific industry needs.
+              </p>
             </CardContent>
           </Card>
 
@@ -107,41 +83,60 @@ export default function CommissionTiers() {
                   <i className="fas fa-building text-yellow-600 text-2xl"></i>
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">Large Groups</h3>
-                <p className="text-muted-foreground">Multi-location businesses, franchises</p>
+                <p className="text-muted-foreground">Corporations, franchises, multi-location businesses</p>
               </div>
               
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center">
-                  <span className="text-foreground">Commission</span>
-                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-large">£1K - £20K</span>
+                  <span className="text-foreground">Commission Range</span>
+                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-large">£5,000-£25,000</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Monthly Volume</span>
-                  <span className="font-semibold">£500K+</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-foreground">Processing Time</span>
-                  <span className="font-semibold">3-5 days</span>
+                  <span className="font-semibold text-foreground">£500K+</span>
                 </div>
               </div>
               
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Enterprise integration
-                </li>
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Multi-location management
-                </li>
-                <li className="flex items-center">
-                  <i className="fas fa-check text-green-500 mr-2"></i> Dedicated account manager
-                </li>
-              </ul>
+              <p className="text-sm text-foreground leading-relaxed">
+                Enterprise-level payment solutions for large organizations with complex requirements and multiple locations.
+              </p>
             </CardContent>
           </Card>
         </div>
 
+        {/* Product Benefits */}
+        <div className="mt-16 bg-white border border-border rounded-xl p-8 shadow-lg">
+          <h3 className="text-2xl font-bold text-center text-foreground mb-8">
+            Why Your Clients Will Love Our Solutions
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="fas fa-handshake text-primary text-xl"></i>
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold text-foreground mb-2">Seamless Transition</h4>
+                <p className="text-foreground">
+                  We buy out existing agreements so your clients can upgrade for free and start saving money immediately. No termination fees or penalties.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="fas fa-calendar-check text-primary text-xl"></i>
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold text-foreground mb-2">Flexible Contracts</h4>
+                <p className="text-foreground">
+                  Starting from monthly rolling contracts or fixed pricing to guarantee no price increases. Your clients choose what works best for them.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Additional Products */}
-        <div className="mt-16 bg-card rounded-xl p-8 shadow-lg">
+        <div className="mt-8 bg-white border border-border rounded-xl p-8 shadow-lg">
           <h3 className="text-2xl font-bold text-center text-foreground mb-8">
             Additional Revenue Opportunities
           </h3>
@@ -152,7 +147,7 @@ export default function CommissionTiers() {
               </div>
               <div>
                 <h4 className="text-xl font-semibold text-foreground mb-2">Business Funding</h4>
-                <p className="text-muted-foreground">
+                <p className="text-foreground">
                   Stack additional commissions by referring businesses for working capital loans and merchant cash advances.
                 </p>
                 <span className="inline-block mt-2 text-primary font-semibold" data-testid="text-funding-commission">
@@ -166,7 +161,7 @@ export default function CommissionTiers() {
               </div>
               <div>
                 <h4 className="text-xl font-semibold text-foreground mb-2">Premium Analytics</h4>
-                <p className="text-muted-foreground">
+                <p className="text-foreground">
                   Refer businesses for advanced reporting and analytics solutions to optimize their payment processing.
                 </p>
                 <span className="inline-block mt-2 text-primary font-semibold" data-testid="text-analytics-commission">
