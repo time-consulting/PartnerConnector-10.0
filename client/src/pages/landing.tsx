@@ -59,7 +59,7 @@ export default function Landing() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   size="lg" 
-                  className="bg-primary text-white hover:bg-primary/90 text-lg px-8 py-4 font-semibold shadow-lg"
+                  className="bg-primary hover:bg-primary/90 text-lg px-8 py-4 font-semibold shadow-lg text-[#000000]"
                   onClick={() => window.location.href = "/api/login"}
                   data-testid="button-start-referring"
                 >
