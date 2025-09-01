@@ -37,6 +37,15 @@ export const users = pgTable("users", {
   clientBaseSize: varchar("client_base_size"),
   gdprConsent: boolean("gdpr_consent").default(false),
   marketingConsent: boolean("marketing_consent").default(false),
+  // Banking information for commission payments
+  bankAccountName: varchar("bank_account_name"),
+  bankSortCode: varchar("bank_sort_code"),
+  bankAccountNumber: varchar("bank_account_number"),
+  bankingComplete: boolean("banking_complete").default(false),
+  // Company information
+  companyNumber: varchar("company_number"),
+  vatNumber: varchar("vat_number"),
+  businessAddress: text("business_address"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -62,10 +71,17 @@ export const referrals = pgTable("referrals", {
   currentProcessor: varchar("current_processor"),
   monthlyVolume: decimal("monthly_volume", { precision: 15, scale: 2 }),
   currentRate: decimal("current_rate", { precision: 5, scale: 4 }),
-  status: varchar("status").notNull().default("pending"), // pending, approved, rejected, completed
+  // Card machine requirements
+  cardMachineQuantity: integer("card_machine_quantity").default(1),
+  // Quote and commission tracking
+  quoteGenerated: boolean("quote_generated").default(false),
+  quoteAmount: decimal("quote_amount", { precision: 10, scale: 2 }),
+  clientApproved: boolean("client_approved").default(false),
+  status: varchar("status").notNull().default("pending"), // pending, quoted, approved, rejected, completed
   estimatedCommission: decimal("estimated_commission", { precision: 10, scale: 2 }),
   actualCommission: decimal("actual_commission", { precision: 10, scale: 2 }),
   notes: text("notes"),
+  adminNotes: text("admin_notes"),
   gdprConsent: boolean("gdpr_consent").default(false),
   submittedAt: timestamp("submitted_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -84,8 +100,41 @@ export const commissionPayments = pgTable("commission_payments", {
   referralId: varchar("referral_id").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentDate: timestamp("payment_date"),
-  status: varchar("status").notNull().default("pending"), // pending, paid, failed
+  status: varchar("status").notNull().default("pending"), // pending, processing, paid, failed
+  transferReference: varchar("transfer_reference"),
   notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Business owner details captured after client approves quote
+export const businessOwners = pgTable("business_owners", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  referralId: varchar("referral_id").notNull(),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  dateOfBirth: varchar("date_of_birth"),
+  homeAddress: text("home_address"),
+  email: varchar("email").notNull(),
+  phone: varchar("phone").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Business information captured after client approves quote
+export const businessDetails = pgTable("business_details", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  referralId: varchar("referral_id").notNull(),
+  tradingName: varchar("trading_name").notNull(),
+  tradingAddress: text("trading_address").notNull(),
+  businessStructure: varchar("business_structure").notNull(), // limited_company, sole_trader, partnership
+  limitedCompanyName: varchar("limited_company_name"),
+  companyNumber: varchar("company_number"),
+  // Partnership details (if applicable)
+  partnershipContactName: varchar("partnership_contact_name"),
+  partnershipContactEmail: varchar("partnership_contact_email"),
+  partnershipContactPhone: varchar("partnership_contact_phone"),
+  // Banking details
+  bankSortCode: varchar("bank_sort_code").notNull(),
+  bankAccountNumber: varchar("bank_account_number").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -105,6 +154,14 @@ export const referralsRelations = relations(referrals, ({ one, many }) => ({
   }),
   billUploads: many(billUploads),
   commissionPayments: many(commissionPayments),
+  businessOwner: one(businessOwners, {
+    fields: [referrals.id],
+    references: [businessOwners.referralId],
+  }),
+  businessDetails: one(businessDetails, {
+    fields: [referrals.id],
+    references: [businessDetails.referralId],
+  }),
 }));
 
 export const billUploadsRelations = relations(billUploads, ({ one }) => ({
@@ -121,6 +178,20 @@ export const commissionPaymentsRelations = relations(commissionPayments, ({ one 
   }),
 }));
 
+export const businessOwnersRelations = relations(businessOwners, ({ one }) => ({
+  referral: one(referrals, {
+    fields: [businessOwners.referralId],
+    references: [referrals.id],
+  }),
+}));
+
+export const businessDetailsRelations = relations(businessDetails, ({ one }) => ({
+  referral: one(referrals, {
+    fields: [businessDetails.referralId],
+    references: [referrals.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -133,10 +204,22 @@ export const insertReferralSchema = createInsertSchema(referrals).omit({
   submittedAt: true,
   updatedAt: true,
   actualCommission: true,
+  quoteGenerated: true,
+  clientApproved: true,
 });
 
 export const insertBusinessTypeSchema = createInsertSchema(businessTypes).omit({
   id: true,
+});
+
+export const insertBusinessOwnerSchema = createInsertSchema(businessOwners).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBusinessDetailsSchema = createInsertSchema(businessDetails).omit({
+  id: true,
+  createdAt: true,
 });
 
 // Types
@@ -148,3 +231,7 @@ export type Referral = typeof referrals.$inferSelect;
 export type BusinessType = typeof businessTypes.$inferSelect;
 export type BillUpload = typeof billUploads.$inferSelect;
 export type CommissionPayment = typeof commissionPayments.$inferSelect;
+export type BusinessOwner = typeof businessOwners.$inferSelect;
+export type BusinessDetails = typeof businessDetails.$inferSelect;
+export type InsertBusinessOwner = z.infer<typeof insertBusinessOwnerSchema>;
+export type InsertBusinessDetails = z.infer<typeof insertBusinessDetailsSchema>;

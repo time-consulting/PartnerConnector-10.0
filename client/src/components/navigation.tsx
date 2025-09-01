@@ -16,7 +16,7 @@ export default function Navigation() {
             <div className="flex-shrink-0">
               <Link href="/">
                 <h1 className="text-2xl font-bold text-primary cursor-pointer" data-testid="link-logo">
-                  ReferPro
+                  ReferralConnect
                 </h1>
               </Link>
             </div>

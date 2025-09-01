@@ -39,6 +39,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
       currentProcessor: "",
       monthlyVolume: "",
       currentRate: "",
+      cardMachineQuantity: 1,
       notes: "",
       gdprConsent: false,
     },
@@ -173,15 +174,35 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="monthlyVolume">Monthly Transaction Volume (£)</Label>
-            <Input
-              id="monthlyVolume"
-              type="number"
-              {...form.register("monthlyVolume")}
-              placeholder="e.g., 50000"
-              data-testid="input-monthly-volume"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="monthlyVolume">Monthly Transaction Volume (£)</Label>
+              <Input
+                id="monthlyVolume"
+                type="number"
+                {...form.register("monthlyVolume")}
+                placeholder="e.g., 50000"
+                data-testid="input-monthly-volume"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="cardMachineQuantity">Number of Card Machines Required *</Label>
+              <Input
+                id="cardMachineQuantity"
+                type="number"
+                min="1"
+                max="20"
+                {...form.register("cardMachineQuantity", { valueAsNumber: true })}
+                placeholder="e.g., 2"
+                data-testid="input-card-machine-quantity"
+              />
+              {form.formState.errors.cardMachineQuantity && (
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.cardMachineQuantity.message}
+                </p>
+              )}
+            </div>
           </div>
 
           <div>
