@@ -1,0 +1,75 @@
+# Overview
+
+ReferPro is a professional referral platform designed for accountants, business consultants, and financial advisors to earn commissions by referring payment processing solutions to their clients. The application features a React-based frontend with a Node.js/Express backend, utilizing PostgreSQL for data persistence and implementing secure authentication through Replit's OAuth system.
+
+# User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+# System Architecture
+
+## Frontend Architecture
+The frontend is built using React with TypeScript and follows a component-based architecture:
+- **UI Framework**: React 18 with TypeScript for type safety
+- **Styling**: Tailwind CSS with shadcn/ui component library for consistent design
+- **Routing**: Wouter for lightweight client-side routing
+- **State Management**: TanStack Query (React Query) for server state management
+- **Form Handling**: React Hook Form with Zod validation for type-safe forms
+- **Build Tool**: Vite for fast development and optimized production builds
+
+## Backend Architecture
+The backend implements a RESTful API using Express.js:
+- **Framework**: Express.js with TypeScript for type safety
+- **Database ORM**: Drizzle ORM for type-safe database operations
+- **Authentication**: Replit Auth with OpenID Connect for secure user authentication
+- **Session Management**: Express sessions stored in PostgreSQL using connect-pg-simple
+- **File Handling**: Multer middleware for handling file uploads (bill uploads)
+- **API Design**: REST endpoints with consistent error handling and logging
+
+## Database Design
+PostgreSQL database with the following core entities:
+- **Users**: Stores user profiles with GDPR/marketing consent tracking
+- **Business Types**: Categorizes different types of businesses for commission calculation
+- **Referrals**: Tracks submitted referrals with status management
+- **Bill Uploads**: Handles client payment processing bill storage
+- **Commission Payments**: Tracks commission payments to users
+- **Sessions**: Stores user session data for authentication
+
+## Authentication & Authorization
+- **Provider**: Replit Auth using OpenID Connect protocol
+- **Session Storage**: PostgreSQL-backed sessions with configurable TTL
+- **Route Protection**: Middleware-based authentication checks for protected routes
+- **User Management**: Automatic user creation/updates on successful authentication
+
+## File Upload System
+- **Storage**: In-memory storage with Multer (10MB file size limit)
+- **Security**: File type and size validation
+- **Association**: Files linked to specific referrals for commission calculation
+
+# External Dependencies
+
+## Database Services
+- **PostgreSQL**: Primary database using Neon serverless PostgreSQL
+- **Drizzle ORM**: Database toolkit with PostgreSQL dialect
+- **Connection Pooling**: @neondatabase/serverless for optimized connections
+
+## Authentication Services
+- **Replit Auth**: OpenID Connect authentication provider
+- **Session Storage**: connect-pg-simple for PostgreSQL session storage
+
+## Development Tools
+- **Replit Integration**: Cartographer and runtime error modal plugins
+- **Build System**: ESBuild for server bundling, Vite for client bundling
+- **Type Safety**: TypeScript across the entire stack
+
+## UI Components & Styling
+- **Radix UI**: Headless component primitives for accessible UI
+- **Tailwind CSS**: Utility-first CSS framework
+- **shadcn/ui**: Pre-built component library with consistent design system
+- **Lucide React**: Icon library for consistent iconography
+
+## Utility Libraries
+- **Form Validation**: Zod for runtime type checking and validation
+- **Date Handling**: date-fns for date manipulation
+- **Class Management**: clsx and tailwind-merge for conditional styling
+- **Query Management**: TanStack Query for server state synchronization
