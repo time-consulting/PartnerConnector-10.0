@@ -66,13 +66,13 @@ export default function HowItWorks() {
 
         {/* CTA Section */}
         <div className="text-center mt-16">
-          <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-8 md:p-12">
-            <h3 className="text-3xl font-bold text-white mb-4">Ready to Start Earning?</h3>
-            <p className="text-xl text-blue-100 mb-8">
+          <div className="bg-white border-2 border-primary rounded-xl p-8 md:p-12 shadow-lg">
+            <h3 className="text-3xl font-bold text-foreground mb-4">Ready to Start Earning?</h3>
+            <p className="text-xl text-foreground mb-8">
               Join hundreds of professionals already earning substantial commissions
             </p>
             <button 
-              className="bg-white text-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors shadow-lg"
+              className="bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary/90 transition-colors shadow-lg"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-create-account"
             >
