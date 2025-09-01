@@ -24,9 +24,21 @@ export default function Landing() {
                   </span>
                 </h1>
               </div>
-              <p className="text-xl text-foreground mb-8 leading-relaxed">
-                The UK's leading referral platform for payment processing solutions. Earn £150-£20,000+ commission per successful referral.
+              <p className="text-xl text-foreground mb-6 leading-relaxed">
+                Help your clients get funding and get paid for helping. Specializing in card machines, merchant cash advances, plus utilities and insurance.
               </p>
+              
+              <div className="mb-8 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                <h3 className="text-lg font-semibold text-foreground mb-3">Perfect for:</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-foreground">
+                  <div className="flex items-center"><i className="fas fa-check text-primary mr-2"></i>Accountants</div>
+                  <div className="flex items-center"><i className="fas fa-check text-primary mr-2"></i>Sales Representatives</div>
+                  <div className="flex items-center"><i className="fas fa-check text-primary mr-2"></i>Business Consultants</div>
+                  <div className="flex items-center"><i className="fas fa-check text-primary mr-2"></i>Financial Advisors</div>
+                  <div className="flex items-center"><i className="fas fa-check text-primary mr-2"></i>Insurance Brokers</div>
+                  <div className="flex items-center"><i className="fas fa-check text-primary mr-2"></i>Anyone with Business Connections</div>
+                </div>
+              </div>
               
               {/* Key Benefits */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -274,7 +286,7 @@ export default function Landing() {
           </div>
           
           <div className="border-t border-blue-800 mt-8 pt-8 text-center">
-            <p className="text-blue-200">&copy; 2024 ReferPro. All rights reserved. Professional referral platform for payment processing solutions.</p>
+            <p className="text-blue-200">&copy; 2025 ReferPro. All rights reserved. Professional referral platform for payment processing solutions.</p>
           </div>
         </div>
       </footer>

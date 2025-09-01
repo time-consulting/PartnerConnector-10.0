@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import Navigation from "@/components/navigation";
 import StatsCard from "@/components/stats-card";
+import ReferralProgress from "@/components/referral-progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -219,6 +220,9 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* Referral Progress Tracker */}
+          <ReferralProgress />
 
           {/* Quick Actions */}
           <Card data-testid="card-quick-actions">

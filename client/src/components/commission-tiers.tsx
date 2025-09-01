@@ -6,10 +6,13 @@ export default function CommissionTiers() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-foreground mb-4" data-testid="text-commission-title">
-            Commission Tiers
+            Our Core Services & Commission Tiers
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Earn substantial commissions based on business size and transaction volume. The bigger the referral, the bigger your reward.
+          <p className="text-xl text-foreground max-w-4xl mx-auto mb-6">
+            <span className="font-semibold text-primary">Primary Focus:</span> Card Machines & Merchant Cash Advances - Help your clients get the funding they need while earning substantial commissions.
+          </p>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            Plus additional commissions available for utilities (gas & electric) and insurance referrals.
           </p>
         </div>
         
@@ -135,37 +138,51 @@ export default function CommissionTiers() {
           </div>
         </div>
 
-        {/* Additional Products */}
+        {/* Additional Services */}
         <div className="mt-8 bg-white border border-border rounded-xl p-8 shadow-lg">
           <h3 className="text-2xl font-bold text-center text-foreground mb-8">
-            Additional Revenue Opportunities
+            Additional Services - Boost Your Earnings
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <i className="fas fa-credit-card text-green-600 text-xl"></i>
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="fas fa-bolt text-primary text-xl"></i>
               </div>
               <div>
-                <h4 className="text-xl font-semibold text-foreground mb-2">Business Funding</h4>
-                <p className="text-foreground">
-                  Stack additional commissions by referring businesses for working capital loans and merchant cash advances.
+                <h4 className="text-lg font-semibold text-foreground mb-2">Business Utilities</h4>
+                <p className="text-sm text-foreground mb-2">
+                  Gas & electric supply switching for cost savings.
                 </p>
-                <span className="inline-block mt-2 text-primary font-semibold" data-testid="text-funding-commission">
-                  +£200-£2,000 bonus commission
+                <span className="inline-block text-sm text-primary font-semibold" data-testid="text-utilities-commission">
+                  +£50-£200 per switch
                 </span>
               </div>
             </div>
             <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <i className="fas fa-chart-line text-purple-600 text-xl"></i>
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="fas fa-shield-alt text-primary text-xl"></i>
               </div>
               <div>
-                <h4 className="text-xl font-semibold text-foreground mb-2">Premium Analytics</h4>
-                <p className="text-foreground">
-                  Refer businesses for advanced reporting and analytics solutions to optimize their payment processing.
+                <h4 className="text-lg font-semibold text-foreground mb-2">Business Insurance</h4>
+                <p className="text-sm text-foreground mb-2">
+                  Comprehensive coverage policies for all business types.
                 </p>
-                <span className="inline-block mt-2 text-primary font-semibold" data-testid="text-analytics-commission">
-                  +£100-£500 recurring commission
+                <span className="inline-block text-sm text-primary font-semibold" data-testid="text-insurance-commission">
+                  +£75-£300 per policy
+                </span>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i className="fas fa-chart-line text-green-600 text-xl"></i>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-foreground mb-2">Premium Analytics</h4>
+                <p className="text-sm text-foreground mb-2">
+                  Advanced reporting and business intelligence tools.
+                </p>
+                <span className="inline-block text-sm text-primary font-semibold" data-testid="text-analytics-commission">
+                  +£100-£500 recurring
                 </span>
               </div>
             </div>

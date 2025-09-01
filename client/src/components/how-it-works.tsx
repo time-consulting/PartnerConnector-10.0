@@ -72,7 +72,7 @@ export default function HowItWorks() {
               Join hundreds of professionals already earning substantial commissions
             </p>
             <button 
-              className="bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary/90 transition-colors shadow-lg"
+              className="bg-primary text-primary-foreground px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary/90 transition-colors shadow-lg border-2 border-primary"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-create-account"
             >
