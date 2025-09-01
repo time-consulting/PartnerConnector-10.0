@@ -9,46 +9,45 @@ export default function Landing() {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary via-primary to-accent py-24 lg:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/5"></div>
+      <section className="bg-white py-24 lg:py-32 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="animate-fadeIn">
               <div className="mb-6">
-                <span className="inline-block bg-accent/20 text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                <span className="inline-block bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
                   Trusted by 500+ Professionals
                 </span>
-                <h1 className="text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
+                <h1 className="text-5xl lg:text-7xl font-black text-foreground mb-6 leading-tight">
                   Turn Your Network Into
-                  <span className="block text-accent bg-gradient-to-r from-accent to-yellow-300 bg-clip-text text-transparent">
+                  <span className="block text-primary">
                     Premium Income
                   </span>
                 </h1>
               </div>
-              <p className="text-xl text-white/90 mb-8 leading-relaxed">
+              <p className="text-xl text-foreground mb-8 leading-relaxed">
                 The UK's leading referral platform for payment processing solutions. Earn £150-£20,000+ commission per successful referral.
               </p>
               
               {/* Key Benefits */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-accent mb-1">£850</div>
-                  <div className="text-sm text-white/80">Average Commission</div>
+                <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">£850</div>
+                  <div className="text-sm text-foreground">Average Commission</div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-accent mb-1">87%</div>
-                  <div className="text-sm text-white/80">Success Rate</div>
+                <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">87%</div>
+                  <div className="text-sm text-foreground">Success Rate</div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-accent mb-1">24-48h</div>
-                  <div className="text-sm text-white/80">Quote Turnaround</div>
+                <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">24-48h</div>
+                  <div className="text-sm text-foreground">Quote Turnaround</div>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   size="lg" 
-                  className="bg-accent text-black hover:bg-accent/90 text-lg px-8 py-4 font-semibold shadow-lg"
+                  className="bg-primary text-white hover:bg-primary/90 text-lg px-8 py-4 font-semibold shadow-lg"
                   onClick={() => window.location.href = "/api/login"}
                   data-testid="button-start-referring"
                 >
@@ -57,7 +56,7 @@ export default function Landing() {
                 <Button 
                   variant="outline" 
                   size="lg"
-                  className="border-2 border-white text-white hover:bg-white hover:text-primary text-lg px-8 py-4 font-semibold"
+                  className="border-2 border-primary text-primary hover:bg-primary hover:text-white text-lg px-8 py-4 font-semibold"
                   onClick={() => document.getElementById('commissions')?.scrollIntoView({ behavior: 'smooth' })}
                   data-testid="button-view-tiers"
                 >
@@ -70,7 +69,7 @@ export default function Landing() {
                 <img 
                   src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" 
                   alt="Professional business meeting" 
-                  className="rounded-2xl shadow-2xl w-full h-auto border-4 border-white/20"
+                  className="rounded-2xl shadow-2xl w-full h-auto border-4 border-primary/10"
                   data-testid="img-hero"
                 />
                 <div className="absolute -bottom-6 -right-6 bg-accent text-black p-6 rounded-xl shadow-lg">
