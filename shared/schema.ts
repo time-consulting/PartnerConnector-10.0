@@ -46,6 +46,8 @@ export const users = pgTable("users", {
   companyNumber: varchar("company_number"),
   vatNumber: varchar("vat_number"),
   businessAddress: text("business_address"),
+  // Admin access
+  isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

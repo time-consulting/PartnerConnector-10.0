@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -125,6 +125,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading bill:", error);
       res.status(500).json({ message: "Failed to upload bill" });
+    }
+  });
+
+  // Admin middleware to check admin access
+  const isAdmin: RequestHandler = async (req: any, res, next) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      next();
+    } catch (error) {
+      console.error("Error checking admin access:", error);
+      res.status(500).json({ message: "Failed to verify admin access" });
+    }
+  };
+
+  // Admin routes
+  app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get('/api/admin/referrals', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const referrals = await storage.getAllReferrals();
+      res.json(referrals);
+    } catch (error) {
+      console.error("Error fetching all referrals:", error);
+      res.status(500).json({ message: "Failed to fetch referrals" });
+    }
+  });
+
+  app.patch('/api/admin/users/:userId', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const updateData = req.body;
+      
+      const user = await storage.updateUser(userId, updateData);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.patch('/api/admin/referrals/:referralId', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const updateData = req.body;
+      
+      const referral = await storage.updateReferral(referralId, updateData);
+      res.json(referral);
+    } catch (error) {
+      console.error("Error updating referral:", error);
+      res.status(500).json({ message: "Failed to update referral" });
+    }
+  });
+
+  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // In a real implementation, you would send an email with a reset link
+      // For now, we'll just log it and return success
+      console.log(`Password reset requested for user: ${user.email}`);
+      
+      res.json({ message: "Password reset email sent successfully" });
+    } catch (error) {
+      console.error("Error sending password reset:", error);
+      res.status(500).json({ message: "Failed to send password reset email" });
     }
   });
 

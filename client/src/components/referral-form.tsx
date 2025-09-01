@@ -16,6 +16,9 @@ const formSchema = insertReferralSchema.extend({
   gdprConsent: z.boolean().refine(val => val === true, {
     message: "GDPR consent is required",
   }),
+  selectedProducts: z.array(z.string()).min(1, {
+    message: "Please select at least one service",
+  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -49,6 +52,9 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
   });
 
   const handleSubmit = (data: FormData) => {
+    // Update form with selected products before validation
+    form.setValue("selectedProducts", selectedProducts);
+    
     const formDataWithProducts = {
       ...data,
       selectedProducts
@@ -228,8 +234,16 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
       {/* Product Selection */}
       <ProductSelection
         selectedProducts={selectedProducts}
-        onProductsChange={setSelectedProducts}
+        onProductsChange={(products) => {
+          setSelectedProducts(products);
+          form.setValue("selectedProducts", products);
+        }}
       />
+      {form.formState.errors.selectedProducts && (
+        <p className="text-destructive text-sm mt-1">
+          {form.formState.errors.selectedProducts.message}
+        </p>
+      )}
 
       {/* Commission Estimate */}
       {selectedType && (

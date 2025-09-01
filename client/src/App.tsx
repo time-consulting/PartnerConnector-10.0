@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard";
 import SubmitReferral from "@/pages/submit-referral";
 import LearningPortal from "@/pages/learning-portal";
 import UploadBills from "@/pages/upload-bills";
+import AdminPortal from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/submit-referral" component={SubmitReferral} />
           <Route path="/learning-portal" component={LearningPortal} />
           <Route path="/upload-bills" component={UploadBills} />
+          <Route path="/admin" component={AdminPortal} />
         </>
       )}
       <Route component={NotFound} />

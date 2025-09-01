@@ -22,21 +22,12 @@ interface ProductSelectionProps {
 export default function ProductSelection({ onProductsChange, selectedProducts }: ProductSelectionProps) {
   const products: Product[] = [
     {
-      id: "dojo-go",
-      name: "Dojo Go Card Machine",
+      id: "card-machines",
+      name: "Card Machines",
       category: "card_machines",
-      description: "Portable card machine with integrated receipt printer",
-      price: "£15 + VAT per month",
-      commissionRate: "£200-£500",
-      isActive: true
-    },
-    {
-      id: "dojo-pocket",
-      name: "Dojo Pocket",
-      category: "card_machines", 
-      description: "Compact mobile card reader for on-the-go payments",
-      price: "£20 + VAT per month",
-      commissionRate: "£200-£500",
+      description: "Payment processing solutions for all business types",
+      price: "Competitive rates from 1.2%",
+      commissionRate: "£150-£5,000",
       isActive: true
     },
     {

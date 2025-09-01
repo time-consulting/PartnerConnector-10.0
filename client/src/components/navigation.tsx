@@ -72,6 +72,20 @@ export default function Navigation() {
                       Upload Bills
                     </a>
                   </Link>
+                  {(user as any)?.isAdmin && (
+                    <Link href="/admin">
+                      <a 
+                        className={`px-3 py-2 text-sm font-medium transition-colors ${
+                          isActive('/admin') 
+                            ? 'text-primary' 
+                            : 'text-muted-foreground hover:text-primary'
+                        }`}
+                        data-testid="link-admin"
+                      >
+                        Admin Portal
+                      </a>
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
