@@ -60,6 +60,18 @@ export const businessTypes = pgTable("business_types", {
   processingTime: varchar("processing_time"),
 });
 
+// Products table for different services offered
+export const products = pgTable("products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  category: varchar("category").notNull(), // card_machines, business_funding, utilities, insurance
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 4 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const referrals = pgTable("referrals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   referrerId: varchar("referrer_id").notNull(),
@@ -71,7 +83,8 @@ export const referrals = pgTable("referrals", {
   currentProcessor: varchar("current_processor"),
   monthlyVolume: decimal("monthly_volume", { precision: 15, scale: 2 }),
   currentRate: decimal("current_rate", { precision: 5, scale: 4 }),
-  // Card machine requirements
+  // Product selection and card machine requirements
+  selectedProducts: text("selected_products").array(), // Array of product IDs
   cardMachineQuantity: integer("card_machine_quantity").default(1),
   // Quote and commission tracking
   quoteGenerated: boolean("quote_generated").default(false),
@@ -212,6 +225,11 @@ export const insertBusinessTypeSchema = createInsertSchema(businessTypes).omit({
   id: true,
 });
 
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertBusinessOwnerSchema = createInsertSchema(businessOwners).omit({
   id: true,
   createdAt: true,
@@ -229,9 +247,11 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 export type Referral = typeof referrals.$inferSelect;
 export type BusinessType = typeof businessTypes.$inferSelect;
+export type Product = typeof products.$inferSelect;
 export type BillUpload = typeof billUploads.$inferSelect;
 export type CommissionPayment = typeof commissionPayments.$inferSelect;
 export type BusinessOwner = typeof businessOwners.$inferSelect;
 export type BusinessDetails = typeof businessDetails.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertBusinessOwner = z.infer<typeof insertBusinessOwnerSchema>;
 export type InsertBusinessDetails = z.infer<typeof insertBusinessDetailsSchema>;

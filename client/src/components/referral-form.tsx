@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ProductSelection from "@/components/product-selection";
 
 const formSchema = insertReferralSchema.extend({
   gdprConsent: z.boolean().refine(val => val === true, {
@@ -27,6 +28,7 @@ interface ReferralFormProps {
 
 export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: ReferralFormProps) {
   const [selectedBusinessType, setSelectedBusinessType] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -40,13 +42,18 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
       monthlyVolume: "",
       currentRate: "",
       cardMachineQuantity: 1,
+      selectedProducts: [],
       notes: "",
       gdprConsent: false,
     },
   });
 
   const handleSubmit = (data: FormData) => {
-    onSubmit(data);
+    const formDataWithProducts = {
+      ...data,
+      selectedProducts
+    };
+    onSubmit(formDataWithProducts);
   };
 
   const selectedType = businessTypes.find(type => type.id === selectedBusinessType);
@@ -217,6 +224,12 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
           </div>
         </CardContent>
       </Card>
+
+      {/* Product Selection */}
+      <ProductSelection
+        selectedProducts={selectedProducts}
+        onProductsChange={setSelectedProducts}
+      />
 
       {/* Commission Estimate */}
       {selectedType && (
