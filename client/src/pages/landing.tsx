@@ -84,27 +84,27 @@ export default function Landing() {
       </section>
 
       {/* Trust Indicators */}
-      <section className="py-12 bg-muted/50">
+      <section className="py-16 bg-white border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <p className="text-muted-foreground font-medium">Trusted by leading professionals across the UK</p>
+          <div className="text-center mb-12">
+            <p className="text-foreground font-semibold text-lg">Trusted by leading professionals across the UK</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-60">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary mb-1">500+</div>
-              <div className="text-sm text-muted-foreground">Active Partners</div>
+              <div className="text-3xl font-bold text-primary mb-2">500+</div>
+              <div className="text-sm font-medium text-foreground">Active Partners</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary mb-1">£2.5M</div>
-              <div className="text-sm text-muted-foreground">Commissions Paid</div>
+              <div className="text-3xl font-bold text-primary mb-2">£2.5M</div>
+              <div className="text-sm font-medium text-foreground">Commissions Paid</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary mb-1">1,200+</div>
-              <div className="text-sm text-muted-foreground">Businesses Referred</div>
+              <div className="text-3xl font-bold text-primary mb-2">1,200+</div>
+              <div className="text-sm font-medium text-foreground">Businesses Referred</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary mb-1">4.9/5</div>
-              <div className="text-sm text-muted-foreground">Partner Rating</div>
+              <div className="text-3xl font-bold text-primary mb-2">4.9/5</div>
+              <div className="text-sm font-medium text-foreground">Partner Rating</div>
             </div>
           </div>
         </div>
