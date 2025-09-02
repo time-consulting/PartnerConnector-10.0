@@ -308,6 +308,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin send quote to customer
+  app.post('/api/admin/referrals/:referralId/send-quote', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const quoteData = req.body;
+      
+      // Verify referral exists
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
+      
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Update referral status to quote_sent
+      await storage.updateReferralStatus(referralId, 'quote_sent');
+      
+      // Store quote data (you may want to create a separate quotes table)
+      console.log('Quote sent for referral:', referralId, quoteData);
+      
+      res.json({ 
+        success: true,
+        message: "Quote sent to customer successfully" 
+      });
+    } catch (error) {
+      console.error("Error sending quote:", error);
+      res.status(500).json({ message: "Failed to send quote" });
+    }
+  });
+
   app.post('/api/admin/users/:userId/reset-password', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;

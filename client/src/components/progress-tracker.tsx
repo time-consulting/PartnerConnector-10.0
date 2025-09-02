@@ -35,7 +35,7 @@ interface ProgressTrackerProps {
     businessName: string;
     businessEmail: string;
     status: string;
-    submittedAt: Date;
+    submittedAt: string | Date;
     selectedProducts: string[];
     estimatedCommission?: string;
   };
@@ -49,7 +49,9 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
         title: "Referral Submitted",
         description: "Your referral has been successfully submitted",
         status: "completed",
-        completedAt: referral.submittedAt.toLocaleDateString()
+        completedAt: typeof referral.submittedAt === 'string' 
+          ? new Date(referral.submittedAt).toLocaleDateString() 
+          : referral.submittedAt.toLocaleDateString()
       },
       {
         id: "review",

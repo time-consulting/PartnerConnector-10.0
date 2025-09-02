@@ -167,6 +167,41 @@ export default function AdminPortal() {
     },
   });
 
+  const sendQuoteMutation = useMutation({
+    mutationFn: async ({ referralId, quoteData }: { referralId: string; quoteData: any }) => {
+      return await apiRequest(`/api/admin/referrals/${referralId}/send-quote`, "POST", quoteData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Quote Sent Successfully",
+        description: "The quote has been sent to the customer's portal and they've been notified.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/referrals"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to send quote.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendQuoteToCustomer = (referralId: string, quoteData: any) => {
+    sendQuoteMutation.mutate({ referralId, quoteData });
+  };
+
   if (isLoading || !isAuthenticated) {
     return <div>Loading...</div>;
   }
@@ -376,6 +411,28 @@ export default function AdminPortal() {
                             />
                           </DialogContent>
                         </Dialog>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              size="sm" 
+                              disabled={referral.status === "quote_sent" || referral.status === "quote_approved"}
+                              data-testid={`button-send-quote-${referral.id}`}
+                            >
+                              <Mail className="w-4 h-4 mr-1" />
+                              Send Quote
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Send Quote - {referral.businessName}</DialogTitle>
+                            </DialogHeader>
+                            <QuoteForm 
+                              referral={referral} 
+                              onSend={(quoteData) => sendQuoteToCustomer(referral.id, quoteData)} 
+                            />
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                   </CardContent>
@@ -465,6 +522,108 @@ function UserEditForm({ user, onSave }: { user: any; onSave: (data: any) => void
       </div>
       
       <Button type="submit" className="w-full">Save Changes</Button>
+    </form>
+  );
+}
+
+function QuoteForm({ referral, onSend }: { referral: any; onSend: (quoteData: any) => void }) {
+  const [formData, setFormData] = useState({
+    debitCardRate: "",
+    creditCardRate: "",
+    corporateCardRate: "",
+    securityFee: "",
+    platformFee: "",
+    terminalCost: "",
+    notes: ""
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSend(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="debitCardRate">Debit Card Rate (%)</Label>
+          <Input
+            id="debitCardRate"
+            placeholder="e.g., 0.15"
+            value={formData.debitCardRate}
+            onChange={(e) => setFormData({ ...formData, debitCardRate: e.target.value })}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="creditCardRate">Credit Card Rate (%)</Label>
+          <Input
+            id="creditCardRate"
+            placeholder="e.g., 0.95"
+            value={formData.creditCardRate}
+            onChange={(e) => setFormData({ ...formData, creditCardRate: e.target.value })}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="corporateCardRate">Corporate Card Rate (%)</Label>
+          <Input
+            id="corporateCardRate"
+            placeholder="e.g., 1.25"
+            value={formData.corporateCardRate}
+            onChange={(e) => setFormData({ ...formData, corporateCardRate: e.target.value })}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="securityFee">Security Fee (£)</Label>
+          <Input
+            id="securityFee"
+            placeholder="e.g., 9.95"
+            value={formData.securityFee}
+            onChange={(e) => setFormData({ ...formData, securityFee: e.target.value })}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="platformFee">Platform Fee (£)</Label>
+          <Input
+            id="platformFee"
+            placeholder="e.g., 15.00"
+            value={formData.platformFee}
+            onChange={(e) => setFormData({ ...formData, platformFee: e.target.value })}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="terminalCost">Terminal Cost (£)</Label>
+          <Input
+            id="terminalCost"
+            placeholder="e.g., 25.00"
+            value={formData.terminalCost}
+            onChange={(e) => setFormData({ ...formData, terminalCost: e.target.value })}
+            required
+          />
+        </div>
+      </div>
+      
+      <div>
+        <Label htmlFor="notes">Additional Notes</Label>
+        <Textarea
+          id="notes"
+          placeholder="Any additional information or special terms..."
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          rows={3}
+        />
+      </div>
+      
+      <Button type="submit" className="w-full">Send Quote to Customer</Button>
     </form>
   );
 }
