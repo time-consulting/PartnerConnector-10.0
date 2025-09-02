@@ -10,6 +10,8 @@ import ProgressTracker from "@/components/progress-tracker";
 import NotificationCenter from "@/components/notification-center";
 import QuoteSystem from "@/components/quote-system";
 import AdditionalDetailsForm from "@/components/additional-details-form";
+import Recommendations from "@/components/recommendations";
+import SmartInsights from "@/components/smart-insights";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -199,6 +201,20 @@ export default function Dashboard() {
 
       {/* Main Dashboard Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Personalized Recommendations and Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <Recommendations 
+            userStats={stats} 
+            userReferrals={referrals as any[]} 
+            isLoading={statsLoading || referralsLoading} 
+          />
+          <SmartInsights 
+            userStats={stats} 
+            userReferrals={referrals as any[]} 
+            isLoading={statsLoading || referralsLoading} 
+          />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Referrals */}
           <Card data-testid="card-recent-referrals">
