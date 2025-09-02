@@ -132,30 +132,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bill upload
-  app.post('/api/referrals/:id/upload-bill', isAuthenticated, upload.single('bill'), async (req: any, res) => {
+  app.post('/api/referrals/:id/upload-bill', isAuthenticated, upload.array('bills', 5), async (req: any, res) => {
     try {
       const referralId = req.params.id;
-      const file = req.file;
+      const files = req.files;
       
-      if (!file) {
-        return res.status(400).json({ message: "No file uploaded" });
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
       }
 
-      // Convert file buffer to base64 for database storage
-      const fileContent = file.buffer.toString('base64');
+      // Process each uploaded file
+      const uploadPromises = files.map(async (file: any) => {
+        const fileContent = file.buffer.toString('base64');
+        return storage.createBillUpload(
+          referralId,
+          file.originalname,
+          file.size,
+          file.mimetype,
+          fileContent
+        );
+      });
 
-      const billUpload = await storage.createBillUpload(
-        referralId,
-        file.originalname,
-        file.size,
-        file.mimetype,
-        fileContent
-      );
+      const billUploads = await Promise.all(uploadPromises);
 
-      res.json(billUpload);
+      res.json({ 
+        success: true, 
+        message: `${files.length} file(s) uploaded successfully`,
+        uploads: billUploads
+      });
     } catch (error) {
-      console.error("Error uploading bill:", error);
-      res.status(500).json({ message: "Failed to upload bill" });
+      console.error("Error uploading bills:", error);
+      res.status(500).json({ message: "Failed to upload bills" });
     }
   });
 
@@ -194,6 +201,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching bills:", error);
       res.status(500).json({ message: "Failed to fetch bills" });
+    }
+  });
+
+  // Submit additional details after quote approval
+  app.post('/api/referrals/:id/additional-details', isAuthenticated, async (req: any, res) => {
+    try {
+      const referralId = req.params.id;
+      const userId = req.user.claims.sub;
+      const additionalDetails = req.body;
+
+      // Verify the referral belongs to the user  
+      const userReferrals = await storage.getReferralsByUserId(userId);
+      const referral = userReferrals.find(r => r.id === referralId);
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Update referral status to processing
+      await storage.updateReferralStatus(referralId, 'processing');
+
+      // Store additional details (you may want to create a separate table for this)
+      console.log('Additional details received for referral:', referralId, additionalDetails);
+
+      res.json({ 
+        success: true,
+        message: "Additional details submitted successfully" 
+      });
+    } catch (error) {
+      console.error("Error submitting additional details:", error);
+      res.status(500).json({ message: "Failed to submit additional details" });
     }
   });
 

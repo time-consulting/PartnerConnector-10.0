@@ -22,26 +22,50 @@ export interface ReferralSheetData {
 
 class GoogleSheetsService {
   private sheets: any;
-  private spreadsheetId: string;
+  private spreadsheetId: string = '';
+  private isInitialized: boolean = false;
 
   constructor() {
     if (!process.env.GOOGLE_SHEETS_CLIENT_EMAIL || !process.env.GOOGLE_SHEETS_PRIVATE_KEY || !process.env.GOOGLE_SPREADSHEET_ID) {
-      throw new Error('Google Sheets credentials not configured');
+      console.warn('Google Sheets credentials not configured - sheet sync will be disabled');
+      return;
     }
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
+    try {
+      // Clean up the private key - handle multiple formats
+      let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
+      
+      // Remove quotes if present
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      
+      // Replace escaped newlines
+      privateKey = privateKey.replace(/\\n/g, '\n');
 
-    this.sheets = google.sheets({ version: 'v4', auth });
-    this.spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
+      const auth = new google.auth.GoogleAuth({
+        credentials: {
+          client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+          private_key: privateKey,
+        },
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      });
+
+      this.sheets = google.sheets({ version: 'v4', auth });
+      this.spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize Google Sheets:', error);
+      console.warn('Google Sheets sync will be disabled');
+    }
   }
 
   async initializeSheet(): Promise<void> {
+    if (!this.isInitialized) {
+      console.warn('Google Sheets not initialized - skipping sheet initialization');
+      return;
+    }
+    
     try {
       // Create headers if they don't exist
       const headers = [
@@ -88,6 +112,11 @@ class GoogleSheetsService {
   }
 
   async addReferral(data: ReferralSheetData): Promise<void> {
+    if (!this.isInitialized) {
+      console.warn('Google Sheets not initialized - skipping referral sync');
+      return;
+    }
+    
     try {
       await this.initializeSheet();
 
@@ -128,6 +157,11 @@ class GoogleSheetsService {
   }
 
   async updateReferralStatus(partnerId: string, businessName: string, newStatus: string): Promise<void> {
+    if (!this.isInitialized) {
+      console.warn('Google Sheets not initialized - skipping status update');
+      return;
+    }
+    
     try {
       // Get all data to find the row
       const response = await this.sheets.spreadsheets.values.get({

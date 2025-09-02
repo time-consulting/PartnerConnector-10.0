@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +6,10 @@ import { Link } from "wouter";
 import Navigation from "@/components/navigation";
 import StatsCard from "@/components/stats-card";
 import ReferralProgress from "@/components/referral-progress";
+import ProgressTracker from "@/components/progress-tracker";
+import NotificationCenter from "@/components/notification-center";
+import QuoteSystem from "@/components/quote-system";
+import AdditionalDetailsForm from "@/components/additional-details-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +27,10 @@ import {
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [selectedReferral, setSelectedReferral] = useState<any>(null);
+  const [showProgressTracker, setShowProgressTracker] = useState(false);
+  const [showQuoteSystem, setShowQuoteSystem] = useState(false);
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -68,9 +76,44 @@ export default function Dashboard() {
     }
   };
 
+  const handleReferralClick = (referral: any) => {
+    setSelectedReferral(referral);
+    setShowProgressTracker(true);
+  };
+
+  const handleQuoteClick = (referralId: string) => {
+    // Find the referral and show quote
+    if (referrals && Array.isArray(referrals)) {
+      const referral = referrals.find((r: any) => r.id === referralId);
+      if (referral) {
+        setSelectedReferral(referral);
+        setShowQuoteSystem(true);
+      }
+    }
+  };
+
+  const handleQuoteApproval = () => {
+    // After quote approval, show additional details form
+    setShowQuoteSystem(false);
+    setShowAdditionalDetails(true);
+  };
+
+  const handleAdditionalDetailsComplete = () => {
+    // Update referral status or refresh data
+    setShowAdditionalDetails(false);
+    setSelectedReferral(null);
+    toast({
+      title: "Application Complete",
+      description: "Your application has been submitted successfully. Our team will process it shortly.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <div className="flex items-center justify-between p-4 border-b">
+        <Navigation />
+        <NotificationCenter onQuoteClick={handleQuoteClick} />
+      </div>
       
       {/* Dashboard Header */}
       <div className="bg-primary text-primary-foreground">
@@ -186,7 +229,12 @@ export default function Dashboard() {
               ) : referrals && (referrals as any[]).length > 0 ? (
                 <div className="space-y-4">
                   {(referrals as any[]).slice(0, 5).map((referral: any) => (
-                    <div key={referral.id} className="flex items-center justify-between p-4 bg-muted rounded-lg" data-testid={`referral-${referral.id}`}>
+                    <div 
+                      key={referral.id} 
+                      className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted/80 cursor-pointer transition-colors" 
+                      data-testid={`referral-${referral.id}`}
+                      onClick={() => handleReferralClick(referral)}
+                    >
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                           <i className="fas fa-store text-primary-foreground text-sm"></i>
@@ -281,6 +329,35 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+      
+      {/* Progress Tracker Dialog */}
+      {selectedReferral && (
+        <ProgressTracker
+          isOpen={showProgressTracker}
+          onClose={() => setShowProgressTracker(false)}
+          referral={selectedReferral}
+        />
+      )}
+      
+      {/* Quote System Dialog */}
+      {selectedReferral && (
+        <QuoteSystem
+          isOpen={showQuoteSystem}
+          onClose={() => setShowQuoteSystem(false)}
+          onApprove={handleQuoteApproval}
+          referral={selectedReferral}
+        />
+      )}
+      
+      {/* Additional Details Form Dialog */}
+      {selectedReferral && (
+        <AdditionalDetailsForm
+          isOpen={showAdditionalDetails}
+          onClose={() => setShowAdditionalDetails(false)}
+          onComplete={handleAdditionalDetailsComplete}
+          referral={selectedReferral}
+        />
+      )}
     </div>
   );
 }
