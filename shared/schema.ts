@@ -46,6 +46,8 @@ export const users = pgTable("users", {
   companyNumber: varchar("company_number"),
   vatNumber: varchar("vat_number"),
   businessAddress: text("business_address"),
+  // Partner tracking
+  partnerId: varchar("partner_id").unique(),
   // Admin access
   isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
@@ -107,6 +109,8 @@ export const billUploads = pgTable("bill_uploads", {
   referralId: varchar("referral_id").notNull(),
   fileName: varchar("file_name").notNull(),
   fileSize: integer("file_size"),
+  mimeType: varchar("mime_type"),
+  fileContent: text("file_content"), // Base64 encoded file content
   uploadedAt: timestamp("uploaded_at").defaultNow(),
 });
 
