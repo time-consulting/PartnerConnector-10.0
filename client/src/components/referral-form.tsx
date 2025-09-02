@@ -19,6 +19,9 @@ const formSchema = insertReferralSchema.extend({
   selectedProducts: z.array(z.string()).min(1, {
     message: "Please select at least one service",
   }),
+}).partial({
+  // Make these optional for form submission since we handle them separately
+  selectedProducts: true,
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -52,28 +55,36 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
   });
 
   const handleSubmit = (data: FormData) => {
-    // Update form with selected products before validation
-    form.setValue("selectedProducts", selectedProducts);
-    
-    // Debug form validation
+    console.log("Form submit handler called!");
     console.log("Form data:", data);
     console.log("Selected products:", selectedProducts);
+    console.log("Selected business type:", selectedBusinessType);
     console.log("Form errors:", form.formState.errors);
     
-    const formDataWithProducts = {
-      ...data,
-      selectedProducts
-    };
-    
-    // Validate before submitting
-    if (selectedProducts.length === 0) {
-      form.setError("selectedProducts", { 
-        type: "manual", 
-        message: "Please select at least one service" 
-      });
+    // Check if required fields are filled
+    if (!data.businessName || !data.businessEmail || !selectedBusinessType) {
+      console.log("Missing required fields!");
       return;
     }
     
+    if (selectedProducts.length === 0) {
+      console.log("No products selected!");
+      return;
+    }
+    
+    if (!data.gdprConsent) {
+      console.log("GDPR consent not given!");
+      return;
+    }
+    
+    // Ensure selected products are included in the form data
+    const formDataWithProducts = {
+      ...data,
+      selectedProducts,
+      businessTypeId: selectedBusinessType
+    };
+    
+    console.log("Submitting form with data:", formDataWithProducts);
     onSubmit(formDataWithProducts);
   };
 
@@ -252,11 +263,20 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
         onProductsChange={(products) => {
           setSelectedProducts(products);
           form.setValue("selectedProducts", products);
+          // Clear any existing error when products are selected
+          if (products.length > 0) {
+            form.clearErrors("selectedProducts");
+          }
         }}
       />
       {form.formState.errors.selectedProducts && (
         <p className="text-destructive text-sm mt-1">
           {form.formState.errors.selectedProducts.message}
+        </p>
+      )}
+      {selectedProducts.length === 0 && (
+        <p className="text-destructive text-sm mt-1">
+          Please select at least one service
         </p>
       )}
 
@@ -320,6 +340,11 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
         size="lg"
         disabled={isSubmitting}
         data-testid="button-submit-referral-form"
+        onClick={(e) => {
+          console.log("Submit button clicked!");
+          console.log("Form valid:", form.formState.isValid);
+          console.log("Form errors:", form.formState.errors);
+        }}
       >
         {isSubmitting ? "Submitting..." : "Submit Referral"}
       </Button>
