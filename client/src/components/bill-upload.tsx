@@ -22,7 +22,7 @@ export default function BillUpload({ referralId, onComplete, isOptional = false 
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await fetch('/api/upload-bills', {
+      const response = await fetch(`/api/referrals/${referralId}/upload-bill`, {
         method: 'POST',
         body: formData,
       });

@@ -26,7 +26,7 @@ export default function ProductSelection({ onProductsChange, selectedProducts }:
       name: "Card Machines",
       category: "card_machines",
       description: "Payment processing solutions for all business types",
-      price: "Competitive rates from 1.2%",
+      price: "Competitive rates",
       commissionRate: "£150-£5,000",
       isActive: true
     },
@@ -35,7 +35,7 @@ export default function ProductSelection({ onProductsChange, selectedProducts }:
       name: "Merchant Cash Advance",
       category: "business_funding",
       description: "Fast business funding based on card sales",
-      price: "From £5,000 - £500,000",
+      price: "Funding available from £1,000 to £1,000,000",
       commissionRate: "£1,000-£25,000",
       isActive: true
     },

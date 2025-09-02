@@ -55,10 +55,25 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
     // Update form with selected products before validation
     form.setValue("selectedProducts", selectedProducts);
     
+    // Debug form validation
+    console.log("Form data:", data);
+    console.log("Selected products:", selectedProducts);
+    console.log("Form errors:", form.formState.errors);
+    
     const formDataWithProducts = {
       ...data,
       selectedProducts
     };
+    
+    // Validate before submitting
+    if (selectedProducts.length === 0) {
+      form.setError("selectedProducts", { 
+        type: "manual", 
+        message: "Please select at least one service" 
+      });
+      return;
+    }
+    
     onSubmit(formDataWithProducts);
   };
 
