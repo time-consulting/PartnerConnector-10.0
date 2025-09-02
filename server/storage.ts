@@ -11,6 +11,7 @@ import {
   type BusinessType,
   type BillUpload,
 } from "@shared/schema";
+import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
 
@@ -37,7 +38,13 @@ export interface IStorage {
   }>;
   
   // Bill upload operations
-  createBillUpload(referralId: string, fileName: string, fileSize: number): Promise<BillUpload>;
+  createBillUpload(referralId: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string): Promise<BillUpload>;
+  getBillUploadById(billId: string): Promise<BillUpload | undefined>;
+  getBillUploadsByReferralId(referralId: string): Promise<BillUpload[]>;
+  
+  // Partner ID operations
+  generatePartnerId(userId: string): Promise<string>;
+  getUserByPartnerId(partnerId: string): Promise<User | undefined>;
   
   // Admin operations
   getAdminStats(): Promise<{
@@ -114,6 +121,40 @@ export class DatabaseStorage implements IStorage {
       .insert(referrals)
       .values(referralData)
       .returning();
+    
+    // Sync with Google Sheets
+    try {
+      const referrer = await this.getUser(referral.referrerId);
+      const businessType = await db.select().from(businessTypes).where(eq(businessTypes.id, referral.businessTypeId));
+      
+      if (referrer && businessType[0]) {
+        const sheetData: ReferralSheetData = {
+          partnerId: referrer.partnerId || 'No Partner ID',
+          partnerName: `${referrer.firstName || ''} ${referrer.lastName || ''}`.trim() || 'Unknown',
+          partnerEmail: referrer.email || '',
+          businessName: referral.businessName,
+          businessEmail: referral.businessEmail,
+          businessPhone: referral.businessPhone || '',
+          businessAddress: referral.businessAddress || '',
+          businessType: businessType[0].name,
+          currentProcessor: referral.currentProcessor || '',
+          monthlyVolume: referral.monthlyVolume || '',
+          currentRate: referral.currentRate || '',
+          selectedProducts: referral.selectedProducts?.join(', ') || '',
+          cardMachineQuantity: referral.cardMachineQuantity || 1,
+          status: referral.status,
+          estimatedCommission: referral.estimatedCommission || '',
+          submittedAt: referral.submittedAt?.toISOString() || new Date().toISOString(),
+          notes: referral.notes || ''
+        };
+        
+        await googleSheetsService.addReferral(sheetData);
+      }
+    } catch (error) {
+      console.error('Failed to sync referral with Google Sheets:', error);
+      // Don't throw - we don't want to fail referral creation if sheets sync fails
+    }
+    
     return referral;
   }
 
@@ -126,10 +167,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateReferralStatus(id: string, status: string): Promise<void> {
-    await db
-      .update(referrals)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(referrals.id, id));
+    // Get referral and user info for Google Sheets update
+    const [referral] = await db.select().from(referrals).where(eq(referrals.id, id));
+    
+    if (referral) {
+      const referrer = await this.getUser(referral.referrerId);
+      
+      // Update in database
+      await db
+        .update(referrals)
+        .set({ status, updatedAt: new Date() })
+        .where(eq(referrals.id, id));
+      
+      // Sync status update with Google Sheets
+      try {
+        if (referrer?.partnerId) {
+          await googleSheetsService.updateReferralStatus(
+            referrer.partnerId,
+            referral.businessName,
+            status
+          );
+        }
+      } catch (error) {
+        console.error('Failed to update referral status in Google Sheets:', error);
+        // Don't throw - we don't want to fail status update if sheets sync fails
+      }
+    }
   }
 
   async getUserStats(userId: string): Promise<{
@@ -170,16 +233,52 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createBillUpload(referralId: string, fileName: string, fileSize: number): Promise<BillUpload> {
+  async createBillUpload(referralId: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string): Promise<BillUpload> {
     const [upload] = await db
       .insert(billUploads)
       .values({
         referralId,
         fileName,
         fileSize,
+        mimeType,
+        fileContent,
       })
       .returning();
     return upload;
+  }
+  
+  async generatePartnerId(userId: string): Promise<string> {
+    // Generate a unique partner ID based on user info and timestamp
+    const user = await this.getUser(userId);
+    if (!user) throw new Error('User not found');
+    
+    // Create a partner ID format: PC-{FIRST_INITIAL}{LAST_INITIAL}-{TIMESTAMP_SUFFIX}
+    const firstInitial = (user.firstName || 'X').charAt(0).toUpperCase();
+    const lastInitial = (user.lastName || 'X').charAt(0).toUpperCase();
+    const timestamp = Date.now().toString().slice(-6); // Last 6 digits
+    const partnerId = `PC-${firstInitial}${lastInitial}-${timestamp}`;
+    
+    // Update user with partner ID
+    await db
+      .update(users)
+      .set({ partnerId, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    
+    return partnerId;
+  }
+  
+  async getUserByPartnerId(partnerId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.partnerId, partnerId));
+    return user;
+  }
+  
+  async getBillUploadById(billId: string): Promise<BillUpload | undefined> {
+    const [bill] = await db.select().from(billUploads).where(eq(billUploads.id, billId));
+    return bill;
+  }
+  
+  async getBillUploadsByReferralId(referralId: string): Promise<BillUpload[]> {
+    return await db.select().from(billUploads).where(eq(billUploads.referralId, referralId));
   }
   
   // Admin operations

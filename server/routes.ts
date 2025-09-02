@@ -48,6 +48,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate partner ID for user
+  app.post('/api/auth/generate-partner-id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.partnerId) {
+        return res.status(400).json({ message: "Partner ID already exists", partnerId: user.partnerId });
+      }
+      
+      if (!user.firstName || !user.lastName) {
+        return res.status(400).json({ message: "First name and last name are required to generate Partner ID" });
+      }
+      
+      const partnerId = await storage.generatePartnerId(userId);
+      res.json({ partnerId, message: "Partner ID generated successfully" });
+    } catch (error) {
+      console.error("Error generating partner ID:", error);
+      res.status(500).json({ message: "Failed to generate partner ID" });
+    }
+  });
+
   // Business types
   app.get('/api/business-types', async (req, res) => {
     try {
@@ -115,16 +141,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
+      // Convert file buffer to base64 for database storage
+      const fileContent = file.buffer.toString('base64');
+
       const billUpload = await storage.createBillUpload(
         referralId,
         file.originalname,
-        file.size
+        file.size,
+        file.mimetype,
+        fileContent
       );
 
       res.json(billUpload);
     } catch (error) {
       console.error("Error uploading bill:", error);
       res.status(500).json({ message: "Failed to upload bill" });
+    }
+  });
+
+  // Download bill file
+  app.get('/api/bills/:billId/download', isAuthenticated, async (req: any, res) => {
+    try {
+      const { billId } = req.params;
+      const bill = await storage.getBillUploadById(billId);
+
+      if (!bill || !bill.fileContent) {
+        return res.status(404).json({ message: "Bill not found" });
+      }
+
+      // Set appropriate headers for file download
+      res.setHeader('Content-Disposition', `attachment; filename="${bill.fileName}"`);
+      res.setHeader('Content-Type', bill.mimeType || 'application/octet-stream');
+      if (bill.fileSize) {
+        res.setHeader('Content-Length', bill.fileSize.toString());
+      }
+
+      // Send the file content (decode from base64)
+      const fileBuffer = Buffer.from(bill.fileContent, 'base64');
+      res.send(fileBuffer);
+    } catch (error) {
+      console.error("Error downloading bill:", error);
+      res.status(500).json({ message: "Failed to download bill" });
+    }
+  });
+
+  // Get bills for a referral
+  app.get('/api/referrals/:id/bills', isAuthenticated, async (req: any, res) => {
+    try {
+      const referralId = req.params.id;
+      const bills = await storage.getBillUploadsByReferralId(referralId);
+      res.json(bills);
+    } catch (error) {
+      console.error("Error fetching bills:", error);
+      res.status(500).json({ message: "Failed to fetch bills" });
     }
   });
 
