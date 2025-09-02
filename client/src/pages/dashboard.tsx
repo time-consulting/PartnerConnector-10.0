@@ -331,15 +331,17 @@ export default function Dashboard() {
                   </Button>
                 </Link>
 
-                <Button variant="outline" className="w-full justify-start text-left h-auto p-4" data-testid="button-track-commissions">
-                  <div className="flex items-center space-x-3">
-                    <ChartBarIcon className="w-5 h-5 text-green-600" />
-                    <div>
-                      <p className="font-semibold">Track Commissions</p>
-                      <p className="text-sm text-muted-foreground">View detailed earnings breakdown</p>
+                <Link href="/track-referrals">
+                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4" data-testid="button-track-commissions">
+                    <div className="flex items-center space-x-3">
+                      <ChartBarIcon className="w-5 h-5 text-green-600" />
+                      <div>
+                        <p className="font-semibold">Track Referrals</p>
+                        <p className="text-sm text-muted-foreground">Monitor progress and commissions</p>
+                      </div>
                     </div>
-                  </div>
-                </Button>
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

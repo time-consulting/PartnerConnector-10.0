@@ -152,7 +152,12 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Submitted:</span>
-                  <span>{referral.submittedAt.toLocaleDateString()}</span>
+                  <span>
+                    {typeof referral.submittedAt === 'string' 
+                      ? new Date(referral.submittedAt).toLocaleDateString() 
+                      : referral.submittedAt?.toLocaleDateString?.() || 'Unknown date'
+                    }
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-muted-foreground" />
