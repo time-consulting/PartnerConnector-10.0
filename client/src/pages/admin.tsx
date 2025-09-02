@@ -401,7 +401,7 @@ export default function AdminPortal() {
                               View
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="max-w-2xl bg-white dark:bg-gray-900">
                             <DialogHeader>
                               <DialogTitle>Referral Details: {referral.businessName}</DialogTitle>
                             </DialogHeader>
@@ -423,7 +423,7 @@ export default function AdminPortal() {
                               Send Quote
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="max-w-2xl bg-white dark:bg-gray-900">
                             <DialogHeader>
                               <DialogTitle>Send Quote - {referral.businessName}</DialogTitle>
                             </DialogHeader>

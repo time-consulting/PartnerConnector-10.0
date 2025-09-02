@@ -56,7 +56,7 @@ export default function UploadBills() {
     }
 
     const formData = new FormData();
-    formData.append('bill', uploadedFile);
+    formData.append('bills', uploadedFile);
 
     try {
       const response = await fetch(`/api/referrals/${selectedReferral}/upload-bill`, {
