@@ -124,7 +124,15 @@ export class DatabaseStorage implements IStorage {
     
     // Sync with Google Sheets
     try {
-      const referrer = await this.getUser(referral.referrerId);
+      let referrer = await this.getUser(referral.referrerId);
+      
+      // Auto-generate partner ID if user doesn't have one
+      if (referrer && !referrer.partnerId && referrer.firstName && referrer.lastName) {
+        console.log('Generating partner ID for user:', referrer.id);
+        await this.generatePartnerId(referrer.id);
+        referrer = await this.getUser(referral.referrerId); // Refresh user data
+      }
+      
       const businessType = await db.select().from(businessTypes).where(eq(businessTypes.id, referral.businessTypeId));
       
       if (referrer && businessType[0]) {
@@ -148,7 +156,9 @@ export class DatabaseStorage implements IStorage {
           notes: referral.notes || ''
         };
         
+        console.log('Syncing referral to Google Sheets for partner:', sheetData.partnerId);
         await googleSheetsService.addReferral(sheetData);
+        console.log('Successfully synced referral to Google Sheets');
       }
     } catch (error) {
       console.error('Failed to sync referral with Google Sheets:', error);

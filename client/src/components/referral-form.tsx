@@ -12,17 +12,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProductSelection from "@/components/product-selection";
 
-const formSchema = insertReferralSchema.extend({
-  gdprConsent: z.boolean().refine(val => val === true, {
-    message: "GDPR consent is required",
-  }),
-  selectedProducts: z.array(z.string()).min(1, {
-    message: "Please select at least one service",
-  }),
-}).partial({
-  // Make these optional for form submission since we handle them separately
-  selectedProducts: true,
-});
+const formSchema = insertReferralSchema
+  .omit({
+    referrerId: true, // This will be set automatically on the backend from authenticated user
+  })
+  .extend({
+    gdprConsent: z.boolean().refine(val => val === true, {
+      message: "GDPR consent is required",
+    }),
+    selectedProducts: z.array(z.string()).min(1, {
+      message: "Please select at least one service",
+    }),
+  });
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -55,36 +56,13 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
   });
 
   const handleSubmit = (data: FormData) => {
-    console.log("Form submit handler called!");
-    console.log("Form data:", data);
-    console.log("Selected products:", selectedProducts);
-    console.log("Selected business type:", selectedBusinessType);
-    console.log("Form errors:", form.formState.errors);
-    
-    // Check if required fields are filled
-    if (!data.businessName || !data.businessEmail || !selectedBusinessType) {
-      console.log("Missing required fields!");
-      return;
-    }
-    
-    if (selectedProducts.length === 0) {
-      console.log("No products selected!");
-      return;
-    }
-    
-    if (!data.gdprConsent) {
-      console.log("GDPR consent not given!");
-      return;
-    }
-    
-    // Ensure selected products are included in the form data
+    // Ensure selected products and business type are included
     const formDataWithProducts = {
       ...data,
       selectedProducts,
       businessTypeId: selectedBusinessType
     };
     
-    console.log("Submitting form with data:", formDataWithProducts);
     onSubmit(formDataWithProducts);
   };
 
@@ -340,11 +318,6 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
         size="lg"
         disabled={isSubmitting}
         data-testid="button-submit-referral-form"
-        onClick={(e) => {
-          console.log("Submit button clicked!");
-          console.log("Form valid:", form.formState.isValid);
-          console.log("Form errors:", form.formState.errors);
-        }}
       >
         {isSubmitting ? "Submitting..." : "Submit Referral"}
       </Button>
