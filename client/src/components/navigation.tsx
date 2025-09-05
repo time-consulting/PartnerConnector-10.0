@@ -81,38 +81,46 @@ export default function Navigation() {
                                 </div>
                               </div>
                             </Link>
-                            <a href="/commission-structure" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                <DollarSignIcon className="w-5 h-5 text-green-600" />
+                            <Link href="/commission-structure">
+                              <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                  <DollarSignIcon className="w-5 h-5 text-green-600" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-900">Commission Structure</h4>
+                                  <p className="text-sm text-gray-600">Understand our multi-tier payment system</p>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">Commission Structure</h4>
-                                <p className="text-sm text-gray-600">Understand our multi-tier payment system</p>
+                            </Link>
+                            <Link href="/lead-tracking">
+                              <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                  <BarChart3Icon className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-900">Lead Tracking</h4>
+                                  <p className="text-sm text-gray-600">Track your referrals from submission to payout</p>
+                                </div>
                               </div>
-                            </a>
-                            <a href="/lead-tracking" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <BarChart3Icon className="w-5 h-5 text-purple-600" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">Lead Tracking</h4>
-                                <p className="text-sm text-gray-600">Track your referrals from submission to payout</p>
-                              </div>
-                            </a>
+                            </Link>
                           </div>
                         </div>
                         
                         <div className="border-t border-gray-200 pt-4">
                           <h3 className="text-sm font-semibold text-gray-900 mb-3">PARTNER TOOLS</h3>
                           <div className="grid grid-cols-2 gap-3">
-                            <a href="/partner-portal" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <TrendingUpIcon className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm text-gray-700">Partner Portal</span>
-                            </a>
-                            <a href="/team-management" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <UsersIcon className="w-4 h-4 text-green-600" />
-                              <span className="text-sm text-gray-700">Team Management</span>
-                            </a>
+                            <Link href="/partner-portal">
+                              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                                <TrendingUpIcon className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm text-gray-700">Partner Portal</span>
+                              </div>
+                            </Link>
+                            <Link href="/team-management">
+                              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                                <UsersIcon className="w-4 h-4 text-green-600" />
+                                <span className="text-sm text-gray-700">Team Management</span>
+                              </div>
+                            </Link>
                           </div>
                         </div>
                       </div>
@@ -137,15 +145,17 @@ export default function Navigation() {
                         <div className="mb-4">
                           <h3 className="text-sm font-semibold text-gray-900 mb-2">PLATFORM FEATURES</h3>
                           <div className="space-y-3">
-                            <a href="/partner-recruitment" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <TargetIcon className="w-5 h-5 text-blue-600" />
+                            <Link href="/partner-recruitment">
+                              <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                  <TargetIcon className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-900">Partner Recruitment</h4>
+                                  <p className="text-sm text-gray-600">Find and onboard high-quality partners</p>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">Partner Recruitment</h4>
-                                <p className="text-sm text-gray-600">Find and onboard high-quality partners</p>
-                              </div>
-                            </a>
+                            </Link>
                             <a href="/program-management" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                                 <ShieldCheckIcon className="w-5 h-5 text-green-600" />
