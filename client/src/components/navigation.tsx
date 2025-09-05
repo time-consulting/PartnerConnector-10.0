@@ -15,7 +15,8 @@ import {
   PlayCircleIcon,
   NetworkIcon,
   TargetIcon,
-  GraduationCapIcon
+  GraduationCapIcon,
+  HelpCircleIcon
 } from "lucide-react";
 
 export default function Navigation() {
@@ -308,6 +309,18 @@ export default function Navigation() {
           </div>
           
           <div className="flex items-center space-x-4">
+            {/* Help Icon */}
+            <Link href="/help-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-600 hover:text-blue-600 p-2"
+                data-testid="button-help"
+              >
+                <HelpCircleIcon className="w-5 h-5" />
+              </Button>
+            </Link>
+            
             {isAuthenticated ? (
               <>
                 <span className="text-sm text-gray-600" data-testid="text-user-greeting">

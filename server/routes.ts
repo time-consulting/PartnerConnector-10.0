@@ -27,6 +27,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect('/');
   });
 
+  // GHL Webhook for team member invites
+  app.post('/api/webhooks/ghl/team-invite', async (req: any, res) => {
+    try {
+      const { email, role, invitedBy, teamName } = req.body;
+      
+      // Log the webhook data for debugging
+      console.log('GHL Team Invite Webhook received:', {
+        email,
+        role,
+        invitedBy,
+        teamName,
+        timestamp: new Date().toISOString()
+      });
+
+      // Here you would typically:
+      // 1. Validate the webhook signature from GHL
+      // 2. Process the team invitation
+      // 3. Send email via GHL API
+      // 4. Store invitation in database if needed
+
+      // Mock GHL API call structure (you would implement with actual GHL credentials)
+      const webhookData = {
+        contact: {
+          email: email,
+          firstName: email.split('@')[0],
+          customFields: {
+            invitedBy: invitedBy,
+            role: role,
+            teamName: teamName || 'PartnerConnector Team',
+            inviteType: 'team_member',
+            inviteDate: new Date().toISOString()
+          }
+        },
+        trigger: 'team_invitation_email'
+      };
+
+      // Return success response to acknowledge webhook
+      res.json({ 
+        success: true, 
+        message: 'Team invitation webhook processed',
+        data: webhookData
+      });
+    } catch (error) {
+      console.error('GHL webhook error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to process team invitation webhook' 
+      });
+    }
+  });
+
   // Auth routes
   app.get('/api/auth/user', async (req: any, res) => {
     // Mock user for development - remove this when auth is working

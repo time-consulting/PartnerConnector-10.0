@@ -23,7 +23,11 @@ import {
   PoundSterlingIcon,
   HandshakeIcon,
   TrendingUpIcon,
-  CalendarIcon
+  CalendarIcon,
+  NetworkIcon,
+  UserPlusIcon,
+  DollarSignIcon,
+  UsersIcon
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -300,6 +304,55 @@ export default function Dashboard() {
 
           {/* Referral Progress Tracker */}
           <ReferralProgress />
+
+          {/* Network Building Section */}
+          <Card className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-100 border-0">
+            <CardContent className="p-8">
+              <div className="flex flex-col lg:flex-row items-center justify-between">
+                <div className="lg:w-2/3 mb-6 lg:mb-0">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
+                      <NetworkIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">Expand Your Referral Network</h3>
+                      <p className="text-blue-700 font-medium">Multiply your earning potential</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 text-lg mb-4">
+                    Build a powerful referral network by inviting team members and enabling your customers to refer business. 
+                    Each additional referrer increases your total commission potential.
+                  </p>
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    <div className="flex items-center bg-white/70 rounded-lg px-4 py-2">
+                      <UserPlusIcon className="w-5 h-5 text-blue-600 mr-2" />
+                      <span className="text-sm font-medium text-gray-700">Team Invitations</span>
+                    </div>
+                    <div className="flex items-center bg-white/70 rounded-lg px-4 py-2">
+                      <TrendingUpIcon className="w-5 h-5 text-green-600 mr-2" />
+                      <span className="text-sm font-medium text-gray-700">Customer Referrals</span>
+                    </div>
+                    <div className="flex items-center bg-white/70 rounded-lg px-4 py-2">
+                      <DollarSignIcon className="w-5 h-5 text-purple-600 mr-2" />
+                      <span className="text-sm font-medium text-gray-700">Bonus Commissions</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="lg:w-1/3 text-center">
+                  <Link href="/team-management">
+                    <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg" data-testid="button-build-network">
+                      <UsersIcon className="w-5 h-5 mr-2" />
+                      Start Building Network
+                    </Button>
+                  </Link>
+                  <p className="text-sm text-gray-600 mt-3">
+                    Enable customer referrals and invite team members to maximize your earning potential
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Quick Actions */}
           <Card className="card-hover shadow-lg border-0 bg-white/80 backdrop-blur-sm" data-testid="card-quick-actions">

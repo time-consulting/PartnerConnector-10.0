@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
+import CommissionCalculator from "@/components/commission-calculator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PlayCircleIcon, ClockIcon, TrendingUpIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PlayCircleIcon, ClockIcon, TrendingUpIcon, CalculatorIcon } from "lucide-react";
 
 export default function LearningPortal() {
   const { toast } = useToast();
@@ -65,12 +67,12 @@ export default function LearningPortal() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navigation />
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4" data-testid="text-portal-title">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4" data-testid="text-portal-title">
             Learning Portal
           </h1>
           <p className="text-xl text-muted-foreground">
@@ -141,36 +143,38 @@ export default function LearningPortal() {
         </div>
 
         {/* Commission Calculator */}
-        <Card className="mt-12">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">Commission Calculator</CardTitle>
-            <p className="text-muted-foreground text-center">
-              Estimate your potential earnings based on business volume
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-8 text-white text-center">
-              <h3 className="text-2xl font-bold mb-4">Interactive Calculator Coming Soon</h3>
-              <p className="text-blue-100 mb-6">
-                Calculate exact commission amounts based on business type, monthly volume, and processing rates
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-3xl font-bold">£150+</p>
-                  <p className="text-blue-200">Small Traders</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold">£500+</p>
-                  <p className="text-blue-200">Restaurants</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold">£1K-£20K</p>
-                  <p className="text-blue-200">Large Groups</p>
-                </div>
-              </div>
+        <div className="mt-16">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
+              <CalculatorIcon className="w-8 h-8 text-white" />
             </div>
-          </CardContent>
-        </Card>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Interactive Commission Calculator
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Practice calculating commissions with our interactive tools
+            </p>
+          </div>
+
+          <Tabs defaultValue="payment" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="payment" className="text-lg py-3">
+                Payment Processing
+              </TabsTrigger>
+              <TabsTrigger value="funding" className="text-lg py-3">
+                Business Funding
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="payment">
+              <CommissionCalculator type="payment" />
+            </TabsContent>
+            
+            <TabsContent value="funding">
+              <CommissionCalculator type="funding" />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
