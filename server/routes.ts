@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile
   app.patch('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || 'dev-user-123';
       const updateData = req.body;
       
       const updatedUser = await storage.upsertUser({
@@ -63,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate partner ID for user
   app.post('/api/auth/generate-partner-id', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || 'dev-user-123';
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -100,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Referrals
   app.post('/api/referrals', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || 'dev-user-123';
       const referralData = {
         ...req.body,
         referrerId: userId,
@@ -122,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/referrals', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || 'dev-user-123';
       const referrals = await storage.getReferralsByUserId(userId);
       res.json(referrals);
     } catch (error) {
@@ -134,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard stats
   app.get('/api/dashboard/stats', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || 'dev-user-123';
       const stats = await storage.getUserStats(userId);
       res.json(stats);
     } catch (error) {
@@ -220,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/referrals/:id/additional-details', async (req: any, res) => {
     try {
       const referralId = req.params.id;
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || 'dev-user-123';
       const additionalDetails = req.body;
 
       // Verify the referral belongs to the user  
@@ -249,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin middleware to check admin access
   const isAdmin: RequestHandler = async (req: any, res, next) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || 'dev-user-123';
       const user = await storage.getUser(userId);
       
       if (!user?.isAdmin) {

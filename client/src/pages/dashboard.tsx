@@ -111,8 +111,8 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex items-center justify-between p-4 border-b">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <div className="flex items-center justify-between p-4 border-b bg-white/80 backdrop-blur-sm">
         <Navigation />
         <NotificationCenter onQuoteClick={handleQuoteClick} />
       </div>
