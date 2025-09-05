@@ -7,9 +7,11 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import ReferralForm from "@/components/referral-form";
 import BillUpload from "@/components/bill-upload";
+import CommissionCalculator from "@/components/commission-calculator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircleIcon, ArrowRightIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircleIcon, ArrowRightIcon, CalculatorIcon } from "lucide-react";
 
 export default function SubmitReferral() {
   const { toast } = useToast();
@@ -207,24 +209,60 @@ export default function SubmitReferral() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <Card className="text-center p-4 border-0 bg-white/60 backdrop-blur-sm">
                 <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-blue-600">7.5%</div>
-                  <div className="text-sm text-gray-600">Partner Commission</div>
+                  <div className="text-2xl font-bold text-blue-600">60%</div>
+                  <div className="text-sm text-gray-600">Level 1 Commission</div>
                 </CardContent>
               </Card>
               <Card className="text-center p-4 border-0 bg-white/60 backdrop-blur-sm">
                 <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-green-600">5%</div>
-                  <div className="text-sm text-gray-600">Customer Commission</div>
+                  <div className="text-2xl font-bold text-green-600">25%</div>
+                  <div className="text-sm text-gray-600">Level 2 Network</div>
                 </CardContent>
               </Card>
               <Card className="text-center p-4 border-0 bg-white/60 backdrop-blur-sm">
                 <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-purple-600">12.5%</div>
-                  <div className="text-sm text-gray-600">Total Value</div>
+                  <div className="text-2xl font-bold text-purple-600">15%</div>
+                  <div className="text-sm text-gray-600">Level 3 Extended</div>
                 </CardContent>
               </Card>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Commission Calculator Section */}
+      <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
+              <CalculatorIcon className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Commission Calculator
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              See your earning potential with our interactive calculators
+            </p>
+          </div>
+
+          <Tabs defaultValue="payment" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="payment" className="text-lg py-3">
+                Payment Processing
+              </TabsTrigger>
+              <TabsTrigger value="funding" className="text-lg py-3">
+                Business Funding
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="payment">
+              <CommissionCalculator type="payment" />
+            </TabsContent>
+            
+            <TabsContent value="funding">
+              <CommissionCalculator type="funding" />
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 
