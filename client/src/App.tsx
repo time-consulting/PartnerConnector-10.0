@@ -12,6 +12,13 @@ import UploadBills from "@/pages/upload-bills";
 import AdminPortal from "@/pages/admin";
 import TrackReferrals from "@/pages/track-referrals";
 import TeamManagement from "@/pages/team-management";
+import PartnerOnboarding from "@/pages/partner-onboarding";
+import CommissionStructure from "@/pages/commission-structure";
+import LeadTracking from "@/pages/lead-tracking";
+import PartnerPortal from "@/pages/partner-portal";
+import About from "@/pages/about";
+import HelpCenter from "@/pages/help-center";
+import PartnerRecruitment from "@/pages/partner-recruitment";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +26,16 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes available to everyone */}
+      <Route path="/partner-onboarding" component={PartnerOnboarding} />
+      <Route path="/commission-structure" component={CommissionStructure} />
+      <Route path="/lead-tracking" component={LeadTracking} />
+      <Route path="/partner-portal" component={PartnerPortal} />
+      <Route path="/about" component={About} />
+      <Route path="/help-center" component={HelpCenter} />
+      <Route path="/partner-recruitment" component={PartnerRecruitment} />
+      
+      {/* Protected routes for authenticated users */}
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (

@@ -70,15 +70,17 @@ export default function Navigation() {
                         <div className="mb-4">
                           <h3 className="text-sm font-semibold text-gray-900 mb-2">GET STARTED</h3>
                           <div className="space-y-3">
-                            <a href="/partner-onboarding" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <UsersIcon className="w-5 h-5 text-blue-600" />
+                            <Link href="/partner-onboarding">
+                              <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                  <UsersIcon className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-900">Partner Onboarding</h4>
+                                  <p className="text-sm text-gray-600">Learn how to get started and maximize earnings</p>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">Partner Onboarding</h4>
-                                <p className="text-sm text-gray-600">Learn how to get started and maximize earnings</p>
-                              </div>
-                            </a>
+                            </Link>
                             <a href="/commission-structure" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                                 <DollarSignIcon className="w-5 h-5 text-green-600" />

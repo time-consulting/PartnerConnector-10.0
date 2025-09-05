@@ -39,14 +39,14 @@ export default function Landing() {
               </Badge>
               
               <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-                Drive growth with{" "}
+                Empower growth through{" "}
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  B2B partnerships
+                  strategic partnerships
                 </span>
               </h1>
               
               <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-lg">
-                Scale partner revenue through high-performing co-sell, affiliate, influencer and customer referrals on the only PRM with a network of partners
+                Unlock revenue opportunities by connecting clients with partners. Turn your professional network into a thriving income stream through our partnership ecosystem.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
