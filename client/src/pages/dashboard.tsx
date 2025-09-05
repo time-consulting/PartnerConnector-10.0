@@ -118,30 +118,39 @@ export default function Dashboard() {
       </div>
       
       {/* Dashboard Header */}
-      <div className="bg-primary text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="hero-gradient relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold" data-testid="text-welcome">
+            <div className="animate-fadeIn">
+              <h1 className="text-4xl font-bold text-white drop-shadow-lg" data-testid="text-welcome">
                 Welcome back, {(user as any)?.firstName || 'Professional'}
               </h1>
-              <p className="text-blue-200 mt-1">Ready to earn more commissions today?</p>
+              <p className="text-white/90 mt-2 text-lg">Ready to earn more commissions today?</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-blue-200 text-sm" data-testid="text-last-login">
-                Last login: Today, {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-              <div className="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center">
-                {(user as any)?.profileImageUrl ? (
-                  <img 
-                    src={(user as any).profileImageUrl} 
-                    alt="Profile" 
-                    className="w-full h-full rounded-full object-cover"
-                    data-testid="img-profile"
-                  />
-                ) : (
-                  <i className="fas fa-user text-white" data-testid="icon-default-profile"></i>
-                )}
+            <div className="flex items-center space-x-6 animate-fadeIn">
+              <div className="text-right">
+                <span className="text-white/80 text-sm block" data-testid="text-last-login">
+                  Last login: Today
+                </span>
+                <span className="text-white font-medium">
+                  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              <div className="relative">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border-2 border-white/30 shadow-lg">
+                  {(user as any)?.profileImageUrl ? (
+                    <img 
+                      src={(user as any).profileImageUrl} 
+                      alt="Profile" 
+                      className="w-full h-full rounded-full object-cover"
+                      data-testid="img-profile"
+                    />
+                  ) : (
+                    <i className="fas fa-user text-white text-lg" data-testid="icon-default-profile"></i>
+                  )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
               </div>
             </div>
           </div>
@@ -149,9 +158,10 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="py-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="py-12 stats-gradient relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <StatsCard
               title="Total Commissions"
               value={statsLoading ? "..." : `£${(stats as any)?.totalCommissions?.toLocaleString() || "0"}`}
@@ -200,7 +210,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Dashboard Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gradient-to-b from-white to-slate-50">
         {/* Personalized Recommendations and Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <Recommendations 
@@ -217,9 +227,12 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Referrals */}
-          <Card data-testid="card-recent-referrals">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold">Recent Referrals</CardTitle>
+          <Card className="card-hover shadow-lg border-0 bg-white/80 backdrop-blur-sm" data-testid="card-recent-referrals">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                Recent Referrals
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {referralsLoading ? (
@@ -247,12 +260,12 @@ export default function Dashboard() {
                   {(referrals as any[]).slice(0, 5).map((referral: any) => (
                     <div 
                       key={referral.id} 
-                      className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted/80 cursor-pointer transition-colors" 
+                      className="flex items-center justify-between p-4 bg-white/60 rounded-xl hover:bg-white/80 cursor-pointer transition-all duration-300 border border-gray-100 hover:border-primary/20 hover:shadow-md" 
                       data-testid={`referral-${referral.id}`}
                       onClick={() => handleReferralClick(referral)}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
                           <i className="fas fa-store text-primary-foreground text-sm"></i>
                         </div>
                         <div>
@@ -289,14 +302,17 @@ export default function Dashboard() {
           <ReferralProgress />
 
           {/* Quick Actions */}
-          <Card data-testid="card-quick-actions">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
+          <Card className="card-hover shadow-lg border-0 bg-white/80 backdrop-blur-sm" data-testid="card-quick-actions">
+            <CardHeader className="bg-gradient-to-r from-secondary/10 to-transparent">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <div className="w-2 h-2 bg-secondary rounded-full"></div>
+                Quick Actions
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <Link href="/submit-referral">
-                  <Button className="w-full justify-start text-left h-auto p-4" data-testid="button-submit-referral">
+                  <Button className="w-full justify-start text-left h-auto p-4 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300" data-testid="button-submit-referral">
                     <div className="flex items-center space-x-3">
                       <PlusIcon className="w-5 h-5" />
                       <div>
@@ -308,7 +324,7 @@ export default function Dashboard() {
                 </Link>
 
                 <Link href="/upload-bills">
-                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4" data-testid="button-upload-bills">
+                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300" data-testid="button-upload-bills">
                     <div className="flex items-center space-x-3">
                       <UploadIcon className="w-5 h-5 text-primary" />
                       <div>
@@ -320,7 +336,7 @@ export default function Dashboard() {
                 </Link>
 
                 <Link href="/learning-portal">
-                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4" data-testid="button-learning-portal">
+                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300" data-testid="button-learning-portal">
                     <div className="flex items-center space-x-3">
                       <GraduationCapIcon className="w-5 h-5 text-accent" />
                       <div>
@@ -332,7 +348,7 @@ export default function Dashboard() {
                 </Link>
 
                 <Link href="/track-referrals">
-                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4" data-testid="button-track-commissions">
+                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300" data-testid="button-track-commissions">
                     <div className="flex items-center space-x-3">
                       <ChartBarIcon className="w-5 h-5 text-green-600" />
                       <div>

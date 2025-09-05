@@ -15,7 +15,8 @@ import {
   PlusCircleIcon,
   BarChart3Icon,
   UsersIcon,
-  XIcon
+  XIcon,
+  ClockIcon
 } from "lucide-react";
 
 interface Recommendation {
@@ -245,7 +246,10 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
       typeCount[type] = (typeCount[type] || 0) + 1;
     });
 
-    const mostCommonType = Object.entries(typeCount).reduce((a, b) => typeCount[a[0]] > typeCount[b[0]] ? a : b)?.[0];
+    const entries = Object.entries(typeCount);
+    if (entries.length === 0) return null;
+    
+    const mostCommonType = entries.reduce((a, b) => typeCount[a[0]] > typeCount[b[0]] ? a : b)?.[0];
     
     if (mostCommonType && typeCount[mostCommonType] >= 2) {
       return {
@@ -333,12 +337,14 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="card-hover shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+      <CardHeader className="bg-gradient-to-r from-yellow-50 to-transparent">
         <CardTitle className="flex items-center gap-2">
-          <LightbulbIcon className="w-5 h-5" />
+          <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
+            <LightbulbIcon className="w-4 h-4 text-white" />
+          </div>
           Personalized Recommendations
-          <Badge variant="outline">{recommendations.length}</Badge>
+          <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700">{recommendations.length}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -349,12 +355,12 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
           return (
             <div
               key={rec.id}
-              className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+              className="flex items-start gap-3 p-4 rounded-xl border-0 bg-white/60 hover:bg-white/80 transition-all duration-300 shadow-sm hover:shadow-md"
               data-testid={`recommendation-${rec.id}`}
             >
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Icon className="w-4 h-4 text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20">
+                  <Icon className="w-5 h-5 text-primary" />
                 </div>
               </div>
               
@@ -362,8 +368,8 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-sm">{rec.title}</h4>
-                      <Badge variant={getPriorityColor(rec.priority)} className="text-xs">
+                      <h4 className="font-semibold text-sm">{rec.title}</h4>
+                      <Badge variant={getPriorityColor(rec.priority)} className="text-xs px-2 py-1 rounded-full">
                         {rec.priority}
                       </Badge>
                     </div>
@@ -398,7 +404,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
                   <Button
                     size="sm"
                     onClick={() => handleAction(rec)}
-                    className="mt-2"
+                    className="mt-3 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-300"
                     data-testid={`button-action-${rec.id}`}
                   >
                     {rec.action}

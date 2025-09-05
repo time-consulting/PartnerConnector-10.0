@@ -149,7 +149,7 @@ export default function SmartInsights({ userStats, userReferrals, isLoading }: S
     return { streak, avgPerWeek: userReferrals.length / Math.max(1, streak / 7) };
   };
 
-  const identifyBestPerformingBusinessType = () => {
+  const identifyBestPerformingBusinessType = (): { name: string; rate: number } | null => {
     if (!userReferrals.length) return null;
     
     const typePerformance: { [key: string]: { total: number; successful: number } } = {};
@@ -252,12 +252,14 @@ export default function SmartInsights({ userStats, userReferrals, isLoading }: S
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="card-hover shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-transparent">
         <CardTitle className="flex items-center gap-2">
-          <TrendingUpIcon className="w-5 h-5" />
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <TrendingUpIcon className="w-4 h-4 text-white" />
+          </div>
           Smart Insights
-          <Badge variant="outline">{insights.length}</Badge>
+          <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">{insights.length}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -267,12 +269,12 @@ export default function SmartInsights({ userStats, userReferrals, isLoading }: S
           return (
             <div
               key={insight.id}
-              className="flex items-start gap-3 p-3 rounded-lg border bg-card"
+              className="flex items-start gap-3 p-4 rounded-xl border-0 bg-white/60 hover:bg-white/80 transition-all duration-300 shadow-sm"
               data-testid={`insight-${insight.id}`}
             >
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                  <Icon className={`w-4 h-4 ${insight.color}`} />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center border border-gray-200">
+                  <Icon className={`w-5 h-5 ${insight.color}`} />
                 </div>
               </div>
               
