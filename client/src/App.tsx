@@ -11,6 +11,7 @@ import LearningPortal from "@/pages/learning-portal";
 import UploadBills from "@/pages/upload-bills";
 import AdminPortal from "@/pages/admin";
 import TrackReferrals from "@/pages/track-referrals";
+import TeamManagement from "@/pages/team-management";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
           <Route path="/learning-portal" component={LearningPortal} />
           <Route path="/upload-bills" component={UploadBills} />
           <Route path="/track-referrals" component={TrackReferrals} />
+          <Route path="/team-management" component={TeamManagement} />
           <Route path="/admin" component={AdminPortal} />
         </>
       )}

@@ -46,8 +46,17 @@ export const users = pgTable("users", {
   companyNumber: varchar("company_number"),
   vatNumber: varchar("vat_number"),
   businessAddress: text("business_address"),
-  // Partner tracking
+  // Partner tracking and MLM structure
   partnerId: varchar("partner_id").unique(),
+  parentPartnerId: varchar("parent_partner_id"), // For MLM structure
+  referralCode: varchar("referral_code").unique(),
+  partnerLevel: integer("partner_level").default(1), // 1, 2, 3 for commission tiers
+  // Team management
+  teamRole: varchar("team_role").default("member"), // owner, admin, manager, member
+  teamId: varchar("team_id"),
+  canSubmitReferrals: boolean("can_submit_referrals").default(true),
+  canViewCommissions: boolean("can_view_commissions").default(true),
+  canManageTeam: boolean("can_manage_team").default(false),
   // Admin access
   isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
@@ -114,14 +123,51 @@ export const billUploads = pgTable("bill_uploads", {
   uploadedAt: timestamp("uploaded_at").defaultNow(),
 });
 
+// Teams table for multi-user account management
+export const teams = pgTable("teams", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  ownerId: varchar("owner_id").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Multi-level commission tracking
 export const commissionPayments = pgTable("commission_payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   referralId: varchar("referral_id").notNull(),
+  recipientId: varchar("recipient_id").notNull(), // User receiving commission
+  level: integer("level").notNull(), // 1 = direct, 2 = level 2, 3 = level 3
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  percentage: decimal("percentage", { precision: 5, scale: 4 }).notNull(),
   paymentDate: timestamp("payment_date"),
   status: varchar("status").notNull().default("pending"), // pending, processing, paid, failed
   transferReference: varchar("transfer_reference"),
   notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Partner hierarchy for MLM tracking
+export const partnerHierarchy = pgTable("partner_hierarchy", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  childId: varchar("child_id").notNull(),
+  parentId: varchar("parent_id").notNull(),
+  level: integer("level").notNull(), // How many levels down
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Team invitations
+export const teamInvitations = pgTable("team_invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  teamId: varchar("team_id").notNull(),
+  email: varchar("email").notNull(),
+  role: varchar("role").notNull().default("member"),
+  invitedBy: varchar("invited_by").notNull(),
+  status: varchar("status").notNull().default("pending"), // pending, accepted, declined, expired
+  token: varchar("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -158,8 +204,51 @@ export const businessDetails = pgTable("business_details", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   referrals: many(referrals),
+  team: one(teams, {
+    fields: [users.teamId],
+    references: [teams.id],
+  }),
+  ownedTeams: many(teams),
+  parentPartner: one(users, {
+    fields: [users.parentPartnerId],
+    references: [users.id],
+  }),
+  childPartners: many(users),
+  sentInvitations: many(teamInvitations),
+  commissionPayments: many(commissionPayments),
+}));
+
+export const teamsRelations = relations(teams, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [teams.ownerId],
+    references: [users.id],
+  }),
+  members: many(users),
+  invitations: many(teamInvitations),
+}));
+
+export const teamInvitationsRelations = relations(teamInvitations, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamInvitations.teamId],
+    references: [teams.id],
+  }),
+  inviter: one(users, {
+    fields: [teamInvitations.invitedBy],
+    references: [users.id],
+  }),
+}));
+
+export const partnerHierarchyRelations = relations(partnerHierarchy, ({ one }) => ({
+  child: one(users, {
+    fields: [partnerHierarchy.childId],
+    references: [users.id],
+  }),
+  parent: one(users, {
+    fields: [partnerHierarchy.parentId],
+    references: [users.id],
+  }),
 }));
 
 export const referralsRelations = relations(referrals, ({ one, many }) => ({
@@ -194,6 +283,10 @@ export const commissionPaymentsRelations = relations(commissionPayments, ({ one 
   referral: one(referrals, {
     fields: [commissionPayments.referralId],
     references: [referrals.id],
+  }),
+  recipient: one(users, {
+    fields: [commissionPayments.recipientId],
+    references: [users.id],
   }),
 }));
 
@@ -246,6 +339,17 @@ export const insertBusinessDetailsSchema = createInsertSchema(businessDetails).o
   createdAt: true,
 });
 
+export const insertTeamSchema = createInsertSchema(teams).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTeamInvitationSchema = createInsertSchema(teamInvitations).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -261,3 +365,8 @@ export type BusinessDetails = typeof businessDetails.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertBusinessOwner = z.infer<typeof insertBusinessOwnerSchema>;
 export type InsertBusinessDetails = z.infer<typeof insertBusinessDetailsSchema>;
+export type Team = typeof teams.$inferSelect;
+export type TeamInvitation = typeof teamInvitations.$inferSelect;
+export type PartnerHierarchy = typeof partnerHierarchy.$inferSelect;
+export type InsertTeam = z.infer<typeof insertTeamSchema>;
+export type InsertTeamInvitation = z.infer<typeof insertTeamInvitationSchema>;
