@@ -10,6 +10,10 @@ import BillUpload from "@/components/bill-upload";
 import CommissionCalculator from "@/components/commission-calculator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircleIcon, ArrowRightIcon, CalculatorIcon } from "lucide-react";
 
@@ -18,6 +22,15 @@ export default function SubmitReferral() {
   const { isAuthenticated, isLoading } = useAuth();
   const [submittedReferralId, setSubmittedReferralId] = useState<string | null>(null);
   const [showBillUpload, setShowBillUpload] = useState(false);
+  const [showMissingInfoDialog, setShowMissingInfoDialog] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [missingInfo, setMissingInfo] = useState({
+    businessAddress: "",
+    businessTypeId: "",
+    currentProcessor: "",
+    currentRate: "",
+    selectedProducts: [] as string[]
+  });
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -78,6 +91,36 @@ export default function SubmitReferral() {
       });
     },
   });
+
+  const handleMissingInfoSubmit = () => {
+    if (!selectedLead) return;
+    
+    const referralData = {
+      businessName: selectedLead.businessName,
+      businessEmail: selectedLead.contactEmail || "",
+      businessPhone: selectedLead.contactPhone || "",
+      businessAddress: missingInfo.businessAddress,
+      businessTypeId: missingInfo.businessTypeId,
+      currentProcessor: missingInfo.currentProcessor,
+      monthlyVolume: selectedLead.estimatedMonthlyVolume || "",
+      currentRate: missingInfo.currentRate,
+      cardMachineQuantity: 1,
+      selectedProducts: missingInfo.selectedProducts,
+      notes: selectedLead.notes || "",
+      gdprConsent: true,
+    };
+    
+    submitReferralMutation.mutate(referralData);
+    setShowMissingInfoDialog(false);
+    setSelectedLead(null);
+    setMissingInfo({
+      businessAddress: "",
+      businessTypeId: "",
+      currentProcessor: "",
+      currentRate: "",
+      selectedProducts: []
+    });
+  };
 
   if (isLoading || !isAuthenticated) {
     return <div>Loading...</div>;
@@ -309,21 +352,8 @@ export default function SubmitReferral() {
                             key={lead.id}
                             className="border rounded-lg p-4 hover:border-blue-300 cursor-pointer transition-colors"
                             onClick={() => {
-                              const referralData = {
-                                businessName: lead.businessName,
-                                businessEmail: lead.contactEmail || "",
-                                businessPhone: lead.contactPhone || "",
-                                businessAddress: "",
-                                businessTypeId: "",
-                                currentProcessor: "",
-                                monthlyVolume: lead.estimatedMonthlyVolume || "",
-                                currentRate: "",
-                                cardMachineQuantity: 1,
-                                selectedProducts: [],
-                                notes: lead.notes || "",
-                                gdprConsent: true,
-                              };
-                              submitReferralMutation.mutate(referralData);
+                              setSelectedLead(lead);
+                              setShowMissingInfoDialog(true);
                             }}
                             data-testid={`button-select-lead-${lead.id}`}
                           >
@@ -376,6 +406,97 @@ export default function SubmitReferral() {
           </Card>
         </div>
       </section>
+
+      {/* Missing Information Dialog */}
+      <Dialog open={showMissingInfoDialog} onOpenChange={setShowMissingInfoDialog}>
+        <DialogContent className="bg-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Complete Referral Information</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800">
+                Selected Lead: <strong>{selectedLead?.businessName}</strong>
+              </p>
+              <p className="text-sm text-blue-600">
+                Please provide the missing information to submit this referral.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="businessAddress">Business Address *</Label>
+                <Input
+                  id="businessAddress"
+                  value={missingInfo.businessAddress}
+                  onChange={(e) => setMissingInfo({...missingInfo, businessAddress: e.target.value})}
+                  placeholder="Enter full business address"
+                  data-testid="input-business-address"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="businessType">Business Type *</Label>
+                <Select 
+                  value={missingInfo.businessTypeId} 
+                  onValueChange={(value) => setMissingInfo({...missingInfo, businessTypeId: value})}
+                >
+                  <SelectTrigger data-testid="select-business-type">
+                    <SelectValue placeholder="Select business type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    {businessTypes && (businessTypes as any[]).map((type: any) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="currentProcessor">Current Payment Processor</Label>
+                <Input
+                  id="currentProcessor"
+                  value={missingInfo.currentProcessor}
+                  onChange={(e) => setMissingInfo({...missingInfo, currentProcessor: e.target.value})}
+                  placeholder="e.g., Stripe, Square, Worldpay"
+                  data-testid="input-current-processor"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="currentRate">Current Processing Rate (%)</Label>
+                <Input
+                  id="currentRate"
+                  value={missingInfo.currentRate}
+                  onChange={(e) => setMissingInfo({...missingInfo, currentRate: e.target.value})}
+                  placeholder="e.g., 1.4"
+                  data-testid="input-current-rate"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button 
+                onClick={handleMissingInfoSubmit}
+                disabled={!missingInfo.businessAddress || !missingInfo.businessTypeId || submitReferralMutation.isPending}
+                className="flex-1"
+                data-testid="button-submit-referral"
+              >
+                {submitReferralMutation.isPending ? "Submitting..." : "Submit Referral"}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowMissingInfoDialog(false)}
+                data-testid="button-cancel"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
