@@ -14,6 +14,7 @@ import {
 import OnboardingWizard from "@/components/onboarding-wizard";
 import TrainingModules from "@/components/training-modules";
 import KnowledgeBase from "@/components/knowledge-base";
+import DownloadableResources from "@/components/downloadable-resources";
 
 export default function Training() {
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -123,7 +124,7 @@ export default function Training() {
           <CardContent className="p-0">
             <Tabs defaultValue="modules" className="w-full">
               <div className="border-b px-6 pt-6">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="modules" className="flex items-center gap-2">
                     <PlayCircleIcon className="w-4 h-4" />
                     Training Modules
@@ -131,6 +132,10 @@ export default function Training() {
                   <TabsTrigger value="certifications" className="flex items-center gap-2">
                     <TrophyIcon className="w-4 h-4" />
                     Certifications
+                  </TabsTrigger>
+                  <TabsTrigger value="resources" className="flex items-center gap-2">
+                    <BookOpenIcon className="w-4 h-4" />
+                    Resources
                   </TabsTrigger>
                   <TabsTrigger value="knowledge" className="flex items-center gap-2">
                     <HelpCircleIcon className="w-4 h-4" />
@@ -218,6 +223,10 @@ export default function Training() {
                     </Card>
                   </div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="resources" className="p-6">
+                <DownloadableResources />
               </TabsContent>
 
               <TabsContent value="knowledge" className="p-6">
