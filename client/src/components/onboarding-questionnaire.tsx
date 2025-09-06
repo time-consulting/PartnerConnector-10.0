@@ -84,8 +84,14 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
 
   const steps = [
     {
+      id: 'welcome',
+      title: 'Welcome to PartnerConnector',
+      icon: <StarIcon className="w-6 h-6" />,
+      description: 'Empower your clients while building your income'
+    },
+    {
       id: 'personal',
-      title: 'Personal Information',
+      title: 'Your Details',
       icon: <UserIcon className="w-6 h-6" />,
       description: 'Let us get to know you better'
     },
@@ -109,8 +115,8 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
     },
     {
       id: 'additional',
-      title: 'Additional Details',
-      icon: <StarIcon className="w-6 h-6" />,
+      title: 'Final Details',
+      icon: <CheckCircleIcon className="w-6 h-6" />,
       description: 'Final questions to personalize your experience'
     }
   ];
@@ -136,7 +142,9 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
 
   const validateCurrentStep = () => {
     switch (currentStep) {
-      case 0: // Personal Information
+      case 0: // Welcome step - no validation needed
+        return true;
+      case 1: // Personal Information
         if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
           toast({
             title: "Required Fields Missing",
@@ -154,7 +162,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
           return false;
         }
         break;
-      case 1: // Professional Background
+      case 2: // Professional Background
         if (!formData.profession || !formData.experience) {
           toast({
             title: "Required Fields Missing",
@@ -164,7 +172,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
           return false;
         }
         break;
-      case 2: // Network & Relationships
+      case 3: // Network & Relationships
         if (!formData.networkSize || !formData.referralExperience) {
           toast({
             title: "Required Fields Missing",
@@ -174,7 +182,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
           return false;
         }
         break;
-      case 3: // Goals & Preferences
+      case 4: // Goals & Preferences
         if (!formData.monthlyEarningsGoal || !formData.timeCommitment || formData.primaryInterest.length === 0) {
           toast({
             title: "Required Fields Missing",
@@ -213,7 +221,65 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 0: // Personal Information
+      case 0: // Welcome Step
+        return (
+          <div className="space-y-8 text-center">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Empower Your Clients, Grow Your Income
+              </h3>
+              <p className="text-lg text-gray-700 mb-6">
+                Connect your clients with the funding and payment solutions they already need – while you remain their trusted advisor and we handle all the delivery.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-white border-2 border-blue-100 p-6 rounded-xl">
+                <div className="text-blue-600 text-3xl font-bold mb-2">60%</div>
+                <div className="font-semibold text-gray-900 mb-2">Commission Rate</div>
+                <div className="text-sm text-gray-600 mb-4">Earn up to 60% commission on all successful referrals</div>
+                <div className="text-sm bg-blue-50 p-3 rounded-lg">
+                  <strong>Example:</strong> £75,000 business funding = <strong>£1,350</strong> commission to you
+                </div>
+              </div>
+
+              <div className="bg-white border-2 border-green-100 p-6 rounded-xl">
+                <div className="text-green-600 text-3xl font-bold mb-2">Team</div>
+                <div className="font-semibold text-gray-900 mb-2">Building Rewards</div>
+                <div className="text-sm text-gray-600 mb-4">Invite team members and earn from their referrals too</div>
+                <div className="text-sm bg-green-50 p-3 rounded-lg">
+                  <strong>Growth:</strong> Build a network and earn passive income from your team's success
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-xl">
+              <h4 className="font-semibold text-gray-900 mb-3">How It Works:</h4>
+              <div className="grid md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                  <span>You refer clients needing funding or payment solutions</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                  <span>We handle all the application and delivery process</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                  <span>You earn substantial commissions while remaining their trusted advisor</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-left">
+              <p className="text-sm text-yellow-800">
+                <strong>Your Role:</strong> Stay the trusted advisor your clients rely on. We handle the technical delivery, paperwork, and ongoing support – you focus on the relationship and earn from services they genuinely need.
+              </p>
+            </div>
+          </div>
+        );
+
+      case 1: // Personal Information
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
@@ -265,7 +331,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
           </div>
         );
 
-      case 1: // Professional Background
+      case 2: // Professional Background
         return (
           <div className="space-y-6">
             <div>
@@ -328,7 +394,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
           </div>
         );
 
-      case 2: // Network & Relationships
+      case 3: // Network & Relationships
         return (
           <div className="space-y-6">
             <div>
@@ -393,7 +459,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
           </div>
         );
 
-      case 3: // Goals & Preferences
+      case 4: // Goals & Preferences
         return (
           <div className="space-y-6">
             <div>
@@ -468,7 +534,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
           </div>
         );
 
-      case 4: // Additional Information
+      case 5: // Additional Information
         return (
           <div className="space-y-6">
             <div>
