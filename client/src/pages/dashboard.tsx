@@ -15,6 +15,7 @@ import SmartInsights from "@/components/smart-insights";
 import OnboardingQuestionnaire from "@/components/onboarding-questionnaire";
 import InteractiveTour from "@/components/interactive-tour";
 import { StatsHelpTooltip, FeatureHelpTooltip } from "@/components/contextual-help-tooltip";
+import WeeklyTasks from "@/components/weekly-tasks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -266,6 +267,11 @@ export default function Dashboard() {
 
       {/* Main Dashboard Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gradient-to-b from-white to-slate-50">
+        {/* Weekly Tasks and Goals */}
+        <div className="mb-8">
+          <WeeklyTasks />
+        </div>
+
         {/* Personalized Recommendations and Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <Recommendations 
@@ -486,13 +492,13 @@ export default function Dashboard() {
                   </Button>
                 </Link>
 
-                <Link href="/learning-portal">
-                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300" data-testid="button-learning-portal">
+                <Link href="/training">
+                  <Button variant="outline" className="w-full justify-start text-left h-auto p-4 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300" data-testid="button-training">
                     <div className="flex items-center space-x-3">
                       <GraduationCapIcon className="w-5 h-5 text-accent" />
                       <div>
-                        <p className="font-semibold">Learning Portal</p>
-                        <p className="text-sm text-muted-foreground">Commission calculation guides</p>
+                        <p className="font-semibold">Training & Learning</p>
+                        <p className="text-sm text-muted-foreground">Boost skills for 23% higher earnings</p>
                       </div>
                       <div className="ml-auto">
                         <FeatureHelpTooltip 

@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import SubmitReferral from "@/pages/submit-referral";
-import LearningPortal from "@/pages/learning-portal";
 import UploadBills from "@/pages/upload-bills";
 import AdminPortal from "@/pages/admin";
 import TrackReferrals from "@/pages/track-referrals";
@@ -45,7 +44,6 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/leads" component={Leads} />
           <Route path="/submit-referral" component={SubmitReferral} />
-          <Route path="/learning-portal" component={LearningPortal} />
           <Route path="/training" component={Training} />
           <Route path="/upload-bills" component={UploadBills} />
           <Route path="/track-referrals" component={TrackReferrals} />
