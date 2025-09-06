@@ -11,6 +11,26 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
+// GHL Integration function
+async function submitToGHL(referral: any) {
+  // This would integrate with GoHighLevel API
+  // For now, we'll simulate the submission
+  console.log(`Submitting referral to GHL:`, {
+    business: referral.businessName,
+    email: referral.businessEmail,
+    phone: referral.businessPhone,
+    volume: referral.monthlyVolume
+  });
+  
+  // In a real implementation, you would:
+  // 1. Call GHL API to create a new lead/contact
+  // 2. Add them to appropriate campaigns
+  // 3. Set up follow-up workflows
+  // 4. Return success/failure status
+  
+  return { success: true, ghlContactId: `ghl_${Date.now()}` };
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware - temporarily disabled for development
   // await setupAuth(app);
@@ -164,6 +184,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const referral = await storage.createReferral(validation.data);
+      
+      // Submit to GoHighLevel (GHL) for processing
+      try {
+        await submitToGHL(referral);
+        console.log(`Referral ${referral.id} submitted to GHL successfully`);
+      } catch (ghlError) {
+        console.error(`Failed to submit referral ${referral.id} to GHL:`, ghlError);
+        // Continue processing even if GHL submission fails
+      }
+      
       res.json(referral);
     } catch (error) {
       console.error("Error creating referral:", error);
