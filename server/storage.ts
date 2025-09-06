@@ -4,6 +4,10 @@ import {
   businessTypes,
   billUploads,
   commissionPayments,
+  leads,
+  leadInteractions,
+  partners,
+  partnerReviews,
   type User,
   type UpsertUser,
   type InsertReferral,
@@ -57,6 +61,18 @@ export interface IStorage {
   getAllReferrals(): Promise<Referral[]>;
   updateUser(userId: string, data: Partial<User>): Promise<User>;
   updateReferral(referralId: string, data: Partial<Referral>): Promise<Referral>;
+  
+  // Leads operations
+  createLead(lead: any): Promise<any>;
+  createLeadsBulk(leads: any[]): Promise<{ count: number }>;
+  getLeadsByUserId(userId: string): Promise<any[]>;
+  updateLeadStatus(leadId: string, status: string): Promise<any>;
+  addLeadInteraction(leadId: string, interaction: any): Promise<any>;
+  
+  // Partner operations  
+  getPartners(): Promise<any[]>;
+  getPartnerBySlug(slug: string): Promise<any>;
+  seedPartners(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -82,6 +98,151 @@ export class DatabaseStorage implements IStorage {
 
   async getBusinessTypes(): Promise<BusinessType[]> {
     return await db.select().from(businessTypes);
+  }
+
+  // Leads operations
+  async createLead(leadData: any): Promise<any> {
+    const [lead] = await db
+      .insert(leads)
+      .values(leadData)
+      .returning();
+    return lead;
+  }
+
+  async createLeadsBulk(leadsData: any[]): Promise<{ count: number }> {
+    const results = await db
+      .insert(leads)
+      .values(leadsData)
+      .returning();
+    return { count: results.length };
+  }
+
+  async getLeadsByUserId(userId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(leads)
+      .where(eq(leads.partnerId, userId))
+      .orderBy(desc(leads.createdAt));
+  }
+
+  async updateLeadStatus(leadId: string, status: string): Promise<any> {
+    const [lead] = await db
+      .update(leads)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(leads.id, leadId))
+      .returning();
+    return lead;
+  }
+
+  async addLeadInteraction(leadId: string, interactionData: any): Promise<any> {
+    const [interaction] = await db
+      .insert(leadInteractions)
+      .values({
+        leadId,
+        ...interactionData,
+      })
+      .returning();
+    return interaction;
+  }
+
+  // Partner operations
+  async getPartners(): Promise<any[]> {
+    return await db
+      .select()
+      .from(partners)
+      .where(eq(partners.isActive, true))
+      .orderBy(partners.name);
+  }
+
+  async getPartnerBySlug(slug: string): Promise<any> {
+    const [partner] = await db
+      .select()
+      .from(partners)
+      .where(eq(partners.slug, slug));
+    return partner;
+  }
+
+  async seedPartners(): Promise<void> {
+    const existingPartners = await db.select().from(partners);
+    if (existingPartners.length > 0) return;
+
+    const dojoPartner = {
+      name: "Dojo",
+      slug: "dojo",
+      description: "Dojo is the UK's most trusted payment provider, helping businesses accept payments with confidence. With cutting-edge technology and award-winning customer service, Dojo provides secure, reliable payment solutions for businesses of all sizes.",
+      logoUrl: "https://www.dojo.tech/assets/images/dojo-logo.svg",
+      website: "https://www.dojo.tech",
+      contactEmail: "partners@dojo.tech",
+      trustScore: "4.8",
+      totalReviews: 1247,
+      services: [
+        "Card Payment Processing",
+        "Mobile Card Readers",
+        "POS Terminal Solutions", 
+        "Online Payment Gateway",
+        "Business Banking Integration",
+        "Inventory Management",
+        "Real-time Analytics",
+        "24/7 Customer Support"
+      ],
+      specializations: [
+        "Retail",
+        "Hospitality", 
+        "Professional Services",
+        "Healthcare",
+        "Beauty & Wellness",
+        "Mobile Businesses"
+      ],
+      isActive: true,
+    };
+
+    const [insertedPartner] = await db.insert(partners).values(dojoPartner).returning();
+
+    // Add some reviews for Dojo
+    const dojoReviews = [
+      {
+        partnerId: insertedPartner.id,
+        reviewerName: "Sarah Mitchell",
+        rating: 5,
+        title: "Excellent service and support",
+        content: "Dojo has transformed our payment processing. The setup was seamless, rates are competitive, and their support team is outstanding. Highly recommend for any business looking to modernize their payments.",
+        businessType: "Retail",
+        isVerified: true,
+        helpfulCount: 23,
+      },
+      {
+        partnerId: insertedPartner.id, 
+        reviewerName: "Marcus Thompson",
+        rating: 5,
+        title: "Game changer for our restaurant",
+        content: "The mobile terminals have been perfect for table service. Fast transactions, reliable connection, and the analytics help us understand our business better. Great investment.",
+        businessType: "Hospitality",
+        isVerified: true,
+        helpfulCount: 18,
+      },
+      {
+        partnerId: insertedPartner.id,
+        reviewerName: "Jennifer Adams", 
+        rating: 4,
+        title: "Solid payment solution",
+        content: "Very happy with Dojo's service. Professional setup, competitive rates, and good customer service. The only minor issue was the initial learning curve with the POS system.",
+        businessType: "Professional Services",
+        isVerified: true,
+        helpfulCount: 12,
+      },
+      {
+        partnerId: insertedPartner.id,
+        reviewerName: "David Chen",
+        rating: 5,
+        title: "Perfect for mobile business",
+        content: "As a mobile barber, I needed reliable payment processing on the go. Dojo's mobile readers are perfect - fast, secure, and never let me down. Client feedback has been very positive.",
+        businessType: "Mobile Services", 
+        isVerified: true,
+        helpfulCount: 15,
+      },
+    ];
+
+    await db.insert(partnerReviews).values(dojoReviews);
   }
 
   async seedBusinessTypes(): Promise<void> {

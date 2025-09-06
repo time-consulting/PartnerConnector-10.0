@@ -421,6 +421,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Initialize seed data
+  await storage.seedBusinessTypes();
+  await storage.seedPartners();
+
+  // Leads routes
+  app.get('/api/leads', async (req: any, res) => {
+    try {
+      const userId = 'dev-user-123'; // Mock for development
+      const leads = await storage.getLeadsByUserId(userId);
+      res.json(leads);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      res.status(500).json({ message: "Failed to fetch leads" });
+    }
+  });
+
+  app.post('/api/leads', async (req: any, res) => {
+    try {
+      const userId = 'dev-user-123'; // Mock for development
+      const leadData = {
+        ...req.body,
+        partnerId: userId,
+      };
+      
+      const lead = await storage.createLead(leadData);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error creating lead:", error);
+      res.status(500).json({ message: "Failed to create lead" });
+    }
+  });
+
+  app.post('/api/leads/bulk', async (req: any, res) => {
+    try {
+      const userId = 'dev-user-123'; // Mock for development
+      const { leads: leadsData } = req.body;
+      
+      const leadsWithPartnerId = leadsData.map((lead: any) => ({
+        ...lead,
+        partnerId: userId,
+      }));
+      
+      const result = await storage.createLeadsBulk(leadsWithPartnerId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating bulk leads:", error);
+      res.status(500).json({ message: "Failed to create leads" });
+    }
+  });
+
+  app.patch('/api/leads/:leadId', async (req: any, res) => {
+    try {
+      const { leadId } = req.params;
+      const { status } = req.body;
+      
+      const lead = await storage.updateLeadStatus(leadId, status);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      res.status(500).json({ message: "Failed to update lead status" });
+    }
+  });
+
+  app.post('/api/leads/:leadId/interactions', async (req: any, res) => {
+    try {
+      const userId = 'dev-user-123'; // Mock for development
+      const { leadId } = req.params;
+      const interactionData = {
+        ...req.body,
+        partnerId: userId,
+      };
+      
+      const interaction = await storage.addLeadInteraction(leadId, interactionData);
+      res.json(interaction);
+    } catch (error) {
+      console.error("Error adding interaction:", error);
+      res.status(500).json({ message: "Failed to add interaction" });
+    }
+  });
+
+  app.post('/api/leads/:leadId/send-info', async (req: any, res) => {
+    try {
+      const userId = 'dev-user-123'; // Mock for development
+      const { leadId } = req.params;
+      const { productType, title, content } = req.body;
+      
+      // Create an interaction record for the info sharing
+      const interactionData = {
+        partnerId: userId,
+        interactionType: 'email',
+        subject: `Sent: ${title}`,
+        details: `Sent business information about ${productType}:\n\n${content}`,
+        outcome: 'follow_up_required',
+        nextAction: 'Follow up on information shared',
+      };
+      
+      const interaction = await storage.addLeadInteraction(leadId, interactionData);
+      res.json({ success: true, interaction });
+    } catch (error) {
+      console.error("Error sending info:", error);
+      res.status(500).json({ message: "Failed to send information" });
+    }
+  });
+
+  // Partners routes
+  app.get('/api/partners', async (req, res) => {
+    try {
+      const partners = await storage.getPartners();
+      res.json(partners);
+    } catch (error) {
+      console.error("Error fetching partners:", error);
+      res.status(500).json({ message: "Failed to fetch partners" });
+    }
+  });
+
+  app.get('/api/partners/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const partner = await storage.getPartnerBySlug(slug);
+      
+      if (!partner) {
+        return res.status(404).json({ message: "Partner not found" });
+      }
+      
+      res.json(partner);
+    } catch (error) {
+      console.error("Error fetching partner:", error);
+      res.status(500).json({ message: "Failed to fetch partner" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
