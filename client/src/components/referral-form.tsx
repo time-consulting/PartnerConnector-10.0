@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProductSelection from "@/components/product-selection";
+import { FieldHelpTooltip } from "@/components/contextual-help-tooltip";
 
 const formSchema = insertReferralSchema
   .omit({
@@ -78,7 +79,12 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="businessName">Business Name *</Label>
+              <Label htmlFor="businessName" className="flex items-center gap-2">
+                Business Name *
+                <FieldHelpTooltip 
+                  content="The registered business name that will be used for the funding application. This should match official business documents."
+                />
+              </Label>
               <Input
                 id="businessName"
                 {...form.register("businessName")}
@@ -93,7 +99,12 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
             </div>
             
             <div>
-              <Label htmlFor="businessEmail">Business Email *</Label>
+              <Label htmlFor="businessEmail" className="flex items-center gap-2">
+                Business Email *
+                <FieldHelpTooltip 
+                  content="Primary business email for communications about the funding application. Should be monitored regularly."
+                />
+              </Label>
               <Input
                 id="businessEmail"
                 type="email"

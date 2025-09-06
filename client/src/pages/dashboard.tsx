@@ -14,6 +14,7 @@ import Recommendations from "@/components/recommendations";
 import SmartInsights from "@/components/smart-insights";
 import OnboardingQuestionnaire from "@/components/onboarding-questionnaire";
 import InteractiveTour from "@/components/interactive-tour";
+import { StatsHelpTooltip, FeatureHelpTooltip } from "@/components/contextual-help-tooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -286,6 +287,15 @@ export default function Dashboard() {
               <CardTitle className="text-xl font-bold flex items-center gap-2">
                 <div className="w-2 h-2 bg-primary rounded-full"></div>
                 Recent Referrals
+                <StatsHelpTooltip 
+                  content={
+                    <div>
+                      <p className="font-semibold mb-2">Referral Tracking</p>
+                      <p>Monitor the status of your submitted referrals from initial submission to commission payment.</p>
+                      <p className="mt-2 text-xs text-gray-300">Track: Pending → Processing → Approved → Paid</p>
+                    </div>
+                  }
+                />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -410,6 +420,20 @@ export default function Dashboard() {
               <CardTitle className="text-xl font-bold flex items-center gap-2">
                 <div className="w-2 h-2 bg-secondary rounded-full"></div>
                 Quick Actions
+                <FeatureHelpTooltip 
+                  content={
+                    <div>
+                      <p className="font-semibold mb-2">Platform Actions</p>
+                      <p>Essential tasks to grow your commission income:</p>
+                      <ul className="mt-2 text-xs text-gray-300 space-y-1">
+                        <li>• Submit referrals for businesses needing funding</li>
+                        <li>• Upload bills to calculate potential savings</li>
+                        <li>• Complete training to maximize earnings</li>
+                        <li>• Track your commission progress</li>
+                      </ul>
+                    </div>
+                  }
+                />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -421,6 +445,18 @@ export default function Dashboard() {
                       <div>
                         <p className="font-semibold">Submit New Referral</p>
                         <p className="text-sm text-muted-foreground">Add a new business referral</p>
+                      </div>
+                      <div className="ml-auto">
+                        <FeatureHelpTooltip 
+                          content={
+                            <div>
+                              <p className="font-semibold mb-2">Submit Referral</p>
+                              <p>Submit businesses that need funding or payment processing solutions.</p>
+                              <p className="mt-2 text-xs text-gray-300">Earn up to 60% commission on successful applications</p>
+                            </div>
+                          }
+                          position="left"
+                        />
                       </div>
                     </div>
                   </Button>
@@ -434,6 +470,18 @@ export default function Dashboard() {
                         <p className="font-semibold">Upload Bills</p>
                         <p className="text-sm text-muted-foreground">Compare current processing costs</p>
                       </div>
+                      <div className="ml-auto">
+                        <FeatureHelpTooltip 
+                          content={
+                            <div>
+                              <p className="font-semibold mb-2">Bill Analysis</p>
+                              <p>Upload client payment processing bills to calculate potential savings and commission opportunities.</p>
+                              <p className="mt-2 text-xs text-gray-300">Helps identify switching opportunities for higher commissions</p>
+                            </div>
+                          }
+                          position="left"
+                        />
+                      </div>
                     </div>
                   </Button>
                 </Link>
@@ -445,6 +493,18 @@ export default function Dashboard() {
                       <div>
                         <p className="font-semibold">Learning Portal</p>
                         <p className="text-sm text-muted-foreground">Commission calculation guides</p>
+                      </div>
+                      <div className="ml-auto">
+                        <FeatureHelpTooltip 
+                          content={
+                            <div>
+                              <p className="font-semibold mb-2">Training & Education</p>
+                              <p>Access training materials, commission calculators, and best practices to maximize your earnings.</p>
+                              <p className="mt-2 text-xs text-gray-300">Complete training modules to become a certified partner</p>
+                            </div>
+                          }
+                          position="left"
+                        />
                       </div>
                     </div>
                   </Button>

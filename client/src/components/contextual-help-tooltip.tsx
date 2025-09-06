@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircleIcon, InfoIcon, HelpIcon } from "lucide-react";
+import { HelpCircleIcon, InfoIcon, CircleHelpIcon } from "lucide-react";
 
 interface ContextualHelpTooltipProps {
   content: string | React.ReactNode;
@@ -17,7 +17,7 @@ interface ContextualHelpTooltipProps {
 const iconTypes = {
   help: HelpCircleIcon,
   info: InfoIcon,
-  question: HelpIcon,
+  question: CircleHelpIcon,
 };
 
 export function ContextualHelpTooltip({
