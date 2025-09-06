@@ -12,6 +12,7 @@ import UploadBills from "@/pages/upload-bills";
 import AdminPortal from "@/pages/admin";
 import TrackReferrals from "@/pages/track-referrals";
 import TeamManagement from "@/pages/team-management";
+import Training from "@/pages/training";
 import PartnerOnboarding from "@/pages/partner-onboarding";
 import CommissionStructure from "@/pages/commission-structure";
 import LeadTracking from "@/pages/lead-tracking";
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/submit-referral" component={SubmitReferral} />
           <Route path="/learning-portal" component={LearningPortal} />
+          <Route path="/training" component={Training} />
           <Route path="/upload-bills" component={UploadBills} />
           <Route path="/track-referrals" component={TrackReferrals} />
           <Route path="/team-management" component={TeamManagement} />
