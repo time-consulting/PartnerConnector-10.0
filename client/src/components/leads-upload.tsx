@@ -188,12 +188,25 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
       {uploadedLeads.length > 0 && (
         <Card className="border-green-200 bg-green-50 dark:bg-green-950">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-              <CheckCircleIcon className="h-5 w-5" />
-              <span className="font-medium">
-                Successfully uploaded {uploadedLeads.length} lead{uploadedLeads.length !== 1 ? 's' : ''}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                <CheckCircleIcon className="h-5 w-5" />
+                <span className="font-medium">
+                  Successfully uploaded {uploadedLeads.length} lead{uploadedLeads.length !== 1 ? 's' : ''} to your tracking system
+                </span>
+              </div>
+              <Button 
+                variant="outline" 
+                className="ml-4 border-green-600 text-green-700 hover:bg-green-600 hover:text-white"
+                onClick={() => window.location.href = '/submit-referral'}
+                data-testid="button-submit-referral"
+              >
+                Submit Referral
+              </Button>
             </div>
+            <p className="text-sm text-green-600 mt-2">
+              🎯 Next step: Review and qualify these leads, then submit the best ones as referrals to earn commissions.
+            </p>
           </CardContent>
         </Card>
       )}
@@ -202,8 +215,13 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlusIcon className="h-5 w-5" />
-            Add New Leads
+            Lead Tracking System
           </CardTitle>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+            <p className="text-sm text-blue-800">
+              💡 <strong>Important:</strong> This uploads leads to your tracking system. Once you qualify a lead, use the "Submit Referral" button to submit it for commission.
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="manual" className="w-full">
