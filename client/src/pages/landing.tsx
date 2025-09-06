@@ -1,10 +1,8 @@
-import { useState } from "react";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  PlayIcon, 
   CheckIcon, 
   TrendingUpIcon, 
   UsersIcon, 
@@ -13,15 +11,12 @@ import {
   StarIcon,
   DollarSignIcon,
   NetworkIcon,
-  TargetIcon
+  TargetIcon,
+  CreditCardIcon,
+  HandshakeIcon
 } from "lucide-react";
 
 export default function Landing() {
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-
-  const handleVideoPlay = () => {
-    setIsVideoPlaying(true);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -35,18 +30,18 @@ export default function Landing() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="animate-fadeIn">
               <Badge className="mb-6 bg-blue-100 text-blue-700 hover:bg-blue-200" data-testid="badge-trusted">
-                Join 500+ partners earning revenue through referrals
+                Trusted by 500+ professionals earning commission
               </Badge>
               
               <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-                Empower growth through{" "}
+                Build your business through{" "}
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  strategic partnerships
+                  partnership connections
                 </span>
               </h1>
               
               <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-lg">
-                Unlock revenue opportunities by connecting clients with partners. Turn your professional network into a thriving income stream through our partnership ecosystem.
+                Connect your clients with card payment solutions and business funding while earning substantial commissions. Build a thriving referral business and grow your team.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -88,35 +83,56 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Video Section */}
+            {/* Partnership Connection Animation */}
             <div className="relative animate-fadeIn">
               <Card className="overflow-hidden shadow-2xl bg-gradient-to-br from-blue-500 to-purple-600">
-                <CardContent className="p-0 relative aspect-video">
-                  {!isVideoPlaying ? (
-                    <div 
-                      className="relative w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center cursor-pointer group"
-                      onClick={handleVideoPlay}
-                      data-testid="video-placeholder"
-                    >
-                      <div className="absolute inset-0 bg-black/20"></div>
-                      <div className="relative z-10 text-center">
-                        <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 mx-auto group-hover:bg-white/30 transition-colors duration-300">
-                          <PlayIcon className="w-8 h-8 text-white ml-1" />
+                <CardContent className="p-8 relative aspect-video flex items-center justify-center">
+                  <div className="relative w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center rounded-lg">
+                    <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
+                    
+                    {/* Animated Partnership Connection */}
+                    <div className="relative z-10 w-full max-w-md">
+                      <div className="flex items-center justify-between">
+                        {/* You */}
+                        <div className="text-center animate-pulse">
+                          <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center mb-3 shadow-lg">
+                            <UsersIcon className="w-8 h-8 text-blue-600" />
+                          </div>
+                          <p className="text-white font-semibold text-sm">You</p>
+                          <p className="text-white/80 text-xs">Professional</p>
                         </div>
-                        <p className="text-white font-semibold text-lg mb-2">Watch 1-minute video</p>
-                        <p className="text-white/80 text-sm">See how PartnerConnector works</p>
+                        
+                        {/* Connection Lines */}
+                        <div className="flex-1 px-4">
+                          <div className="relative">
+                            <div className="h-0.5 bg-white/60 animate-pulse"></div>
+                            <HandshakeIcon className="w-6 h-6 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 rounded-full p-1 animate-bounce" />
+                          </div>
+                        </div>
+                        
+                        {/* Client */}
+                        <div className="text-center animate-pulse" style={{animationDelay: '0.5s'}}>
+                          <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center mb-3 shadow-lg">
+                            <TargetIcon className="w-8 h-8 text-purple-600" />
+                          </div>
+                          <p className="text-white font-semibold text-sm">Client</p>
+                          <p className="text-white/80 text-xs">Business</p>
+                        </div>
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-blue-600/50 to-transparent"></div>
+                      
+                      {/* Services */}
+                      <div className="mt-8 grid grid-cols-2 gap-4">
+                        <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 text-center animate-pulse" style={{animationDelay: '1s'}}>
+                          <CreditCardIcon className="w-6 h-6 text-white mx-auto mb-2" />
+                          <p className="text-white text-xs font-medium">Card Payments</p>
+                        </div>
+                        <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 text-center animate-pulse" style={{animationDelay: '1.5s'}}>
+                          <DollarSignIcon className="w-6 h-6 text-white mx-auto mb-2" />
+                          <p className="text-white text-xs font-medium">Business Funding</p>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <iframe
-                      src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-                      className="w-full h-full"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      data-testid="video-iframe"
-                    />
-                  )}
+                  </div>
                 </CardContent>
               </Card>
               <div className="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-lg p-4">
