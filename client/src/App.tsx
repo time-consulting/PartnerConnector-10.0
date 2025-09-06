@@ -13,6 +13,7 @@ import AdminPortal from "@/pages/admin";
 import TrackReferrals from "@/pages/track-referrals";
 import TeamManagement from "@/pages/team-management";
 import Training from "@/pages/training";
+import Leads from "@/pages/leads";
 import PartnerOnboarding from "@/pages/partner-onboarding";
 import CommissionStructure from "@/pages/commission-structure";
 import LeadTracking from "@/pages/lead-tracking";
@@ -42,6 +43,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Dashboard} />
+          <Route path="/leads" component={Leads} />
           <Route path="/submit-referral" component={SubmitReferral} />
           <Route path="/learning-portal" component={LearningPortal} />
           <Route path="/training" component={Training} />
