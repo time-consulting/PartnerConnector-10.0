@@ -66,19 +66,19 @@ export default function Landing() {
                 </Button>
               </div>
 
-              {/* Platform stats */}
+              {/* Partnership stats */}
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-gray-900">500+</div>
                   <div className="text-sm text-gray-600">Partners</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">£2.5M</div>
-                  <div className="text-sm text-gray-600">Revenue generated</div>
+                  <div className="text-2xl font-bold text-gray-900">£1.2M</div>
+                  <div className="text-sm text-gray-600">Commissions paid</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">98%</div>
-                  <div className="text-sm text-gray-600">Success rate</div>
+                  <div className="text-2xl font-bold text-gray-900">60%</div>
+                  <div className="text-sm text-gray-600">Commission rate</div>
                 </div>
               </div>
             </div>
@@ -147,93 +147,80 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Platform Features Section */}
+      {/* Partnership Features Section */}
       <section id="platform-features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <Badge className="mb-4 bg-blue-100 text-blue-700">PLATFORM FEATURES</Badge>
+            <Badge className="mb-4 bg-blue-100 text-blue-700">PARTNERSHIP SOLUTIONS</Badge>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Learn how PartnerConnector can scale your SaaS business:
+              Build your business through strategic partnerships
             </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Focus on card payment solutions and business funding - connecting your clients with the right financial services while earning substantial commissions.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-            {/* Recruit */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Connect Clients */}
             <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-0 bg-gradient-to-b from-blue-50 to-white">
               <CardContent className="p-0">
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <UsersIcon className="w-8 h-8 text-blue-600" />
+                  <HandshakeIcon className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Recruit</h3>
-                <p className="text-sm text-gray-600 mb-4">Attract high-quality, great-fit partners</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Connect Clients</h3>
+                <p className="text-sm text-gray-600 mb-4">Match clients with payment and funding solutions</p>
                 <ul className="text-xs text-gray-500 space-y-1">
-                  <li>• Partner discovery</li>
-                  <li>• Application management</li>
-                  <li>• Automated onboarding</li>
+                  <li>• Card payment systems</li>
+                  <li>• Business funding options</li>
+                  <li>• Tailored recommendations</li>
                 </ul>
               </CardContent>
             </Card>
 
-            {/* Activate */}
+            {/* Earn Commission */}
             <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-0 bg-gradient-to-b from-green-50 to-white">
               <CardContent className="p-0">
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <TargetIcon className="w-8 h-8 text-green-600" />
+                  <DollarSignIcon className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Activate</h3>
-                <p className="text-sm text-gray-600 mb-4">Enable partners with best-in-class resources</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Earn Commission</h3>
+                <p className="text-sm text-gray-600 mb-4">Receive up to 60% commission on every successful referral</p>
                 <ul className="text-xs text-gray-500 space-y-1">
-                  <li>• Training portal</li>
-                  <li>• Marketing assets</li>
-                  <li>• Sales enablement</li>
+                  <li>• Upfront commissions</li>
+                  <li>• Fast payouts</li>
+                  <li>• Transparent tracking</li>
                 </ul>
               </CardContent>
             </Card>
 
-            {/* Track */}
+            {/* Build Team */}
             <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-0 bg-gradient-to-b from-purple-50 to-white">
               <CardContent className="p-0">
                 <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <TrendingUpIcon className="w-8 h-8 text-purple-600" />
+                  <UsersIcon className="w-8 h-8 text-purple-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Track</h3>
-                <p className="text-sm text-gray-600 mb-4">Monitor every partner-sourced lead</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Build Team</h3>
+                <p className="text-sm text-gray-600 mb-4">Grow your network and earn from team referrals</p>
                 <ul className="text-xs text-gray-500 space-y-1">
-                  <li>• Lead tracking</li>
-                  <li>• Attribution</li>
-                  <li>• Performance analytics</li>
+                  <li>• Team recruitment</li>
+                  <li>• Training support</li>
+                  <li>• Ongoing income</li>
                 </ul>
               </CardContent>
             </Card>
 
-            {/* Commission */}
+            {/* Track Success */}
             <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-0 bg-gradient-to-b from-yellow-50 to-white">
               <CardContent className="p-0">
                 <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <DollarSignIcon className="w-8 h-8 text-yellow-600" />
+                  <TrendingUpIcon className="w-8 h-8 text-yellow-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Commission</h3>
-                <p className="text-sm text-gray-600 mb-4">Incentivize partners with rewards and commissions</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Track Success</h3>
+                <p className="text-sm text-gray-600 mb-4">Monitor your referrals and commission earnings</p>
                 <ul className="text-xs text-gray-500 space-y-1">
-                  <li>• Automated payouts</li>
-                  <li>• Multi-tier commissions</li>
-                  <li>• Performance bonuses</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Optimize */}
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-0 bg-gradient-to-b from-red-50 to-white">
-              <CardContent className="p-0">
-                <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <NetworkIcon className="w-8 h-8 text-red-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Optimize</h3>
-                <p className="text-sm text-gray-600 mb-4">Improve performance with reports and insights</p>
-                <ul className="text-xs text-gray-500 space-y-1">
+                  <li>• Real-time dashboard</li>
+                  <li>• Commission tracking</li>
                   <li>• Performance insights</li>
-                  <li>• ROI tracking</li>
-                  <li>• Optimization tools</li>
                 </ul>
               </CardContent>
             </Card>
@@ -264,7 +251,7 @@ export default function Landing() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-600 font-medium mb-8">
-            JOIN 500+ COMPANIES THAT USE PARTNERSTACK TO GROW AND SUSTAIN REVENUE
+            JOIN 500+ PROFESSIONALS EARNING COMMISSION THROUGH PARTNERSHIP CONNECTIONS
           </p>
           <div className="flex justify-center">
             <Button 
