@@ -220,7 +220,7 @@ export const leads = pgTable("leads", {
   lastContact: timestamp("last_contact"),
   nextFollowUp: timestamp("next_follow_up"),
   tags: text("tags").array(), // Array of tags for categorization
-  estimatedValue: decimal("estimated_value", { precision: 10, scale: 2 }),
+  estimatedValue: varchar("estimated_value"),
   probabilityScore: integer("probability_score").default(50), // 0-100 percentage
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
