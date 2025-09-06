@@ -12,6 +12,8 @@ import QuoteSystem from "@/components/quote-system";
 import AdditionalDetailsForm from "@/components/additional-details-form";
 import Recommendations from "@/components/recommendations";
 import SmartInsights from "@/components/smart-insights";
+import OnboardingQuestionnaire from "@/components/onboarding-questionnaire";
+import InteractiveTour from "@/components/interactive-tour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +39,9 @@ export default function Dashboard() {
   const [showProgressTracker, setShowProgressTracker] = useState(false);
   const [showQuoteSystem, setShowQuoteSystem] = useState(false);
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showTour, setShowTour] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -58,10 +63,55 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
+  // Check if user needs onboarding (new user detection)
+  useEffect(() => {
+    if (isAuthenticated && user && stats) {
+      // Check if user is new (no referrals, no commission history)
+      const hasNoActivity = (stats as any)?.totalCommissions === 0 && (stats as any)?.activeReferrals === 0;
+      const isFirstLogin = localStorage.getItem('hasCompletedOnboarding') !== 'true';
+      
+      if (hasNoActivity && isFirstLogin) {
+        setIsNewUser(true);
+        setShowOnboarding(true);
+      }
+    }
+  }, [isAuthenticated, user, stats]);
+
   const { data: referrals, isLoading: referralsLoading } = useQuery({
     queryKey: ["/api/referrals"],
     enabled: isAuthenticated,
   });
+
+  const handleOnboardingComplete = (data: any) => {
+    console.log('Onboarding completed with data:', data);
+    localStorage.setItem('hasCompletedOnboarding', 'true');
+    localStorage.setItem('onboardingData', JSON.stringify(data));
+    setShowOnboarding(false);
+    setShowTour(true);
+    
+    toast({
+      title: "Welcome to PartnerConnector! 🎉",
+      description: `Hi ${data.firstName}! Let's show you around the platform.`,
+    });
+  };
+
+  const handleOnboardingSkip = () => {
+    localStorage.setItem('hasCompletedOnboarding', 'true');
+    setShowOnboarding(false);
+    setShowTour(true);
+  };
+
+  const handleTourComplete = () => {
+    setShowTour(false);
+    toast({
+      title: "You're all set! 🚀",
+      description: "Start submitting referrals to earn your first commissions!",
+    });
+  };
+
+  const handleTourSkip = () => {
+    setShowTour(false);
+  };
 
   if (isLoading || !isAuthenticated) {
     return <div>Loading...</div>;
@@ -445,6 +495,22 @@ export default function Dashboard() {
           referral={selectedReferral}
         />
       )}
+
+      {/* Onboarding Questionnaire */}
+      {showOnboarding && (
+        <OnboardingQuestionnaire
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
+
+      {/* Interactive Tour */}
+      <InteractiveTour
+        isVisible={showTour}
+        onComplete={handleTourComplete}
+        onSkip={handleTourSkip}
+        startStep="welcome"
+      />
     </div>
   );
 }
