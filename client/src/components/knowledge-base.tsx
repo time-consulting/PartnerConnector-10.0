@@ -84,7 +84,7 @@ export default function KnowledgeBase() {
     {
       id: '2',
       question: 'When do I receive commission payments?',
-      answer: 'Commission payments are processed monthly, typically within the first week of each month for the previous month\'s earnings. You must have a minimum balance of £50 to receive payment. Payments are made via bank transfer to your registered account.',
+      answer: 'Commission payments are processed within 30 days of successful client onboarding. You must have a minimum balance of £50 to receive payment. Payments are made via bank transfer to your registered account. For team building, ongoing commissions are paid monthly.',
       category: 'commission-structure',
       tags: ['payments', 'commission', 'schedule'],
       helpful: 38,

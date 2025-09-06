@@ -105,14 +105,14 @@ Dojo is the UK's most trusted payment provider, helping businesses accept paymen
 ### Commission Structure & Earnings
 
 #### Level 1 Commission: 60% Revenue Share
-- **Card Processing Referrals**: Earn 60% of Dojo's revenue from your clients
-- **Average Monthly Earnings**: £200-£800 per active client
-- **Lifetime Value**: Recurring revenue for the life of the client relationship
+- **Card Processing Referrals**: Earn 60% upfront commission on successful referrals
+- **Payment Processing Setup**: One-time commission based on client setup value
+- **Business Banking Integration**: Additional upfront commission for connected services
 
-#### Example Earnings:
-- **Small Cafe (£5K monthly processing)**: ~£30/month commission = £360/year
-- **Medium Retail (£15K monthly processing)**: ~£90/month commission = £1,080/year  
-- **Large Restaurant (£30K monthly processing)**: ~£180/month commission = £2,160/year
+#### Example Upfront Earnings:
+- **Small Cafe Setup**: £450-£750 upfront commission per successful referral
+- **Medium Retail Setup**: £850-£1,200 upfront commission per successful referral  
+- **Large Restaurant Setup**: £1,500-£2,500 upfront commission per successful referral
 
 ### Perfect Client Types for Dojo
 

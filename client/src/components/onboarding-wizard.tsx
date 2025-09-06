@@ -313,7 +313,7 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
         return (
           <div className="space-y-4">
             <div>
-              <Label>Monthly Commission Target</Label>
+              <Label>Commission Target Per Sale</Label>
               <div className="grid grid-cols-4 gap-2 mt-2">
                 {['£500', '£1,000', '£2,500', '£5,000+'].map((target) => (
                   <Button

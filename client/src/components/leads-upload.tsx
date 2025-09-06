@@ -291,7 +291,7 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
                   <div>
                     <Label htmlFor="estimatedMonthlyVolume" className="flex items-center gap-2">
                       Estimated Monthly Volume
-                      <FieldHelpTooltip content="Approximate monthly card processing volume for commission calculation" />
+                      <FieldHelpTooltip content="Approximate processing volume to help determine potential upfront commission value" />
                     </Label>
                     <Input
                       id="estimatedMonthlyVolume"
