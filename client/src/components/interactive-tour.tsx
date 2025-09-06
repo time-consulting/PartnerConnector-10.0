@@ -183,7 +183,7 @@ export default function InteractiveTour({ isVisible, onComplete, onSkip, startSt
         // Position relative to highlighted element if specified
         ...(step.element && getElementPosition(step.element, step.position))
       }}>
-        <Card className="bg-white shadow-2xl border-2 border-blue-200">
+        <Card className="bg-white shadow-2xl border-2 border-blue-200 backdrop-blur-none">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

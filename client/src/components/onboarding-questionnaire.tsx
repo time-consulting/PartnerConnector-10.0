@@ -533,8 +533,8 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
-        <CardHeader>
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4 bg-white border-2 border-gray-200 shadow-2xl">
+        <CardHeader className="bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {steps[currentStep].icon}
@@ -556,7 +556,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 bg-white">
           {renderStepContent()}
 
           <div className="flex justify-between pt-6 border-t">
