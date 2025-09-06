@@ -84,8 +84,44 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  const handleOnboardingComplete = (data: any) => {
+  const handleOnboardingComplete = async (data: any) => {
     console.log('Onboarding completed with data:', data);
+    
+    try {
+      // Update user profile in the backend
+      const response = await fetch('/api/auth/user', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          profession: data.profession,
+          company: data.company,
+          clientBaseSize: data.clientBaseSize,
+          gdprConsent: data.gdprConsent || true,
+          marketingConsent: data.marketingConsent || false,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+      
+      // Refresh user data to update navigation
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      toast({
+        title: "Profile Update Failed",
+        description: "There was an issue saving your profile. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     localStorage.setItem('hasCompletedOnboarding', 'true');
     localStorage.setItem('onboardingData', JSON.stringify(data));
     setShowOnboarding(false);

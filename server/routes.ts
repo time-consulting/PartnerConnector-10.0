@@ -100,17 +100,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth routes
   app.get('/api/auth/user', async (req: any, res) => {
-    // Mock user for development - remove this when auth is working
-    const mockUser = {
-      id: 'dev-user-123',
-      email: 'developer@example.com',
-      firstName: 'John',
-      lastName: 'Developer',
-      profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      profession: 'Software Developer',
-      company: 'Dev Company Ltd',
-    };
-    res.json(mockUser);
+    try {
+      const userId = req.user?.claims?.sub || 'dev-user-123';
+      let user = await storage.getUser(userId);
+      
+      // If user doesn't exist, create a mock user for development
+      if (!user) {
+        user = await storage.upsertUser({
+          id: userId,
+          email: 'developer@example.com',
+          firstName: null, // Will be set during onboarding
+          lastName: null,  // Will be set during onboarding
+          profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+          profession: null,
+          company: null,
+        });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
   });
 
   // Update user profile
