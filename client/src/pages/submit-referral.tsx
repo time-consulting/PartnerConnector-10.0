@@ -39,6 +39,11 @@ export default function SubmitReferral() {
     enabled: isAuthenticated,
   });
 
+  const { data: leads } = useQuery({
+    queryKey: ["/api/leads"],
+    enabled: isAuthenticated,
+  });
+
   const submitReferralMutation = useMutation({
     mutationFn: async (referralData: any) => {
       const response = await apiRequest("POST", "/api/referrals", referralData);
@@ -279,11 +284,94 @@ export default function SubmitReferral() {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <ReferralForm
-                businessTypes={(businessTypes as any[]) || []}
-                onSubmit={(data) => submitReferralMutation.mutate(data)}
-                isSubmitting={submitReferralMutation.isPending}
-              />
+              <Tabs defaultValue="existing" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="existing" className="flex items-center gap-2">
+                    Select Existing Lead
+                  </TabsTrigger>
+                  <TabsTrigger value="new" className="flex items-center gap-2">
+                    Enter New Details
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="existing" className="space-y-4">
+                  {leads && (leads as any[]).length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-800">
+                          💡 Select a qualified lead from your tracking system to submit as a referral for commission.
+                        </p>
+                      </div>
+                      
+                      <div className="grid gap-4">
+                        {(leads as any[]).map((lead: any) => (
+                          <div
+                            key={lead.id}
+                            className="border rounded-lg p-4 hover:border-blue-300 cursor-pointer transition-colors"
+                            onClick={() => {
+                              const referralData = {
+                                businessName: lead.businessName,
+                                businessEmail: lead.contactEmail || "",
+                                businessPhone: lead.contactPhone || "",
+                                businessAddress: "",
+                                businessTypeId: "",
+                                currentProcessor: "",
+                                monthlyVolume: lead.estimatedMonthlyVolume || "",
+                                currentRate: "",
+                                cardMachineQuantity: 1,
+                                selectedProducts: [],
+                                notes: lead.notes || "",
+                                gdprConsent: true,
+                              };
+                              submitReferralMutation.mutate(referralData);
+                            }}
+                            data-testid={`button-select-lead-${lead.id}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">{lead.businessName}</h4>
+                                <p className="text-sm text-gray-600">{lead.contactName}</p>
+                                <p className="text-sm text-gray-500">{lead.contactEmail}</p>
+                                {lead.estimatedMonthlyVolume && (
+                                  <p className="text-sm text-blue-600">Est. Volume: {lead.estimatedMonthlyVolume}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <span className={`inline-block px-2 py-1 rounded-full text-xs ${
+                                  lead.status === 'interested' ? 'bg-green-100 text-green-800' :
+                                  lead.status === 'contacted' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {lead.status}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 mb-4">No leads found in your tracking system.</p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => window.location.href = '/leads'}
+                        data-testid="button-upload-leads"
+                      >
+                        Upload Leads First
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="new" className="space-y-4">
+                  <ReferralForm
+                    businessTypes={(businessTypes as any[]) || []}
+                    onSubmit={(data) => submitReferralMutation.mutate(data)}
+                    isSubmitting={submitReferralMutation.isPending}
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
