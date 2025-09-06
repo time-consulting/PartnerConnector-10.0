@@ -58,6 +58,133 @@ export default function TrainingModules({ onModuleComplete }: TrainingModulesPro
 
   const trainingModules: TrainingModule[] = [
     {
+      id: 'dojo-integration',
+      title: 'Dojo Partnership Overview & Services',
+      description: 'Master our featured payment partner Dojo and unlock premium commission opportunities',
+      duration: '25 min',
+      difficulty: 'Beginner',
+      type: 'interactive',
+      completed: false,
+      locked: false,
+      progress: 0,
+      points: 150,
+      isRequired: false,
+      content: `
+# Dojo Partnership Overview
+
+## About Dojo - Your Premium Payment Partner
+
+Dojo is the UK's most trusted payment provider, helping businesses accept payments with confidence. As our featured partner, Dojo offers cutting-edge technology and award-winning customer service, providing secure, reliable payment solutions for businesses of all sizes.
+
+### Why Dojo is Perfect for Your Clients
+
+#### Trust & Reliability
+- **4.8/5 Trust Score** with over 1,200+ verified reviews
+- FCA regulated and fully compliant with UK payment standards
+- 24/7 customer support with award-winning service
+
+#### Comprehensive Services
+- **Card Payment Processing** - Competitive rates with transparent pricing
+- **Mobile Card Readers** - Perfect for on-the-go businesses
+- **POS Terminal Solutions** - Complete point-of-sale systems
+- **Online Payment Gateway** - Secure e-commerce integration
+- **Business Banking Integration** - Streamlined financial management
+- **Inventory Management** - Built-in business tools
+- **Real-time Analytics** - Comprehensive reporting dashboard
+
+### Client Success Stories
+
+> **Sarah Mitchell - Retail Business Owner**
+> "Dojo has transformed our payment processing. The setup was seamless, rates are competitive, and their support team is outstanding. Highly recommend for any business looking to modernize their payments."
+> ⭐⭐⭐⭐⭐ (Verified Review)
+
+> **Marcus Thompson - Restaurant Owner**
+> "The mobile terminals have been perfect for table service. Fast transactions, reliable connection, and the analytics help us understand our business better. Great investment."
+> ⭐⭐⭐⭐⭐ (Verified Review)
+
+### Commission Structure & Earnings
+
+#### Level 1 Commission: 60% Revenue Share
+- **Card Processing Referrals**: Earn 60% of Dojo's revenue from your clients
+- **Average Monthly Earnings**: £200-£800 per active client
+- **Lifetime Value**: Recurring revenue for the life of the client relationship
+
+#### Example Earnings:
+- **Small Cafe (£5K monthly processing)**: ~£30/month commission = £360/year
+- **Medium Retail (£15K monthly processing)**: ~£90/month commission = £1,080/year  
+- **Large Restaurant (£30K monthly processing)**: ~£180/month commission = £2,160/year
+
+### Perfect Client Types for Dojo
+
+#### High-Success Industries:
+1. **Retail Businesses** - In-store and online payment solutions
+2. **Hospitality** - Restaurants, cafes, bars with mobile payment needs
+3. **Professional Services** - Accountants, consultants, healthcare
+4. **Healthcare** - Clinics, dental practices, wellness centers
+5. **Beauty & Wellness** - Salons, spas, fitness studios
+6. **Mobile Businesses** - Contractors, delivery services, events
+
+### How to Position Dojo to Clients
+
+#### Key Selling Points:
+1. **Cost Savings** - "Save up to 30% on payment processing fees"
+2. **Reliability** - "99.9% uptime with 24/7 UK-based support"
+3. **Growth Tools** - "Built-in analytics to help grow your business"
+4. **Security** - "Bank-level security protecting your customers"
+
+#### Opening Conversation:
+*"I've been working with businesses like yours to help reduce payment processing costs while improving customer experience. Many of my clients have saved 20-30% on their monthly card fees by switching to Dojo. Would you be interested in a quick 5-minute review of your current processing costs?"*
+
+### Implementation Process
+
+#### Step 1: Initial Discovery (5-10 minutes)
+- Current payment provider and monthly volume
+- Pain points with existing solution
+- Business goals and growth plans
+
+#### Step 2: Proposal Creation (Same day)
+- Custom rate comparison showing potential savings
+- Service benefits specific to their business type
+- Implementation timeline and support plan
+
+#### Step 3: Handoff to Dojo (24-48 hours)
+- Warm introduction to dedicated Dojo account manager
+- Technical setup consultation scheduled
+- Commission tracking activated in your dashboard
+
+### Best Practices for Success
+
+#### Do's:
+✅ Focus on cost savings and improved service
+✅ Use real client testimonials and case studies
+✅ Offer to review their current processing statements
+✅ Emphasize the quality of Dojo's UK-based support
+✅ Highlight industry-specific benefits
+
+#### Don'ts:
+❌ Oversell or make unrealistic promises
+❌ Rush the discovery process
+❌ Skip the needs analysis
+❌ Forget to set proper expectations on implementation time
+
+### Your Action Plan
+
+1. **Week 1**: Review your current client base for payment processing opportunities
+2. **Week 2**: Reach out to 5 prospects using the positioning scripts provided
+3. **Week 3**: Schedule discovery calls and gather payment processing statements
+4. **Week 4**: Submit your first Dojo referral and track commission
+
+### Support Resources
+
+- **Dojo Partner Portal**: Access rates, collateral, and client onboarding tools
+- **Live Chat Support**: Direct line to Dojo partnership team
+- **Monthly Partner Webinars**: Latest product updates and sales techniques
+- **Commission Dashboard**: Real-time tracking of all your Dojo referrals
+
+Remember: Dojo isn't just a product - it's a partnership that grows with your clients' success. Focus on long-term value creation rather than quick sales.
+`
+    },
+    {
       id: 'gdpr-compliance',
       title: 'GDPR Data Protection Training',
       description: 'Essential GDPR compliance training for handling client data (REQUIRED)',

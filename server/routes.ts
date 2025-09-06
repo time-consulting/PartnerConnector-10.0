@@ -423,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Initialize seed data
   await storage.seedBusinessTypes();
-  await storage.seedPartners();
+  // Partners seeding will be added after database schema is migrated
 
   // Leads routes
   app.get('/api/leads', async (req: any, res) => {
