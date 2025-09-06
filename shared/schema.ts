@@ -94,8 +94,8 @@ export const referrals = pgTable("referrals", {
   businessAddress: text("business_address"),
   businessTypeId: varchar("business_type_id").notNull(),
   currentProcessor: varchar("current_processor"),
-  monthlyVolume: decimal("monthly_volume", { precision: 15, scale: 2 }),
-  currentRate: decimal("current_rate", { precision: 5, scale: 4 }),
+  monthlyVolume: varchar("monthly_volume"),
+  currentRate: varchar("current_rate"),
   // Product selection and card machine requirements
   selectedProducts: text("selected_products").array(), // Array of product IDs
   cardMachineQuantity: integer("card_machine_quantity").default(1),
