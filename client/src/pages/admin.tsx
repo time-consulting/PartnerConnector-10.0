@@ -911,61 +911,306 @@ function CommissionApprovalForm({ referral, onSubmit, isSubmitting }: { referral
   const [formData, setFormData] = useState({
     actualCommission: "",
     adminNotes: "",
+    // Payment processing rates
+    debitRate: "1.5",
+    creditRate: "2.1", 
+    corporateRate: "2.3",
+    internationalRate: "2.8",
+    amexRate: "3.2",
+    secureTransactionFee: "1.5", // in pence
+    platformFee: "10",
+    fasterSettlement: false,
+    terminalFee: "15"
   });
+  
+  const [activeTab, setActiveTab] = useState("savings");
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
+  const monthlyVolume = parseFloat(referral.monthlyVolume?.replace(/[£,]/g, '') || "0");
+  const commission = parseFloat(formData.actualCommission || "0");
+
+  // Calculate estimated monthly savings for client
+  const calculateSavings = () => {
+    if (monthlyVolume <= 0) return { totalSavings: 0, breakdown: {} };
+
+    // Assume typical competitor rates are higher
+    const currentRates = {
+      debit: 1.8, // vs our 1.5%
+      credit: 2.5, // vs our 2.1%  
+      corporate: 2.8, // vs our 2.3%
+      platformFee: 25, // vs our £10
+      terminalFee: 25 // vs our £15
+    };
+
+    const ourRates = {
+      debit: parseFloat(formData.debitRate),
+      credit: parseFloat(formData.creditRate),
+      corporate: parseFloat(formData.corporateRate),
+      platformFee: parseFloat(formData.platformFee),
+      terminalFee: parseFloat(formData.terminalFee)
+    };
+
+    // Estimate transaction breakdown (60% debit, 30% credit, 10% corporate)
+    const debitVolume = monthlyVolume * 0.6;
+    const creditVolume = monthlyVolume * 0.3;
+    const corporateVolume = monthlyVolume * 0.1;
+
+    const debitSavings = (debitVolume * (currentRates.debit - ourRates.debit)) / 100;
+    const creditSavings = (creditVolume * (currentRates.credit - ourRates.credit)) / 100;
+    const corporateSavings = (corporateVolume * (currentRates.corporate - ourRates.corporate)) / 100;
+    const platformSavings = currentRates.platformFee - ourRates.platformFee;
+    const terminalSavings = currentRates.terminalFee - ourRates.terminalFee;
+
+    const totalSavings = debitSavings + creditSavings + corporateSavings + platformSavings + terminalSavings;
+
+    return {
+      totalSavings,
+      breakdown: {
+        debitSavings,
+        creditSavings, 
+        corporateSavings,
+        platformSavings,
+        terminalSavings,
+        debitVolume,
+        creditVolume,
+        corporateVolume
+      }
+    };
+  };
+
+  const savingsData = calculateSavings();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       actualCommission: parseFloat(formData.actualCommission),
-      adminNotes: formData.adminNotes
+      adminNotes: formData.adminNotes,
+      ratesData: {
+        debitRate: formData.debitRate,
+        creditRate: formData.creditRate,
+        corporateRate: formData.corporateRate,
+        internationalRate: formData.internationalRate,
+        amexRate: formData.amexRate,
+        secureTransactionFee: formData.secureTransactionFee,
+        platformFee: formData.platformFee,
+        fasterSettlement: formData.fasterSettlement,
+        terminalFee: formData.terminalFee,
+        estimatedMonthlySavings: savingsData.totalSavings
+      }
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-        <h4 className="font-medium text-blue-900 mb-2">Creating Commission Approval</h4>
-        <p className="text-sm text-blue-700">
-          This will update the referral with the actual commission and send an approval request to the user. 
-          The user will see this on their dashboard with an "Approve" button.
-        </p>
+    <div className="space-y-4">
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex">
+          <button
+            onClick={() => setActiveTab("savings")}
+            className={`mr-8 py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "savings" 
+                ? "border-green-500 text-green-600 bg-green-50" 
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            💰 Client Savings
+          </button>
+          <button
+            onClick={() => setActiveTab("rates")}
+            className={`mr-8 py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "rates" 
+                ? "border-blue-500 text-blue-600" 
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            📊 Rates Setup
+          </button>
+        </nav>
       </div>
 
-      <div>
-        <Label htmlFor="actualCommission">Actual Commission Amount (£)</Label>
-        <Input
-          id="actualCommission"
-          type="number"
-          step="0.01"
-          min="0"
-          value={formData.actualCommission}
-          onChange={(e) => setFormData({ ...formData, actualCommission: e.target.value })}
-          placeholder="e.g., 1500.00"
-          required
-        />
-      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {activeTab === "savings" && (
+          <div className="space-y-4">
+            {/* Highlighted Savings Display */}
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-green-800 mb-2">
+                  Monthly Savings: £{savingsData.totalSavings.toFixed(2)}
+                </h3>
+                <p className="text-green-700">
+                  Annual Savings: £{(savingsData.totalSavings * 12).toFixed(2)}
+                </p>
+                <p className="text-sm text-green-600 mt-2">
+                  Based on £{monthlyVolume.toLocaleString()} monthly volume
+                </p>
+              </div>
+            </div>
 
-      <div>
-        <Label htmlFor="adminNotes">Admin Notes (Optional)</Label>
-        <Textarea
-          id="adminNotes"
-          value={formData.adminNotes}
-          onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
-          placeholder="Any additional notes for the user..."
-          rows={3}
-        />
-      </div>
+            {/* Commission Input */}
+            <div>
+              <Label htmlFor="actualCommission">Actual Commission Amount (£)</Label>
+              <Input
+                id="actualCommission"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.actualCommission}
+                onChange={(e) => setFormData({ ...formData, actualCommission: e.target.value })}
+                placeholder="e.g., 1500.00"
+                required
+              />
+            </div>
 
-      <div className="text-sm text-gray-600">
-        <strong>Business:</strong> {referral.businessName} <br />
-        <strong>Estimated Commission:</strong> £{referral.estimatedCommission || "Not set"} <br />
-        <strong>Monthly Volume:</strong> £{referral.monthlyVolume || "Not specified"}
-      </div>
+            {/* Expandable Breakdown */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowBreakdown(!showBreakdown)}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                {showBreakdown ? "Hide" : "View"} Detailed Breakdown
+              </button>
+              
+              {showBreakdown && (
+                <div className="mt-2 p-4 bg-gray-50 rounded-lg border text-xs text-gray-600">
+                  <p className="text-xs text-gray-500 italic mb-3">View Only - Internal Use</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <strong>Transaction Savings:</strong><br />
+                      Debit (60%): £{savingsData.breakdown.debitSavings?.toFixed(2)}<br />
+                      Credit (30%): £{savingsData.breakdown.creditSavings?.toFixed(2)}<br />
+                      Corporate (10%): £{savingsData.breakdown.corporateSavings?.toFixed(2)}
+                    </div>
+                    <div>
+                      <strong>Fixed Savings:</strong><br />
+                      Platform Fee: £{savingsData.breakdown.platformSavings?.toFixed(2)}<br />
+                      Terminal Fee: £{savingsData.breakdown.terminalSavings?.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "Creating Approval..." : "Create Commission Approval"}
-      </Button>
-    </form>
+            <div>
+              <Label htmlFor="adminNotes">Admin Notes (Optional)</Label>
+              <Textarea
+                id="adminNotes"
+                value={formData.adminNotes}
+                onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
+                placeholder="Any additional notes for the user..."
+                rows={3}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === "rates" && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Debit Rate (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.debitRate}
+                  onChange={(e) => setFormData({ ...formData, debitRate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Credit Rate (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.creditRate}
+                  onChange={(e) => setFormData({ ...formData, creditRate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Corporate Rate (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.corporateRate}
+                  onChange={(e) => setFormData({ ...formData, corporateRate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>International Rate (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.internationalRate}
+                  onChange={(e) => setFormData({ ...formData, internationalRate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>AMEX Rate (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.amexRate}
+                  onChange={(e) => setFormData({ ...formData, amexRate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Secure Transaction Fee (pence)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={formData.secureTransactionFee}
+                  onChange={(e) => setFormData({ ...formData, secureTransactionFee: e.target.value })}
+                  placeholder="e.g., 1.5"
+                />
+              </div>
+              <div>
+                <Label>Platform Fee (£)</Label>
+                <Select 
+                  value={formData.platformFee} 
+                  onValueChange={(value) => setFormData({ ...formData, platformFee: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">£0</SelectItem>
+                    <SelectItem value="10">£10</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Terminal Fee - Dojo Go (£)</Label>
+                <Input
+                  type="number"
+                  value={formData.terminalFee}
+                  onChange={(e) => setFormData({ ...formData, terminalFee: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="fasterSettlement"
+                checked={formData.fasterSettlement}
+                onChange={(e) => setFormData({ ...formData, fasterSettlement: e.target.checked })}
+              />
+              <Label htmlFor="fasterSettlement">Faster Settlement (+£10/month)</Label>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-4">
+          <Button type="submit" disabled={isSubmitting} className="flex-1">
+            {isSubmitting ? "Updating..." : "Update Commission"}
+          </Button>
+          <Button type="button" variant="outline" className="flex-1">
+            Send Quote to Client
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
 
