@@ -514,6 +514,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ RATES MANAGEMENT ENDPOINTS ============
+  
+  // Get all rates
+  app.get('/api/admin/rates', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const rates = await storage.getRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching rates:", error);
+      res.status(500).json({ message: "Failed to fetch rates" });
+    }
+  });
+
+  // Create new rate
+  app.post('/api/admin/rates', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const rate = await storage.createRate(req.body);
+      res.json(rate);
+    } catch (error) {
+      console.error("Error creating rate:", error);
+      res.status(500).json({ message: "Failed to create rate" });
+    }
+  });
+
+  // Update rate
+  app.patch('/api/admin/rates/:rateId', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { rateId } = req.params;
+      const rate = await storage.updateRate(rateId, req.body);
+      res.json(rate);
+    } catch (error) {
+      console.error("Error updating rate:", error);
+      res.status(500).json({ message: "Failed to update rate" });
+    }
+  });
+
+  // Delete rate
+  app.delete('/api/admin/rates/:rateId', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { rateId } = req.params;
+      await storage.deleteRate(rateId);
+      res.json({ success: true, message: "Rate deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting rate:", error);
+      res.status(500).json({ message: "Failed to delete rate" });
+    }
+  });
+
+  // ============ COMMISSION APPROVAL ENDPOINTS ============
+  
+  // Create commission approval when admin enters actual commission
+  app.post('/api/admin/referrals/:referralId/create-commission-approval', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { actualCommission, adminNotes } = req.body;
+
+      // First update the referral with actual commission
+      await storage.updateReferral(referralId, { 
+        actualCommission: actualCommission,
+        adminNotes: adminNotes || null
+      });
+
+      // Get referral details for approval
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
+      
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Create commission approval for the user
+      const approval = await storage.createCommissionApproval({
+        referralId: referralId,
+        userId: referral.referrerId,
+        commissionAmount: actualCommission,
+        clientBusinessName: referral.businessName,
+        adminNotes: adminNotes || null
+      });
+
+      // Create notification for user
+      await createNotificationForUser(referral.referrerId, {
+        type: 'commission_approval',
+        title: 'Commission Ready for Approval',
+        message: `Your commission of £${actualCommission} for ${referral.businessName} is ready for approval`,
+        referralId: referralId,
+        businessName: referral.businessName
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Commission approval created successfully",
+        approval: approval
+      });
+    } catch (error) {
+      console.error("Error creating commission approval:", error);
+      res.status(500).json({ message: "Failed to create commission approval" });
+    }
+  });
+
+  // Get all commission approvals (admin view)
+  app.get('/api/admin/commission-approvals', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const approvals = await storage.getAllCommissionApprovals();
+      res.json(approvals);
+    } catch (error) {
+      console.error("Error fetching commission approvals:", error);
+      res.status(500).json({ message: "Failed to fetch commission approvals" });
+    }
+  });
+
+  // Process commission payment (admin)
+  app.post('/api/admin/commission-approvals/:approvalId/process-payment', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { approvalId } = req.params;
+      const { paymentReference } = req.body;
+
+      // Generate payment reference if not provided
+      const paymentRef = paymentReference || `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      
+      await storage.processCommissionPayment(approvalId, paymentRef);
+
+      res.json({ 
+        success: true, 
+        message: "Commission payment processed successfully",
+        paymentReference: paymentRef
+      });
+    } catch (error) {
+      console.error("Error processing commission payment:", error);
+      res.status(500).json({ message: "Failed to process commission payment" });
+    }
+  });
+
   // Admin routes
   app.get('/api/admin/stats', async (req: any, res) => {
     try {
@@ -623,9 +755,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Initialize seed data
   await storage.seedBusinessTypes();
+  await storage.seedRates();
   // Partners seeding will be added after database schema is migrated
   
   // Notification routes
+  // ============ USER COMMISSION APPROVAL ENDPOINTS ============
+  
+  // Get user's pending commission approvals
+  app.get('/api/commission-approvals', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const approvals = await storage.getCommissionApprovalsByUserId(userId);
+      res.json(approvals);
+    } catch (error) {
+      console.error("Error fetching commission approvals:", error);
+      res.status(500).json({ message: "Failed to fetch commission approvals" });
+    }
+  });
+
+  // User approves commission
+  app.patch('/api/commission-approvals/:approvalId/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const { approvalId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Verify approval belongs to user
+      const approvals = await storage.getCommissionApprovalsByUserId(userId);
+      const approval = approvals.find(a => a.id === approvalId);
+      
+      if (!approval) {
+        return res.status(404).json({ message: "Commission approval not found" });
+      }
+
+      if (approval.approvalStatus !== 'pending') {
+        return res.status(400).json({ message: "Commission approval is not pending" });
+      }
+
+      // Update approval status
+      const updatedApproval = await storage.updateCommissionApprovalStatus(approvalId, 'approved');
+
+      res.json({ 
+        success: true, 
+        message: "Commission approved successfully",
+        approval: updatedApproval
+      });
+    } catch (error) {
+      console.error("Error approving commission:", error);
+      res.status(500).json({ message: "Failed to approve commission" });
+    }
+  });
+
+  // User rejects commission  
+  app.patch('/api/commission-approvals/:approvalId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const { approvalId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Verify approval belongs to user
+      const approvals = await storage.getCommissionApprovalsByUserId(userId);
+      const approval = approvals.find(a => a.id === approvalId);
+      
+      if (!approval) {
+        return res.status(404).json({ message: "Commission approval not found" });
+      }
+
+      if (approval.approvalStatus !== 'pending') {
+        return res.status(400).json({ message: "Commission approval is not pending" });
+      }
+
+      // Update approval status
+      const updatedApproval = await storage.updateCommissionApprovalStatus(approvalId, 'rejected');
+
+      res.json({ 
+        success: true, 
+        message: "Commission rejected",
+        approval: updatedApproval
+      });
+    } catch (error) {
+      console.error("Error rejecting commission:", error);
+      res.status(500).json({ message: "Failed to reject commission" });
+    }
+  });
+
   app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

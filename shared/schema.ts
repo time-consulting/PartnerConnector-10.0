@@ -158,6 +158,37 @@ export const partnerHierarchy = pgTable("partner_hierarchy", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Rates management table
+export const rates = pgTable("rates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  category: varchar("category").notNull(), // payment_processing, business_funding
+  rateType: varchar("rate_type").notNull(), // percentage, fixed, tiered
+  value: decimal("value", { precision: 10, scale: 4 }).notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  effectiveFrom: timestamp("effective_from").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Commission approvals - pending approvals for users to accept
+export const commissionApprovals = pgTable("commission_approvals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  referralId: varchar("referral_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  commissionAmount: decimal("commission_amount", { precision: 10, scale: 2 }).notNull(),
+  clientBusinessName: varchar("client_business_name"),
+  approvalStatus: varchar("approval_status").notNull().default("pending"), // pending, approved, rejected
+  approvedAt: timestamp("approved_at"),
+  paymentStatus: varchar("payment_status").notNull().default("pending"), // pending, processing, completed, failed
+  paymentDate: timestamp("payment_date"),
+  paymentReference: varchar("payment_reference"),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Team invitations
 export const teamInvitations = pgTable("team_invitations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -512,6 +543,16 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Rate types and schemas
+export const insertRateSchema = createInsertSchema(rates);
+export type InsertRate = z.infer<typeof insertRateSchema>;
+export type Rate = typeof rates.$inferSelect;
+
+// Commission approval types and schemas
+export const insertCommissionApprovalSchema = createInsertSchema(commissionApprovals);
+export type InsertCommissionApproval = z.infer<typeof insertCommissionApprovalSchema>;
+export type CommissionApproval = typeof commissionApprovals.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 export type Referral = typeof referrals.$inferSelect;

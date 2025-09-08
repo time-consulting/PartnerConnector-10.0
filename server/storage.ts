@@ -9,6 +9,8 @@ import {
   partners,
   partnerReviews,
   notifications,
+  rates,
+  commissionApprovals,
   type User,
   type UpsertUser,
   type InsertReferral,
@@ -17,6 +19,10 @@ import {
   type BillUpload,
   type Notification,
   type InsertNotification,
+  type InsertRate,
+  type Rate,
+  type InsertCommissionApproval,
+  type CommissionApproval,
 } from "@shared/schema";
 import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
@@ -82,6 +88,20 @@ export interface IStorage {
   createNotification(notification: any): Promise<any>;
   markNotificationAsRead(notificationId: string): Promise<void>;
   markAllNotificationsAsRead(userId: string): Promise<void>;
+  
+  // Rates management operations
+  getRates(): Promise<Rate[]>;
+  createRate(rate: InsertRate): Promise<Rate>;
+  updateRate(id: string, rate: Partial<InsertRate>): Promise<Rate>;
+  deleteRate(id: string): Promise<void>;
+  seedRates(): Promise<void>;
+  
+  // Commission approval operations
+  createCommissionApproval(approval: InsertCommissionApproval): Promise<CommissionApproval>;
+  getCommissionApprovalsByUserId(userId: string): Promise<CommissionApproval[]>;
+  getAllCommissionApprovals(): Promise<CommissionApproval[]>;
+  updateCommissionApprovalStatus(approvalId: string, status: string): Promise<CommissionApproval>;
+  processCommissionPayment(approvalId: string, paymentReference: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -175,37 +195,34 @@ export class DatabaseStorage implements IStorage {
     const existingPartners = await db.select().from(partners);
     if (existingPartners.length > 0) return;
 
-    const dojoPartner = {
-      name: "Dojo",
-      slug: "dojo",
-      description: "Dojo is the UK's most trusted payment provider, helping businesses accept payments with confidence. With cutting-edge technology and award-winning customer service, Dojo provides secure, reliable payment solutions for businesses of all sizes.",
-      logoUrl: "https://www.dojo.tech/assets/images/dojo-logo.svg",
-      website: "https://www.dojo.tech",
-      contactEmail: "partners@dojo.tech",
-      trustScore: "4.8",
-      totalReviews: 1247,
+    const strategicPartner = {
+      name: "FinanceFlow Solutions",
+      slug: "financeflow",
+      description: "Your strategic partner for comprehensive business financial services. We specialize in payment processing solutions and business funding, helping companies of all sizes streamline their operations and access the capital they need to grow.",
+      logoUrl: "/assets/financeflow-logo.svg",
+      website: "https://financeflow.co.uk",
+      contactEmail: "partners@financeflow.co.uk",
+      trustScore: "4.9",
+      totalReviews: 2847,
       services: [
         "Card Payment Processing",
-        "Mobile Card Readers",
-        "POS Terminal Solutions", 
-        "Online Payment Gateway",
-        "Business Banking Integration",
-        "Inventory Management",
-        "Real-time Analytics",
-        "24/7 Customer Support"
+        "Business Funding Solutions",
+        "Equipment Finance",
+        "Working Capital Loans",
+        "Merchant Cash Advances",
+        "Invoice Factoring",
+        "24/7 Support & Consulting"
       ],
       specializations: [
-        "Retail",
-        "Hospitality", 
-        "Professional Services",
-        "Healthcare",
-        "Beauty & Wellness",
-        "Mobile Businesses"
+        "Payment Processing",
+        "Business Funding",
+        "Equipment Finance",
+        "Cash Flow Solutions"
       ],
       isActive: true,
     };
 
-    const [insertedPartner] = await db.insert(partners).values(dojoPartner).returning();
+    const [insertedPartner] = await db.insert(partners).values(strategicPartner).returning();
 
     // Add some reviews for Dojo
     const dojoReviews = [
@@ -541,6 +558,122 @@ export class DatabaseStorage implements IStorage {
       .update(notifications)
       .set({ read: true })
       .where(eq(notifications.userId, userId));
+  }
+
+  // Rates management operations
+  async getRates(): Promise<Rate[]> {
+    return await db.select().from(rates).where(eq(rates.isActive, true)).orderBy(rates.name);
+  }
+
+  async createRate(rateData: InsertRate): Promise<Rate> {
+    const [rate] = await db.insert(rates).values(rateData).returning();
+    return rate;
+  }
+
+  async updateRate(id: string, rateData: Partial<InsertRate>): Promise<Rate> {
+    const [rate] = await db
+      .update(rates)
+      .set({ ...rateData, updatedAt: new Date() })
+      .where(eq(rates.id, id))
+      .returning();
+    return rate;
+  }
+
+  async deleteRate(id: string): Promise<void> {
+    await db.update(rates).set({ isActive: false }).where(eq(rates.id, id));
+  }
+
+  async seedRates(): Promise<void> {
+    const existingRates = await this.getRates();
+    if (existingRates.length > 0) return;
+
+    const defaultRates = [
+      {
+        name: "Headline Debit Rate",
+        category: "payment_processing",
+        rateType: "percentage",
+        value: "1.5",
+        description: "Standard debit card processing rate for transactions",
+        isActive: true,
+      },
+      {
+        name: "Credit Card Rate",
+        category: "payment_processing", 
+        rateType: "percentage",
+        value: "2.1",
+        description: "Standard credit card processing rate for transactions",
+        isActive: true,
+      },
+      {
+        name: "Business Funding Commission",
+        category: "business_funding",
+        rateType: "percentage",
+        value: "60.0",
+        description: "Commission rate for successful business funding referrals",
+        isActive: true,
+      },
+      {
+        name: "Equipment Finance Commission",
+        category: "business_funding",
+        rateType: "percentage", 
+        value: "55.0",
+        description: "Commission rate for equipment financing referrals",
+        isActive: true,
+      }
+    ];
+
+    await db.insert(rates).values(defaultRates);
+  }
+
+  // Commission approval operations
+  async createCommissionApproval(approvalData: InsertCommissionApproval): Promise<CommissionApproval> {
+    const [approval] = await db.insert(commissionApprovals).values(approvalData).returning();
+    return approval;
+  }
+
+  async getCommissionApprovalsByUserId(userId: string): Promise<CommissionApproval[]> {
+    return await db
+      .select()
+      .from(commissionApprovals)
+      .where(eq(commissionApprovals.userId, userId))
+      .orderBy(desc(commissionApprovals.createdAt));
+  }
+
+  async getAllCommissionApprovals(): Promise<CommissionApproval[]> {
+    return await db
+      .select()
+      .from(commissionApprovals)
+      .orderBy(desc(commissionApprovals.createdAt));
+  }
+
+  async updateCommissionApprovalStatus(approvalId: string, status: string): Promise<CommissionApproval> {
+    const updateData: any = { 
+      approvalStatus: status,
+      updatedAt: new Date()
+    };
+    
+    if (status === 'approved') {
+      updateData.approvedAt = new Date();
+    }
+
+    const [approval] = await db
+      .update(commissionApprovals)
+      .set(updateData)
+      .where(eq(commissionApprovals.id, approvalId))
+      .returning();
+    return approval;
+  }
+
+  async processCommissionPayment(approvalId: string, paymentReference: string): Promise<void> {
+    await db
+      .update(commissionApprovals)
+      .set({
+        paymentStatus: 'completed',
+        paymentDate: new Date(),
+        paymentReference,
+        updatedAt: new Date()
+      })
+      .where(eq(commissionApprovals.id, approvalId));
   }
 }
 

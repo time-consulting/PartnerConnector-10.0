@@ -21,7 +21,11 @@ import {
   Edit,
   Eye,
   Check,
-  X
+  X,
+  CreditCard,
+  Plus,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
@@ -202,6 +206,112 @@ export default function AdminPortal() {
     sendQuoteMutation.mutate({ referralId, quoteData });
   };
 
+  // ============ RATES MANAGEMENT ============
+  const { data: rates = [], refetch: refetchRates } = useQuery({
+    queryKey: ["/api/admin/rates"],
+    enabled: selectedTab === "rates"
+  });
+
+  const createRateMutation = useMutation({
+    mutationFn: async (rateData: any) => {
+      return await apiRequest("/api/admin/rates", "POST", rateData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rate Created",
+        description: "Rate has been created successfully.",
+      });
+      refetchRates();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create rate.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateRateMutation = useMutation({
+    mutationFn: async ({ rateId, data }: { rateId: string; data: any }) => {
+      return await apiRequest(`/api/admin/rates/${rateId}`, "PATCH", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rate Updated",
+        description: "Rate has been updated successfully.",
+      });
+      refetchRates();
+    },
+  });
+
+  // ============ COMMISSION APPROVAL MANAGEMENT ============
+  const { data: commissionApprovals = [], refetch: refetchCommissions } = useQuery({
+    queryKey: ["/api/admin/commission-approvals"],
+    enabled: selectedTab === "commissions"
+  });
+
+  const createCommissionApprovalMutation = useMutation({
+    mutationFn: async ({ referralId, actualCommission, adminNotes }: { referralId: string; actualCommission: number; adminNotes?: string }) => {
+      return await apiRequest(`/api/admin/referrals/${referralId}/create-commission-approval`, "POST", {
+        actualCommission,
+        adminNotes
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Commission Approval Created",
+        description: "Commission approval has been sent to the user for approval.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/referrals"] });
+      refetchCommissions();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized", 
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create commission approval.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const processPaymentMutation = useMutation({
+    mutationFn: async ({ approvalId, paymentReference }: { approvalId: string; paymentReference?: string }) => {
+      return await apiRequest(`/api/admin/commission-approvals/${approvalId}/process-payment`, "POST", {
+        paymentReference
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Payment Processed",
+        description: "Commission payment has been processed successfully.",
+      });
+      refetchCommissions();
+    },
+  });
+
   if (isLoading || !isAuthenticated) {
     return <div>Loading...</div>;
   }
@@ -214,6 +324,8 @@ export default function AdminPortal() {
     { id: "overview", name: "Overview", icon: TrendingUp },
     { id: "users", name: "Users", icon: Users },
     { id: "referrals", name: "Referrals", icon: FileText },
+    { id: "rates", name: "Rates", icon: DollarSign },
+    { id: "commissions", name: "Commissions", icon: CreditCard },
   ];
 
   return (
@@ -433,6 +545,37 @@ export default function AdminPortal() {
                             />
                           </DialogContent>
                         </Dialog>
+
+                        {!referral.actualCommission && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="secondary" data-testid={`button-set-commission-${referral.id}`}>
+                                <DollarSign className="w-4 h-4 mr-1" />
+                                Set Commission
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-lg bg-white dark:bg-gray-900">
+                              <DialogHeader>
+                                <DialogTitle>Set Actual Commission - {referral.businessName}</DialogTitle>
+                              </DialogHeader>
+                              <CommissionApprovalForm 
+                                referral={referral}
+                                onSubmit={(commissionData) => createCommissionApprovalMutation.mutate({
+                                  referralId: referral.id,
+                                  actualCommission: commissionData.actualCommission,
+                                  adminNotes: commissionData.adminNotes
+                                })}
+                                isSubmitting={createCommissionApprovalMutation.isPending}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        )}
+
+                        {referral.actualCommission && (
+                          <div className="text-sm text-green-600 font-medium">
+                            Commission Set: £{Number(referral.actualCommission).toLocaleString()}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -441,8 +584,388 @@ export default function AdminPortal() {
             </div>
           </div>
         )}
+
+        {/* Rates Management Tab */}
+        {selectedTab === "rates" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">Rates Management</h2>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add New Rate
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Rate</DialogTitle>
+                  </DialogHeader>
+                  <NewRateForm onSave={(data) => createRateMutation.mutate(data)} />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {rates.map((rate: any) => (
+                <Card key={rate.id} className="relative">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{rate.name}</CardTitle>
+                        <Badge variant={rate.category === 'payment_processing' ? 'default' : 'secondary'}>
+                          {rate.category.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Rate</DialogTitle>
+                          </DialogHeader>
+                          <EditRateForm 
+                            rate={rate} 
+                            onSave={(data) => updateRateMutation.mutate({ rateId: rate.id, data })} 
+                          />
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="text-2xl font-bold text-primary">
+                        {rate.value}%
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {rate.description}
+                      </p>
+                      <div className="text-xs text-muted-foreground">
+                        Type: {rate.rateType}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Commission Approvals Tab */}
+        {selectedTab === "commissions" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">Commission Approvals</h2>
+              <div className="text-sm text-muted-foreground">
+                Total Pending: {commissionApprovals.filter((c: any) => c.approvalStatus === 'pending').length}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {commissionApprovals.map((approval: any) => (
+                <Card key={approval.id} className="relative">
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                      <div>
+                        <div className="font-medium">{approval.clientBusinessName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Referral ID: {approval.referralId.slice(0, 8)}...
+                        </div>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          £{Number(approval.commissionAmount).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Commission</div>
+                      </div>
+
+                      <div className="text-center">
+                        <Badge 
+                          variant={
+                            approval.approvalStatus === 'approved' ? 'default' :
+                            approval.approvalStatus === 'rejected' ? 'destructive' : 'secondary'
+                          }
+                          className="mb-2"
+                        >
+                          {approval.approvalStatus.toUpperCase()}
+                        </Badge>
+                        {approval.paymentStatus && (
+                          <div className="text-xs">
+                            Payment: {approval.paymentStatus}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        {approval.approvalStatus === 'approved' && approval.paymentStatus === 'pending' && (
+                          <Button
+                            onClick={() => processPaymentMutation.mutate({ approvalId: approval.id })}
+                            disabled={processPaymentMutation.isPending}
+                            className="flex items-center gap-2"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            Process Payment
+                          </Button>
+                        )}
+                        {approval.paymentStatus === 'completed' && (
+                          <div className="text-sm text-green-600">
+                            ✓ Paid: {approval.paymentReference}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {approval.adminNotes && (
+                      <div className="mt-4 pt-4 border-t">
+                        <div className="text-xs text-muted-foreground">Admin Notes:</div>
+                        <div className="text-sm">{approval.adminNotes}</div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {commissionApprovals.length === 0 && (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <div className="text-muted-foreground">No commission approvals found</div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+// ============ NEW FORM COMPONENTS ============
+
+function NewRateForm({ onSave }: { onSave: (data: any) => void }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "payment_processing",
+    rateType: "percentage",
+    value: "",
+    description: "",
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Rate Name</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="e.g., Headline Debit Rate"
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="category">Category</Label>
+        <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="payment_processing">Payment Processing</SelectItem>
+            <SelectItem value="business_funding">Business Funding</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="rateType">Rate Type</Label>
+        <Select value={formData.rateType} onValueChange={(value) => setFormData({ ...formData, rateType: value })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="percentage">Percentage</SelectItem>
+            <SelectItem value="fixed">Fixed Amount</SelectItem>
+            <SelectItem value="tiered">Tiered</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="value">Rate Value</Label>
+        <Input
+          id="value"
+          value={formData.value}
+          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+          placeholder="e.g., 1.5 (for percentage rates)"
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Brief description of this rate..."
+          rows={3}
+        />
+      </div>
+
+      <Button type="submit" className="w-full">Create Rate</Button>
+    </form>
+  );
+}
+
+function EditRateForm({ rate, onSave }: { rate: any; onSave: (data: any) => void }) {
+  const [formData, setFormData] = useState({
+    name: rate.name || "",
+    category: rate.category || "payment_processing",
+    rateType: rate.rateType || "percentage",
+    value: rate.value || "",
+    description: rate.description || "",
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Rate Name</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="category">Category</Label>
+        <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="payment_processing">Payment Processing</SelectItem>
+            <SelectItem value="business_funding">Business Funding</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="rateType">Rate Type</Label>
+        <Select value={formData.rateType} onValueChange={(value) => setFormData({ ...formData, rateType: value })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="percentage">Percentage</SelectItem>
+            <SelectItem value="fixed">Fixed Amount</SelectItem>
+            <SelectItem value="tiered">Tiered</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="value">Rate Value</Label>
+        <Input
+          id="value"
+          value={formData.value}
+          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          rows={3}
+        />
+      </div>
+
+      <Button type="submit" className="w-full">Update Rate</Button>
+    </form>
+  );
+}
+
+// ============ COMMISSION APPROVAL FORM ============
+
+function CommissionApprovalForm({ referral, onSubmit, isSubmitting }: { referral: any; onSubmit: (data: any) => void; isSubmitting: boolean }) {
+  const [formData, setFormData] = useState({
+    actualCommission: "",
+    adminNotes: "",
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      actualCommission: parseFloat(formData.actualCommission),
+      adminNotes: formData.adminNotes
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <h4 className="font-medium text-blue-900 mb-2">Creating Commission Approval</h4>
+        <p className="text-sm text-blue-700">
+          This will update the referral with the actual commission and send an approval request to the user. 
+          The user will see this on their dashboard with an "Approve" button.
+        </p>
+      </div>
+
+      <div>
+        <Label htmlFor="actualCommission">Actual Commission Amount (£)</Label>
+        <Input
+          id="actualCommission"
+          type="number"
+          step="0.01"
+          min="0"
+          value={formData.actualCommission}
+          onChange={(e) => setFormData({ ...formData, actualCommission: e.target.value })}
+          placeholder="e.g., 1500.00"
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="adminNotes">Admin Notes (Optional)</Label>
+        <Textarea
+          id="adminNotes"
+          value={formData.adminNotes}
+          onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
+          placeholder="Any additional notes for the user..."
+          rows={3}
+        />
+      </div>
+
+      <div className="text-sm text-gray-600">
+        <strong>Business:</strong> {referral.businessName} <br />
+        <strong>Estimated Commission:</strong> £{referral.estimatedCommission || "Not set"} <br />
+        <strong>Monthly Volume:</strong> £{referral.monthlyVolume || "Not specified"}
+      </div>
+
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? "Creating Approval..." : "Create Commission Approval"}
+      </Button>
+    </form>
   );
 }
 
