@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertReferralSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { emailService } from "./emailService";
 import multer from "multer";
 
 const upload = multer({ 
@@ -475,6 +476,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to verify admin access" });
     }
   };
+
+  // Password reset functionality
+  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.email) {
+        return res.status(400).json({ message: "User has no email address" });
+      }
+
+      // Generate a simple reset token (in production, use crypto.randomBytes)
+      const resetToken = `rst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Send password reset email
+      const emailSent = await emailService.sendPasswordResetEmail(user.email, resetToken);
+      
+      if (emailSent) {
+        res.json({ 
+          success: true, 
+          message: `Password reset email sent to ${user.email}` 
+        });
+      } else {
+        res.json({ 
+          success: false, 
+          message: "Email service not configured. Password reset email could not be sent." 
+        });
+      }
+    } catch (error) {
+      console.error("Error sending password reset:", error);
+      res.status(500).json({ message: "Failed to send password reset email" });
+    }
+  });
 
   // Admin routes
   app.get('/api/admin/stats', async (req: any, res) => {
