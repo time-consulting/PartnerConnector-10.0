@@ -13,22 +13,95 @@ const upload = multer({
 
 // GHL Integration function
 async function submitToGHL(referral: any) {
-  // This would integrate with GoHighLevel API
-  // For now, we'll simulate the submission
-  console.log(`Submitting referral to GHL:`, {
-    business: referral.businessName,
-    email: referral.businessEmail,
-    phone: referral.businessPhone,
-    volume: referral.monthlyVolume
-  });
-  
-  // In a real implementation, you would:
-  // 1. Call GHL API to create a new lead/contact
-  // 2. Add them to appropriate campaigns
-  // 3. Set up follow-up workflows
-  // 4. Return success/failure status
-  
-  return { success: true, ghlContactId: `ghl_${Date.now()}` };
+  try {
+    // Check if GHL credentials are configured
+    if (!process.env.GHL_API_KEY || !process.env.GHL_LOCATION_ID) {
+      console.log('GHL credentials not configured - skipping submission');
+      return { success: true, ghlContactId: `mock_${Date.now()}`, skipped: true };
+    }
+
+    const ghlApiKey = process.env.GHL_API_KEY;
+    const locationId = process.env.GHL_LOCATION_ID;
+    
+    // Create contact/lead in GoHighLevel
+    const contactData = {
+      firstName: referral.businessOwnerName?.split(' ')[0] || 'Business',
+      lastName: referral.businessOwnerName?.split(' ').slice(1).join(' ') || 'Owner',
+      email: referral.businessEmail,
+      phone: referral.businessPhone,
+      companyName: referral.businessName,
+      customFields: {
+        business_type: referral.businessType,
+        monthly_volume: referral.monthlyVolume,
+        annual_turnover: referral.annualTurnover,
+        referral_source: 'PartnerConnector',
+        referral_id: referral.id,
+        submission_date: new Date().toISOString()
+      },
+      tags: ['PartnerConnector Referral', `Volume: £${referral.monthlyVolume || 'Unknown'}`]
+    };
+
+    // Submit to GHL API
+    const response = await fetch(`https://services.leadconnectorhq.com/locations/${locationId}/contacts`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ghlApiKey}`,
+        'Content-Type': 'application/json',
+        'Version': '2021-07-28'
+      },
+      body: JSON.stringify(contactData)
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('GHL API Error:', response.status, error);
+      throw new Error(`GHL API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log(`Referral ${referral.id} successfully submitted to GHL. Contact ID: ${result.contact?.id}`);
+    
+    // Add to appropriate workflow/campaign if configured
+    if (process.env.GHL_WORKFLOW_ID && result.contact?.id) {
+      await addToGHLWorkflow(result.contact.id, process.env.GHL_WORKFLOW_ID, ghlApiKey);
+    }
+
+    return { 
+      success: true, 
+      ghlContactId: result.contact?.id,
+      ghlResponse: result
+    };
+  } catch (error) {
+    console.error(`Failed to submit referral ${referral.id} to GHL:`, error);
+    // Don't fail the entire referral submission if GHL fails
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      ghlContactId: null
+    };
+  }
+}
+
+// Add contact to GHL workflow/campaign
+async function addToGHLWorkflow(contactId: string, workflowId: string, apiKey: string) {
+  try {
+    const response = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/workflow/${workflowId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Version': '2021-07-28'
+      }
+    });
+
+    if (response.ok) {
+      console.log(`Contact ${contactId} added to workflow ${workflowId}`);
+    } else {
+      console.error(`Failed to add contact to workflow: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error adding contact to workflow:', error);
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -54,13 +127,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      // Here you would typically:
-      // 1. Validate the webhook signature from GHL
-      // 2. Process the team invitation
-      // 3. Send email via GHL API
-      // 4. Store invitation in database if needed
+      // Validate webhook signature if configured
+      if (process.env.GHL_WEBHOOK_SECRET) {
+        const signature = req.headers['x-ghl-signature'];
+        if (!signature) {
+          return res.status(401).json({ success: false, message: 'Missing webhook signature' });
+        }
+        // Add signature validation logic here
+      }
 
-      // Mock GHL API call structure (you would implement with actual GHL credentials)
+      // Process team invitation through GHL API
+      let ghlResponse = null;
+      if (process.env.GHL_API_KEY && process.env.GHL_LOCATION_ID) {
+        try {
+          const inviteData = {
+            firstName: email.split('@')[0],
+            lastName: 'Partner',
+            email: email,
+            customFields: {
+              invited_by: invitedBy,
+              team_role: role,
+              team_name: teamName || 'PartnerConnector Team',
+              invite_type: 'team_member',
+              invite_date: new Date().toISOString()
+            },
+            tags: ['Team Invitation', `Role: ${role}`, 'PartnerConnector']
+          };
+
+          const response = await fetch(`https://services.leadconnectorhq.com/locations/${process.env.GHL_LOCATION_ID}/contacts`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+              'Content-Type': 'application/json',
+              'Version': '2021-07-28'
+            },
+            body: JSON.stringify(inviteData)
+          });
+
+          if (response.ok) {
+            ghlResponse = await response.json();
+            console.log(`Team invitation processed for ${email}. GHL Contact ID: ${ghlResponse.contact?.id}`);
+          } else {
+            console.error(`GHL API error for team invite: ${response.status}`);
+          }
+        } catch (error) {
+          console.error('Error processing team invitation through GHL:', error);
+        }
+      }
+
       const webhookData = {
         contact: {
           email: email,
@@ -73,7 +187,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             inviteDate: new Date().toISOString()
           }
         },
-        trigger: 'team_invitation_email'
+        ghlContactId: ghlResponse?.contact?.id || null,
+        processed: !!ghlResponse
       };
 
       // Return success response to acknowledge webhook
