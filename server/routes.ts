@@ -32,32 +32,13 @@ async function submitToGHL(referral: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware - temporarily disabled for development
-  // await setupAuth(app);
+  // Auth middleware
+  await setupAuth(app);
 
   // Seed business types on startup
   await storage.seedBusinessTypes();
 
-  // Development authentication with session tracking
-  app.get('/api/login', (req: any, res) => {
-    req.session.isLoggedIn = true;
-    res.redirect('/');
-  });
-
-  app.get('/api/logout', (req: any, res) => {
-    req.session.isLoggedIn = false;
-    req.session.destroy((err: any) => {
-      if (err) {
-        console.error('Session destruction error:', err);
-      }
-      res.clearCookie('connect.sid', {
-        path: '/',
-        secure: true,
-        httpOnly: true
-      });
-      res.redirect('/');
-    });
-  });
+  // Login and logout are now handled by setupAuth in replitAuth.ts
 
   // GHL Webhook for team member invites
   app.post('/api/webhooks/ghl/team-invite', async (req: any, res) => {
@@ -110,30 +91,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auth routes with development session tracking
-  app.get('/api/auth/user', async (req: any, res) => {
+  // Auth routes with proper Replit authentication
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      // Check if user is logged in (for development)
-      if (!req.session?.isLoggedIn) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const userId = req.user?.claims?.sub || 'dev-user-123';
-      let user = await storage.getUser(userId);
-      
-      // If user doesn't exist, create a mock user for development
-      if (!user) {
-        user = await storage.upsertUser({
-          id: userId,
-          email: 'developer@example.com',
-          firstName: null, // Will be set during onboarding
-          lastName: null,  // Will be set during onboarding
-          profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-          profession: null,
-          company: null,
-        });
-      }
-      
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -142,14 +104,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.patch('/api/auth/user', async (req: any, res) => {
+  app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      // Check if user is logged in (for development)
-      if (!req.session?.isLoggedIn) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const userId = req.user?.claims?.sub || 'dev-user-123';
+      const userId = req.user.claims.sub;
       const updateData = req.body;
       
       const updatedUser = await storage.upsertUser({
@@ -165,9 +122,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate partner ID for user
-  app.post('/api/auth/generate-partner-id', async (req: any, res) => {
+  app.post('/api/auth/generate-partner-id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub || 'dev-user-123';
+      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -202,9 +159,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Referrals
-  app.post('/api/referrals', async (req: any, res) => {
+  app.post('/api/referrals', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub || 'dev-user-123';
+      const userId = req.user.claims.sub;
       const referralData = {
         ...req.body,
         referrerId: userId,
@@ -234,9 +191,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/referrals', async (req: any, res) => {
+  app.get('/api/referrals', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub || 'dev-user-123';
+      const userId = req.user.claims.sub;
       const referrals = await storage.getReferralsByUserId(userId);
       res.json(referrals);
     } catch (error) {
@@ -246,9 +203,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard stats
-  app.get('/api/dashboard/stats', async (req: any, res) => {
+  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub || 'dev-user-123';
+      const userId = req.user.claims.sub;
       const stats = await storage.getUserStats(userId);
       res.json(stats);
     } catch (error) {
@@ -363,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin middleware to check admin access
   const isAdmin: RequestHandler = async (req: any, res, next) => {
     try {
-      const userId = req.user?.claims?.sub || 'dev-user-123';
+      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
       if (!user?.isAdmin) {
@@ -489,9 +446,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Partners seeding will be added after database schema is migrated
 
   // Leads routes
-  app.get('/api/leads', async (req: any, res) => {
+  app.get('/api/leads', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = 'dev-user-123'; // Mock for development
+      const userId = req.user.claims.sub;
       const leads = await storage.getLeadsByUserId(userId);
       res.json(leads);
     } catch (error) {
@@ -500,9 +457,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads', async (req: any, res) => {
+  app.post('/api/leads', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = 'dev-user-123'; // Mock for development
+      const userId = req.user.claims.sub;
       const leadData = {
         ...req.body,
         partnerId: userId,
@@ -516,9 +473,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads/bulk', async (req: any, res) => {
+  app.post('/api/leads/bulk', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = 'dev-user-123'; // Mock for development
+      const userId = req.user.claims.sub;
       const { leads: leadsData } = req.body;
       
       const leadsWithPartnerId = leadsData.map((lead: any) => ({
@@ -547,9 +504,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads/:leadId/interactions', async (req: any, res) => {
+  app.post('/api/leads/:leadId/interactions', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = 'dev-user-123'; // Mock for development
+      const userId = req.user.claims.sub;
       const { leadId } = req.params;
       const interactionData = {
         ...req.body,
@@ -564,9 +521,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads/:leadId/send-info', async (req: any, res) => {
+  app.post('/api/leads/:leadId/send-info', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = 'dev-user-123'; // Mock for development
+      const userId = req.user.claims.sub;
       const { leadId } = req.params;
       const { productType, title, content } = req.body;
       
