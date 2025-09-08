@@ -21,7 +21,7 @@ import {
 
 export default function Navigation() {
   const [location] = useLocation();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const isActive = (path: string) => location === path;
@@ -342,7 +342,7 @@ export default function Navigation() {
                 </span>
                 <Button 
                   variant="outline" 
-                  onClick={() => window.location.href = "/api/logout"}
+                  onClick={logout}
                   data-testid="button-logout"
                   className="border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
