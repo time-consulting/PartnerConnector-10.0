@@ -38,13 +38,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seed business types on startup
   await storage.seedBusinessTypes();
 
-  // Mock login route for development
-  app.get('/api/login', (req, res) => {
+  // Development authentication with session tracking
+  app.get('/api/login', (req: any, res) => {
+    req.session.isLoggedIn = true;
     res.redirect('/');
   });
 
-  app.get('/api/logout', (req, res) => {
-    res.redirect('/');
+  app.get('/api/logout', (req: any, res) => {
+    req.session.isLoggedIn = false;
+    req.session.destroy((err: any) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+      }
+      res.clearCookie('connect.sid', {
+        path: '/',
+        secure: true,
+        httpOnly: true
+      });
+      res.redirect('/');
+    });
   });
 
   // GHL Webhook for team member invites
@@ -98,9 +110,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auth routes
+  // Auth routes with development session tracking
   app.get('/api/auth/user', async (req: any, res) => {
     try {
+      // Check if user is logged in (for development)
+      if (!req.session?.isLoggedIn) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       const userId = req.user?.claims?.sub || 'dev-user-123';
       let user = await storage.getUser(userId);
       
@@ -127,6 +144,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile
   app.patch('/api/auth/user', async (req: any, res) => {
     try {
+      // Check if user is logged in (for development)
+      if (!req.session?.isLoggedIn) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       const userId = req.user?.claims?.sub || 'dev-user-123';
       const updateData = req.body;
       
