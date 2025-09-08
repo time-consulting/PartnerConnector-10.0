@@ -8,12 +8,15 @@ import {
   leadInteractions,
   partners,
   partnerReviews,
+  notifications,
   type User,
   type UpsertUser,
   type InsertReferral,
   type Referral,
   type BusinessType,
   type BillUpload,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
 import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
@@ -73,6 +76,12 @@ export interface IStorage {
   getPartners(): Promise<any[]>;
   getPartnerBySlug(slug: string): Promise<any>;
   seedPartners(): Promise<void>;
+  
+  // Notification operations
+  getNotificationsByUserId(userId: string): Promise<any[]>;
+  createNotification(notification: any): Promise<any>;
+  markNotificationAsRead(notificationId: string): Promise<void>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -500,6 +509,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(referrals.id, referralId))
       .returning();
     return referral;
+  }
+  
+  // Notification operations
+  async getNotificationsByUserId(userId: string): Promise<any[]> {
+    const userNotifications = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+    return userNotifications;
+  }
+  
+  async createNotification(notificationData: any): Promise<any> {
+    const [notification] = await db
+      .insert(notifications)
+      .values(notificationData)
+      .returning();
+    return notification;
+  }
+  
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, notificationId));
+  }
+  
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.userId, userId));
   }
 }
 

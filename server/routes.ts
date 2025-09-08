@@ -104,6 +104,24 @@ async function addToGHLWorkflow(contactId: string, workflowId: string, apiKey: s
   }
 }
 
+// Helper function to create notifications
+async function createNotificationForUser(userId: string, notification: any) {
+  try {
+    await storage.createNotification({
+      userId,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      referralId: notification.referralId || null,
+      leadId: notification.leadId || null,
+      businessName: notification.businessName || null,
+      metadata: notification.metadata || null
+    });
+  } catch (error) {
+    console.error('Error creating notification:', error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -289,6 +307,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const referral = await storage.createReferral(validation.data);
+      
+      // Create notification for referral submission
+      await createNotificationForUser(userId, {
+        type: 'status_update',
+        title: 'Referral Submitted',
+        message: `Your referral for ${referral.businessName} has been submitted and is being processed`,
+        referralId: referral.id,
+        businessName: referral.businessName
+      });
       
       // Submit to GoHighLevel (GHL) for processing
       try {
@@ -559,6 +586,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize seed data
   await storage.seedBusinessTypes();
   // Partners seeding will be added after database schema is migrated
+  
+  // Notification routes
+  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notifications = await storage.getNotificationsByUserId(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+  
+  app.patch('/api/notifications/:notificationId/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const { notificationId } = req.params;
+      await storage.markNotificationAsRead(notificationId);
+      res.json({ success: true, message: "Notification marked as read" });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+  
+  app.patch('/api/notifications/read-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true, message: "All notifications marked as read" });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
 
   // Leads routes
   app.get('/api/leads', isAuthenticated, async (req: any, res) => {

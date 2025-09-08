@@ -10,7 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Quote, CreditCard, CheckCircle2, AlertCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
 interface Notification {
   id: string;
@@ -30,43 +32,41 @@ interface NotificationCenterProps {
 export default function NotificationCenter({ onQuoteClick }: NotificationCenterProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Mock notifications for now - in real app this would come from backend
-  const { data: notifications = [] } = useQuery<Notification[]>({
+  const { data: notifications = [], refetch: refetchNotifications } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
-    retry: false,
-    // Mock data for demonstration
-    queryFn: () => Promise.resolve([
-      {
-        id: "1",
-        type: "quote_ready",
-        title: "Quote Ready",
-        message: "A custom quote is ready for Tech Solutions Ltd",
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        read: false,
-        referralId: "123",
-        businessName: "Tech Solutions Ltd"
-      },
-      {
-        id: "2", 
-        type: "status_update",
-        title: "Status Update",
-        message: "ABC Restaurant has approved their quote",
-        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-        read: false,
-        referralId: "456",
-        businessName: "ABC Restaurant"
-      },
-      {
-        id: "3",
-        type: "commission_paid",
-        title: "Commission Paid",
-        message: "£2,500 commission paid for Marketing Co referral",
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-        read: true,
-        referralId: "789",
-        businessName: "Marketing Co"
-      }
-    ])
+    retry: false
+  });
+
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const response = await fetch(`/api/notifications/${notificationId}/read`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to mark as read');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    }
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/notifications/read-all', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to mark all as read');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    }
   });
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -118,9 +118,16 @@ export default function NotificationCenter({ onQuoteClick }: NotificationCenterP
   };
 
   const handleNotificationClick = (notification: Notification) => {
+    // Mark notification as read if it's unread
+    if (!notification.read) {
+      markAsReadMutation.mutate(notification.id);
+    }
+    
+    // Handle specific notification actions
     if (notification.type === "quote_ready" && notification.referralId && onQuoteClick) {
       onQuoteClick(notification.referralId);
     }
+    
     setIsOpen(false);
   };
 
@@ -204,7 +211,14 @@ export default function NotificationCenter({ onQuoteClick }: NotificationCenterP
         {notifications.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-center text-sm text-primary cursor-pointer">
+            <DropdownMenuItem 
+              className="text-center text-sm text-primary cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                markAllAsReadMutation.mutate();
+              }}
+              data-testid="mark-all-read-button"
+            >
               Mark all as read
             </DropdownMenuItem>
           </>

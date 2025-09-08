@@ -272,11 +272,27 @@ export const partnerReviews = pgTable("partner_reviews", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notifications for user activity
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  type: varchar("type").notNull(), // quote_ready, status_update, commission_paid, team_invite, system_message
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  read: boolean("read").default(false),
+  referralId: varchar("referral_id"), // Optional - for referral-related notifications
+  leadId: varchar("lead_id"), // Optional - for lead-related notifications
+  businessName: varchar("business_name"), // For context in notifications
+  metadata: jsonb("metadata"), // Additional data like commission amount, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   referrals: many(referrals),
   leads: many(leads),
   leadInteractions: many(leadInteractions),
+  notifications: many(notifications),
   team: one(teams, {
     fields: [users.teamId],
     references: [teams.id],
@@ -405,6 +421,21 @@ export const partnerReviewsRelations = relations(partnerReviews, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+  referral: one(referrals, {
+    fields: [notifications.referralId],
+    references: [referrals.id],
+  }),
+  lead: one(leads, {
+    fields: [notifications.leadId],
+    references: [leads.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -473,6 +504,11 @@ export const insertPartnerReviewSchema = createInsertSchema(partnerReviews).omit
   createdAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -501,3 +537,5 @@ export type Partner = typeof partners.$inferSelect;
 export type InsertPartner = z.infer<typeof insertPartnerSchema>;
 export type PartnerReview = typeof partnerReviews.$inferSelect;
 export type InsertPartnerReview = z.infer<typeof insertPartnerReviewSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
