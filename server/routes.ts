@@ -568,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/referrals/:referralId/create-commission-approval', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
-      const { actualCommission, adminNotes } = req.body;
+      const { actualCommission, adminNotes, ratesData } = req.body;
 
       // First update the referral with actual commission
       await storage.updateReferral(referralId, { 
@@ -590,7 +590,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: referral.referrerId,
         commissionAmount: actualCommission,
         clientBusinessName: referral.businessName,
-        adminNotes: adminNotes || null
+        adminNotes: adminNotes || null,
+        ratesData: ratesData ? JSON.stringify(ratesData) : null
       });
 
       // Create notification for user
@@ -610,6 +611,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating commission approval:", error);
       res.status(500).json({ message: "Failed to create commission approval" });
+    }
+  });
+
+  // Get user's commission approvals
+  app.get('/api/commission-approvals', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const approvals = await storage.getUserCommissionApprovals(userId);
+      res.json(approvals);
+    } catch (error) {
+      console.error("Error fetching user commission approvals:", error);
+      res.status(500).json({ message: "Failed to fetch commission approvals" });
     }
   });
 

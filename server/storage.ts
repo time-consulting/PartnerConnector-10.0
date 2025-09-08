@@ -631,6 +631,10 @@ export class DatabaseStorage implements IStorage {
     return approval;
   }
 
+  async getUserCommissionApprovals(userId: string): Promise<CommissionApproval[]> {
+    return await db.select().from(commissionApprovals).where(eq(commissionApprovals.userId, userId));
+  }
+
   async getCommissionApprovalsByUserId(userId: string): Promise<CommissionApproval[]> {
     return await db
       .select()

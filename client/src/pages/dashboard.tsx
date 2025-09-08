@@ -84,6 +84,11 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
+  const { data: commissionApprovals, isLoading: approvalsLoading } = useQuery({
+    queryKey: ["/api/commission-approvals"],
+    enabled: isAuthenticated,
+  });
+
   const handleOnboardingComplete = async (data: any) => {
     console.log('Onboarding completed with data:', data);
     
@@ -613,6 +618,140 @@ export default function Dashboard() {
         onSkip={handleTourSkip}
         startStep="welcome"
       />
+    </div>
+  );
+}
+
+// Commission Approval Card Component
+function CommissionApprovalCard({ approval, onApprove }: { approval: any; onApprove: () => void }) {
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [adjustedRates, setAdjustedRates] = useState(approval.ratesData ? JSON.parse(approval.ratesData) : null);
+
+  const ratesData = adjustedRates || {
+    debitRate: "1.5",
+    creditRate: "2.1",
+    corporateRate: "2.3",
+    secureTransactionFee: "1.5",
+    platformFee: "10",
+    terminalFee: "15",
+    estimatedMonthlySavings: 0
+  };
+
+  return (
+    <div className="bg-white border-2 border-green-300 rounded-lg p-6">
+      {/* Commission Amount and Business */}
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="text-xl font-bold text-green-800">
+            Commission: £{Number(approval.commissionAmount).toLocaleString()}
+          </h3>
+          <p className="text-gray-600">{approval.clientBusinessName}</p>
+          <Badge variant="secondary" className="mt-1">
+            Status: {approval.approvalStatus}
+          </Badge>
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-semibold text-green-600">
+            Client Savings: £{ratesData.estimatedMonthlySavings?.toFixed(2) || 0}/month
+          </p>
+          <p className="text-sm text-green-500">
+            Annual: £{((ratesData.estimatedMonthlySavings || 0) * 12).toFixed(2)}
+          </p>
+        </div>
+      </div>
+
+      {/* Current Rates Display */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+        <h4 className="font-medium mb-2">Current Rates Offered:</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div>
+            <span className="text-gray-600">Debit:</span> <strong>{ratesData.debitRate}%</strong>
+          </div>
+          <div>
+            <span className="text-gray-600">Credit:</span> <strong>{ratesData.creditRate}%</strong>
+          </div>
+          <div>
+            <span className="text-gray-600">Corporate:</span> <strong>{ratesData.corporateRate}%</strong>
+          </div>
+          <div>
+            <span className="text-gray-600">Platform:</span> <strong>£{ratesData.platformFee}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* Expandable Rate Adjustment */}
+      <div className="mb-4">
+        <button
+          onClick={() => setShowBreakdown(!showBreakdown)}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+        >
+          {showBreakdown ? "Hide" : "Adjust"} Rates to Increase Commission
+        </button>
+        
+        {showBreakdown && (
+          <div className="mt-3 p-4 bg-blue-50 rounded-lg">
+            <p className="text-xs text-gray-500 italic mb-3">Adjust rates to optimize your commission (higher rates = higher commission)</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs font-medium">Debit Rate (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={ratesData.debitRate}
+                  onChange={(e) => setAdjustedRates({...ratesData, debitRate: e.target.value})}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Credit Rate (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={ratesData.creditRate}
+                  onChange={(e) => setAdjustedRates({...ratesData, creditRate: e.target.value})}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Platform Fee (£)</label>
+                <select
+                  value={ratesData.platformFee}
+                  onChange={(e) => setAdjustedRates({...ratesData, platformFee: e.target.value})}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                >
+                  <option value="0">£0</option>
+                  <option value="10">£10</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Admin Notes */}
+      {approval.adminNotes && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-yellow-800">
+            <strong>Admin Notes:</strong> {approval.adminNotes}
+          </p>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <Button 
+          onClick={onApprove}
+          className="flex-1 bg-green-600 hover:bg-green-700"
+        >
+          Approve Commission
+        </Button>
+        <Button 
+          variant="outline" 
+          className="flex-1"
+        >
+          Request Changes
+        </Button>
+      </div>
     </div>
   );
 }

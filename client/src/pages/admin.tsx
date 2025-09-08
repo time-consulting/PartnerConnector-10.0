@@ -324,7 +324,6 @@ export default function AdminPortal() {
     { id: "overview", name: "Overview", icon: TrendingUp },
     { id: "users", name: "Users", icon: Users },
     { id: "referrals", name: "Referrals", icon: FileText },
-    { id: "rates", name: "Rates", icon: DollarSign },
     { id: "commissions", name: "Commissions", icon: CreditCard },
   ];
 

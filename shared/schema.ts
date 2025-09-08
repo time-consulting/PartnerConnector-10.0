@@ -185,6 +185,7 @@ export const commissionApprovals = pgTable("commission_approvals", {
   paymentDate: timestamp("payment_date"),
   paymentReference: varchar("payment_reference"),
   adminNotes: text("admin_notes"),
+  ratesData: jsonb("rates_data"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
