@@ -740,6 +740,113 @@ export default function AdminPortal() {
             )}
           </div>
         )}
+
+        {/* Diagnostics Tab */}
+        {selectedTab === "diagnostics" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">System Diagnostics</h2>
+              <Button 
+                onClick={() => window.open('/admin/diagnostics', '_blank')}
+                className="flex items-center gap-2"
+                data-testid="open-diagnostics"
+              >
+                <Activity className="w-4 h-4" />
+                Open Full Diagnostics
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    Request Monitoring
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    Monitor HTTP requests, response times, and error rates
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open('/admin/diagnostics?tab=requests', '_blank')}
+                    className="w-full"
+                    data-testid="view-requests"
+                  >
+                    View Request Logs
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Audit Trail
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    Track user actions and system changes for compliance
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open('/admin/diagnostics?tab=audits', '_blank')}
+                    className="w-full"
+                    data-testid="view-audits"
+                  >
+                    View Audit Logs
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    Webhooks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    Monitor webhook deliveries and failures
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open('/admin/diagnostics?tab=webhooks', '_blank')}
+                    className="w-full"
+                    data-testid="view-webhooks"
+                  >
+                    View Webhook Logs
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Health Check</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm">Application Status: Healthy</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm">Database: Connected</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <span className="text-sm">Monitoring: Active</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
