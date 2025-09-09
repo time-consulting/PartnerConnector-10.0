@@ -545,6 +545,62 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
+// Audit trail table for tracking important actions
+export const audits = pgTable("audits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  actorUserId: varchar("actor_user_id"),
+  action: varchar("action").notNull(),
+  entityType: varchar("entity_type").notNull(),
+  entityId: varchar("entity_id"),
+  metadata: jsonb("metadata"),
+  requestId: varchar("request_id"),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Request logs table for storing HTTP request data
+export const requestLogs = pgTable("request_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requestId: varchar("request_id").notNull().unique(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  userId: varchar("user_id"),
+  method: varchar("method").notNull(),
+  route: varchar("route").notNull(),
+  statusCode: integer("status_code").notNull(),
+  duration: integer("duration").notNull(), // milliseconds
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address"),
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Webhook delivery logs
+export const webhookLogs = pgTable("webhook_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  webhookType: varchar("webhook_type").notNull(),
+  targetUrl: varchar("target_url").notNull(),
+  payload: jsonb("payload").notNull(),
+  responseCode: integer("response_code"),
+  responseBody: text("response_body"),
+  deliveryAttempt: integer("delivery_attempt").default(1),
+  delivered: boolean("delivered").default(false),
+  deliveredAt: timestamp("delivered_at"),
+  nextRetryAt: timestamp("next_retry_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Audit = typeof audits.$inferSelect;
+export type InsertAudit = typeof audits.$inferInsert;
+export type RequestLog = typeof requestLogs.$inferSelect;
+export type InsertRequestLog = typeof requestLogs.$inferInsert;
+export type WebhookLog = typeof webhookLogs.$inferSelect;
+export type InsertWebhookLog = typeof webhookLogs.$inferInsert;
+
+export type User = typeof users.$inferSelect;
+
 // Rate types and schemas
 export const insertRateSchema = createInsertSchema(rates);
 export type InsertRate = z.infer<typeof insertRateSchema>;

@@ -11,8 +11,17 @@ import {
   notifications,
   rates,
   commissionApprovals,
+  audits,
+  requestLogs,
+  webhookLogs,
   type User,
   type UpsertUser,
+  type Audit,
+  type InsertAudit,
+  type RequestLog,
+  type InsertRequestLog,
+  type WebhookLog,
+  type InsertWebhookLog,
   type InsertReferral,
   type Referral,
   type BusinessType,
@@ -678,6 +687,73 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(commissionApprovals.id, approvalId));
+  }
+  // Audit trail operations
+  async createAudit(auditData: InsertAudit): Promise<Audit> {
+    const [audit] = await db.insert(audits).values(auditData).returning();
+    return audit;
+  }
+
+  async getAudits(limit: number = 100): Promise<Audit[]> {
+    return await db
+      .select()
+      .from(audits)
+      .orderBy(desc(audits.timestamp))
+      .limit(limit);
+  }
+
+  async getUserAudits(userId: string, limit: number = 50): Promise<Audit[]> {
+    return await db
+      .select()
+      .from(audits)
+      .where(eq(audits.actorUserId, userId))
+      .orderBy(desc(audits.timestamp))
+      .limit(limit);
+  }
+
+  // Request logs operations
+  async createRequestLog(logData: InsertRequestLog): Promise<RequestLog> {
+    const [log] = await db.insert(requestLogs).values(logData).returning();
+    return log;
+  }
+
+  async getRequestLogs(limit: number = 100): Promise<RequestLog[]> {
+    return await db
+      .select()
+      .from(requestLogs)
+      .orderBy(desc(requestLogs.timestamp))
+      .limit(limit);
+  }
+
+  async getErrorLogs(limit: number = 50): Promise<RequestLog[]> {
+    return await db
+      .select()
+      .from(requestLogs)
+      .where(sql`status_code >= 400`)
+      .orderBy(desc(requestLogs.timestamp))
+      .limit(limit);
+  }
+
+  // Webhook logs operations
+  async createWebhookLog(logData: InsertWebhookLog): Promise<WebhookLog> {
+    const [log] = await db.insert(webhookLogs).values(logData).returning();
+    return log;
+  }
+
+  async getWebhookLogs(limit: number = 100): Promise<WebhookLog[]> {
+    return await db
+      .select()
+      .from(webhookLogs)
+      .orderBy(desc(webhookLogs.createdAt))
+      .limit(limit);
+  }
+
+  async getFailedWebhooks(): Promise<WebhookLog[]> {
+    return await db
+      .select()
+      .from(webhookLogs)
+      .where(eq(webhookLogs.delivered, false))
+      .orderBy(desc(webhookLogs.createdAt));
   }
 }
 

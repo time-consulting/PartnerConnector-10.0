@@ -1,5 +1,5 @@
 import winston from 'winston';
-import rfs from 'rotating-file-stream';
+import * as rfs from 'rotating-file-stream';
 import path from 'path';
 import { Request, Response } from 'express';
 

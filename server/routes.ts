@@ -6,6 +6,9 @@ import { insertReferralSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
 import multer from "multer";
+import { requestIdMiddleware, loggingMiddleware, errorHandlingMiddleware } from "./middleware/requestId";
+import { healthzHandler, readyzHandler, metricsHandler } from "./health";
+import { logAudit } from "./logger";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -124,6 +127,15 @@ async function createNotificationForUser(userId: string, notification: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Request ID and logging middleware
+  app.use(requestIdMiddleware);
+  app.use(loggingMiddleware);
+
+  // Health and monitoring endpoints (before auth)
+  app.get('/healthz', healthzHandler);
+  app.get('/readyz', readyzHandler);
+  app.get('/metrics', metricsHandler);
+
   // Auth middleware
   await setupAuth(app);
 
@@ -1009,6 +1021,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch partner" });
     }
   });
+
+  // Error handling middleware (must be last)
+  app.use(errorHandlingMiddleware);
 
   const httpServer = createServer(app);
   return httpServer;
