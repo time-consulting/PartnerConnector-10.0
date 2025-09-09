@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { logger } from "./logger";
 
 // Initialize Sentry
@@ -20,8 +19,6 @@ export function initSentry() {
     profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     
     integrations: [
-      nodeProfilingIntegration(),
-      
       // HTTP integration for tracking requests
       new Sentry.Integrations.Http({ 
         tracing: true,
@@ -121,8 +118,21 @@ export function addBreadcrumb(message: string, category: string, data?: Record<s
 }
 
 // Express middleware
-export const sentryRequestHandler = Sentry.Handlers.requestHandler();
-export const sentryTracingHandler = Sentry.Handlers.tracingHandler();
-export const sentryErrorHandler = Sentry.Handlers.errorHandler();
+export function getSentryHandlers() {
+  // Return no-op middleware if Sentry is not configured
+  if (!process.env.SENTRY_DSN) {
+    return {
+      requestHandler: (req: any, res: any, next: any) => next(),
+      tracingHandler: (req: any, res: any, next: any) => next(),
+      errorHandler: (err: any, req: any, res: any, next: any) => next(err)
+    };
+  }
+
+  return {
+    requestHandler: Sentry.Handlers.requestHandler(),
+    tracingHandler: Sentry.Handlers.tracingHandler(),
+    errorHandler: Sentry.Handlers.errorHandler()
+  };
+}
 
 export { Sentry };

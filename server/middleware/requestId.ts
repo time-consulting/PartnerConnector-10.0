@@ -27,9 +27,8 @@ export const requestIdMiddleware = (req: Request, res: Response, next: NextFunct
 export const loggingMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   
-  // Override res.end to capture response details
-  const originalEnd = res.end;
-  res.end = function(chunk: any, encoding?: any) {
+  // Track response completion
+  res.on('finish', () => {
     const duration = Date.now() - startTime;
     const isError = res.statusCode >= 400;
     
@@ -62,10 +61,7 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
     } else {
       logRequest(logContext);
     }
-    
-    // Call original end
-    originalEnd.call(this, chunk, encoding);
-  };
+  });
   
   next();
 };

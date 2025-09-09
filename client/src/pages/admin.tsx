@@ -25,7 +25,8 @@ import {
   CreditCard,
   Plus,
   CheckCircle,
-  XCircle
+  XCircle,
+  Activity
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
