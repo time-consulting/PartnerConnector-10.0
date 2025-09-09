@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard";
 import SubmitReferral from "@/pages/submit-referral";
 import UploadBills from "@/pages/upload-bills";
 import AdminPortal from "@/pages/admin";
+import AdminDiagnostics from "@/pages/admin-diagnostics";
 import TrackReferrals from "@/pages/track-referrals";
 import TeamManagement from "@/pages/team-management";
 import Training from "@/pages/training";
@@ -49,6 +50,7 @@ function Router() {
           <Route path="/track-referrals" component={TrackReferrals} />
           <Route path="/team-management" component={TeamManagement} />
           <Route path="/admin" component={AdminPortal} />
+          <Route path="/admin/diagnostics" component={AdminDiagnostics} />
         </>
       )}
       <Route component={NotFound} />

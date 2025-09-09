@@ -111,6 +111,21 @@ export interface IStorage {
   getAllCommissionApprovals(): Promise<CommissionApproval[]>;
   updateCommissionApprovalStatus(approvalId: string, status: string): Promise<CommissionApproval>;
   processCommissionPayment(approvalId: string, paymentReference: string): Promise<void>;
+
+  // Audit trail operations
+  createAudit(auditData: InsertAudit): Promise<Audit>;
+  getAudits(limit?: number): Promise<Audit[]>;
+  getUserAudits(userId: string, limit?: number): Promise<Audit[]>;
+
+  // Request logs operations
+  createRequestLog(logData: InsertRequestLog): Promise<RequestLog>;
+  getRequestLogs(limit?: number): Promise<RequestLog[]>;
+  getErrorLogs(limit?: number): Promise<RequestLog[]>;
+
+  // Webhook logs operations
+  createWebhookLog(logData: InsertWebhookLog): Promise<WebhookLog>;
+  getWebhookLogs(limit?: number): Promise<WebhookLog[]>;
+  getFailedWebhooks(): Promise<WebhookLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {

@@ -1022,6 +1022,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin diagnostics routes
+  app.get('/api/admin/request-logs', isAuthenticated, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const logs = await storage.getRequestLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching request logs:", error);
+      res.status(500).json({ message: "Failed to fetch request logs" });
+    }
+  });
+
+  app.get('/api/admin/error-logs', isAuthenticated, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const logs = await storage.getErrorLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching error logs:", error);
+      res.status(500).json({ message: "Failed to fetch error logs" });
+    }
+  });
+
+  app.get('/api/admin/webhook-logs', isAuthenticated, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const logs = await storage.getWebhookLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching webhook logs:", error);
+      res.status(500).json({ message: "Failed to fetch webhook logs" });
+    }
+  });
+
+  app.get('/api/admin/audit-logs', isAuthenticated, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const logs = await storage.getAudits(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
   // Error handling middleware (must be last)
   app.use(errorHandlingMiddleware);
 

@@ -1,8 +1,17 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initSentry, sentryRequestHandler, sentryTracingHandler, sentryErrorHandler } from "./sentry";
+
+// Initialize Sentry before everything else
+initSentry();
 
 const app = express();
+
+// Sentry request handler must be first
+app.use(sentryRequestHandler);
+app.use(sentryTracingHandler);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -38,6 +47,9 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+
+  // Sentry error handler must be before your other error handlers and after all controllers
+  app.use(sentryErrorHandler);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
