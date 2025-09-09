@@ -326,6 +326,7 @@ export default function AdminPortal() {
     { id: "users", name: "Users", icon: Users },
     { id: "referrals", name: "Referrals", icon: FileText },
     { id: "commissions", name: "Commissions", icon: CreditCard },
+    { id: "diagnostics", name: "Diagnostics", icon: Activity },
   ];
 
   return (
