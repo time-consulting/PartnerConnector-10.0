@@ -30,7 +30,7 @@ export default function Landing() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="animate-fadeIn">
               <Badge className="mb-6 bg-blue-100 text-blue-700 hover:bg-blue-200" data-testid="badge-trusted">
-                Trusted by 500+ professionals earning commission
+                Trusted by professionals nationwide
               </Badge>
               
               <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
@@ -41,14 +41,14 @@ export default function Landing() {
               </h1>
               
               <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-lg">
-                Connect your clients with card payment solutions and business funding while earning substantial commissions. Build a thriving referral business and grow your team.
+                Your clients need card payment solutions and business funding. You control the connections, earn substantial commissions, and grow your professional network with services they're already seeking.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <Button 
                   size="lg" 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => window.location.href = "/api/login"}
+                  onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/81iXxx9KCxtnaSgEEiim', '_blank')}
                   data-testid="button-book-demo"
                 >
                   Book a demo
@@ -69,8 +69,8 @@ export default function Landing() {
               {/* Partnership stats */}
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">500+</div>
-                  <div className="text-sm text-gray-600">Partners</div>
+                  <div className="text-2xl font-bold text-gray-900">Top</div>
+                  <div className="text-sm text-gray-600">Solutions</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-gray-900">£1.2M</div>
@@ -156,7 +156,7 @@ export default function Landing() {
               Build your business through strategic partnerships
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Focus on card payment solutions and business funding - connecting your clients with the right financial services while earning substantial commissions.
+              Focus on card payment solutions and business funding - connecting your clients with the right financial services they need while earning substantial commissions.
             </p>
           </div>
 
@@ -184,7 +184,7 @@ export default function Landing() {
                   <DollarSignIcon className="w-8 h-8 text-green-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Earn Commission</h3>
-                <p className="text-sm text-gray-600 mb-4">Receive up to 60% commission on every successful referral</p>
+                <p className="text-sm text-gray-600 mb-4">Receive up to 60% commission on every successful connection</p>
                 <ul className="text-xs text-gray-500 space-y-1">
                   <li>• Upfront commissions</li>
                   <li>• Fast payouts</li>
@@ -200,7 +200,7 @@ export default function Landing() {
                   <UsersIcon className="w-8 h-8 text-purple-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Build Team</h3>
-                <p className="text-sm text-gray-600 mb-4">Grow your network and earn from team referrals</p>
+                <p className="text-sm text-gray-600 mb-4">Grow your network and earn from team connections</p>
                 <ul className="text-xs text-gray-500 space-y-1">
                   <li>• Team recruitment</li>
                   <li>• Training support</li>
@@ -216,7 +216,7 @@ export default function Landing() {
                   <TrendingUpIcon className="w-8 h-8 text-yellow-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Track Success</h3>
-                <p className="text-sm text-gray-600 mb-4">Monitor your referrals and commission earnings</p>
+                <p className="text-sm text-gray-600 mb-4">Monitor your connections and commission earnings</p>
                 <ul className="text-xs text-gray-500 space-y-1">
                   <li>• Real-time dashboard</li>
                   <li>• Commission tracking</li>
@@ -230,7 +230,7 @@ export default function Landing() {
             <Button 
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/81iXxx9KCxtnaSgEEiim', '_blank')}
             >
               Book a demo
               <ArrowRightIcon className="ml-2 w-5 h-5" />
@@ -251,7 +251,7 @@ export default function Landing() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-600 font-medium mb-8">
-            JOIN 500+ PROFESSIONALS EARNING COMMISSION THROUGH PARTNERSHIP CONNECTIONS
+            JOIN PROFESSIONALS NATIONWIDE EARNING COMMISSION THROUGH PARTNERSHIP CONNECTIONS
           </p>
           <div className="flex justify-center">
             <Button 
