@@ -331,10 +331,10 @@ export default function Landing() {
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to scale your partner ecosystem?
+            Empower Your Clients With the Right partner
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join hundreds of companies using PartnerConnector to drive growth through partnerships
+            Connect your clients with partners your clients want and need while earning substantial commissions. Build a thriving business and grow your team.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -342,13 +342,14 @@ export default function Landing() {
               className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
               onClick={() => window.location.href = "/api/login"}
             >
-              Start your free trial
+              Join free today
               <ArrowRightIcon className="ml-2 w-5 h-5" />
             </Button>
             <Button 
               variant="outline"
               size="lg"
               className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg font-semibold"
+              onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/81iXxx9KCxtnaSgEEiim', '_blank')}
             >
               Schedule a demo
               <ArrowRightIcon className="ml-2 w-5 h-5" />
