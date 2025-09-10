@@ -26,7 +26,8 @@ import {
   Plus,
   CheckCircle,
   XCircle,
-  Activity
+  Activity,
+  Zap
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
