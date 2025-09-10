@@ -21,6 +21,9 @@ import PartnerPortal from "@/pages/partner-portal";
 import About from "@/pages/about";
 import HelpCenter from "@/pages/help-center";
 import PartnerRecruitment from "@/pages/partner-recruitment";
+import ProfilePage from "@/pages/account/profile";
+import BankingPage from "@/pages/account/banking";
+import FeedbackPage from "@/pages/account/feedback";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -49,6 +52,9 @@ function Router() {
           <Route path="/upload-bills" component={UploadBills} />
           <Route path="/track-referrals" component={TrackReferrals} />
           <Route path="/team-management" component={TeamManagement} />
+          <Route path="/account/profile" component={ProfilePage} />
+          <Route path="/account/banking" component={BankingPage} />
+          <Route path="/account/feedback" component={FeedbackPage} />
           <Route path="/admin" component={AdminPortal} />
           <Route path="/admin/diagnostics" component={AdminDiagnostics} />
         </>

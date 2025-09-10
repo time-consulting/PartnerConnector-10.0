@@ -1067,6 +1067,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Account management routes
+  app.patch('/api/account/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { firstName, lastName, phone, address, city, postcode, country } = req.body;
+      
+      // Update user profile
+      await storage.updateUserProfile(userId, {
+        firstName,
+        lastName,
+        phone,
+        address,
+        city,
+        postcode,
+        country
+      });
+
+      // Log the profile update
+      await storage.createAudit({
+        actorUserId: userId,
+        action: 'profile_updated',
+        entityType: 'user',
+        entityId: userId,
+        metadata: { fields_changed: Object.keys(req.body) },
+        requestId: req.requestId,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({ message: "Profile updated successfully" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.patch('/api/account/banking', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bankingData = req.body;
+      
+      // Update banking details
+      await storage.updateBankingDetails(userId, bankingData);
+
+      // Log the banking update
+      await storage.createAudit({
+        actorUserId: userId,
+        action: 'banking_updated',
+        entityType: 'user',
+        entityId: userId,
+        metadata: { fields_updated: Object.keys(bankingData) },
+        requestId: req.requestId,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({ message: "Banking details updated successfully" });
+    } catch (error) {
+      console.error("Error updating banking details:", error);
+      res.status(500).json({ message: "Failed to update banking details" });
+    }
+  });
+
+  app.post('/api/account/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { type, subject, message, priority, rating } = req.body;
+      
+      // Store feedback
+      const feedbackId = await storage.createFeedback({
+        userId,
+        type,
+        subject,
+        message,
+        priority,
+        rating: rating ? parseInt(rating) : null
+      });
+
+      // Log the feedback submission
+      await storage.createAudit({
+        actorUserId: userId,
+        action: 'feedback_submitted',
+        entityType: 'feedback',
+        entityId: feedbackId,
+        metadata: { type, subject, priority },
+        requestId: req.requestId,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({ message: "Feedback submitted successfully", id: feedbackId });
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      res.status(500).json({ message: "Failed to submit feedback" });
+    }
+  });
+
   // Error handling middleware (must be last)
   app.use(errorHandlingMiddleware);
 

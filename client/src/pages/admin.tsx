@@ -209,7 +209,7 @@ export default function AdminPortal() {
   };
 
   // ============ RATES MANAGEMENT ============
-  const { data: rates = [], refetch: refetchRates } = useQuery({
+  const { data: rates = [], refetch: refetchRates } = useQuery<any[]>({
     queryKey: ["/api/admin/rates"],
     enabled: selectedTab === "rates"
   });
@@ -259,7 +259,7 @@ export default function AdminPortal() {
   });
 
   // ============ COMMISSION APPROVAL MANAGEMENT ============
-  const { data: commissionApprovals = [], refetch: refetchCommissions } = useQuery({
+  const { data: commissionApprovals = [], refetch: refetchCommissions } = useQuery<any[]>({
     queryKey: ["/api/admin/commission-approvals"],
     enabled: selectedTab === "commissions"
   });
@@ -318,8 +318,16 @@ export default function AdminPortal() {
     return <div>Loading...</div>;
   }
 
-  if (!(user as any)?.isAdmin) {
-    return <div>Access denied...</div>;
+  // Restrict admin access to specific email only
+  if ((user as any)?.email !== 'd.skeats@gmail.com') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
+          <p className="text-muted-foreground">You don't have permission to access this area.</p>
+        </div>
+      </div>
+    );
   }
 
   const tabs = [
