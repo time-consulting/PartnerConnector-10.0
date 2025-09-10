@@ -21,7 +21,6 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navigation />
-      
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20 lg:py-32">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzMzMzMzMyIgZmlsbC1vcGFjaXR5PSIwLjEiLz4KPC9zdmc+')] opacity-30"></div>
@@ -69,7 +68,7 @@ export default function Landing() {
               {/* Partnership stats */}
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">Top</div>
+                  <div className="text-2xl font-bold text-gray-900">verified</div>
                   <div className="text-sm text-gray-600">Solutions</div>
                 </div>
                 <div className="text-center">
@@ -146,7 +145,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Partnership Features Section */}
       <section id="platform-features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -246,7 +244,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Social Proof */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -264,7 +261,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Trust Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -326,7 +322,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -357,7 +352,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
