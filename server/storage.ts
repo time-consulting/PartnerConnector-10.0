@@ -770,6 +770,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(webhookLogs.delivered, false))
       .orderBy(desc(webhookLogs.createdAt));
   }
+
+  // Account management operations
+  async updateUserProfile(userId: string, profileData: any): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async updateBankingDetails(userId: string, bankingData: any): Promise<void> {
+    // In a real implementation, this would store encrypted banking details
+    // For now, we'll just log that banking details were updated
+    console.log(`Banking details updated for user ${userId}:`, Object.keys(bankingData));
+  }
+
+  async createFeedback(feedbackData: any): Promise<string> {
+    // In a real implementation, this would create a feedback record
+    // For now, we'll just return a mock ID and log the feedback
+    const feedbackId = `feedback_${Date.now()}`;
+    console.log(`Feedback submitted:`, feedbackData);
+    return feedbackId;
+  }
 }
 
 export const storage = new DatabaseStorage();
