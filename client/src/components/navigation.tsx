@@ -357,7 +357,7 @@ export default function Navigation() {
                 </button>
                 
                 {openDropdown === 'account' && (
-                  <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-6 px-6 z-50">
+                  <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-6 px-6 z-[9999]">
                     <div className="space-y-4">
                       {/* User Info Section */}
                       <div className="border-b border-gray-200 pb-4">
