@@ -954,6 +954,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/leads/:leadId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { leadId } = req.params;
+      const updates = req.body;
+      
+      const lead = await storage.updateLead(leadId, updates);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      res.status(500).json({ message: "Failed to update lead" });
+    }
+  });
+
+  app.get('/api/leads/:leadId/interactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { leadId } = req.params;
+      const interactions = await storage.getLeadInteractions(leadId);
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error fetching lead interactions:", error);
+      res.status(500).json({ message: "Failed to fetch interactions" });
+    }
+  });
+
   app.post('/api/leads/:leadId/interactions', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

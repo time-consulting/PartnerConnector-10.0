@@ -187,6 +187,23 @@ export class DatabaseStorage implements IStorage {
     return lead;
   }
 
+  async updateLead(leadId: string, updates: any): Promise<any> {
+    const [lead] = await db
+      .update(leads)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(leads.id, leadId))
+      .returning();
+    return lead;
+  }
+
+  async getLeadInteractions(leadId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(leadInteractions)
+      .where(eq(leadInteractions.leadId, leadId))
+      .orderBy(desc(leadInteractions.createdAt));
+  }
+
   async addLeadInteraction(leadId: string, interactionData: any): Promise<any> {
     const [interaction] = await db
       .insert(leadInteractions)
