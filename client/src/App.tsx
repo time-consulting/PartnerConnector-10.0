@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -26,6 +27,35 @@ import BankingPage from "@/pages/account/banking";
 import FeedbackPage from "@/pages/account/feedback";
 import NotFound from "@/pages/not-found";
 
+// Private route wrapper that redirects to login if not authenticated
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      window.location.href = '/api/login';
+    }
+  }, [isAuthenticated, isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Redirecting to login...</div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -40,25 +70,32 @@ function Router() {
       <Route path="/help-center" component={HelpCenter} />
       <Route path="/partner-recruitment" component={PartnerRecruitment} />
       
-      {/* Protected routes for authenticated users */}
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/leads" component={Leads} />
-          <Route path="/submit-referral" component={SubmitReferral} />
-          <Route path="/training" component={Training} />
-          <Route path="/upload-bills" component={UploadBills} />
-          <Route path="/track-referrals" component={TrackReferrals} />
-          <Route path="/team-management" component={TeamManagement} />
-          <Route path="/account/profile" component={ProfilePage} />
-          <Route path="/account/banking" component={BankingPage} />
-          <Route path="/account/feedback" component={FeedbackPage} />
-          <Route path="/admin" component={AdminPortal} />
-          <Route path="/admin/diagnostics" component={AdminDiagnostics} />
-        </>
-      )}
+      {/* Home route - Landing if not authenticated, Dashboard if authenticated */}
+      <Route path="/" component={() => {
+        if (isLoading) {
+          return (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-lg">Loading...</div>
+            </div>
+          );
+        }
+        return isAuthenticated ? <Dashboard /> : <Landing />;
+      }} />
+      
+      {/* Protected routes - always register but guard with PrivateRoute */}
+      <Route path="/leads" component={() => <PrivateRoute><Leads /></PrivateRoute>} />
+      <Route path="/submit-referral" component={() => <PrivateRoute><SubmitReferral /></PrivateRoute>} />
+      <Route path="/training" component={() => <PrivateRoute><Training /></PrivateRoute>} />
+      <Route path="/upload-bills" component={() => <PrivateRoute><UploadBills /></PrivateRoute>} />
+      <Route path="/track-referrals" component={() => <PrivateRoute><TrackReferrals /></PrivateRoute>} />
+      <Route path="/team-management" component={() => <PrivateRoute><TeamManagement /></PrivateRoute>} />
+      <Route path="/account/profile" component={() => <PrivateRoute><ProfilePage /></PrivateRoute>} />
+      <Route path="/account/banking" component={() => <PrivateRoute><BankingPage /></PrivateRoute>} />
+      <Route path="/account/feedback" component={() => <PrivateRoute><FeedbackPage /></PrivateRoute>} />
+      <Route path="/admin" component={() => <PrivateRoute><AdminPortal /></PrivateRoute>} />
+      <Route path="/admin/diagnostics" component={() => <PrivateRoute><AdminDiagnostics /></PrivateRoute>} />
+      
+      {/* Catch-all for unknown routes */}
       <Route component={NotFound} />
     </Switch>
   );
