@@ -41,5 +41,9 @@ integrations = ["javascript_log_in_with_replit:1.0.0", "javascript_database:1.0.
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 34219
+externalPort = 3001
+
 [objectStorage]
 defaultBucketID = "replit-objstore-132388f0-5612-49ed-bdef-949a465fc88a"

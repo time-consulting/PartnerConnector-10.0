@@ -24,13 +24,16 @@ import {
   LogOut,
   Shield,
   MessageSquare,
-  Activity
+  Activity,
+  Menu,
+  X
 } from "lucide-react";
 
 export default function Navigation() {
   const [location] = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => location === path;
 
@@ -39,6 +42,16 @@ export default function Navigation() {
   };
 
   const handleDropdownClose = () => {
+    setOpenDropdown(null);
+  };
+
+  const handleMobileMenuToggle = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+    setOpenDropdown(null); // Close any open dropdowns
+  };
+
+  const handleMobileMenuClose = () => {
+    setIsMobileMenuOpen(false);
     setOpenDropdown(null);
   };
 
@@ -165,7 +178,7 @@ export default function Navigation() {
                                 </div>
                               </div>
                             </Link>
-                            <a href="/program-management" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                            <Link href="/program-management" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                                 <ShieldCheckIcon className="w-5 h-5 text-green-600" />
                               </div>
@@ -173,8 +186,8 @@ export default function Navigation() {
                                 <h4 className="font-medium text-gray-900">Program Management</h4>
                                 <p className="text-sm text-gray-600">Manage your entire partner ecosystem</p>
                               </div>
-                            </a>
-                            <a href="/analytics-reporting" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                            </Link>
+                            <Link href="/analytics-reporting" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                                 <BarChart3Icon className="w-5 h-5 text-purple-600" />
                               </div>
@@ -182,7 +195,7 @@ export default function Navigation() {
                                 <h4 className="font-medium text-gray-900">Analytics & Reporting</h4>
                                 <p className="text-sm text-gray-600">Track performance and optimize programs</p>
                               </div>
-                            </a>
+                            </Link>
                           </div>
                         </div>
                       </div>
@@ -204,46 +217,42 @@ export default function Navigation() {
                   {openDropdown === 'resources' && (
                     <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-6 px-6 z-50">
                       <div className="grid grid-cols-1 gap-3">
-                        <a href="/help-center" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <Link href="/help-center" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                           <HeadphonesIcon className="w-5 h-5 text-blue-600 mt-0.5" />
                           <div>
                             <h4 className="font-medium text-gray-900">Help Center</h4>
                             <p className="text-sm text-gray-600">Get support and find answers</p>
                           </div>
-                        </a>
-                        <Link href="/training">
-                          <a className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                            <GraduationCapIcon className="w-5 h-5 text-blue-600 mt-0.5" />
-                            <div>
-                              <h4 className="font-medium text-gray-900">Training Center</h4>
-                              <p className="text-sm text-gray-600">Interactive modules and onboarding</p>
-                            </div>
-                          </a>
                         </Link>
-                        <a href="/api-docs" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <Link href="/training" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                          <GraduationCapIcon className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-gray-900">Training Center</h4>
+                            <p className="text-sm text-gray-600">Interactive modules and onboarding</p>
+                          </div>
+                        </Link>
+                        <Link href="/api-docs" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                           <FileTextIcon className="w-5 h-5 text-purple-600 mt-0.5" />
                           <div>
                             <h4 className="font-medium text-gray-900">API Documentation</h4>
                             <p className="text-sm text-gray-600">Developer resources and guides</p>
                           </div>
-                        </a>
-                        <a href="/webinars" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        </Link>
+                        <Link href="/webinars" className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                           <PlayCircleIcon className="w-5 h-5 text-red-600 mt-0.5" />
                           <div>
                             <h4 className="font-medium text-gray-900">Webinars & Events</h4>
                             <p className="text-sm text-gray-600">Live training and networking events</p>
                           </div>
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* About Us Link */}
-                <Link href="/about">
-                  <a className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">
-                    About Us
-                  </a>
+                <Link href="/about" className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">
+                  About Us
                 </Link>
               </div>
             )}
@@ -251,65 +260,55 @@ export default function Navigation() {
             {isAuthenticated && (
               <div className="hidden md:block">
                 <div className="ml-10 flex items-baseline space-x-8">
-                  <Link href="/">
-                    <a 
-                      className={`px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive('/') 
-                          ? 'text-blue-600 border-b-2 border-blue-600' 
-                          : 'text-gray-700 hover:text-blue-600'
-                      }`}
-                      data-testid="link-dashboard"
-                    >
-                      Dashboard
-                    </a>
+                  <Link href="/" 
+                    className={`px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive('/') 
+                        ? 'text-blue-600 border-b-2 border-blue-600' 
+                        : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                    data-testid="link-dashboard"
+                  >
+                    Dashboard
                   </Link>
-                  <Link href="/leads">
-                    <a 
-                      className={`px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive('/leads') 
-                          ? 'text-blue-600 border-b-2 border-blue-600' 
-                          : 'text-gray-700 hover:text-blue-600'
-                      }`}
-                      data-testid="link-leads"
-                    >
-                      Leads
-                    </a>
+                  <Link href="/leads" 
+                    className={`px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive('/leads') 
+                        ? 'text-blue-600 border-b-2 border-blue-600' 
+                        : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                    data-testid="link-leads"
+                  >
+                    Leads
                   </Link>
-                  <Link href="/submit-referral">
-                    <a 
-                      className={`px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive('/submit-referral') 
-                          ? 'text-blue-600 border-b-2 border-blue-600' 
-                          : 'text-gray-700 hover:text-blue-600'
-                      }`}
-                      data-testid="link-submit-referral"
-                    >
-                      Submit Referral
-                    </a>
+                  <Link href="/submit-referral" 
+                    className={`px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive('/submit-referral') 
+                        ? 'text-blue-600 border-b-2 border-blue-600' 
+                        : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                    data-testid="link-submit-referral"
+                  >
+                    Submit Referral
                   </Link>
-                  <Link href="/team-management">
-                    <a 
-                      className={`px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive('/team-management') 
-                          ? 'text-blue-600 border-b-2 border-blue-600' 
-                          : 'text-gray-700 hover:text-blue-600'
-                      }`}
-                      data-testid="link-team-management"
-                    >
-                      Team
-                    </a>
+                  <Link href="/team-management" 
+                    className={`px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive('/team-management') 
+                        ? 'text-blue-600 border-b-2 border-blue-600' 
+                        : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                    data-testid="link-team-management"
+                  >
+                    Team
                   </Link>
-                  <Link href="/training">
-                    <a 
-                      className={`px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive('/training') 
-                          ? 'text-blue-600 border-b-2 border-blue-600' 
-                          : 'text-gray-700 hover:text-blue-600'
-                      }`}
-                      data-testid="link-training"
-                    >
-                      Training
-                    </a>
+                  <Link href="/training" 
+                    className={`px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive('/training') 
+                        ? 'text-blue-600 border-b-2 border-blue-600' 
+                        : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                    data-testid="link-training"
+                  >
+                    Training
                   </Link>
                 </div>
               </div>
@@ -330,17 +329,24 @@ export default function Navigation() {
               </Button>
             )}
             
-            {/* Help Icon */}
-            <Link href="/help-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-600 hover:text-blue-600 p-2"
-                data-testid="button-help"
-              >
-                <HelpCircleIcon className="w-5 h-5" />
-              </Button>
+            {/* Help Icon - hidden on mobile */}
+            <Link href="/help-center" 
+              className="hidden sm:inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 text-gray-600 hover:text-blue-600 p-2"
+              data-testid="button-help"
+            >
+              <HelpCircleIcon className="w-5 h-5" />
             </Link>
+            
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="sm:hidden text-gray-600 hover:text-blue-600 p-2"
+              onClick={handleMobileMenuToggle}
+              data-testid="button-mobile-menu"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </Button>
             
             {isAuthenticated ? (
               <div className="relative">
@@ -457,7 +463,287 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-[100] sm:hidden"
+          onClick={handleMobileMenuClose}
+        />
+      )}
+
+      {/* Mobile Menu Panel */}
+      <div 
+        className={`fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-[101] sm:hidden ${
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Mobile Menu Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex items-center">
+              <div className="w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+                <NetworkIcon className="w-4 h-4 text-white" />
+              </div>
+              <h1 className="text-lg font-bold text-gray-900">PartnerConnector</h1>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:text-blue-600 p-1"
+              onClick={handleMobileMenuClose}
+              data-testid="button-close-mobile-menu"
+            >
+              <X className="w-6 h-6" />
+            </Button>
+          </div>
+
+          {/* Mobile Menu Content */}
+          <div className="flex-1 overflow-y-auto">
+            {isAuthenticated ? (
+              /* Authenticated Mobile Menu */
+              <div className="py-4">
+                {/* User Info */}
+                <div className="px-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">{(user as any)?.firstName} {(user as any)?.lastName}</h4>
+                      <p className="text-sm text-gray-600">{(user as any)?.email}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Navigation */}
+                <div className="space-y-1 px-4 mb-6">
+                  <Link href="/" onClick={handleMobileMenuClose}>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      isActive('/') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`} data-testid="mobile-link-dashboard">
+                      <TrendingUpIcon className="w-5 h-5" />
+                      <span className="font-medium">Dashboard</span>
+                    </div>
+                  </Link>
+                  <Link href="/leads" onClick={handleMobileMenuClose}>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      isActive('/leads') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`} data-testid="mobile-link-leads">
+                      <BarChart3Icon className="w-5 h-5" />
+                      <span className="font-medium">Leads</span>
+                    </div>
+                  </Link>
+                  <Link href="/submit-referral" onClick={handleMobileMenuClose}>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      isActive('/submit-referral') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`} data-testid="mobile-link-submit-referral">
+                      <UsersIcon className="w-5 h-5" />
+                      <span className="font-medium">Submit Referral</span>
+                    </div>
+                  </Link>
+                  <Link href="/team-management" onClick={handleMobileMenuClose}>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      isActive('/team-management') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`} data-testid="mobile-link-team-management">
+                      <UsersIcon className="w-5 h-5" />
+                      <span className="font-medium">Team</span>
+                    </div>
+                  </Link>
+                  <Link href="/training" onClick={handleMobileMenuClose}>
+                    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      isActive('/training') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`} data-testid="mobile-link-training">
+                      <GraduationCapIcon className="w-5 h-5" />
+                      <span className="font-medium">Training</span>
+                    </div>
+                  </Link>
+                  <Link href="/help-center" onClick={handleMobileMenuClose}>
+                    <div className="flex items-center gap-3 p-3 rounded-lg transition-colors text-gray-700 hover:bg-gray-50" data-testid="mobile-link-help-center">
+                      <HelpCircleIcon className="w-5 h-5" />
+                      <span className="font-medium">Help Center</span>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Account Section */}
+                <div className="border-t border-gray-200 pt-4 px-4 mb-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">ACCOUNT</h3>
+                  <div className="space-y-1">
+                    <Link href="/account/profile" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <Settings className="w-4 h-4 text-gray-600" />
+                        <span className="text-sm text-gray-700">Personal Information</span>
+                      </div>
+                    </Link>
+                    <Link href="/account/banking" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <CreditCard className="w-4 h-4 text-gray-600" />
+                        <span className="text-sm text-gray-700">Banking Details</span>
+                      </div>
+                    </Link>
+                    <Link href="/account/feedback" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <MessageSquare className="w-4 h-4 text-gray-600" />
+                        <span className="text-sm text-gray-700">Feedback & Support</span>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Admin Section - only for d.skeats@gmail.com */}
+                {(user as any)?.email === 'd.skeats@gmail.com' && (
+                  <div className="border-t border-gray-200 pt-4 px-4 mb-6">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">ADMIN</h3>
+                    <div className="space-y-1">
+                      <Link href="/admin" onClick={handleMobileMenuClose}>
+                        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                          <Shield className="w-4 h-4 text-red-600" />
+                          <span className="text-sm text-gray-700">System Administration</span>
+                        </div>
+                      </Link>
+                      <Link href="/admin/diagnostics" onClick={handleMobileMenuClose}>
+                        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                          <Activity className="w-4 h-4 text-red-600" />
+                          <span className="text-sm text-gray-700">System Diagnostics</span>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {/* Logout Section */}
+                <div className="border-t border-gray-200 pt-4 px-4">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      logout();
+                      handleMobileMenuClose();
+                    }}
+                    data-testid="mobile-button-logout"
+                    className="w-full justify-start text-gray-700 hover:bg-gray-50 p-3"
+                  >
+                    <LogOut className="w-4 h-4 mr-3" />
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Non-authenticated Mobile Menu */
+              <div className="py-4">
+                {/* For Partners Section */}
+                <div className="px-4 mb-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">FOR PARTNERS</h3>
+                  <div className="space-y-2">
+                    <Link href="/partner-onboarding" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <UsersIcon className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <h4 className="font-medium text-gray-900">Partner Onboarding</h4>
+                          <p className="text-xs text-gray-600">Get started and maximize earnings</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link href="/commission-structure" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <DollarSignIcon className="w-5 h-5 text-green-600" />
+                        <div>
+                          <h4 className="font-medium text-gray-900">Commission Structure</h4>
+                          <p className="text-xs text-gray-600">Multi-tier payment system</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link href="/lead-tracking" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <BarChart3Icon className="w-5 h-5 text-purple-600" />
+                        <div>
+                          <h4 className="font-medium text-gray-900">Lead Tracking</h4>
+                          <p className="text-xs text-gray-600">Track referrals to payout</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link href="/partner-portal" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <TrendingUpIcon className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm text-gray-700">Partner Portal</span>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* For Vendors Section */}
+                <div className="border-t border-gray-200 pt-4 px-4 mb-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">FOR VENDORS</h3>
+                  <div className="space-y-2">
+                    <Link href="/partner-recruitment" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <TargetIcon className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <h4 className="font-medium text-gray-900">Partner Recruitment</h4>
+                          <p className="text-xs text-gray-600">Find quality partners</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Resources Section */}
+                <div className="border-t border-gray-200 pt-4 px-4 mb-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">RESOURCES</h3>
+                  <div className="space-y-2">
+                    <Link href="/help-center" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <HeadphonesIcon className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm text-gray-700">Help Center</span>
+                      </div>
+                    </Link>
+                    <Link href="/training" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <GraduationCapIcon className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm text-gray-700">Training Center</span>
+                      </div>
+                    </Link>
+                    <Link href="/about" onClick={handleMobileMenuClose}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <FileTextIcon className="w-5 h-5 text-purple-600" />
+                        <span className="text-sm text-gray-700">About Us</span>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Login Section */}
+                <div className="border-t border-gray-200 pt-4 px-4">
+                  <div className="space-y-2">
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        window.location.href = "/api/login";
+                        handleMobileMenuClose();
+                      }}
+                      data-testid="mobile-button-login"
+                      className="w-full justify-start text-gray-700 hover:bg-gray-50 p-3"
+                    >
+                      Login
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        window.location.href = "/api/login";
+                        handleMobileMenuClose();
+                      }}
+                      data-testid="mobile-button-get-started"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3"
+                    >
+                      Get started
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop dropdown overlay */}
       {openDropdown && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden"
