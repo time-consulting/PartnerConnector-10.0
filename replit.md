@@ -2,6 +2,18 @@
 
 PartnerConnector is a professional referral platform designed for accountants, business consultants, and financial advisors to earn commissions by referring payment processing solutions to their clients. The application features a React-based frontend with a Node.js/Express backend, utilizing PostgreSQL for data persistence and implementing secure authentication through Replit's OAuth system.
 
+# Recent Changes
+
+**Dashboard UX Redesign (September 2025)**
+- Implemented comprehensive dashboard redesign with improved UX and navigation
+- Added desktop side navigation component with icon-based, expandable design (hover to expand from w-16 to w-64)
+- Redesigned dashboard layout into three distinct sections:
+  - **Hero Overview**: Welcome message, snapshot cards (Deals Submitted, Commission Pending, Total Referrals, Monthly Earnings), and progress tracking with gamification
+  - **Action Hub**: Prominent "Add Team Member" button and Quick Actions grid (Submit Deal, Track Referral, View Payout History, Upload Bills)
+  - **Engagement Feed**: Weekly tasks, recent referrals list, and daily suggestions for ongoing user engagement
+- Maintained responsive design with desktop side navigation and mobile hamburger menu
+- Preserved all existing functionality while dramatically improving visual hierarchy and user experience
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
