@@ -208,15 +208,16 @@ function LeadCard({ lead, onEditDetails }: { lead: Lead; onEditDetails: (lead: L
       ref={setNodeRef}
       style={style}
       className={`
-        bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm cursor-move
-        hover:shadow-md transition-shadow
+        bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm cursor-pointer
+        hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all
         ${isDragging ? 'opacity-50' : ''}
       `}
       data-testid={`lead-card-${lead.id}`}
+      onClick={() => onEditDetails(lead)}
     >
       <div className="space-y-3">
         {/* Drag handle area */}
-        <div {...attributes} {...listeners} className="space-y-3">
+        <div {...attributes} {...listeners} className="space-y-3" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-start justify-between">
             <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight">
               {lead.businessName}
@@ -292,7 +293,7 @@ function LeadCard({ lead, onEditDetails }: { lead: Lead; onEditDetails: (lead: L
               size="sm"
               variant="ghost"
               className="h-8 px-2 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-900/20 dark:hover:text-green-400"
-              onClick={handleCall}
+              onClick={(e) => { e.stopPropagation(); handleCall(e); }}
               data-testid={`button-call-${lead.id}`}
               disabled={!lead.contactPhone}
               title={lead.contactPhone ? `Call ${lead.contactPhone}` : "No phone number"}
@@ -304,7 +305,7 @@ function LeadCard({ lead, onEditDetails }: { lead: Lead; onEditDetails: (lead: L
               size="sm"
               variant="ghost"
               className="h-8 px-2 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-              onClick={handleEmail}
+              onClick={(e) => { e.stopPropagation(); handleEmail(e); }}
               data-testid={`button-email-${lead.id}`}
               disabled={!lead.contactEmail}
               title={lead.contactEmail ? `Email ${lead.contactEmail}` : "No email address"}
@@ -316,7 +317,7 @@ function LeadCard({ lead, onEditDetails }: { lead: Lead; onEditDetails: (lead: L
               size="sm"
               variant="ghost"
               className="h-8 px-2 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-900/20 dark:hover:text-purple-400"
-              onClick={handleQuoteRequest}
+              onClick={(e) => { e.stopPropagation(); handleQuoteRequest(e); }}
               data-testid={`button-quote-${lead.id}`}
               title="Request Quote"
             >
@@ -721,7 +722,7 @@ function LeadDetailsPanel({
         businessType: lead.businessType || "",
         estimatedMonthlyVolume: lead.estimatedMonthlyVolume || "",
         leadSource: lead.leadSource || "",
-        priority: lead.priority || "medium",
+        priority: (lead.priority as "low" | "medium" | "high") || "medium",
         notes: lead.notes || "",
       });
     }
