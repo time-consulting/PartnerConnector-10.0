@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -8,7 +8,6 @@ import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import ReferralForm from "@/components/referral-form";
 import BillUpload from "@/components/bill-upload";
-import CommissionCalculator from "@/components/commission-calculator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircleIcon, ArrowRightIcon, CalculatorIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircleIcon, ArrowRightIcon, SendIcon, UserIcon, MailIcon, PhoneIcon, BuildingIcon, SearchIcon, PackageIcon } from "lucide-react";
 
 export default function SubmitReferral() {
   const { toast } = useToast();
@@ -25,6 +25,8 @@ export default function SubmitReferral() {
   const [showBillUpload, setShowBillUpload] = useState(false);
   const [showMissingInfoDialog, setShowMissingInfoDialog] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const [customerSearch, setCustomerSearch] = useState<string>("");
   const [missingInfo, setMissingInfo] = useState({
     businessAddress: "",
     businessTypeId: "",
@@ -53,10 +55,27 @@ export default function SubmitReferral() {
     enabled: isAuthenticated,
   });
 
+  const { data: products } = useQuery({
+    queryKey: ["/api/products"],
+    enabled: isAuthenticated,
+  });
+
   const { data: leads } = useQuery({
     queryKey: ["/api/leads"],
     enabled: isAuthenticated,
   });
+
+  // Filter leads based on search
+  const filteredLeads = useMemo(() => {
+    if (!leads || !Array.isArray(leads)) return [];
+    if (!customerSearch.trim()) return leads;
+    
+    return leads.filter((lead: any) => 
+      lead.businessName?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+      lead.contactName?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+      lead.contactEmail?.toLowerCase().includes(customerSearch.toLowerCase())
+    );
+  }, [leads, customerSearch]);
 
   const submitReferralMutation = useMutation({
     mutationFn: async (referralData: any) => {
@@ -236,174 +255,239 @@ export default function SubmitReferral() {
         <Navigation />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 py-16">
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 py-12">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzMzMzMzMyIgZmlsbC1vcGFjaXR5PSIwLjEiLz4KPC9zdmc+')] opacity-30"></div>
         
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fadeIn">
             <div className="mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-2xl mb-4">
-                <ArrowRightIcon className="w-10 h-10 text-blue-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-4">
+                <SendIcon className="w-8 h-8 text-blue-600" />
               </div>
             </div>
             
-            <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
+            <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
               Submit New{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                 Referral
               </span>
             </h1>
             
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Connect businesses with better payment solutions and earn competitive commissions. 
-              Complete the form below to get started.
+            <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto leading-relaxed">
+              Connect businesses with the right payment solutions and earn commissions.
             </p>
-
-            {/* Commission Info Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <Card className="text-center p-4 border-0 bg-white/60 backdrop-blur-sm">
-                <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-blue-600">60%</div>
-                  <div className="text-sm text-gray-600">Level 1 Commission</div>
-                </CardContent>
-              </Card>
-              <Card className="text-center p-4 border-0 bg-white/60 backdrop-blur-sm">
-                <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-green-600">25%</div>
-                  <div className="text-sm text-gray-600">Level 2 Network</div>
-                </CardContent>
-              </Card>
-              <Card className="text-center p-4 border-0 bg-white/60 backdrop-blur-sm">
-                <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-purple-600">15%</div>
-                  <div className="text-sm text-gray-600">Level 3 Extended</div>
-                </CardContent>
-              </Card>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Commission Calculator Section */}
-      <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
-              <CalculatorIcon className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Commission Calculator
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              See your earning potential with our interactive calculators
-            </p>
-          </div>
-
-          <Tabs defaultValue="payment" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="payment" className="text-lg py-3">
-                Payment Processing
-              </TabsTrigger>
-              <TabsTrigger value="funding" className="text-lg py-3">
-                Business Funding
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="payment">
-              <CommissionCalculator type="payment" />
-            </TabsContent>
-            
-            <TabsContent value="funding">
-              <CommissionCalculator type="funding" />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </section>
 
       {/* Form Section */}
-      <section className="py-12 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="shadow-2xl border-0 bg-gradient-to-b from-white to-gray-50">
-            <CardHeader className="pb-8">
+      <section className="py-8 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Product Selection Header */}
+          <div className="mb-8">
+            <Card className="shadow-lg border border-blue-100 bg-gradient-to-r from-blue-50 to-white">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <PackageIcon className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Select Product Type</h2>
+                </div>
+                <p className="text-gray-600 mb-4">Choose the product that best matches your referral to determine the correct submission requirements.</p>
+                <Select 
+                  value={selectedProduct} 
+                  onValueChange={setSelectedProduct}
+                >
+                  <SelectTrigger className="bg-white" data-testid="select-product">
+                    <SelectValue placeholder="Select a product category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    {products && (products as any[]).filter((product: any) => product.isActive).map((product: any) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{product.name}</span>
+                          <span className="text-sm text-gray-500 capitalize">{product.category?.replace('_', ' ')}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedProduct && (
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      ✓ Product selected. Now choose how to enter your customer information below.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Customer Information Section */}
+          <Card className="shadow-xl border-0 bg-gradient-to-b from-white to-gray-50">
+            <CardHeader className="pb-6">
               <div className="text-center">
-                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">Business Information</CardTitle>
+                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">Customer Information</CardTitle>
                 <p className="text-gray-600">
-                  Fill out the details below to submit your referral
+                  Add your customer details to submit the referral
                 </p>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
               <Tabs defaultValue="existing" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="existing" className="flex items-center gap-2">
-                    Select Existing Lead
+                  <TabsTrigger value="existing" className="flex items-center gap-2" data-testid="tab-existing">
+                    <SearchIcon className="w-4 h-4" />
+                    Search Existing Customers
                   </TabsTrigger>
-                  <TabsTrigger value="new" className="flex items-center gap-2">
-                    Enter New Details
+                  <TabsTrigger value="new" className="flex items-center gap-2" data-testid="tab-new">
+                    <UserIcon className="w-4 h-4" />
+                    Add New Customer
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="existing" className="space-y-4">
-                  {leads && (leads as any[]).length > 0 ? (
+                <TabsContent value="existing" className="space-y-6">
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search customers by name, business, or email..."
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      className="pl-10 bg-white"
+                      data-testid="input-customer-search"
+                    />
+                  </div>
+
+                  {filteredLeads.length > 0 ? (
                     <div className="space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
                         <p className="text-sm text-blue-800">
-                          💡 Select a qualified lead from your tracking system to submit as a referral for commission.
+                          💡 Select a customer from your database to create a referral submission.
                         </p>
                       </div>
                       
-                      <div className="grid gap-4">
-                        {(leads as any[]).map((lead: any) => (
+                      <div className="grid gap-3 max-h-96 overflow-y-auto">
+                        {filteredLeads.map((lead: any) => (
                           <div
                             key={lead.id}
-                            className="border rounded-lg p-4 hover:border-blue-300 cursor-pointer transition-colors"
+                            className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md cursor-pointer transition-all bg-white"
                             onClick={() => {
                               setSelectedLead(lead);
                               setShowMissingInfoDialog(true);
                             }}
                             data-testid={`button-select-lead-${lead.id}`}
                           >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-semibold text-gray-900">{lead.businessName}</h4>
-                                <p className="text-sm text-gray-600">{lead.contactName}</p>
-                                <p className="text-sm text-gray-500">{lead.contactEmail}</p>
-                                {lead.estimatedMonthlyVolume && (
-                                  <p className="text-sm text-blue-600">Est. Volume: {lead.estimatedMonthlyVolume}</p>
-                                )}
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-start gap-3">
+                                  <div className="p-2 bg-gray-100 rounded-lg">
+                                    <BuildingIcon className="w-4 h-4 text-gray-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-900 mb-1">{lead.businessName}</h4>
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <UserIcon className="w-3 h-3" />
+                                        <span>{lead.contactName}</span>
+                                      </div>
+                                      {lead.contactEmail && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                          <MailIcon className="w-3 h-3" />
+                                          <span>{lead.contactEmail}</span>
+                                        </div>
+                                      )}
+                                      {lead.contactPhone && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                          <PhoneIcon className="w-3 h-3" />
+                                          <span>{lead.contactPhone}</span>
+                                        </div>
+                                      )}
+                                      {lead.estimatedMonthlyVolume && (
+                                        <div className="text-sm text-blue-600 font-medium">
+                                          Est. Volume: {lead.estimatedMonthlyVolume}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-right">
-                                <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                                  lead.status === 'interested' ? 'bg-green-100 text-green-800' :
-                                  lead.status === 'contacted' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {lead.status}
-                                </span>
+                              <div className="text-right ml-4">
+                                <Badge 
+                                  className={`${
+                                    lead.status === 'quote_received' ? 'bg-green-100 text-green-800 hover:bg-green-100' :
+                                    lead.status === 'submitted' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' :
+                                    lead.status === 'contacted' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100' :
+                                    'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                                  }`}
+                                  variant="secondary"
+                                >
+                                  {lead.status?.replace('_', ' ')}
+                                </Badge>
                               </div>
                             </div>
                           </div>
                         ))}
                       </div>
+                      
+                      {customerSearch && filteredLeads.length === 0 && (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500 mb-2">No customers found matching "{customerSearch}"</p>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setCustomerSearch("")}    data-testid="button-clear-search"
+                          >
+                            Clear Search
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500 mb-4">No leads found in your tracking system.</p>
+                  ) : !customerSearch ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <SearchIcon className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-500 mb-4">No customers found in your database.</p>
                       <Button 
                         variant="outline" 
                         onClick={() => window.location.href = '/leads'}
-                        data-testid="button-upload-leads"
+                        data-testid="button-manage-leads"
                       >
-                        Upload Leads First
+                        Manage Customer Database
                       </Button>
                     </div>
-                  )}
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 mb-2">No customers found matching "{customerSearch}"</p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setCustomerSearch("")} 
+                        data-testid="button-clear-search"
+                      >
+                        Clear Search
+                      </Button>
+                    </div>
+                  )
+                }
                 </TabsContent>
 
-                <TabsContent value="new" className="space-y-4">
+                <TabsContent value="new" className="space-y-6">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-sm text-green-800">
+                      ✨ Enter new customer details below. All information will be saved to your database for future referrals.
+                    </p>
+                  </div>
+                  
                   <ReferralForm
                     businessTypes={(businessTypes as any[]) || []}
-                    onSubmit={(data) => submitReferralMutation.mutate(data)}
+                    onSubmit={(data) => {
+                      const referralData = {
+                        ...data,
+                        selectedProducts: selectedProduct ? [selectedProduct] : data.selectedProducts
+                      };
+                      submitReferralMutation.mutate(referralData);
+                    }}
                     isSubmitting={submitReferralMutation.isPending}
                   />
                 </TabsContent>
