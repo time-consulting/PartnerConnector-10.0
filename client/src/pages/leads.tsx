@@ -217,7 +217,7 @@ function LeadCard({ lead, onEditDetails }: { lead: Lead; onEditDetails: (lead: L
     >
       <div className="space-y-3">
         {/* Drag handle area */}
-        <div {...attributes} {...listeners} className="space-y-3" onClick={(e) => e.stopPropagation()}>
+        <div {...attributes} {...listeners} className="space-y-3">
           <div className="flex items-start justify-between">
             <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight">
               {lead.businessName}
