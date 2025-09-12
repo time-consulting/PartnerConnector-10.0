@@ -23,7 +23,7 @@ import {
   MessageSquareIcon,
   EyeIcon,
   EditIcon,
-  SendIcon,
+  Send,
   FileTextIcon,
   FilterIcon,
   SearchIcon
@@ -374,7 +374,7 @@ export default function LeadsDashboard({ leads, onStatusUpdate, onAddInteraction
                                 }}
                                 data-testid={`button-send-info-${lead.id}`}
                               >
-                                <SendIcon className="h-4 w-4" />
+                                <Send className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-3xl bg-white">
@@ -693,7 +693,7 @@ Best regards,
           Reset to Template
         </Button>
         <Button type="submit">
-          <SendIcon className="h-4 w-4 mr-2" />
+          <Send className="h-4 w-4 mr-2" />
           Send Information
         </Button>
       </div>

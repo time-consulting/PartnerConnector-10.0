@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { 
   FileTextIcon, 
   DownloadIcon, 
-  SendIcon, 
+  Send, 
   CheckCircleIcon,
   BuildingIcon,
   CalendarIcon,
@@ -249,7 +249,7 @@ export default function ContractPreview({ referral, onApprove, onReject, onSendT
                 onClick={handleSendContract}
                 data-testid="button-send-contract"
               >
-                <SendIcon className="w-4 h-4 mr-2" />
+                <Send className="w-4 h-4 mr-2" />
                 Send to Client
               </Button>
               <Button

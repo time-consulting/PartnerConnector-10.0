@@ -67,7 +67,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
     onSubmit(formDataWithProducts);
   };
 
-  const selectedType = businessTypes.find(type => type.id === selectedBusinessType);
+  const selectedType = businessTypes?.find(type => type.id === selectedBusinessType);
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
