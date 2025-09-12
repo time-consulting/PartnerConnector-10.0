@@ -115,6 +115,19 @@ export default function SubmitReferral() {
   const handleMissingInfoSubmit = () => {
     if (!selectedLead) return;
     
+    // Get the final selected products (prioritize header selection, then dialog selection)
+    const finalSelectedProducts = selectedProduct ? [selectedProduct] : (missingInfo.selectedProducts.length > 0 ? missingInfo.selectedProducts : []);
+    
+    // Ensure a product is selected
+    if (finalSelectedProducts.length === 0) {
+      toast({
+        title: "Product Required",
+        description: "Please select a product type before submitting the referral.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const referralData = {
       businessName: selectedLead.businessName,
       businessEmail: selectedLead.contactEmail || "",
@@ -125,7 +138,7 @@ export default function SubmitReferral() {
       monthlyVolume: selectedLead.estimatedMonthlyVolume || "",
       currentRate: missingInfo.currentRate,
       cardMachineQuantity: 1,
-      selectedProducts: missingInfo.selectedProducts,
+      selectedProducts: finalSelectedProducts,
       notes: selectedLead.notes || "",
       gdprConsent: true,
     };
