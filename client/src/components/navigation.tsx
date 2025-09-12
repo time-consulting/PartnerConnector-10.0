@@ -257,62 +257,7 @@ export default function Navigation() {
               </div>
             )}
 
-            {isAuthenticated && (
-              <div className="hidden md:block">
-                <div className="ml-10 flex items-baseline space-x-8">
-                  <Link href="/" 
-                    className={`px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive('/') 
-                        ? 'text-blue-600 border-b-2 border-blue-600' 
-                        : 'text-gray-700 hover:text-blue-600'
-                    }`}
-                    data-testid="link-dashboard"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link href="/leads" 
-                    className={`px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive('/leads') 
-                        ? 'text-blue-600 border-b-2 border-blue-600' 
-                        : 'text-gray-700 hover:text-blue-600'
-                    }`}
-                    data-testid="link-leads"
-                  >
-                    Leads
-                  </Link>
-                  <Link href="/submit-referral" 
-                    className={`px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive('/submit-referral') 
-                        ? 'text-blue-600 border-b-2 border-blue-600' 
-                        : 'text-gray-700 hover:text-blue-600'
-                    }`}
-                    data-testid="link-submit-referral"
-                  >
-                    Submit Referral
-                  </Link>
-                  <Link href="/team-management" 
-                    className={`px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive('/team-management') 
-                        ? 'text-blue-600 border-b-2 border-blue-600' 
-                        : 'text-gray-700 hover:text-blue-600'
-                    }`}
-                    data-testid="link-team-management"
-                  >
-                    Team
-                  </Link>
-                  <Link href="/training" 
-                    className={`px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive('/training') 
-                        ? 'text-blue-600 border-b-2 border-blue-600' 
-                        : 'text-gray-700 hover:text-blue-600'
-                    }`}
-                    data-testid="link-training"
-                  >
-                    Training
-                  </Link>
-                </div>
-              </div>
-            )}
+            {/* Desktop navigation links are hidden for authenticated users - using sidebar instead */}
           </div>
           
           <div className="flex items-center space-x-4">
