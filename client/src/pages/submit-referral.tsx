@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
+import SideNavigation from "@/components/side-navigation";
 import ReferralForm from "@/components/referral-form";
 import BillUpload from "@/components/bill-upload";
 import CommissionCalculator from "@/components/commission-calculator";
@@ -145,7 +146,9 @@ export default function SubmitReferral() {
   if (showBillUpload && submittedReferralId) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-        <Navigation />
+        <SideNavigation />
+        <div className="lg:ml-16">
+          <Navigation />
         
         {/* Success Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-green-50 via-white to-blue-50 py-16">
@@ -221,13 +224,16 @@ export default function SubmitReferral() {
             </div>
           </div>
         </section>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <Navigation />
+      <SideNavigation />
+      <div className="lg:ml-16">
+        <Navigation />
       
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 py-16">
@@ -497,6 +503,7 @@ export default function SubmitReferral() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

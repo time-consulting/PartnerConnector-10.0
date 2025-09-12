@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
+import SideNavigation from "@/components/side-navigation";
 import LeadsUpload from "@/components/leads-upload";
 import LeadsDashboard from "@/components/leads-dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -250,7 +251,9 @@ export default function Leads() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navigation />
+      <SideNavigation />
+      <div className="lg:ml-16">
+        <Navigation />
       
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-6">
@@ -364,6 +367,7 @@ export default function Leads() {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
       </div>
     </div>
   );

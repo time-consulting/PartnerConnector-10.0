@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SideNavigation from "@/components/side-navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +53,9 @@ export default function Training() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <SideNavigation />
+      <div className="lg:ml-16 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -279,6 +282,7 @@ export default function Training() {
             </Tabs>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

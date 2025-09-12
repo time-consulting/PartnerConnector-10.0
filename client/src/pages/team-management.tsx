@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
+import SideNavigation from "@/components/side-navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -178,9 +179,12 @@ export default function TeamManagement() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navigation />
+        <SideNavigation />
+        <div className="lg:ml-16">
+          <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">Loading...</div>
+        </div>
         </div>
       </div>
     );
@@ -192,7 +196,9 @@ export default function TeamManagement() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <Navigation />
+      <SideNavigation />
+      <div className="lg:ml-16">
+        <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
@@ -689,6 +695,7 @@ export default function TeamManagement() {
             </Card>
           </TabsContent>
         </Tabs>
+      </div>
       </div>
     </div>
   );
