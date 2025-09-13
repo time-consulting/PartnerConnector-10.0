@@ -599,8 +599,6 @@ export type InsertRequestLog = typeof requestLogs.$inferInsert;
 export type WebhookLog = typeof webhookLogs.$inferSelect;
 export type InsertWebhookLog = typeof webhookLogs.$inferInsert;
 
-export type User = typeof users.$inferSelect;
-
 // Rate types and schemas
 export const insertRateSchema = createInsertSchema(rates);
 export type InsertRate = z.infer<typeof insertRateSchema>;

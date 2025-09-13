@@ -5,47 +5,76 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
+import ProgressionSystem from "@/components/progression-system";
+import ReferralLinkManager from "@/components/referral-link-manager";
+import InviteTracker from "@/components/invite-tracker";
+import MobileShareSheet from "@/components/mobile-share-sheet";
+import TeamAnalytics from "@/components/team-analytics";
+import InviteTeamMember from "@/components/invite-team-member";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  UsersIcon, 
-  UserPlusIcon, 
-  ShieldCheckIcon, 
-  CrownIcon,
-  SettingsIcon,
-  EyeIcon,
-  EyeOffIcon,
-  MailIcon,
-  TrashIcon,
-  CheckIcon,
-  XIcon,
-  ShareIcon,
-  DollarSignIcon,
-  TrendingUpIcon,
-  GiftIcon,
-  StarIcon,
-  ArrowRightIcon,
-  CopyIcon,
-  HeartHandshakeIcon
+  Users2, 
+  Rocket, 
+  Share2, 
+  Target,
+  TrendingUp,
+  Crown,
+  Sparkles,
+  Network,
+  Trophy,
+  Zap
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
+
+// Type definitions for better type safety
+interface ReferralLinkData {
+  id: string;
+  name: string;
+  url: string;
+  shortCode: string;
+  clicks: number;
+  conversions: number;
+  created: Date;
+  expires?: Date;
+  isActive: boolean;
+  trackingEnabled: boolean;
+  campaignName?: string;
+}
+
+interface CreateLinkData {
+  name: string;
+  campaignName?: string;
+  expiresAt?: Date;
+  trackingEnabled?: boolean;
+}
+
+interface UpdateLinkData {
+  name?: string;
+  isActive?: boolean;
+  trackingEnabled?: boolean;
+}
+
+interface ShareData {
+  platform: string;
+  message: string;
+  customData?: any;
+}
+
+interface UserStats {
+  level: string;
+  earnings: number;
+  teamSize: number;
+}
 
 export default function TeamManagement() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [showMobileShareSheet, setShowMobileShareSheet] = useState(false);
+  const [showTeamAnalytics, setShowTeamAnalytics] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [showCustomerReferralDialog, setShowCustomerReferralDialog] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("member");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [referralSource, setReferralSource] = useState("");
   const queryClient = useQueryClient();
 
   // Redirect to login if not authenticated
@@ -63,91 +92,182 @@ export default function TeamManagement() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Customer referral data with realistic commission calculations based on 60% Level 1 rate
-  const customerReferrals = [
+  // Mock data for gamified system - would be from API in production
+  const userStats = {
+    level: "Gold Partner",
+    earnings: 4350,
+    teamSize: 12
+  };
+
+  const progressionData = {
+    currentLevel: "Gold Partner",
+    currentXP: 3250,
+    xpToNextLevel: 1750,
+    totalXP: 3250,
+    teamSize: 12,
+    totalInvites: 25,
+    successfulInvites: 12,
+    currentStreak: 7,
+    longestStreak: 14,
+    revenue: 4350,
+    achievements: [
+      {
+        id: "first-invite",
+        name: "First Steps",
+        description: "Sent your first team invitation",
+        icon: "users",
+        unlockedAt: new Date('2024-01-15')
+      },
+      {
+        id: "week-streak",
+        name: "Week Warrior",
+        description: "7 day invitation streak",
+        icon: "flame",
+        unlockedAt: new Date('2024-01-22')
+      },
+      {
+        id: "team-builder",
+        name: "Team Builder",
+        description: "Build a team of 10+ members",
+        icon: "users",
+        unlockedAt: new Date('2024-01-28')
+      },
+      {
+        id: "revenue-milestone",
+        name: "Revenue Generator",
+        description: "Generate £5000+ in team revenue",
+        icon: "trending",
+        progress: 4350,
+        total: 5000
+      },
+      {
+        id: "platinum-path",
+        name: "Platinum Potential",
+        description: "Get 50% to Platinum level",
+        icon: "star",
+        progress: 3250,
+        total: 5000
+      }
+    ],
+    nextMilestone: {
+      name: "Platinum Partner",
+      description: "Reach Platinum level for premium benefits",
+      progress: 3250,
+      total: 5000,
+      reward: "10% Bonus Rate"
+    }
+  };
+
+  const mockReferralLinks = [
     {
       id: "1",
-      customerName: "Sarah Johnson",
-      customerEmail: "sarah@techcorp.com",
-      businessName: "TechCorp Solutions",
-      referralValue: 25000, // Monthly card processing volume
-      commission: 300, // £500 base * 60% = £300 (for £25k volume bracket)
-      status: "converted",
-      dateReferred: "2024-01-15",
-      referredBy: "you"
+      name: "LinkedIn Campaign",
+      url: "https://example.com/signup?ref=user123-linkedin",
+      shortCode: "user123-linkedin",
+      clicks: 47,
+      conversions: 8,
+      created: new Date('2024-01-15'),
+      isActive: true,
+      trackingEnabled: true,
+      campaignName: "Q1-2024-LinkedIn"
     },
     {
-      id: "2", 
-      customerName: "Mike Chen",
-      customerEmail: "mike@growthco.com",
-      businessName: "GrowthCo Marketing",
-      referralValue: 75000, // Business funding amount
-      commission: 1350, // £75k * 3% * 60% = £1,350
-      status: "in_progress",
-      dateReferred: "2024-01-20",
-      referredBy: "you"
-    },
-    {
-      id: "3",
-      customerName: "Lisa Rodriguez",
-      customerEmail: "lisa@innovatetech.com", 
-      businessName: "InnovateTech Ltd",
-      referralValue: 45000, // Monthly processing volume
-      commission: 480, // £800 base * 60% = £480 (for £45k volume bracket)
-      status: "pending",
-      dateReferred: "2024-01-25",
-      referredBy: "you"
-    },
-    {
-      id: "4",
-      customerName: "James Wilson",
-      customerEmail: "james@wilsonltd.com",
-      businessName: "Wilson & Associates",
-      referralValue: 120000, // Business funding
-      commission: 2160, // £120k * 3% * 60% = £2,160
-      status: "converted",
-      dateReferred: "2024-01-10",
-      referredBy: "you"
-    },
-    {
-      id: "5",
-      customerName: "Emma Thompson",
-      customerEmail: "emma@creativeco.com",
-      businessName: "Creative Solutions Co",
-      referralValue: 15000, // Monthly processing
-      commission: 120, // £200 base * 60% = £120 (for £15k volume bracket)
-      status: "converted",
-      dateReferred: "2024-01-05",
-      referredBy: "you"
+      id: "2",
+      name: "Email Newsletter",
+      url: "https://example.com/signup?ref=user123-email",
+      shortCode: "user123-email",
+      clicks: 23,
+      conversions: 5,
+      created: new Date('2024-01-20'),
+      expires: new Date('2024-04-20'),
+      isActive: true,
+      trackingEnabled: true
     }
   ];
 
-  // Calculate realistic team stats based on actual referral data
-  const teamStats = {
-    totalCustomerReferrals: customerReferrals.length,
-    totalReferralValue: customerReferrals.reduce((sum, ref) => sum + ref.referralValue, 0),
-    totalCommissionEarned: customerReferrals.reduce((sum, ref) => sum + ref.commission, 0),
-    averageReferralValue: Math.round(customerReferrals.reduce((sum, ref) => sum + ref.referralValue, 0) / customerReferrals.length),
-    averageCommission: Math.round(customerReferrals.reduce((sum, ref) => sum + ref.commission, 0) / customerReferrals.length),
-    conversionRate: Math.round((customerReferrals.filter(ref => ref.status === 'converted').length / customerReferrals.length) * 100)
+  const mockInvites = [
+    {
+      id: "1",
+      email: "sarah@techcorp.com",
+      name: "Sarah Johnson",
+      status: 'active' as const,
+      sentAt: new Date('2024-01-15'),
+      openedAt: new Date('2024-01-15'),
+      clickedAt: new Date('2024-01-16'),
+      registeredAt: new Date('2024-01-16'),
+      activatedAt: new Date('2024-01-17'),
+      source: "LinkedIn",
+      device: 'desktop' as const,
+      location: "London, UK",
+      referralCode: "user123-sarah",
+      remindersSent: 0
+    },
+    {
+      id: "2",
+      email: "mike@growthco.com",
+      name: "Mike Chen",
+      status: 'registered' as const,
+      sentAt: new Date('2024-01-20'),
+      openedAt: new Date('2024-01-20'),
+      clickedAt: new Date('2024-01-21'),
+      registeredAt: new Date('2024-01-22'),
+      source: "Email",
+      device: 'mobile' as const,
+      location: "Manchester, UK",
+      referralCode: "user123-mike",
+      remindersSent: 1
+    },
+    {
+      id: "3",
+      email: "lisa@innovatetech.com",
+      name: "Lisa Rodriguez",
+      status: 'clicked' as const,
+      sentAt: new Date('2024-01-25'),
+      openedAt: new Date('2024-01-25'),
+      clickedAt: new Date('2024-01-26'),
+      source: "WhatsApp",
+      device: 'mobile' as const,
+      location: "Birmingham, UK",
+      referralCode: "user123-lisa",
+      remindersSent: 0
+    }
+  ];
+
+  const inviteMetrics = {
+    sent: 25,
+    opened: 18,
+    clicked: 15,
+    registered: 12,
+    active: 12
   };
 
-  const customerReferralMutation = useMutation({
-    mutationFn: async (data: { customerName: string; customerEmail: string; referralSource: string }) => {
-      // Mock API call - would be real in production
-      return new Promise((resolve) => setTimeout(resolve, 1000));
+  // Typed mutations for better type safety
+  const createLinkMutation = useMutation({
+    mutationFn: async (data: CreateLinkData): Promise<ReferralLinkData> => {
+      // Mock API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return {
+        id: Date.now().toString(),
+        name: data.name,
+        url: `https://example.com/signup?ref=${user?.id || 'demo123'}-${Date.now()}`,
+        shortCode: `${user?.id || 'demo123'}-${Date.now()}`,
+        clicks: 0,
+        conversions: 0,
+        created: new Date(),
+        expires: data.expiresAt,
+        isActive: true,
+        trackingEnabled: data.trackingEnabled ?? true,
+        campaignName: data.campaignName,
+      };
     },
     onSuccess: () => {
-      setShowCustomerReferralDialog(false);
-      setCustomerName("");
-      setCustomerEmail("");
-      setReferralSource("");
+      queryClient.invalidateQueries({ queryKey: ['/api/referral-links'] });
       toast({
-        title: "Customer Referral Submitted",
-        description: "Your customer referral has been submitted and is being processed.",
+        title: "Link Created",
+        description: "Referral link created successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -161,37 +281,129 @@ export default function TeamManagement() {
       }
       toast({
         title: "Error",
-        description: error.message || "Failed to submit customer referral",
+        description: "Failed to create referral link",
         variant: "destructive",
       });
     },
   });
 
-  const copyReferralLink = () => {
-    const referralLink = `${window.location.origin}?ref=demo`;
-    navigator.clipboard.writeText(referralLink);
+  const shareTrackingMutation = useMutation({
+    mutationFn: async (data: ShareData) => {
+      // Mock API call to track sharing
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Shared Successfully",
+        description: `Shared on ${data.platform}`,
+      });
+    },
+    onError: (error: unknown) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to track sharing",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Typed handler functions for component interactions
+  const handleCreateReferralLink = async (data: CreateLinkData): Promise<ReferralLinkData> => {
+    return createLinkMutation.mutateAsync(data);
+  };
+
+  const handleUpdateReferralLink = async (id: string, data: UpdateLinkData): Promise<UpdateLinkData> => {
+    // Mock update API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     toast({
-      title: "Link Copied",
-      description: "Your referral link has been copied to clipboard",
+      title: "Link Updated",
+      description: "Referral link updated successfully",
+    });
+    return data;
+  };
+
+  const handleDeleteReferralLink = async (id: string): Promise<void> => {
+    // Mock delete API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    toast({
+      title: "Link Deleted",
+      description: "Referral link deleted successfully",
     });
   };
 
-  if (isLoading) {
+  const handleShare = async (platform: string, message: string, customData?: any): Promise<ShareData> => {
+    return shareTrackingMutation.mutateAsync({ platform, message, customData });
+  };
+
+  const handleOpenAnalytics = () => {
+    setShowTeamAnalytics(true);
+  };
+
+  const handleOpenInviteDialog = () => {
+    setShowInviteDialog(true);
+  };
+
+  const handleRefreshAnalytics = async () => {
+    // Mock refresh analytics data
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    queryClient.invalidateQueries({ queryKey: ['/api/team-analytics'] });
+    toast({
+      title: "Analytics Refreshed",
+      description: "Team analytics data has been updated",
+    });
+  };
+
+  const handleInviteSuccess = (invitation: any) => {
+    // Handle successful invitation
+    queryClient.invalidateQueries({ queryKey: ['/api/team-invitations'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/team-analytics'] });
+  };
+
+  const handleResendInvite = async (id: string) => {
+    // Mock resend API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    toast({
+      title: "Invite Resent",
+      description: "Invitation has been resent successfully",
+    });
+  };
+
+  const handleSendReminder = async (id: string) => {
+    // Mock reminder API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    toast({
+      title: "Reminder Sent",
+      description: "Reminder has been sent successfully",
+    });
+  };
+
+  const handleRefreshInvites = async () => {
+    // Mock refresh API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    queryClient.invalidateQueries({ queryKey: ['/api/invites'] });
+  };
+
+  if (isLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <SideNavigation />
-        <div className="lg:ml-16">
-          <Navigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">Loading...</div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return null;
   }
 
   return (
@@ -199,503 +411,237 @@ export default function TeamManagement() {
       <SideNavigation />
       <div className="lg:ml-16">
         <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Team & Referrals</h1>
-          <p className="text-xl text-gray-600">
-            Manage your team and empower your customers to refer business for extra commission
-          </p>
+        
+        {/* Full Width Layout */}
+        <div className="w-full">
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b">
+            <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="text-center">
+                <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
+                  <Crown className="w-8 h-8 text-yellow-500" />
+                  Team Growth Center
+                  <Sparkles className="w-8 h-8 text-purple-500" />
+                </h1>
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                  Build your network, track your progress, and unlock rewards through our gamified team growth platform
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Layout */}
+          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+              
+              {/* Main Content - 8 columns on XL screens */}
+              <div className="xl:col-span-8">
+                <Tabs defaultValue="progression" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="progression" className="flex items-center gap-2" data-testid="tab-progression">
+                      <Rocket className="w-4 h-4" />
+                      Progression
+                    </TabsTrigger>
+                    <TabsTrigger value="referral-links" className="flex items-center gap-2" data-testid="tab-referral-links">
+                      <Share2 className="w-4 h-4" />
+                      Referral Links
+                    </TabsTrigger>
+                    <TabsTrigger value="invite-tracking" className="flex items-center gap-2" data-testid="tab-invite-tracking">
+                      <Target className="w-4 h-4" />
+                      Invite Tracking
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="progression" className="space-y-6">
+                    <ProgressionSystem data={progressionData} />
+                  </TabsContent>
+
+                  <TabsContent value="referral-links" className="space-y-6">
+                    <ReferralLinkManager 
+                      userReferralCode={user?.id || 'demo123'}
+                      links={mockReferralLinks}
+                      onCreateLink={handleCreateReferralLink}
+                      onUpdateLink={handleUpdateReferralLink}
+                      onDeleteLink={handleDeleteReferralLink}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="invite-tracking" className="space-y-6">
+                    <InviteTracker 
+                      invites={mockInvites}
+                      metrics={inviteMetrics}
+                      onResendInvite={handleResendInvite}
+                      onSendReminder={handleSendReminder}
+                      onRefresh={handleRefreshInvites}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
+
+              {/* Sidebar - 4 columns on XL screens */}
+              <div className="xl:col-span-4">
+                {/* Desktop Sidebar */}
+                <div className="hidden xl:block">
+                  <div className="sticky top-8 space-y-6">
+                    
+                    {/* Quick Actions Card */}
+                    <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-0 shadow-lg">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Zap className="w-5 h-5" />
+                          Quick Actions
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                          onClick={() => setShowMobileShareSheet(true)}
+                          data-testid="button-share-quick"
+                        >
+                          <Share2 className="w-4 h-4 mr-2" />
+                          Share Referral Link
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={handleOpenInviteDialog}
+                          data-testid="button-invite-team"
+                        >
+                          <Users2 className="w-4 h-4 mr-2" />
+                          Invite Team Member
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={handleOpenAnalytics}
+                          data-testid="button-view-analytics"
+                        >
+                          <TrendingUp className="w-4 h-4 mr-2" />
+                          View Analytics
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {/* Level Progress Card */}
+                    <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-0">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Trophy className="w-5 h-5 text-yellow-600" />
+                          Level Progress
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-center space-y-3">
+                          <div className="text-2xl font-bold text-yellow-700">{userStats.level}</div>
+                          <div className="text-sm text-gray-600">1,750 XP to Platinum</div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full" style={{ width: '65%' }}></div>
+                          </div>
+                          <div className="text-xs text-gray-500">65% to next level</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Team Stats Card */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Network className="w-5 h-5" />
+                          Team Stats
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Team Size</span>
+                          <span className="font-semibold">{userStats.teamSize}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Total Earnings</span>
+                          <span className="font-semibold text-green-600">£{userStats.earnings}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Active Invites</span>
+                          <span className="font-semibold">{inviteMetrics.active}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Conversion Rate</span>
+                          <span className="font-semibold text-blue-600">{Math.round((inviteMetrics.active / inviteMetrics.sent) * 100)}%</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Commission Structure Card */}
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0">
+                      <CardHeader>
+                        <CardTitle className="text-sm font-medium text-green-800">Commission Rates</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-green-700">Direct Referrals</span>
+                          <Badge className="bg-green-200 text-green-800">7.5%</Badge>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-green-700">Level 2 Team</span>
+                          <Badge className="bg-green-200 text-green-800">2%</Badge>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-green-700">Performance Bonus</span>
+                          <Badge className="bg-green-200 text-green-800">+10%</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                {/* Mobile Bottom Sheet */}
+                <div className="xl:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl">
+                  <div className="px-4 py-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="text-lg font-bold text-gray-900">{userStats.level}</div>
+                        <div className="text-sm text-gray-600">£{userStats.earnings} earned</div>
+                      </div>
+                      <Button 
+                        size="sm"
+                        onClick={() => setShowMobileShareSheet(true)}
+                        data-testid="button-mobile-share"
+                      >
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Share
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
 
-        <Tabs defaultValue="customer-referrals" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="customer-referrals" className="flex items-center gap-2" data-testid="tab-customer-referrals">
-              <HeartHandshakeIcon className="w-4 h-4" />
-              Customer Referrals
-            </TabsTrigger>
-            <TabsTrigger value="team-management" className="flex items-center gap-2" data-testid="tab-team-management">
-              <UsersIcon className="w-4 h-4" />
-              Team Management  
-            </TabsTrigger>
-          </TabsList>
+        {/* Mobile Share Sheet */}
+        <MobileShareSheet 
+          isOpen={showMobileShareSheet}
+          onOpenChange={setShowMobileShareSheet}
+          referralUrl={`${window.location.origin}/signup?ref=${user?.id || 'demo123'}`}
+          userStats={userStats}
+          onShare={handleShare}
+        />
 
-          <TabsContent value="customer-referrals" className="space-y-6">
-            {/* Customer Referral Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-blue-600 font-medium">Total Referrals</p>
-                      <p className="text-3xl font-bold text-blue-700">{teamStats.totalCustomerReferrals}</p>
-                    </div>
-                    <ShareIcon className="w-8 h-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Team Analytics Dialog */}
+        <TeamAnalytics
+          isOpen={showTeamAnalytics}
+          onClose={() => setShowTeamAnalytics(false)}
+          onRefresh={handleRefreshAnalytics}
+        />
 
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-green-600 font-medium">Total Value</p>
-                      <p className="text-2xl font-bold text-green-700">£{teamStats.totalReferralValue.toLocaleString()}</p>
-                    </div>
-                    <TrendingUpIcon className="w-8 h-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Invite Team Member Dialog */}
+        <InviteTeamMember
+          isOpen={showInviteDialog}
+          onOpenChange={setShowInviteDialog}
+          userReferralCode={user?.id || 'demo123'}
+          onInviteSuccess={handleInviteSuccess}
+        />
 
-              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-purple-600 font-medium">Commission Earned</p>
-                      <p className="text-2xl font-bold text-purple-700">£{teamStats.totalCommissionEarned.toLocaleString()}</p>
-                    </div>
-                    <DollarSignIcon className="w-8 h-8 text-purple-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-yellow-600 font-medium">Avg. Value</p>
-                      <p className="text-2xl font-bold text-yellow-700">£{teamStats.averageReferralValue.toLocaleString()}</p>
-                    </div>
-                    <GiftIcon className="w-8 h-8 text-yellow-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-indigo-600 font-medium">Avg. Commission</p>
-                      <p className="text-2xl font-bold text-indigo-700">£{teamStats.averageCommission.toLocaleString()}</p>
-                    </div>
-                    <DollarSignIcon className="w-8 h-8 text-indigo-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-red-600 font-medium">Conversion Rate</p>
-                      <p className="text-3xl font-bold text-red-700">{teamStats.conversionRate}%</p>
-                    </div>
-                    <StarIcon className="w-8 h-8 text-red-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Referral Actions */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <HeartHandshakeIcon className="w-5 h-5" />
-                    Customer Referral Program
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-gray-600">
-                    Empower your existing customers to refer new business and earn additional commission on successful referrals.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Dialog open={showCustomerReferralDialog} onOpenChange={setShowCustomerReferralDialog}>
-                      <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-refer-customer">
-                          <UserPlusIcon className="w-4 h-4 mr-2" />
-                          Refer a Customer
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Refer a Customer for Extra Commission</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="customerName">Customer Name</Label>
-                            <Input
-                              id="customerName"
-                              value={customerName}
-                              onChange={(e) => setCustomerName(e.target.value)}
-                              placeholder="Enter customer's full name"
-                              data-testid="input-customer-name"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="customerEmail">Customer Email</Label>
-                            <Input
-                              id="customerEmail"
-                              type="email"
-                              value={customerEmail}
-                              onChange={(e) => setCustomerEmail(e.target.value)}
-                              placeholder="customer@company.com"
-                              data-testid="input-customer-email"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="referralSource">How did you connect with this customer?</Label>
-                            <Select value={referralSource} onValueChange={setReferralSource}>
-                              <SelectTrigger data-testid="select-referral-source">
-                                <SelectValue placeholder="Select referral source" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="existing-client">Existing Client</SelectItem>
-                                <SelectItem value="networking">Networking Event</SelectItem>
-                                <SelectItem value="social-media">Social Media</SelectItem>
-                                <SelectItem value="word-of-mouth">Word of Mouth</SelectItem>
-                                <SelectItem value="cold-outreach">Cold Outreach</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex justify-end space-x-3">
-                            <Button
-                              variant="outline"
-                              onClick={() => setShowCustomerReferralDialog(false)}
-                              data-testid="button-cancel-referral"
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              onClick={() => customerReferralMutation.mutate({
-                                customerName,
-                                customerEmail,
-                                referralSource
-                              })}
-                              disabled={!customerName || !customerEmail || !referralSource || customerReferralMutation.isPending}
-                              data-testid="button-submit-referral"
-                            >
-                              {customerReferralMutation.isPending ? "Submitting..." : "Submit Referral"}
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    
-                    <Button 
-                      variant="outline" 
-                      onClick={copyReferralLink}
-                      data-testid="button-copy-referral-link"
-                    >
-                      <CopyIcon className="w-4 h-4 mr-2" />
-                      Copy Referral Link
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">Commission Structure</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Customer Referrals</span>
-                      <span className="font-semibold text-green-700">5%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Partner Referrals</span>
-                      <span className="font-semibold text-blue-700">7.5%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Team Bonuses</span>
-                      <span className="font-semibold text-purple-700">2%</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Customer Referrals List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Customer Referrals</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium">Customer</th>
-                        <th className="text-left py-3 px-4 font-medium">Business</th>
-                        <th className="text-left py-3 px-4 font-medium">Value</th>
-                        <th className="text-left py-3 px-4 font-medium">Commission</th>
-                        <th className="text-left py-3 px-4 font-medium">Status</th>
-                        <th className="text-left py-3 px-4 font-medium">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {customerReferrals.map((referral) => (
-                        <tr key={referral.id} className="border-b hover:bg-gray-50" data-testid={`row-customer-referral-${referral.id}`}>
-                          <td className="py-3 px-4">
-                            <div>
-                              <div className="font-medium text-gray-900">{referral.customerName}</div>
-                              <div className="text-sm text-gray-500">{referral.customerEmail}</div>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-gray-700">{referral.businessName}</td>
-                          <td className="py-3 px-4 font-semibold text-gray-900">£{referral.referralValue.toLocaleString()}</td>
-                          <td className="py-3 px-4 font-semibold text-green-600">£{referral.commission.toLocaleString()}</td>
-                          <td className="py-3 px-4">
-                            <Badge 
-                              variant={
-                                referral.status === 'converted' ? 'default' : 
-                                referral.status === 'in_progress' ? 'secondary' : 
-                                'outline'
-                              }
-                              className={
-                                referral.status === 'converted' ? 'bg-green-100 text-green-700' :
-                                referral.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-700'
-                              }
-                            >
-                              {referral.status === 'converted' ? 'Converted' :
-                               referral.status === 'in_progress' ? 'In Progress' :
-                               'Pending'}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4 text-gray-600">
-                            {new Date(referral.dateReferred).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="team-management" className="space-y-6">
-            {/* Team Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Team Members</p>
-                      <p className="text-3xl font-bold text-gray-900">4</p>
-                    </div>
-                    <UsersIcon className="w-8 h-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Pending Invitations</p>
-                      <p className="text-3xl font-bold text-gray-900">2</p>
-                    </div>
-                    <MailIcon className="w-8 h-8 text-yellow-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Total Revenue</p>
-                      <p className="text-2xl font-bold text-gray-900">£124k</p>
-                    </div>
-                    <TrendingUpIcon className="w-8 h-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Team Actions */}
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Team Members</h2>
-                <p className="text-gray-600">Manage your team and invite new members</p>
-              </div>
-              
-              <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-invite-member">
-                    <UserPlusIcon className="w-4 h-4 mr-2" />
-                    Invite Member
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Invite Team Member</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="inviteEmail">Email Address</Label>
-                      <Input
-                        id="inviteEmail"
-                        type="email"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                        placeholder="colleague@company.com"
-                        data-testid="input-invite-email"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="inviteRole">Role</Label>
-                      <Select value={inviteRole} onValueChange={setInviteRole}>
-                        <SelectTrigger data-testid="select-invite-role">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="manager">Manager</SelectItem>
-                          <SelectItem value="member">Member</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end space-x-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowInviteDialog(false)}
-                        data-testid="button-cancel-invite"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={async () => {
-                          try {
-                            // Call GHL webhook for team member invite
-                            const response = await fetch('/api/webhooks/ghl/team-invite', {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({
-                                email: inviteEmail,
-                                role: inviteRole,
-                                invitedBy: (user as any)?.email || 'demo@partnerconnector.com',
-                                teamName: 'PartnerConnector Team'
-                              })
-                            });
-                            
-                            const result = await response.json();
-                            
-                            if (result.success) {
-                              toast({
-                                title: "Invitation Sent",
-                                description: "Team invitation has been sent via email automation.",
-                              });
-                            } else {
-                              toast({
-                                title: "Invitation Queued", 
-                                description: "Team invitation has been queued for processing.",
-                                variant: "default",
-                              });
-                            }
-                            
-                            setShowInviteDialog(false);
-                            setInviteEmail("");
-                            setInviteRole("member");
-                          } catch (error) {
-                            toast({
-                              title: "Error",
-                              description: "Failed to send invitation. Please try again.",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                        disabled={!inviteEmail}
-                        data-testid="button-send-invite"
-                      >
-                        Send Invitation
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Team Members Table */}
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-6 font-medium">Member</th>
-                        <th className="text-left py-3 px-6 font-medium">Role</th>
-                        <th className="text-left py-3 px-6 font-medium">Referrals</th>
-                        <th className="text-left py-3 px-6 font-medium">Commission</th>
-                        <th className="text-left py-3 px-6 font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b hover:bg-gray-50">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <span className="text-blue-700 font-medium">JD</span>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">John Doe</div>
-                              <div className="text-sm text-gray-500">john@company.com</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Badge className="bg-purple-100 text-purple-700">
-                            <CrownIcon className="w-3 h-3 mr-1" />
-                            Owner
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-6 font-semibold">8</td>
-                        <td className="py-4 px-6 font-semibold text-green-600">£4,250</td>
-                        <td className="py-4 px-6">
-                          <Button variant="ghost" size="sm">
-                            <SettingsIcon className="w-4 h-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                      <tr className="border-b hover:bg-gray-50">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                              <span className="text-green-700 font-medium">SM</span>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">Sarah Miller</div>
-                              <div className="text-sm text-gray-500">sarah@company.com</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Badge className="bg-blue-100 text-blue-700">
-                            <ShieldCheckIcon className="w-3 h-3 mr-1" />
-                            Admin
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-6 font-semibold">12</td>
-                        <td className="py-4 px-6 font-semibold text-green-600">£6,100</td>
-                        <td className="py-4 px-6">
-                          <Button variant="ghost" size="sm">
-                            <SettingsIcon className="w-4 h-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
       </div>
     </div>
   );
