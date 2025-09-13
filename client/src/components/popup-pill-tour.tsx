@@ -57,10 +57,7 @@ export default function PopupPillTour({ isVisible, onComplete, onSkip, onDismiss
   // Analytics tracking mutations
   const trackAnalyticsMutation = useMutation({
     mutationFn: async ({ event, data }: { event: string, data?: any }) => {
-      return apiRequest(`/api/analytics/track`, {
-        method: 'POST',
-        body: JSON.stringify({ event, data })
-      });
+      return apiRequest('POST', `/api/analytics/track`, { event, data });
     },
     onError: (error) => {
       console.warn('Analytics tracking failed:', error);

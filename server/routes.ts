@@ -1188,6 +1188,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics tracking endpoint
+  app.post('/api/analytics/track', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { event, data } = req.body;
+      
+      // Log analytics event for audit trail
+      await storage.createAudit({
+        actorUserId: userId,
+        action: 'analytics_tracked',
+        entityType: 'analytics',
+        entityId: event,
+        metadata: { event, data },
+        requestId: req.requestId,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      // Update user onboarding data based on event
+      if (event === 'tour_started') {
+        await storage.upsertUser({
+          id: userId,
+          tourStarted: new Date(),
+        });
+      } else if (event === 'tour_completed') {
+        const user = await storage.getUser(userId);
+        await storage.upsertUser({
+          id: userId,
+          tourCompleted: new Date(),
+          onboardingXp: (user?.onboardingXp || 0) + 100,
+        });
+      } else if (event === 'tour_skipped') {
+        await storage.upsertUser({
+          id: userId,
+          tourSkipped: new Date(),
+        });
+      }
+
+      res.json({ success: true, message: 'Analytics event tracked' });
+    } catch (error) {
+      console.error("Error tracking analytics:", error);
+      res.status(500).json({ success: false, message: "Failed to track analytics" });
+    }
+  });
+
   // Error handling middleware (must be last)
   app.use(errorHandlingMiddleware);
 
