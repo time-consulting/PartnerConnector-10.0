@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initSentry, getSentryHandlers } from "./sentry";
@@ -12,6 +13,37 @@ const app = express();
 const sentryHandlers = getSentryHandlers();
 app.use(sentryHandlers.requestHandler);
 app.use(sentryHandlers.tracingHandler);
+
+// Enable compression for all responses
+app.use(compression({
+  // Compression level (0-9): 6 provides good balance of speed vs compression ratio
+  level: 6,
+  // Only compress responses larger than 1KB
+  threshold: 1024,
+  // Filter function to exclude already compressed formats and small responses
+  filter: (req: Request, res: Response) => {
+    // Don't compress responses with this request header
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    
+    // Only compress if content type indicates text-based content
+    const contentType = res.getHeader('content-type') as string;
+    if (contentType) {
+      // Skip already compressed formats
+      if (contentType.includes('image/') || 
+          contentType.includes('video/') ||
+          contentType.includes('audio/') ||
+          contentType.includes('application/pdf') ||
+          contentType.includes('application/zip')) {
+        return false;
+      }
+    }
+    
+    // Use compression for text-based content
+    return compression.filter(req, res);
+  }
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -63,6 +95,41 @@ app.use((req, res, next) => {
     
     // Log the error but don't throw it again to prevent headers conflict
     console.error('Application error:', err);
+  });
+
+  // Add caching middleware for static assets before serving them
+  app.use((req, res, next) => {
+    const url = req.url;
+    const ext = url.split('.').pop()?.toLowerCase();
+    const filename = url.split('/').pop() || '';
+    
+    // Only apply to static assets (not API routes)
+    if (!url.startsWith('/api')) {
+      // Check if file has hash in name (typical Vite pattern: filename-hash.ext)
+      const hasHash = /\.[a-f0-9]{8,}\./i.test(filename) || /\-[a-f0-9]{8,}\./i.test(filename);
+      
+      if (hasHash) {
+        // Hashed assets - can be cached for 1 year since content changes = new hash
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } else if (ext === 'html' || url === '/' || !ext) {
+        // HTML files and routes - short cache to ensure updates are seen quickly
+        res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+      } else if (['js', 'css', 'json'].includes(ext || '')) {
+        // Non-hashed JS/CSS - moderate cache with revalidation
+        res.setHeader('Cache-Control', 'public, max-age=86400, must-revalidate');
+      } else if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'webp', 'avif'].includes(ext || '')) {
+        // Images - can be cached longer as they change less frequently
+        res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 days
+      } else if (['woff', 'woff2', 'ttf', 'eot'].includes(ext || '')) {
+        // Fonts - can be cached for long periods
+        res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
+      } else if (ext) {
+        // Default caching for other static assets
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+      }
+    }
+    
+    next();
   });
 
   // importantly only setup vite in development and after
