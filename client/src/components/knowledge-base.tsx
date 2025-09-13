@@ -93,7 +93,7 @@ export default function KnowledgeBase() {
     {
       id: '3',
       question: 'What commission rates do you offer?',
-      answer: 'Our commission structure is tiered based on performance. Level 1 partners earn 60% of gross commission, Level 2 partners earn 70%, and Master partners earn 80%. Commission amounts vary by service type, with payment processing starting at £300 per successful referral.',
+      answer: 'Our commission structure is tiered based on performance. Level 1 partners earn upfront commissions on successful referrals, Level 2 partners earn 20% ongoing commission from their team\'s success, and Extended network partners earn 10% ongoing commission from their extended network. Commission amounts vary by service type, with payment processing starting at £300 per successful referral.',
       category: 'commission-structure',
       tags: ['rates', 'commission', 'tiers'],
       helpful: 52,
@@ -186,9 +186,9 @@ export default function KnowledgeBase() {
 
       <Tabs defaultValue="faq" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="faq">FAQ</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="contact">Contact Support</TabsTrigger>
+          <TabsTrigger value="faq" data-testid="tab-faq">FAQ</TabsTrigger>
+          <TabsTrigger value="categories" data-testid="tab-categories">Categories</TabsTrigger>
+          <TabsTrigger value="contact" data-testid="tab-contact-support">Contact Support</TabsTrigger>
         </TabsList>
 
         <TabsContent value="faq" className="space-y-6">

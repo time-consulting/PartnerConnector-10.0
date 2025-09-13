@@ -21,7 +21,7 @@ export default function CommissionCalculator({ type = "payment", className = "" 
   const [locations, setLocations] = useState([1]);
   const [fundingAmount, setFundingAmount] = useState([50000]);
 
-  // Payment processing commission calculation (60% of base rates)
+  // Payment processing commission calculation (Level 1 upfront commissions)
   const calculatePaymentCommission = () => {
     const volume = monthlyVolume[0];
     const locationCount = locations[0];
@@ -40,8 +40,8 @@ export default function CommissionCalculator({ type = "payment", className = "" 
     // Location multiplier
     const locationMultiplier = 1 + (locationCount - 1) * 0.3;
     
-    // Apply 60% commission rate (Level 1)
-    const totalCommission = Math.round(baseCommission * locationMultiplier * 0.6);
+    // Apply Level 1 upfront commission rate
+    const totalCommission = Math.round(baseCommission * locationMultiplier);
     
     return {
       baseCommission: Math.round(baseCommission * locationMultiplier),
@@ -64,8 +64,8 @@ export default function CommissionCalculator({ type = "payment", className = "" 
     else commissionRate = 0.02; // 2%
     
     const baseCommission = Math.round(funding * commissionRate);
-    // Apply 60% commission rate (Level 1)
-    const yourCommission = Math.round(baseCommission * 0.6);
+    // Apply Level 1 upfront commission rate
+    const yourCommission = Math.round(baseCommission);
     
     return {
       baseCommission,
@@ -99,7 +99,7 @@ export default function CommissionCalculator({ type = "payment", className = "" 
           </div>
         </div>
         <Badge className="w-fit bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-          Level 1: 60% Commission Rate
+          Level 1: Upfront Commissions
         </Badge>
       </CardHeader>
       

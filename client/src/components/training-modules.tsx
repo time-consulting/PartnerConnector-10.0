@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { 
   PlayCircleIcon,
   BookOpenIcon,
@@ -19,9 +25,27 @@ import {
   UsersIcon,
   TargetIcon,
   ShieldIcon,
-  AlertTriangleIcon
+  AlertTriangleIcon,
+  CreditCardIcon,
+  DollarSignIcon,
+  TrendingUpIcon,
+  SearchIcon,
+  FilterIcon,
+  ChevronRightIcon,
+  XIcon,
+  AwardIcon,
+  FlameIcon,
+  ZapIcon,
+  RocketIcon,
+  BanknotesIcon,
+  PiggyBankIcon,
+  BarChartIcon,
+  CalendarIcon,
+  PhoneIcon,
+  MessageCircleIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+// Removed unused framer-motion import
 
 interface TrainingModule {
   id: string;
@@ -37,6 +61,19 @@ interface TrainingModule {
   prerequisites?: string[];
   content?: string;
   isRequired?: boolean;
+  category: string;
+  instructor?: string;
+  rating?: number;
+  enrolledCount?: number;
+  lastUpdated?: string;
+  tags?: string[];
+}
+
+interface QuizQuestion {
+  question: string;
+  options: string[];
+  correct: number;
+  explanation: string;
 }
 
 interface TrainingModulesProps {
@@ -47,14 +84,31 @@ export default function TrainingModules({ onModuleComplete }: TrainingModulesPro
   const { toast } = useToast();
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [moduleStates, setModuleStates] = useState<Record<string, any>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [currentQuizQuestion, setCurrentQuizQuestion] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filterByDifficulty, setFilterByDifficulty] = useState<string>('all');
   const [userProgress, setUserProgress] = useState({
-    totalPoints: 450,
-    completedModules: 8,
-    totalModules: 21,
-    currentLevel: 'Bronze Partner',
-    nextLevel: 'Silver Partner',
-    pointsToNext: 550
+    totalPoints: 1850,
+    completedModules: 15,
+    totalModules: 24,
+    currentLevel: 'Gold Partner',
+    nextLevel: 'Platinum Partner',
+    pointsToNext: 1150,
+    streak: 7
   });
+
+  const categories = [
+    { id: 'all', name: 'All Modules', count: 24 },
+    { id: 'dojo-payments', name: 'Dojo Card Payments', count: 8 },
+    { id: 'business-funding', name: 'Business Funding', count: 6 },
+    { id: 'platform-usage', name: 'Platform Training', count: 5 },
+    { id: 'compliance', name: 'Compliance & Legal', count: 3 },
+    { id: 'advanced', name: 'Advanced Strategies', count: 2 }
+  ];
 
   const trainingModules: TrainingModule[] = [
     {
@@ -64,17 +118,18 @@ export default function TrainingModules({ onModuleComplete }: TrainingModulesPro
       duration: '25 min',
       difficulty: 'Beginner',
       type: 'interactive',
-      completed: false,
+      completed: true,
       locked: false,
-      progress: 0,
+      progress: 100,
       points: 150,
       isRequired: false,
+      category: 'dojo-payments',
       content: `
-# Dojo Partnership Overview
+# 🚀 Dojo Partnership Training - Complete Guide
 
 ## About Dojo - Your Premium Payment Partner
 
-Dojo is the UK's most trusted payment provider, helping businesses accept payments with confidence. As our featured partner, Dojo offers cutting-edge technology and award-winning customer service, providing secure, reliable payment solutions for businesses of all sizes.
+Dojo is the UK's fastest-growing payment provider, helping over 85,000+ businesses accept payments with confidence. As our featured partner, you have access to cutting-edge technology and award-winning customer service.
 
 ### Why Dojo is Perfect for Your Clients
 
@@ -104,8 +159,8 @@ Dojo is the UK's most trusted payment provider, helping businesses accept paymen
 
 ### Commission Structure & Earnings
 
-#### Level 1 Commission: 60% Revenue Share
-- **Card Processing Referrals**: Earn 60% upfront commission on successful referrals
+#### Level 1 Commission: Upfront Revenue Share
+- **Card Processing Referrals**: Earn upfront commission on successful referrals
 - **Payment Processing Setup**: One-time commission based on client setup value
 - **Business Banking Integration**: Additional upfront commission for connected services
 
@@ -185,17 +240,523 @@ Remember: Dojo isn't just a product - it's a partnership that grows with your cl
 `
     },
     {
+      id: 'dojo-pricing-mastery',
+      title: 'Dojo Pricing & Rate Structure Deep Dive',
+      description: 'Master Dojo\'s competitive pricing and learn how to position rates effectively',
+      duration: '18 min',
+      difficulty: 'Intermediate',
+      type: 'interactive',
+      completed: false,
+      locked: false,
+      progress: 0,
+      points: 120,
+      isRequired: false,
+      category: 'dojo-payments',
+      instructor: 'Sarah Mitchell',
+      rating: 4.9,
+      enrolledCount: 847,
+      lastUpdated: '2025-09-10',
+      tags: ['pricing', 'competitive-analysis', 'negotiations'],
+      content: `
+# 💰 Dojo Pricing Mastery Training
+
+## Understanding Dojo's Competitive Edge
+
+Dojo consistently beats competitors on both price AND service. Here's how to leverage this advantage:
+
+### Rate Structure Breakdown
+
+#### Card Present Transactions (Chip & Pin)
+- **Interchange +**: 0.10% + 2p per transaction
+- **Blended Rate**: Starting from 1.2% (depends on volume)
+- **Monthly Minimum**: £20 (waived for £2k+ monthly volume)
+
+#### Card Not Present (Online/Phone)
+- **Standard Rate**: 1.6% + 20p per transaction
+- **High Volume Discount**: Available for 500+ transactions/month
+- **3D Secure**: Additional 0.1% for enhanced security
+
+### Hardware & Setup
+- **Terminal Rental**: From £12/month (includes support)
+- **Mobile Readers**: £15/month or £180 purchase
+- **Integration Setup**: FREE (normally £200+ elsewhere)
+
+## Competitive Comparison
+
+### vs Square
+✅ **Dojo**: 1.2% + 2p | **Square**: 1.75% flat
+✅ **Dojo**: UK-based support | **Square**: Outsourced support
+✅ **Dojo**: Next-day setup | **Square**: 3-5 days
+
+### vs iZettle (PayPal)
+✅ **Dojo**: 1.2% + 2p | **iZettle**: 1.75% + 5p
+✅ **Dojo**: Dedicated account manager | **iZettle**: Generic support
+✅ **Dojo**: No long-term contracts | **iZettle**: 12-month minimum
+
+### vs SumUp
+✅ **Dojo**: Advanced reporting | **SumUp**: Basic analytics
+✅ **Dojo**: Multiple integration options | **SumUp**: Limited connectivity
+✅ **Dojo**: Business banking integration | **SumUp**: Payments only
+
+## ROI Calculator for Clients
+
+### Monthly Savings Example:
+**Client**: Medium restaurant - £12,000 monthly card volume
+
+**Current Provider** (typical high-street bank):
+- Rate: 2.1% + 12p per transaction
+- 800 transactions/month
+- Monthly cost: £252 + £96 = **£348**
+
+**Dojo Solution**:
+- Rate: 1.4% + 2p per transaction
+- 800 transactions/month  
+- Monthly cost: £168 + £16 = **£184**
+
+**Monthly Savings: £164 (£1,968 annually)**
+
+## Positioning Scripts
+
+### Opening Hook:
+*"Most businesses are overpaying for card processing by 30-40%. I work with Dojo, the UK's fastest-growing payment provider, to help businesses like yours keep more of what they earn. Would you be open to a quick 3-minute review of your current processing costs?"*
+
+### Objection Handling:
+
+**"We're happy with our current provider"**
+→ "That's great to hear! Many of my best clients said the same thing. What they discovered was that while their service was fine, they were leaving £2,000+ on the table annually. Would it be worth 5 minutes to see if that applies to you too?"
+
+**"We don't want to switch"**
+→ "I completely understand - switching providers can be disruptive. That's why Dojo handles the entire transition for you at zero cost, including staff training and running systems in parallel until you're 100% confident. Plus, there's no long-term contract, so you can trial it risk-free."
+
+**"We need to think about it"**
+→ "Absolutely, this is an important decision. What I typically do is create a custom comparison showing exactly what you'd save monthly. It takes 2 minutes, costs nothing, and gives you concrete numbers to evaluate. Shall we do that now?"
+
+## Commission Optimization
+
+### Volume Tiers & Your Earnings:
+- **£0-5k monthly**: 60% of £300 setup = £180
+- **£5k-15k monthly**: 60% of £450 setup = £270
+- **£15k+ monthly**: 60% of £650 setup = £390
+
+### Additional Revenue Streams:
+- **Business Banking**: £150 commission per connection
+- **Insurance Referral**: £75 commission per policy
+- **Equipment Upgrade**: 20% of hardware value
+
+## Action Plan This Week:
+
+1. **Identify 10 prospects** using card machines (restaurants, retail, services)
+2. **Practice the opening script** with 3 warm contacts
+3. **Request processing statements** from interested prospects
+4. **Create 2 custom proposals** using the ROI calculator
+5. **Submit your first referral** and track in dashboard
+
+## Success Metrics:
+- **Target**: 2 referrals per week
+- **Conversion Rate**: 25% from qualified prospects
+- **Average Commission**: £270 per successful referral
+- **Monthly Goal**: £2,160 from Dojo referrals alone
+
+*Remember: You're not selling payment processing - you're delivering cost savings and better service. Focus on the client's bottom line, not Dojo's features.*
+`
+    },
+    {
+      id: 'business-funding-intro',
+      title: 'Business Funding & Merchant Cash Advances',
+      description: 'Learn how to offer flexible funding solutions to help businesses grow',
+      duration: '22 min',
+      difficulty: 'Beginner',
+      type: 'interactive',
+      completed: false,
+      locked: false,
+      progress: 0,
+      points: 180,
+      isRequired: false,
+      category: 'business-funding',
+      instructor: 'Marcus Thompson',
+      rating: 4.8,
+      enrolledCount: 623,
+      lastUpdated: '2025-09-12',
+      tags: ['funding', 'cash-advance', 'business-growth'],
+      content: `
+# 💵 Business Funding Training - Complete Guide
+
+## Introduction to Business Funding Solutions
+
+Business funding is one of our highest-commission products, with earnings of £800-2,000 per successful referral. Every business needs cash flow solutions, making this a massive opportunity.
+
+## Types of Funding We Offer
+
+### 1. Merchant Cash Advance (MCA)
+**Best for**: Businesses with consistent card sales
+**Loan Amount**: £5,000 - £500,000
+**Repayment**: Daily percentage of card sales (typically 8-15%)
+**Approval Time**: 24-48 hours
+**Your Commission**: £800-1,200 per deal
+
+#### How It Works:
+1. Business receives lump sum upfront
+2. Repays through daily card sales deductions
+3. Higher sales days = higher repayments
+4. Lower sales days = lower repayments
+5. Flexible and cash-flow friendly
+
+### 2. Unsecured Business Loans
+**Best for**: Established businesses with good credit
+**Loan Amount**: £10,000 - £250,000
+**Term**: 6 months to 5 years
+**Interest**: 7.9% - 29.9% APR
+**Your Commission**: £1,000-1,800 per deal
+
+### 3. Asset-Based Lending
+**Best for**: Businesses with valuable equipment/property
+**Loan Amount**: £25,000 - £2,000,000
+**Security**: Against business assets
+**Your Commission**: £1,200-2,500 per deal
+
+## Perfect Funding Candidates
+
+### High-Success Businesses:
+1. **Restaurants & Hospitality**
+   - Seasonal cash flow needs
+   - Equipment upgrades
+   - Expansion opportunities
+
+2. **Retail Businesses**
+   - Stock purchases
+   - Seasonal inventory
+   - Store renovations
+
+3. **Healthcare Practices**
+   - Equipment financing
+   - Practice expansion
+   - Staff hiring
+
+4. **Professional Services**
+   - Office setup
+   - Technology upgrades
+   - Marketing campaigns
+
+### Red Flags to Avoid:
+❌ New businesses (< 6 months trading)
+❌ Declining revenue trends
+❌ Multiple existing funding arrangements
+❌ Poor credit history (for unsecured loans)
+❌ Cash-only businesses
+
+## Qualification Process
+
+### Initial Questions:
+1. "How long have you been trading?"
+2. "What's your monthly turnover?"
+3. "Do you currently have any business funding?"
+4. "What would you use the funding for?"
+5. "Do you take card payments?"
+
+### Required Information:
+- **Trading History**: Minimum 6 months
+- **Monthly Revenue**: £5,000+ for MCA, £10,000+ for loans
+- **Bank Statements**: Last 3 months
+- **ID & Address Proof**: Directors
+- **Business Information**: Company house details
+
+## Positioning & Sales Scripts
+
+### Opening Approach:
+*"I help businesses like yours access growth capital quickly and easily. Most business owners don't realize there are funding options that don't require personal guarantees or lengthy approval processes. Are you looking at any growth opportunities that could benefit from additional working capital?"*
+
+### Merchant Cash Advance Positioning:
+*"This isn't a traditional loan - it's a cash advance against your future card sales. So if you have a quiet day, you pay less back. If you have a busy day, you pay more. It flexes with your business, and there's no set monthly payment to worry about."*
+
+### Benefits to Emphasize:
+✅ **Quick Approval**: Decisions within 24-48 hours
+✅ **Flexible Repayments**: Based on actual sales performance
+✅ **No Personal Guarantees**: For most MCA products
+✅ **Use for Anything**: Equipment, stock, expansion, cash flow
+✅ **UK-Based Team**: Direct support throughout the process
+
+## Commission Structure
+
+### Merchant Cash Advance:
+- **£5k-25k advance**: £800 commission
+- **£25k-75k advance**: £1,000 commission
+- **£75k-150k advance**: £1,400 commission
+- **£150k+ advance**: £1,800+ commission
+
+### Business Loans:
+- **£10k-50k loan**: £1,000 commission
+- **£50k-100k loan**: £1,400 commission
+- **£100k+ loan**: £1,800+ commission
+
+## Real Client Success Stories
+
+### Case Study 1: Italian Restaurant
+**Challenge**: Needed £30k for kitchen refurbishment
+**Solution**: Merchant Cash Advance - £30,000
+**Outcome**: Kitchen upgraded, 40% increase in covers
+**Your Commission**: £1,000
+
+### Case Study 2: Dental Practice
+**Challenge**: Equipment purchase (£85k digital scanner)
+**Solution**: Asset-based lending - £85,000
+**Outcome**: Reduced treatment times, increased capacity
+**Your Commission**: £1,400
+
+### Case Study 3: Online Retailer
+**Challenge**: Stock purchase for Christmas season
+**Solution**: Unsecured loan - £45,000
+**Outcome**: 200% sales increase during peak season
+**Your Commission**: £1,000
+
+## Objection Handling
+
+**"Interest rates seem high"**
+→ "You're right to consider the cost, but let's look at the return on investment. If this funding helps you increase revenue by even 20%, the ROI is significant. Plus, with our flexible products, you're only paying when you're earning."
+
+**"We'll speak to our bank first"**
+→ "Absolutely, you should explore all options. What I find is that traditional banks can take 6-12 weeks and often require extensive security. We can get you an approval in principle within 24 hours at no cost, so you can compare properly."
+
+**"We don't want debt"**
+→ "I understand that completely. Our merchant cash advance isn't actually debt - it's purchasing your future sales at a discount. You're in complete control of repayments through your sales volume."
+
+## Your Action Plan
+
+### Week 1-2: Learning & Setup
+- Complete this module and quiz
+- Review client qualification criteria
+- Practice positioning scripts
+- Identify 20 potential prospects
+
+### Week 3-4: Prospecting & Qualification
+- Contact 10 warm prospects
+- Qualify 5 serious opportunities
+- Submit 2 applications
+- Track results in your dashboard
+
+### Monthly Target:
+- **Conversations**: 40 qualified prospects
+- **Applications**: 8 submitted
+- **Approvals**: 3-4 (37.5% conversion rate)
+- **Commission Earned**: £3,600-4,800
+
+Remember: Business funding solves real problems and helps businesses grow. You're not selling debt - you're providing growth capital that can transform a business.
+`
+    },
+    {
+      id: 'platform-dashboard-navigation',
+      title: 'Platform Dashboard & Navigation Mastery',
+      description: 'Complete guide to using the PartnerConnector platform effectively',
+      duration: '15 min',
+      difficulty: 'Beginner',
+      type: 'interactive',
+      completed: true,
+      locked: false,
+      progress: 100,
+      points: 100,
+      isRequired: false,
+      category: 'platform-usage',
+      instructor: 'Platform Team',
+      rating: 4.7,
+      enrolledCount: 1205,
+      lastUpdated: '2025-09-13',
+      tags: ['dashboard', 'navigation', 'platform-basics'],
+      content: `
+# 📊 Platform Dashboard Training
+
+## Dashboard Overview
+
+Your PartnerConnector dashboard is your command center for managing referrals, tracking commissions, and building your partner network.
+
+### Key Dashboard Sections:
+
+#### 1. Performance Overview
+- **Monthly Earnings**: Real-time commission tracking
+- **Active Referrals**: Pipeline management
+- **Team Performance**: Monitor your network's success
+- **Achievement Progress**: Track training and milestones
+
+#### 2. Referral Management
+- **Submit New Referral**: Quick referral submission
+- **Track Status**: Real-time referral progress
+- **Commission Calculator**: Estimate earnings
+- **Client Communication**: Built-in messaging system
+
+#### 3. Team Building
+- **Invite Partners**: Send team invitations
+- **Team Analytics**: Monitor team performance
+- **Commission Overrides**: Track level 2 & 3 earnings
+- **Training Progress**: See team development
+
+### Navigation Tips:
+
+✅ **Bookmarks**: Save frequently used pages
+✅ **Quick Actions**: Use keyboard shortcuts
+✅ **Mobile App**: Access on-the-go
+✅ **Notifications**: Enable key alerts
+✅ **Export Data**: Download reports for analysis
+`
+    },
+    {
+      id: 'referral-submission-process',
+      title: 'Referral Submission & Tracking System',
+      description: 'Step-by-step guide to submitting and managing client referrals',
+      duration: '12 min',
+      difficulty: 'Beginner',
+      type: 'interactive',
+      completed: false,
+      locked: false,
+      progress: 0,
+      points: 120,
+      isRequired: true,
+      category: 'platform-usage',
+      instructor: 'Sarah Mitchell',
+      rating: 4.9,
+      enrolledCount: 987,
+      lastUpdated: '2025-09-11',
+      tags: ['referrals', 'submission', 'tracking'],
+      content: `
+# 📈 Referral Submission Training
+
+## The Complete Referral Process
+
+### Step 1: Client Discovery & Qualification
+**Before submitting any referral**, ensure the client meets our criteria:
+
+#### Dojo Card Payments:
+✅ Currently taking card payments OR planning to
+✅ Monthly turnover £1,000+
+✅ UK-based business
+✅ Trading for 3+ months
+
+#### Business Funding:
+✅ Trading 6+ months
+✅ Monthly revenue £5,000+
+✅ Takes card payments (for MCA)
+✅ Clear funding purpose
+
+### Step 2: Information Gathering
+
+#### Required Information:
+- **Business Details**: Name, address, company number
+- **Contact Information**: Decision maker details
+- **Current Situation**: Existing providers, pain points
+- **Requirements**: Specific needs and timeline
+- **Financial Info**: Turnover, transaction volume
+
+### Step 3: Referral Submission
+
+#### Using the Dashboard:
+1. Click "Submit New Referral"
+2. Select service type (Dojo/Funding/Insurance)
+3. Complete client information form
+4. Add notes about client needs
+5. Set follow-up reminders
+6. Submit for processing
+
+#### Quality Checklist:
+✓ All required fields completed
+✓ Contact details verified
+✓ Client expectations set
+✓ Service match confirmed
+✓ Warm introduction scheduled
+
+### Step 4: Handoff Process
+
+#### What Happens Next:
+1. **Automatic Acknowledgment**: You receive confirmation
+2. **Partner Assignment**: Specialist assigned within 2 hours
+3. **Client Contact**: Initial contact within 4 hours
+4. **Progress Updates**: Real-time status updates
+5. **Outcome Notification**: Final result within 48-72 hours
+
+### Step 5: Tracking & Follow-up
+
+#### Dashboard Tracking:
+- **Status Updates**: Real-time referral progress
+- **Communication Log**: All client interactions
+- **Commission Tracking**: Estimated and confirmed earnings
+- **Next Actions**: Your follow-up tasks
+
+#### Status Definitions:
+- **Submitted**: Awaiting assignment
+- **In Progress**: Active discussion with client
+- **Documentation**: Gathering required information
+- **Approved**: Client approved for service
+- **Live**: Service activated, commission due
+- **Declined**: Client not suitable/interested
+
+### Commission Payment Timeline:
+
+#### Dojo Card Payments:
+- **Commission Confirmed**: When client goes live
+- **Payment Processing**: Monthly on 15th
+- **Typical Timeline**: 4-6 weeks from referral
+
+#### Business Funding:
+- **Commission Confirmed**: When funds are drawn
+- **Payment Processing**: Within 7 days
+- **Typical Timeline**: 2-3 weeks from referral
+
+### Best Practices for Success:
+
+#### Do's:
+✅ **Pre-qualify thoroughly** - saves everyone time
+✅ **Set clear expectations** with clients
+✅ **Provide complete information** in referral form
+✅ **Stay engaged** throughout the process
+✅ **Follow up promptly** on any requests
+
+#### Don'ts:
+❌ Don't submit unqualified referrals
+❌ Don't promise specific rates or terms
+❌ Don't go silent after submission
+❌ Don't bypass the referral system
+❌ Don't submit duplicates
+
+### Troubleshooting Common Issues:
+
+**"Client isn't responding to our calls"**
+→ Contact the client yourself to re-engage, then provide updated contact details
+
+**"Referral was declined"**
+→ Review feedback and understand why - use this learning for future referrals
+
+**"Commission amount seems wrong"**
+→ Check the commission calculator and contact support if there's a discrepancy
+
+**"Client wants to work directly with you"**
+→ All business must go through the platform to ensure commission tracking
+
+### Your Success Metrics:
+
+#### Quality Indicators:
+- **Approval Rate**: Target 60%+ (industry average: 35%)
+- **Response Rate**: Target 80%+ client engagement
+- **Processing Time**: Average 48 hours to outcome
+- **Commission Value**: Average £400+ per referral
+
+#### Weekly Goals:
+- **Qualified Conversations**: 10 potential clients
+- **Referral Submissions**: 3-4 quality referrals
+- **Follow-up Actions**: Complete all dashboard tasks
+- **Success Rate**: 2-3 approvals per week
+
+Remember: Quality over quantity. One well-qualified, properly submitted referral is worth more than five poor-quality submissions.
+`
+    },
+    {
       id: 'gdpr-compliance',
       title: 'GDPR Data Protection Training',
       description: 'Essential GDPR compliance training for handling client data (REQUIRED)',
       duration: '20 min',
       difficulty: 'Beginner',
       type: 'compliance',
-      completed: false,
+      completed: true,
       locked: false,
-      progress: 0,
+      progress: 100,
       points: 100,
       isRequired: true,
+      category: 'compliance',
       content: `
 # GDPR Data Protection Training
 
@@ -223,6 +784,38 @@ The General Data Protection Regulation (GDPR) is EU legislation that governs how
 - Personal data must be accurate and kept up to date
 - Incorrect data must be corrected or deleted without delay
 - Implement processes to verify data accuracy
+
+### Your Responsibilities as a Partner:
+
+#### Data Collection:
+✅ Only collect information necessary for referrals
+✅ Explain why you need each piece of information
+✅ Get explicit consent before collecting sensitive data
+✅ Store information securely (encrypted, password-protected)
+
+#### Data Sharing:
+✅ Only share with authorized PartnerConnector systems
+✅ Use secure transmission methods
+✅ Never share data with unauthorized third parties
+✅ Delete local copies once referral is submitted
+
+#### Client Rights:
+Clients have the right to:
+- Know what data you're collecting
+- Access their personal data
+- Correct inaccurate information
+- Request data deletion
+- Withdraw consent at any time
+
+#### Compliance Best Practices:
+
+1. **Minimal Data Collection**: Only ask for what you need
+2. **Clear Communication**: Explain your privacy policy
+3. **Secure Storage**: Use encrypted, password-protected systems
+4. **Regular Deletion**: Remove old data you no longer need
+5. **Incident Reporting**: Report any data breaches immediately
+
+*Completion of this module is required before you can submit referrals.*
 
 ### 5. Storage Limitation
 - Data should not be kept longer than necessary
@@ -392,17 +985,17 @@ As a PartnerConnector partner, you will:
 ## Commission Structure
 
 ### Level 1 Partners (Bronze)
-- **Payment Processing**: 60% of first year commission
+- **Payment Processing**: Upfront commissions on successful referrals
 - **Business Funding**: £300-£1,500 per successful referral
 - **Minimum Requirements**: Complete training modules
 
 ### Level 2 Partners (Silver)
-- **Payment Processing**: 70% of first year commission
+- **Payment Processing**: 20% ongoing commission from team members
 - **Business Funding**: £400-£2,000 per successful referral
 - **Requirements**: 10+ successful referrals, advanced certification
 
-### Level 3 Partners (Gold)
-- **Payment Processing**: 80% of first year commission
+### Level 3 Partners (Gold/Extended Network)
+- **Payment Processing**: 10% ongoing commission from extended network
 - **Business Funding**: £500-£2,500 per successful referral
 - **Requirements**: 25+ successful referrals, master certification
 

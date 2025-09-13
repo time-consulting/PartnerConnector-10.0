@@ -422,7 +422,7 @@ export default function Dashboard() {
                       Add a new business referral and start earning commissions
                     </p>
                     <div className="bg-blue-50 rounded-lg p-4">
-                      <p className="text-blue-700 font-semibold">Earn up to 60% commission</p>
+                      <p className="text-blue-700 font-semibold">Earn upfront commissions</p>
                     </div>
                   </CardContent>
                 </Card>

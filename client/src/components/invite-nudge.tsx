@@ -50,7 +50,7 @@ const EXPLAINER_STEPS: ExplainerStep[] = [
   {
     id: "your-deals",
     title: "You earn on your deals",
-    description: "Every successful referral earns you up to 60% commission directly.",
+    description: "Every successful referral earns you upfront commission directly.",
     icon: <Target className="h-8 w-8 text-green-600" />,
     animation: "animate-bounce"
   },
@@ -74,7 +74,7 @@ const DEFAULT_INVITE_MESSAGE = `Hi {name},
 
 I've joined PartnerConnector and thought you'd be interested too. It's a platform where professionals like us can earn substantial commissions by connecting our clients with business funding and payment solutions.
 
-The commission structure is impressive - up to 60% on successful referrals, plus team overrides when you build a network.
+The commission structure is impressive - upfront commissions on successful referrals, plus 20% team overrides and 10% extended network commissions.
 
 Want to check it out? Here's my referral link: {referralLink}
 
