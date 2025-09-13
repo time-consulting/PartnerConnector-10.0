@@ -279,13 +279,21 @@ export default function Navigation() {
             {/* Desktop navigation links are hidden for authenticated users - using sidebar instead */}
           </div>
           
-          <div className="flex items-center space-x-4">
-            {/* Notifications Bell - moved to left for clear view */}
+          <div className="flex items-center space-x-2">
+            {/* Help Icon - visible on desktop and tablet */}
+            <Link href="/help-center" 
+              className="hidden md:inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-gray-100 h-9 w-9 text-gray-600 hover:text-blue-600"
+              data-testid="button-help"
+            >
+              <HelpCircleIcon className="w-5 h-5" />
+            </Link>
+            
+            {/* Notifications Bell - for authenticated users only */}
             {isAuthenticated && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-gray-600 hover:text-blue-600 p-2 relative"
+                className="text-gray-600 hover:text-blue-600 hover:bg-gray-100 h-9 w-9 p-0 relative"
                 data-testid="button-notifications"
               >
                 <Bell className="w-5 h-5" />
@@ -293,36 +301,28 @@ export default function Navigation() {
               </Button>
             )}
             
-            {/* Help Icon - hidden on mobile */}
-            <Link href="/help-center" 
-              className="hidden sm:inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 text-gray-600 hover:text-blue-600 p-2"
-              data-testid="button-help"
-            >
-              <HelpCircleIcon className="w-5 h-5" />
-            </Link>
-            
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Button - mobile only */}
             <Button
               variant="ghost"
               size="sm"
-              className="sm:hidden text-gray-600 hover:text-blue-600 p-2"
+              className="md:hidden text-gray-600 hover:text-blue-600 hover:bg-gray-100 h-9 w-9 p-0"
               onClick={handleMobileMenuToggle}
               data-testid="button-mobile-menu"
             >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
             
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="relative ml-2">
                 <button
-                  className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors gap-2"
+                  className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded-md px-3 py-2 text-sm font-medium transition-colors gap-2"
                   onClick={() => handleDropdownToggle('account')}
                   data-testid="dropdown-account"
                 >
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
                     <User className="w-4 h-4 text-white" />
                   </div>
-                  <span>{(user as any)?.firstName || 'Account'}</span>
+                  <span className="hidden sm:inline">{(user as any)?.firstName || 'Account'}</span>
                   <ChevronDownIcon className="w-4 h-4" />
                 </button>
                 
