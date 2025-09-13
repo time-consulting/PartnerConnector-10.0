@@ -19,6 +19,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   DndContext, 
   DragEndEvent,
@@ -55,7 +59,16 @@ import {
   AlertCircleIcon,
   CheckCircleIcon,
   ClockIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  LayoutGridIcon,
+  ListIcon,
+  FilterIcon,
+  CalendarDaysIcon,
+  SortAscIcon,
+  SortDescIcon,
+  DollarSignIcon,
+  EyeIcon,
+  MoreHorizontalIcon
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1161,6 +1174,18 @@ export default function Leads() {
   const [isAddLeadDialogOpen, setIsAddLeadDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false);
+  
+  // View and filter states
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [businessTypeFilter, setBusinessTypeFilter] = useState<string>('all');
+  const [leadSourceFilter, setLeadSourceFilter] = useState<string>('all');
+  const [estimatedValueFilter, setEstimatedValueFilter] = useState<string>('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState<{from?: Date, to?: Date}>({});
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortField, setSortField] = useState<string>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Debounced search implementation
   useEffect(() => {
@@ -1265,18 +1290,84 @@ export default function Leads() {
     },
   });
 
-  // Filter leads based on debounced search term
+  // Enhanced filter logic with multiple criteria
   const filteredLeads = leads.filter(lead => {
-    if (!debouncedSearchTerm) return true;
-    const searchLower = debouncedSearchTerm.toLowerCase();
-    return (
-      lead.businessName.toLowerCase().includes(searchLower) ||
-      lead.contactName.toLowerCase().includes(searchLower) ||
-      (lead.contactEmail && lead.contactEmail.toLowerCase().includes(searchLower)) ||
-      (lead.contactPhone && lead.contactPhone.toLowerCase().includes(searchLower)) ||
-      (lead.businessType && lead.businessType.toLowerCase().includes(searchLower)) ||
-      (lead.notes && lead.notes.toLowerCase().includes(searchLower))
-    );
+    // Search filter
+    if (debouncedSearchTerm) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
+      const matchesSearch = (
+        lead.businessName.toLowerCase().includes(searchLower) ||
+        lead.contactName.toLowerCase().includes(searchLower) ||
+        (lead.contactEmail && lead.contactEmail.toLowerCase().includes(searchLower)) ||
+        (lead.contactPhone && lead.contactPhone.toLowerCase().includes(searchLower)) ||
+        (lead.businessType && lead.businessType.toLowerCase().includes(searchLower)) ||
+        (lead.notes && lead.notes.toLowerCase().includes(searchLower))
+      );
+      if (!matchesSearch) return false;
+    }
+    
+    // Status filter
+    if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
+    
+    // Priority filter
+    if (priorityFilter !== 'all' && lead.priority !== priorityFilter) return false;
+    
+    // Business type filter
+    if (businessTypeFilter !== 'all' && lead.businessType !== businessTypeFilter) return false;
+    
+    // Lead source filter
+    if (leadSourceFilter !== 'all' && lead.leadSource !== leadSourceFilter) return false;
+    
+    // Date range filter
+    if (dateRangeFilter.from && lead.createdAt) {
+      const leadDate = new Date(lead.createdAt);
+      if (leadDate < dateRangeFilter.from) return false;
+    }
+    if (dateRangeFilter.to && lead.createdAt) {
+      const leadDate = new Date(lead.createdAt);
+      if (leadDate > dateRangeFilter.to) return false;
+    }
+    
+    // Estimated value filter (simplified)
+    if (estimatedValueFilter !== 'all') {
+      const hasEstimatedValue = lead.estimatedMonthlyVolume && lead.estimatedMonthlyVolume !== '';
+      if (estimatedValueFilter === 'with_value' && !hasEstimatedValue) return false;
+      if (estimatedValueFilter === 'without_value' && hasEstimatedValue) return false;
+    }
+    
+    return true;
+  }).sort((a, b) => {
+    // Sorting logic
+    let aValue: any, bValue: any;
+    
+    switch (sortField) {
+      case 'businessName':
+        aValue = a.businessName;
+        bValue = b.businessName;
+        break;
+      case 'contactName':
+        aValue = a.contactName;
+        bValue = b.contactName;
+        break;
+      case 'priority':
+        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+        aValue = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
+        bValue = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
+        break;
+      case 'createdAt':
+      default:
+        aValue = new Date(a.createdAt || 0).getTime();
+        bValue = new Date(b.createdAt || 0).getTime();
+        break;
+    }
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    } else {
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    }
   });
 
   // Clear search functionality
@@ -1364,6 +1455,459 @@ export default function Leads() {
   // Get the active lead for drag overlay
   const activeLead = activeId ? filteredLeads.find(lead => lead.id === activeId) : null;
 
+  // Toggle sorting
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setBusinessTypeFilter('all');
+    setLeadSourceFilter('all');
+    setEstimatedValueFilter('all');
+    setDateRangeFilter({});
+    setSearchInput('');
+    setDebouncedSearchTerm('');
+  };
+
+  // Filter options
+  const businessTypeOptions = [
+    { value: 'retail', label: 'Retail' },
+    { value: 'restaurant', label: 'Restaurant' },
+    { value: 'e-commerce', label: 'E-commerce' },
+    { value: 'professional_services', label: 'Professional Services' },
+    { value: 'healthcare', label: 'Healthcare' },
+    { value: 'construction', label: 'Construction' },
+    { value: 'manufacturing', label: 'Manufacturing' },
+    { value: 'other', label: 'Other' },
+  ];
+
+  const leadSourceOptions = [
+    { value: 'website', label: 'Website' },
+    { value: 'referral', label: 'Referral' },
+    { value: 'cold_call', label: 'Cold Call' },
+    { value: 'email', label: 'Email Campaign' },
+    { value: 'social_media', label: 'Social Media' },
+    { value: 'event', label: 'Event' },
+    { value: 'advertisement', label: 'Advertisement' },
+    { value: 'other', label: 'Other' },
+  ];
+
+  // List View Component
+  const ListView = () => (
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent border-b border-gray-200 dark:border-gray-700">
+            <TableHead className="w-[200px]">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 p-0"
+                onClick={() => handleSort('businessName')}
+                data-testid="sort-business-name"
+              >
+                Business Name
+                {sortField === 'businessName' && (
+                  sortDirection === 'asc' ? <SortAscIcon className="ml-2 h-3 w-3" /> : <SortDescIcon className="ml-2 h-3 w-3" />
+                )}
+              </Button>
+            </TableHead>
+            <TableHead className="w-[150px]">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 p-0"
+                onClick={() => handleSort('contactName')}
+                data-testid="sort-contact-name"
+              >
+                Contact
+                {sortField === 'contactName' && (
+                  sortDirection === 'asc' ? <SortAscIcon className="ml-2 h-3 w-3" /> : <SortDescIcon className="ml-2 h-3 w-3" />
+                )}
+              </Button>
+            </TableHead>
+            <TableHead>Contact Info</TableHead>
+            <TableHead>Business Type</TableHead>
+            <TableHead className="w-[100px]">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 p-0"
+                onClick={() => handleSort('priority')}
+                data-testid="sort-priority"
+              >
+                Priority
+                {sortField === 'priority' && (
+                  sortDirection === 'asc' ? <SortAscIcon className="ml-2 h-3 w-3" /> : <SortDescIcon className="ml-2 h-3 w-3" />
+                )}
+              </Button>
+            </TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-[100px]">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 p-0"
+                onClick={() => handleSort('createdAt')}
+                data-testid="sort-created"
+              >
+                Created
+                {sortField === 'createdAt' && (
+                  sortDirection === 'asc' ? <SortAscIcon className="ml-2 h-3 w-3" /> : <SortDescIcon className="ml-2 h-3 w-3" />
+                )}
+              </Button>
+            </TableHead>
+            <TableHead className="w-[120px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredLeads.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center py-8">
+                <div className="flex flex-col items-center text-gray-500 dark:text-gray-400">
+                  <UserIcon className="h-12 w-12 mb-2" />
+                  <p>No leads found matching your criteria</p>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredLeads.map((lead) => (
+              <TableRow 
+                key={lead.id} 
+                className="cursor-pointer transition-all duration-200 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 hover:shadow-sm animate-fadeIn"
+                onClick={() => handleOpenLeadDetails(lead)}
+                data-testid={`list-row-${lead.id}`}
+              >
+                <TableCell className="font-medium">
+                  <div className="flex flex-col">
+                    <span className="text-gray-900 dark:text-white font-semibold">{lead.businessName}</span>
+                    {lead.notes && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[180px]">
+                        {lead.notes}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="h-3 w-3 text-gray-400" />
+                    <span className="text-sm">{lead.contactName}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    {lead.contactEmail && (
+                      <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                        <MailIcon className="h-3 w-3" />
+                        <span className="truncate max-w-[120px]">{lead.contactEmail}</span>
+                      </div>
+                    )}
+                    {lead.contactPhone && (
+                      <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                        <PhoneIcon className="h-3 w-3" />
+                        <span>{lead.contactPhone}</span>
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {lead.businessType && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <BuildingIcon className="h-3 w-3 text-gray-400" />
+                      <span className="capitalize">{lead.businessType.replace('_', ' ')}</span>
+                    </div>
+                  )}
+                  {lead.estimatedMonthlyVolume && (
+                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <DollarSignIcon className="h-3 w-3" />
+                      <span>{lead.estimatedMonthlyVolume}</span>
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {lead.priority && (
+                    <Badge className={`${getPriorityColor(lead.priority)} text-xs`} variant="secondary">
+                      {lead.priority}
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    className={`${KANBAN_COLUMNS.find(col => col.id === lead.status)?.color || 'bg-gray-100 text-gray-800'} text-xs`}
+                    variant="secondary"
+                  >
+                    {KANBAN_COLUMNS.find(col => col.id === lead.status)?.title || lead.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : 'No date'}
+                    {lead.leadSource && (
+                      <div className="capitalize mt-1">{lead.leadSource.replace('_', ' ')}</div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-900/20 dark:hover:text-green-400 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (lead.contactPhone) {
+                          window.location.href = `tel:${lead.contactPhone}`;
+                        } else {
+                          toast({
+                            title: "No Phone Number",
+                            description: "This lead doesn't have a phone number.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      disabled={!lead.contactPhone}
+                      title={lead.contactPhone ? `Call ${lead.contactPhone}` : "No phone number"}
+                      data-testid={`list-call-${lead.id}`}
+                    >
+                      <PhoneIcon className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (lead.contactEmail) {
+                          window.location.href = `mailto:${lead.contactEmail}?subject=Follow up from ${lead.businessName}`;
+                        } else {
+                          toast({
+                            title: "No Email Address",
+                            description: "This lead doesn't have an email address.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      disabled={!lead.contactEmail}
+                      title={lead.contactEmail ? `Email ${lead.contactEmail}` : "No email address"}
+                      data-testid={`list-email-${lead.id}`}
+                    >
+                      <MailIcon className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenLeadDetails(lead);
+                      }}
+                      title="View details"
+                      data-testid={`list-details-${lead.id}`}
+                    >
+                      <EyeIcon className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  // Advanced Filters Component
+  const AdvancedFilters = () => (
+    <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <FilterIcon className="h-5 w-5" />
+            Advanced Filters
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearAllFilters}
+            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            data-testid="button-clear-filters"
+          >
+            Clear All
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {/* Status Filter */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+              Status
+            </label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger data-testid="filter-status">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {KANBAN_COLUMNS.map((column) => (
+                  <SelectItem key={column.id} value={column.id}>
+                    {column.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Priority Filter */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+              Priority
+            </label>
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger data-testid="filter-priority">
+                <SelectValue placeholder="All Priorities" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Business Type Filter */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+              Business Type
+            </label>
+            <Select value={businessTypeFilter} onValueChange={setBusinessTypeFilter}>
+              <SelectTrigger data-testid="filter-business-type">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {businessTypeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Lead Source Filter */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+              Lead Source
+            </label>
+            <Select value={leadSourceFilter} onValueChange={setLeadSourceFilter}>
+              <SelectTrigger data-testid="filter-lead-source">
+                <SelectValue placeholder="All Sources" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                {leadSourceOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Estimated Value Filter */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+              Estimated Value
+            </label>
+            <Select value={estimatedValueFilter} onValueChange={setEstimatedValueFilter}>
+              <SelectTrigger data-testid="filter-estimated-value">
+                <SelectValue placeholder="All Values" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Values</SelectItem>
+                <SelectItem value="with_value">With Estimated Value</SelectItem>
+                <SelectItem value="without_value">Without Estimated Value</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date Range Filter */}
+          <div className="md:col-span-2 lg:col-span-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+              Created Date Range
+            </label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal h-10"
+                  data-testid="filter-date-range"
+                >
+                  <CalendarDaysIcon className="mr-2 h-4 w-4" />
+                  {dateRangeFilter.from ? (
+                    dateRangeFilter.to ? (
+                      `${dateRangeFilter.from.toLocaleDateString()} - ${dateRangeFilter.to.toLocaleDateString()}`
+                    ) : (
+                      `From ${dateRangeFilter.from.toLocaleDateString()}`
+                    )
+                  ) : (
+                    "Select date range"
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <div className="p-3">
+                  <div className="flex gap-2 mb-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const today = new Date();
+                        const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        setDateRangeFilter({ from: lastWeek, to: today });
+                      }}
+                    >
+                      Last 7 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const today = new Date();
+                        const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        setDateRangeFilter({ from: lastMonth, to: today });
+                      }}
+                    >
+                      Last 30 days
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDateRangeFilter({})}
+                    className="w-full mb-2"
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -1390,117 +1934,265 @@ export default function Leads() {
         <div className="container mx-auto px-4 py-6">
           <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Leads Management</h1>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white gradient-text">
+                  Leads Management
+                </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Manage your sales pipeline with our Kanban board
+                  Manage your sales pipeline with our enhanced lead management system
                 </p>
               </div>
               
-              {/* Add Lead Button */}
-              <Dialog open={isAddLeadDialogOpen} onOpenChange={setIsAddLeadDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                    data-testid="button-add-lead"
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                {/* View Toggle */}
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 transition-all duration-300">
+                  <Button
+                    variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('kanban')}
+                    className={`transition-all duration-300 ${
+                      viewMode === 'kanban' 
+                        ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' 
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                    data-testid="toggle-kanban-view"
                   >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Add Lead
+                    <LayoutGridIcon className="h-4 w-4 mr-2" />
+                    Kanban
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="text-gray-900 dark:text-white">Add New Lead</DialogTitle>
-                  </DialogHeader>
-                  <AddLeadForm 
-                    onSubmit={handleAddLead} 
-                    isSubmitting={addLeadMutation.isPending} 
-                  />
-                </DialogContent>
-              </Dialog>
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className={`transition-all duration-300 ${
+                      viewMode === 'list' 
+                        ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' 
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                    data-testid="toggle-list-view"
+                  >
+                    <ListIcon className="h-4 w-4 mr-2" />
+                    List
+                  </Button>
+                </div>
+
+                {/* Filter Toggle */}
+                <Button
+                  variant={showFilters ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="transition-all duration-300"
+                  data-testid="toggle-filters"
+                >
+                  <FilterIcon className="h-4 w-4 mr-2" />
+                  Filters
+                  {(statusFilter !== 'all' || priorityFilter !== 'all' || businessTypeFilter !== 'all' || 
+                    leadSourceFilter !== 'all' || estimatedValueFilter !== 'all' || 
+                    dateRangeFilter.from || dateRangeFilter.to) && (
+                    <Badge className="ml-2 h-4 px-1 text-xs bg-primary text-primary-foreground">!</Badge>
+                  )}
+                </Button>
+
+                {/* Add Lead Button */}
+                <Dialog open={isAddLeadDialogOpen} onOpenChange={setIsAddLeadDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="btn-gradient shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                      data-testid="button-add-lead"
+                    >
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Add Lead
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-gray-900 dark:text-white">Add New Lead</DialogTitle>
+                    </DialogHeader>
+                    <AddLeadForm 
+                      onSubmit={handleAddLead} 
+                      isSubmitting={addLeadMutation.isPending} 
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search leads by business name, contact, email, phone, or notes..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-10 pr-10 bg-white dark:bg-gray-800"
-                data-testid="input-search-leads"
-              />
-              {searchInput && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  onClick={handleClearSearch}
-                  data-testid="button-clear-search"
-                  title="Clear search"
-                >
-                  <XIcon className="h-3 w-3" />
-                </Button>
+            {/* Enhanced Search Bar */}
+            <div className="space-y-4">
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search leads by business name, contact, email, phone, notes, or business type..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-10 pr-10 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
+                  data-testid="input-search-leads"
+                />
+                {searchInput && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                    onClick={handleClearSearch}
+                    data-testid="button-clear-search"
+                    title="Clear search"
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              
+              {/* Search Results Info */}
+              {(debouncedSearchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || businessTypeFilter !== 'all' || leadSourceFilter !== 'all' || estimatedValueFilter !== 'all' || dateRangeFilter.from || dateRangeFilter.to) && (
+                <div className="flex items-center justify-between text-sm">
+                  <div className="text-gray-600 dark:text-gray-400">
+                    Found <span className="font-semibold text-gray-900 dark:text-white">{filteredLeads.length}</span> lead{filteredLeads.length !== 1 ? 's' : ''}
+                    {debouncedSearchTerm && (
+                      <span> matching "{debouncedSearchTerm}"</span>
+                    )}
+                    {(statusFilter !== 'all' || priorityFilter !== 'all' || businessTypeFilter !== 'all' || leadSourceFilter !== 'all' || estimatedValueFilter !== 'all' || dateRangeFilter.from || dateRangeFilter.to) && (
+                      <span> with filters applied</span>
+                    )}
+                  </div>
+                  {viewMode === 'list' && filteredLeads.length > 0 && (
+                    <div className="text-gray-500 dark:text-gray-400 text-xs">
+                      Click column headers to sort
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-            
-            {/* Search Results Info */}
-            {debouncedSearchTerm && (
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                Found {filteredLeads.length} lead{filteredLeads.length !== 1 ? 's' : ''} matching "{debouncedSearchTerm}"
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div className="animate-slideUp">
+                <AdvancedFilters />
               </div>
             )}
 
-            {/* Kanban Board */}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCorners}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="overflow-x-auto">
-                <div className="flex gap-6 min-w-fit pb-4">
-                  {KANBAN_COLUMNS.map((column) => (
-                    <KanbanColumn
-                      key={column.id}
-                      column={column}
-                      leads={filteredLeads}
-                      isLoading={leadsLoading}
-                      onEditDetails={handleOpenLeadDetails}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <DragOverlay>
-                {activeLead ? (
-                  <div className="rotate-5">
-                    <LeadCard lead={activeLead} onEditDetails={handleOpenLeadDetails} />
-                  </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-
-            {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-8">
-              {KANBAN_COLUMNS.map((column) => {
-                const columnLeads = filteredLeads.filter(lead => lead.status === column.id);
-                return (
-                  <Card key={column.id}>
-                    <CardContent className="p-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {columnLeads.length}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {column.title}
-                        </p>
+            {/* Main Content Area - Conditional Rendering */}
+            <div className="transition-all duration-500 ease-in-out">
+              {viewMode === 'kanban' ? (
+                <div className="animate-fadeIn">
+                  {/* Kanban Board */}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="overflow-x-auto">
+                      <div className="flex gap-6 min-w-fit pb-4">
+                        {KANBAN_COLUMNS.map((column) => (
+                          <KanbanColumn
+                            key={column.id}
+                            column={column}
+                            leads={filteredLeads}
+                            isLoading={leadsLoading}
+                            onEditDetails={handleOpenLeadDetails}
+                          />
+                        ))}
                       </div>
+                    </div>
+
+                    <DragOverlay>
+                      {activeLead ? (
+                        <div className="rotate-5 animate-pulse">
+                          <LeadCard lead={activeLead} onEditDetails={handleOpenLeadDetails} />
+                        </div>
+                      ) : null}
+                    </DragOverlay>
+                  </DndContext>
+                </div>
+              ) : (
+                <div className="animate-fadeIn">
+                  {/* List View */}
+                  <ListView />
+                </div>
+              )}
+            </div>
+
+            {/* Enhanced Statistics with Animation */}
+            <div className="animate-slideUp">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-8">
+                {KANBAN_COLUMNS.map((column, index) => {
+                  const columnLeads = filteredLeads.filter(lead => lead.status === column.id);
+                  const percentage = filteredLeads.length > 0 ? (columnLeads.length / filteredLeads.length) * 100 : 0;
+                  return (
+                    <Card 
+                      key={column.id} 
+                      className={`card-hover transition-all duration-300 delay-${index * 100}`}
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <CardContent className="p-4">
+                        <div className="text-center space-y-2">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${column.color.split(' ')[0]} animate-pulse`} />
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white gradient-text">
+                              {columnLeads.length}
+                            </p>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                            {column.title}
+                          </p>
+                          {filteredLeads.length > 0 && (
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                              <div 
+                                className={`h-1.5 rounded-full transition-all duration-1000 ease-out ${column.color.split(' ')[0]}`}
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          )}
+                          {percentage > 0 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {percentage.toFixed(1)}% of total
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              
+              {/* Additional Stats Row */}
+              {filteredLeads.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                  <Card className="card-hover">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                        {filteredLeads.filter(l => l.priority === 'high').length}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">High Priority</div>
                     </CardContent>
                   </Card>
-                );
-              })}
+                  <Card className="card-hover">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                        {filteredLeads.filter(l => l.contactEmail).length}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">With Email</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="card-hover">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                        {filteredLeads.filter(l => l.contactPhone).length}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">With Phone</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="card-hover">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                        {filteredLeads.filter(l => l.estimatedMonthlyVolume).length}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">With Est. Value</div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           </div>
         </div>
