@@ -227,6 +227,54 @@ class EmailService {
       html
     });
   }
+
+  async sendInviteEmail(email: string, inviterName: string, inviteLink: string): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+            .content { padding: 30px 20px; background: #f9f9f9; }
+            .button { display: inline-block; padding: 12px 30px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>You're Invited to PartnerConnector!</h1>
+            </div>
+            <div class="content">
+              <p>Hello!</p>
+              <p>${inviterName} has invited you to join their team on PartnerConnector, where you can earn commissions by connecting clients with partners for payment processing solutions.</p>
+              <p>Join our community to:</p>
+              <ul>
+                <li>Submit referrals and track their progress</li>
+                <li>Earn commissions on successful conversions</li>
+                <li>Access comprehensive analytics and reporting</li>
+                <li>Build your network and earn overrides up to 3 levels</li>
+              </ul>
+              <a href="${inviteLink}" class="button">Accept Invitation</a>
+              <p>Start earning commissions today by connecting clients with payment solutions!</p>
+              <p>Best regards,<br>The PartnerConnector Team</p>
+            </div>
+            <div class="footer">
+              <p>This invitation was sent by ${inviterName} through PartnerConnector.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject: `${inviterName} invited you to join PartnerConnector`,
+      html
+    });
+  }
 }
 
 export const emailService = new EmailService();

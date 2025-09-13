@@ -15,8 +15,12 @@ import Recommendations from "@/components/recommendations";
 import SmartInsights from "@/components/smart-insights";
 import OnboardingQuestionnaire from "@/components/onboarding-questionnaire";
 import InteractiveTour from "@/components/interactive-tour";
+import PopupPillTour, { useTourState } from "@/components/popup-pill-tour";
+import QuickSetup, { useQuickSetup } from "@/components/quick-setup";
+import InviteNudge, { useInviteNudge } from "@/components/invite-nudge";
 import { StatsHelpTooltip, FeatureHelpTooltip } from "@/components/contextual-help-tooltip";
 import WeeklyTasks from "@/components/weekly-tasks";
+import InviteProgressCard from "@/components/invite-progress-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +50,11 @@ export default function Dashboard() {
   const [showTour, setShowTour] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
 
+  // New onboarding hooks
+  const { isTourVisible, tourCompleted, startTour, completeTour, skipTour } = useTourState();
+  const { showSetup, setupCompleted, completeSetup } = useQuickSetup();
+  const { showNudge, dismissNudge } = useInviteNudge();
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -66,19 +75,18 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  // Check if user needs onboarding (new user detection)
+  // New user detection for streamlined onboarding
   useEffect(() => {
     if (isAuthenticated && user && stats) {
       // Check if user is new (no referrals, no commission history)
       const hasNoActivity = (stats as any)?.totalCommissions === 0 && (stats as any)?.activeReferrals === 0;
-      const isFirstLogin = localStorage.getItem('hasCompletedOnboarding') !== 'true';
+      const isFirstLogin = !setupCompleted && !tourCompleted;
       
       if (hasNoActivity && isFirstLogin) {
         setIsNewUser(true);
-        setShowOnboarding(true);
       }
     }
-  }, [isAuthenticated, user, stats]);
+  }, [isAuthenticated, user, stats, setupCompleted, tourCompleted]);
 
   const { data: referrals, isLoading: referralsLoading } = useQuery({
     queryKey: ["/api/referrals"],
@@ -90,63 +98,24 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  const handleOnboardingComplete = async (data: any) => {
-    console.log('Onboarding completed with data:', data);
-    
-    try {
-      // Update user profile in the backend
-      const response = await fetch('/api/auth/user', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          profession: data.profession,
-          company: data.company,
-          clientBaseSize: data.clientBaseSize,
-          gdprConsent: data.gdprConsent || true,
-          marketingConsent: data.marketingConsent || false,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-      
-      // Refresh user data to update navigation
-      window.location.reload();
-      
-    } catch (error) {
-      console.error('Error updating user profile:', error);
-      toast({
-        title: "Profile Update Failed",
-        description: "There was an issue saving your profile. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    localStorage.setItem('hasCompletedOnboarding', 'true');
-    localStorage.setItem('onboardingData', JSON.stringify(data));
-    setShowOnboarding(false);
-    setShowTour(true);
+  // Updated handlers for new onboarding flow
+  const handleQuickSetupComplete = (data: any) => {
+    completeSetup();
     
     toast({
-      title: "Welcome to PartnerConnector! 🎉",
-      description: `Hi ${data.firstName}! Let's show you around the platform.`,
+      title: "Profile setup complete! 🎉", 
+      description: "Now let's show you around the platform.",
     });
-  };
-
-  const handleOnboardingSkip = () => {
-    localStorage.setItem('hasCompletedOnboarding', 'true');
-    setShowOnboarding(false);
-    setShowTour(true);
+    
+    // Start tour after quick setup
+    if (!tourCompleted) {
+      startTour();
+    }
   };
 
   const handleTourComplete = () => {
-    setShowTour(false);
+    completeTour();
+    
     toast({
       title: "You're all set! 🚀",
       description: "Start submitting referrals to earn your first commissions!",
@@ -154,8 +123,20 @@ export default function Dashboard() {
   };
 
   const handleTourSkip = () => {
-    setShowTour(false);
+    skipTour();
   };
+
+  const handleInviteSent = (inviteData: any) => {
+    // Track successful invite
+    toast({
+      title: "Great start! 🎯",
+      description: "Your teammate will get started soon.",
+    });
+  };
+
+  // Legacy handlers for fallback compatibility
+  const handleOnboardingComplete = handleQuickSetupComplete;
+  const handleOnboardingSkip = handleTourSkip;
 
   if (isLoading || !isAuthenticated) {
     return <div>Loading...</div>;
@@ -522,8 +503,9 @@ export default function Dashboard() {
               <WeeklyTasks />
             </div>
 
-            {/* Recent Referrals and Suggestions Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Main Content and Right Sidebar Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              {/* Recent Referrals */}
               {/* Recent Referrals */}
               <Card className="shadow-lg border-0 bg-white" data-testid="card-recent-referrals">
                 <CardHeader>
@@ -683,21 +665,54 @@ export default function Dashboard() {
           />
         )}
 
-        {/* Onboarding Questionnaire */}
-        {showOnboarding && (
+        {/* Quick Setup Form - First time users */}
+        {showSetup && isNewUser && (
+          <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
+            <QuickSetup
+              onComplete={handleQuickSetupComplete}
+              initialData={{
+                firstName: (user as any)?.firstName || "",
+                lastName: (user as any)?.lastName || "",
+                phone: (user as any)?.phone || "",
+                companyName: (user as any)?.company || "",
+                country: (user as any)?.country || "gb"
+              }}
+            />
+          </div>
+        )}
+
+        {/* Invite Nudge Banner - After profile completion */}
+        <InviteNudge
+          isVisible={showNudge}
+          onDismiss={dismissNudge}
+          onInviteSent={handleInviteSent}
+          userFirstName={(user as any)?.firstName}
+        />
+
+        {/* Pop-up Pill Tour - After setup */}
+        <PopupPillTour
+          isVisible={isTourVisible}
+          onComplete={handleTourComplete}
+          onSkip={handleTourSkip}
+        />
+
+        {/* Legacy onboarding fallback for edge cases */}
+        {showOnboarding && !showSetup && (
           <OnboardingQuestionnaire
             onComplete={handleOnboardingComplete}
             onSkip={handleOnboardingSkip}
           />
         )}
 
-        {/* Interactive Tour */}
-        <InteractiveTour
-          isVisible={showTour}
-          onComplete={handleTourComplete}
-          onSkip={handleTourSkip}
-          startStep="welcome"
-        />
+        {/* Legacy tour fallback */}
+        {showTour && !isTourVisible && (
+          <InteractiveTour
+            isVisible={showTour}
+            onComplete={handleTourComplete}
+            onSkip={handleTourSkip}
+            startStep="welcome"
+          />
+        )}
       </div>
     </div>
   );

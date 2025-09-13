@@ -59,6 +59,15 @@ export const users = pgTable("users", {
   canManageTeam: boolean("can_manage_team").default(false),
   // Admin access
   isAdmin: boolean("is_admin").default(false),
+  // Onboarding tracking
+  tourStarted: timestamp("tour_started"),
+  tourCompleted: timestamp("tour_completed"),
+  tourSkipped: timestamp("tour_skipped"),
+  profileCompleted: boolean("profile_completed").default(false),
+  firstInviteSent: timestamp("first_invite_sent"),
+  onboardingXp: integer("onboarding_xp").default(0),
+  country: varchar("country").default("gb"),
+  phone: varchar("phone"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

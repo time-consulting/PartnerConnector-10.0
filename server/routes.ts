@@ -255,9 +255,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const updateData = req.body;
       
+      // Ensure timestamps are properly converted
+      if (updateData.tourStarted) {
+        updateData.tourStarted = new Date(updateData.tourStarted);
+      }
+      if (updateData.tourCompleted) {
+        updateData.tourCompleted = new Date(updateData.tourCompleted);
+      }
+      if (updateData.tourSkipped) {
+        updateData.tourSkipped = new Date(updateData.tourSkipped);
+      }
+      if (updateData.firstInviteSent) {
+        updateData.firstInviteSent = new Date(updateData.firstInviteSent);
+      }
+      
       const updatedUser = await storage.upsertUser({
         id: userId,
         ...updateData,
+        updatedAt: new Date(),
       });
       
       res.json(updatedUser);
@@ -290,6 +305,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating partner ID:", error);
       res.status(500).json({ message: "Failed to generate partner ID" });
+    }
+  });
+
+  // Analytics tracking routes
+  app.post('/api/analytics/track', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { event, data } = req.body;
+      
+      const updateData: any = {};
+      const timestamp = new Date();
+      
+      switch (event) {
+        case 'tour_started':
+          updateData.tourStarted = timestamp;
+          break;
+        case 'tour_completed':
+          updateData.tourCompleted = timestamp;
+          break;
+        case 'tour_skipped':
+          updateData.tourSkipped = timestamp;
+          break;
+        case 'profile_completed':
+          updateData.profileCompleted = true;
+          updateData.onboardingXp = (data?.currentXp || 0) + 25;
+          break;
+        case 'first_invite_sent':
+          updateData.firstInviteSent = timestamp;
+          updateData.onboardingXp = (data?.currentXp || 0) + 10;
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid event type' });
+      }
+      
+      await storage.upsertUser({
+        id: userId,
+        ...updateData,
+        updatedAt: timestamp
+      });
+      
+      res.json({ success: true, timestamp });
+    } catch (error) {
+      console.error("Error tracking analytics:", error);
+      res.status(500).json({ message: "Failed to track analytics" });
+    }
+  });
+
+  // Get user referral link
+  app.get('/api/auth/referral-link', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Generate or get referral code
+      let referralCode = user.referralCode;
+      if (!referralCode) {
+        // Create a referral code based on partner ID or generate one
+        referralCode = user.partnerId || `PC${Date.now().toString(36).toUpperCase()}`;
+        await storage.upsertUser({
+          id: userId,
+          referralCode,
+          updatedAt: new Date()
+        });
+      }
+      
+      const referralLink = `${req.protocol}://${req.get('host')}/join?ref=${referralCode}`;
+      
+      res.json({ 
+        referralCode, 
+        referralLink,
+        shortLink: referralLink.replace(req.protocol + '://' + req.get('host'), '')
+      });
+    } catch (error) {
+      console.error("Error generating referral link:", error);
+      res.status(500).json({ message: "Failed to generate referral link" });
+    }
+  });
+
+  // Send team invitation
+  app.post('/api/invites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { email, name, personalMessage } = req.body;
+      
+      // Get user's referral link
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Generate referral code if needed
+      let referralCode = user.referralCode;
+      if (!referralCode) {
+        referralCode = user.partnerId || `PC${Date.now().toString(36).toUpperCase()}`;
+        await storage.upsertUser({
+          id: userId,
+          referralCode,
+          updatedAt: new Date()
+        });
+      }
+      
+      const referralLink = `${req.protocol}://${req.get('host')}/join?ref=${referralCode}`;
+      
+      // Send invitation email (using existing email service)
+      try {
+        await emailService.sendInviteEmail(
+          email,
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'A partner',
+          referralLink
+        );
+      } catch (emailError) {
+        console.warn('Email service not configured, skipping email send:', emailError);
+      }
+      
+      // Track first invite if this is the first one
+      const updateData: any = {};
+      if (!user.firstInviteSent) {
+        updateData.firstInviteSent = new Date();
+        updateData.onboardingXp = (user.onboardingXp || 0) + 10;
+      }
+      
+      if (Object.keys(updateData).length > 0) {
+        await storage.upsertUser({
+          id: userId,
+          ...updateData,
+          updatedAt: new Date()
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        referralLink,
+        inviteSent: true,
+        isFirstInvite: !user.firstInviteSent
+      });
+    } catch (error) {
+      console.error("Error sending invitation:", error);
+      res.status(500).json({ message: "Failed to send invitation" });
     }
   });
 
