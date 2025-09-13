@@ -37,9 +37,9 @@ import {
   FlameIcon,
   ZapIcon,
   RocketIcon,
-  BanknotesIcon,
+  BanknoteIcon,
   PiggyBankIcon,
-  BarChartIcon,
+  BarChart3Icon,
   CalendarIcon,
   PhoneIcon,
   MessageCircleIcon
@@ -103,7 +103,7 @@ export default function TrainingModules({ onModuleComplete }: TrainingModulesPro
 
   const categories = [
     { id: 'all', name: 'All Modules', count: 24 },
-    { id: 'dojo-payments', name: 'Dojo Card Payments', count: 8 },
+    { id: 'dojo-payments', name: 'Dojo Card Payments', count: 7 },
     { id: 'business-funding', name: 'Business Funding', count: 6 },
     { id: 'platform-usage', name: 'Platform Training', count: 5 },
     { id: 'compliance', name: 'Compliance & Legal', count: 3 },
@@ -157,17 +157,23 @@ Dojo is the UK's fastest-growing payment provider, helping over 85,000+ business
 > "The mobile terminals have been perfect for table service. Fast transactions, reliable connection, and the analytics help us understand our business better. Great investment."
 > ⭐⭐⭐⭐⭐ (Verified Review)
 
-### Commission Structure & Earnings
+### Commission Structure & LTV Methodology
 
-#### Level 1 Commission: Upfront Revenue Share
-- **Card Processing Referrals**: Earn upfront commission on successful referrals
-- **Payment Processing Setup**: One-time commission based on client setup value
-- **Business Banking Integration**: Additional upfront commission for connected services
+#### Level 1 Commission: Upfront Revenue Share (60%)
+- **Card Processing Referrals**: Commission calculated based on Lifetime Value (LTV) assessment
+- **Payment Processing Setup**: Commission varies based on business profile analysis
+- **Business Banking Integration**: Additional commission for connected services
 
-#### Example Upfront Earnings:
-- **Small Cafe Setup**: £450-£750 upfront commission per successful referral
-- **Medium Retail Setup**: £850-£1,200 upfront commission per successful referral  
-- **Large Restaurant Setup**: £1,500-£2,500 upfront commission per successful referral
+#### How LTV Commission Calculation Works:
+Our commission structure is based on comprehensive Lifetime Value analysis considering:
+- **Product Mix**: Types of services the client will use over time
+- **Equipment Requirements**: POS systems, card machines, and integrated solutions
+- **Business Turnover**: Monthly processing volume and growth projections  
+- **Transaction Analysis**: Average transaction values and frequency patterns
+- **Card Type Split**: Debit vs credit card usage affecting processing costs
+- **Industry Factors**: Specific needs and retention rates by sector
+
+This ensures fair compensation based on the long-term value each referral brings to our partners.
 
 ### Perfect Client Types for Dojo
 
@@ -182,13 +188,21 @@ Dojo is the UK's fastest-growing payment provider, helping over 85,000+ business
 ### How to Position Dojo to Clients
 
 #### Key Selling Points:
-1. **Cost Savings** - "Save up to 30% on payment processing fees"
-2. **Reliability** - "99.9% uptime with 24/7 UK-based support"
-3. **Growth Tools** - "Built-in analytics to help grow your business"
-4. **Security** - "Bank-level security protecting your customers"
+1. **Service Excellence** - "Award-winning customer service with UK-based support"
+2. **Reliability** - "99.9% uptime with 24/7 technical support"
+3. **Growth Tools** - "Built-in analytics and business management tools"
+4. **Security** - "Bank-level security with full regulatory compliance"
+5. **Value Assessment** - "Comprehensive cost analysis based on your business profile"
 
 #### Opening Conversation:
-*"I've been working with businesses like yours to help reduce payment processing costs while improving customer experience. Many of my clients have saved 20-30% on their monthly card fees by switching to Dojo. Would you be interested in a quick 5-minute review of your current processing costs?"*
+*"I work with businesses like yours to ensure they have the right payment solutions for their needs. Rather than focusing solely on rates, we look at the complete picture - reliability, support, features, and total value. Would you be interested in a comprehensive review of your current payment setup to see if there are opportunities for improvement?"*
+
+#### Important: Bill Upload for Accurate Assessment
+**Always request current supplier bills for accurate LTV calculation:**
+- Upload bills from your current payment processor within the last 6 months
+- Include your **highest volume months** for accurate assessment
+- *Note: In December, focus on bills from June onwards to capture peak trading*
+- This ensures commission calculation reflects true business value
 
 ### Implementation Process
 
@@ -198,7 +212,8 @@ Dojo is the UK's fastest-growing payment provider, helping over 85,000+ business
 - Business goals and growth plans
 
 #### Step 2: Proposal Creation (Same day)
-- Custom rate comparison showing potential savings
+- Comprehensive value assessment based on uploaded bills
+- LTV analysis considering all business factors
 - Service benefits specific to their business type
 - Implementation timeline and support plan
 
@@ -240,127 +255,6 @@ Remember: Dojo isn't just a product - it's a partnership that grows with your cl
 `
     },
     {
-      id: 'dojo-pricing-mastery',
-      title: 'Dojo Pricing & Rate Structure Deep Dive',
-      description: 'Master Dojo\'s competitive pricing and learn how to position rates effectively',
-      duration: '18 min',
-      difficulty: 'Intermediate',
-      type: 'interactive',
-      completed: false,
-      locked: false,
-      progress: 0,
-      points: 120,
-      isRequired: false,
-      category: 'dojo-payments',
-      instructor: 'Sarah Mitchell',
-      rating: 4.9,
-      enrolledCount: 847,
-      lastUpdated: '2025-09-10',
-      tags: ['pricing', 'competitive-analysis', 'negotiations'],
-      content: `
-# 💰 Dojo Pricing Mastery Training
-
-## Understanding Dojo's Competitive Edge
-
-Dojo consistently beats competitors on both price AND service. Here's how to leverage this advantage:
-
-### Rate Structure Breakdown
-
-#### Card Present Transactions (Chip & Pin)
-- **Interchange +**: 0.10% + 2p per transaction
-- **Blended Rate**: Starting from 1.2% (depends on volume)
-- **Monthly Minimum**: £20 (waived for £2k+ monthly volume)
-
-#### Card Not Present (Online/Phone)
-- **Standard Rate**: 1.6% + 20p per transaction
-- **High Volume Discount**: Available for 500+ transactions/month
-- **3D Secure**: Additional 0.1% for enhanced security
-
-### Hardware & Setup
-- **Terminal Rental**: From £12/month (includes support)
-- **Mobile Readers**: £15/month or £180 purchase
-- **Integration Setup**: FREE (normally £200+ elsewhere)
-
-## Competitive Comparison
-
-### vs Square
-✅ **Dojo**: 1.2% + 2p | **Square**: 1.75% flat
-✅ **Dojo**: UK-based support | **Square**: Outsourced support
-✅ **Dojo**: Next-day setup | **Square**: 3-5 days
-
-### vs iZettle (PayPal)
-✅ **Dojo**: 1.2% + 2p | **iZettle**: 1.75% + 5p
-✅ **Dojo**: Dedicated account manager | **iZettle**: Generic support
-✅ **Dojo**: No long-term contracts | **iZettle**: 12-month minimum
-
-### vs SumUp
-✅ **Dojo**: Advanced reporting | **SumUp**: Basic analytics
-✅ **Dojo**: Multiple integration options | **SumUp**: Limited connectivity
-✅ **Dojo**: Business banking integration | **SumUp**: Payments only
-
-## ROI Calculator for Clients
-
-### Monthly Savings Example:
-**Client**: Medium restaurant - £12,000 monthly card volume
-
-**Current Provider** (typical high-street bank):
-- Rate: 2.1% + 12p per transaction
-- 800 transactions/month
-- Monthly cost: £252 + £96 = **£348**
-
-**Dojo Solution**:
-- Rate: 1.4% + 2p per transaction
-- 800 transactions/month  
-- Monthly cost: £168 + £16 = **£184**
-
-**Monthly Savings: £164 (£1,968 annually)**
-
-## Positioning Scripts
-
-### Opening Hook:
-*"Most businesses are overpaying for card processing by 30-40%. I work with Dojo, the UK's fastest-growing payment provider, to help businesses like yours keep more of what they earn. Would you be open to a quick 3-minute review of your current processing costs?"*
-
-### Objection Handling:
-
-**"We're happy with our current provider"**
-→ "That's great to hear! Many of my best clients said the same thing. What they discovered was that while their service was fine, they were leaving £2,000+ on the table annually. Would it be worth 5 minutes to see if that applies to you too?"
-
-**"We don't want to switch"**
-→ "I completely understand - switching providers can be disruptive. That's why Dojo handles the entire transition for you at zero cost, including staff training and running systems in parallel until you're 100% confident. Plus, there's no long-term contract, so you can trial it risk-free."
-
-**"We need to think about it"**
-→ "Absolutely, this is an important decision. What I typically do is create a custom comparison showing exactly what you'd save monthly. It takes 2 minutes, costs nothing, and gives you concrete numbers to evaluate. Shall we do that now?"
-
-## Commission Optimization
-
-### Volume Tiers & Your Earnings:
-- **£0-5k monthly**: 60% of £300 setup = £180
-- **£5k-15k monthly**: 60% of £450 setup = £270
-- **£15k+ monthly**: 60% of £650 setup = £390
-
-### Additional Revenue Streams:
-- **Business Banking**: £150 commission per connection
-- **Insurance Referral**: £75 commission per policy
-- **Equipment Upgrade**: 20% of hardware value
-
-## Action Plan This Week:
-
-1. **Identify 10 prospects** using card machines (restaurants, retail, services)
-2. **Practice the opening script** with 3 warm contacts
-3. **Request processing statements** from interested prospects
-4. **Create 2 custom proposals** using the ROI calculator
-5. **Submit your first referral** and track in dashboard
-
-## Success Metrics:
-- **Target**: 2 referrals per week
-- **Conversion Rate**: 25% from qualified prospects
-- **Average Commission**: £270 per successful referral
-- **Monthly Goal**: £2,160 from Dojo referrals alone
-
-*Remember: You're not selling payment processing - you're delivering cost savings and better service. Focus on the client's bottom line, not Dojo's features.*
-`
-    },
-    {
       id: 'business-funding-intro',
       title: 'Business Funding & Merchant Cash Advances',
       description: 'Learn how to offer flexible funding solutions to help businesses grow',
@@ -383,16 +277,16 @@ Dojo consistently beats competitors on both price AND service. Here's how to lev
 
 ## Introduction to Business Funding Solutions
 
-Business funding is one of our highest-commission products, with earnings of £800-2,000 per successful referral. Every business needs cash flow solutions, making this a massive opportunity.
+Business funding represents significant commission opportunities through our LTV-based structure. Every business needs cash flow solutions, making this a valuable service area for building long-term client relationships.
 
 ## Types of Funding We Offer
 
 ### 1. Merchant Cash Advance (MCA)
 **Best for**: Businesses with consistent card sales
-**Loan Amount**: £5,000 - £500,000
-**Repayment**: Daily percentage of card sales (typically 8-15%)
+**Funding Range**: Available for various business needs
+**Repayment**: Flexible daily percentage based on card sales
 **Approval Time**: 24-48 hours
-**Your Commission**: £800-1,200 per deal
+**Commission**: Calculated using LTV methodology based on funding amount and business profile
 
 #### How It Works:
 1. Business receives lump sum upfront
@@ -403,16 +297,16 @@ Business funding is one of our highest-commission products, with earnings of £8
 
 ### 2. Unsecured Business Loans
 **Best for**: Established businesses with good credit
-**Loan Amount**: £10,000 - £250,000
-**Term**: 6 months to 5 years
-**Interest**: 7.9% - 29.9% APR
-**Your Commission**: £1,000-1,800 per deal
+**Funding Range**: Suitable for various business requirements
+**Term**: Flexible terms available
+**Structure**: Competitive rates based on business assessment
+**Commission**: LTV-based calculation considering loan value and business factors
 
 ### 3. Asset-Based Lending
 **Best for**: Businesses with valuable equipment/property
-**Loan Amount**: £25,000 - £2,000,000
-**Security**: Against business assets
-**Your Commission**: £1,200-2,500 per deal
+**Funding Range**: Substantial funding available for established businesses
+**Security**: Secured against business assets
+**Commission**: Higher LTV calculations due to secured nature and larger amounts
 
 ## Perfect Funding Candidates
 
@@ -453,12 +347,20 @@ Business funding is one of our highest-commission products, with earnings of £8
 4. "What would you use the funding for?"
 5. "Do you take card payments?"
 
-### Required Information:
+### Required Information & Bill Upload Process:
 - **Trading History**: Minimum 6 months
-- **Monthly Revenue**: £5,000+ for MCA, £10,000+ for loans
+- **Monthly Revenue**: Assessment varies by product type
+- **Current Supplier Bills**: **Upload highest bills from last 6 months** for accurate LTV assessment
 - **Bank Statements**: Last 3 months
 - **ID & Address Proof**: Directors
 - **Business Information**: Company house details
+
+#### Critical: Upload Current Supplier Bills
+**For accurate commission calculation, always request:**
+- Upload bills from current funding provider (if any)
+- Focus on **highest volume/cost months** within 6 months
+- *Seasonal tip: In December, emphasize bills from June onwards*
+- This ensures LTV calculation reflects true business funding needs
 
 ## Positioning & Sales Scripts
 
@@ -475,38 +377,46 @@ Business funding is one of our highest-commission products, with earnings of £8
 ✅ **Use for Anything**: Equipment, stock, expansion, cash flow
 ✅ **UK-Based Team**: Direct support throughout the process
 
-## Commission Structure
+## Commission Structure & LTV Methodology
 
-### Merchant Cash Advance:
-- **£5k-25k advance**: £800 commission
-- **£25k-75k advance**: £1,000 commission
-- **£75k-150k advance**: £1,400 commission
-- **£150k+ advance**: £1,800+ commission
+### How Funding Commissions Are Calculated:
+Using our £250 per £10,000 base rate, commissions are calculated through LTV analysis:
 
-### Business Loans:
-- **£10k-50k loan**: £1,000 commission
-- **£50k-100k loan**: £1,400 commission
-- **£100k+ loan**: £1,800+ commission
+#### LTV Factors for Business Funding:
+- **Funding Amount**: Base £250 per £10,000 structure  
+- **Business Profile**: Industry, trading history, growth potential
+- **Product Type**: MCA, loans, or asset-based lending
+- **Repayment Terms**: Longer terms = higher LTV value
+- **Cross-sell Potential**: Payment processing, insurance, equipment
+- **Risk Assessment**: Security, credit profile, business stability
+
+#### Commission Levels:
+- **Level 1 (Direct)**: 60% of calculated LTV commission
+- **Level 2 (Team)**: 20% ongoing from team member success
+- **Level 3 (Network)**: 10% ongoing from extended network
+
+### Building Monthly Income:
+While direct funding referrals provide upfront commissions, focus on team building to create consistent monthly income through the 20% and 10% ongoing structure.
 
 ## Real Client Success Stories
 
 ### Case Study 1: Italian Restaurant
-**Challenge**: Needed £30k for kitchen refurbishment
-**Solution**: Merchant Cash Advance - £30,000
-**Outcome**: Kitchen upgraded, 40% increase in covers
-**Your Commission**: £1,000
+**Challenge**: Needed funding for kitchen refurbishment
+**Solution**: Merchant Cash Advance tailored to their needs
+**Outcome**: Kitchen upgraded, 40% increase in covers, cross-sold payment processing
+**Result**: Upfront commission plus ongoing monthly income from payment processing
 
 ### Case Study 2: Dental Practice
-**Challenge**: Equipment purchase (£85k digital scanner)
-**Solution**: Asset-based lending - £85,000
-**Outcome**: Reduced treatment times, increased capacity
-**Your Commission**: £1,400
+**Challenge**: Equipment purchase for digital scanner
+**Solution**: Asset-based lending with competitive terms
+**Outcome**: Reduced treatment times, increased capacity, equipment financing package
+**Result**: Substantial commission reflecting LTV of large equipment financing plus growth potential
 
 ### Case Study 3: Online Retailer
-**Challenge**: Stock purchase for Christmas season
-**Solution**: Unsecured loan - £45,000
-**Outcome**: 200% sales increase during peak season
-**Your Commission**: £1,000
+**Challenge**: Stock purchase for seasonal peak
+**Solution**: Unsecured loan with flexible terms
+**Outcome**: 200% sales increase during peak season, added payment processing
+**Result**: Commission based on LTV methodology plus ongoing income from increased payment processing
 
 ## Objection Handling
 
@@ -958,6 +868,7 @@ Remember: When in doubt, ask! It's better to check than risk a data breach.
       locked: false,
       progress: 100,
       points: 50,
+      category: 'platform-usage',
       content: `
 # Getting Started with PartnerConnector
 
@@ -1097,6 +1008,7 @@ Ready to start earning? Let's move on to learning about our payment processing s
       locked: false,
       progress: 100,
       points: 75,
+      category: 'dojo-payments',
       content: `
 # Payment Processing Solutions Training
 
@@ -1300,6 +1212,7 @@ Remember: Payment processing is just the beginning of a long-term partnership. F
       locked: false,
       progress: 0,
       points: 100,
+      category: 'business-funding',
       content: `
 # Business Funding & Merchant Cash Advance Training
 
@@ -1556,6 +1469,7 @@ Remember: Business funding changes lives and businesses. You're not just earning
       locked: false,
       progress: 60,
       points: 125,
+      category: 'advanced',
       content: `
 # Effective Sales Techniques Training
 

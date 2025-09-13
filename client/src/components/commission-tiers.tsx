@@ -64,7 +64,7 @@ export default function CommissionTiers() {
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Commission Range</span>
-                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-restaurant">£500-£5,000</span>
+                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-restaurant">£200-£800</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Monthly Volume</span>
@@ -92,7 +92,7 @@ export default function CommissionTiers() {
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Commission Range</span>
-                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-large">£5,000-£25,000</span>
+                  <span className="text-2xl font-bold text-primary" data-testid="text-commission-large">£600-£1,500</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Monthly Volume</span>
@@ -154,7 +154,7 @@ export default function CommissionTiers() {
                   Gas & electric supply switching for cost savings.
                 </p>
                 <span className="inline-block text-sm text-primary font-semibold" data-testid="text-utilities-commission">
-                  +£50-£200 per switch
+                  +£30-£100 per switch
                 </span>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function CommissionTiers() {
                   Comprehensive coverage policies for all business types.
                 </p>
                 <span className="inline-block text-sm text-primary font-semibold" data-testid="text-insurance-commission">
-                  +£75-£300 per policy
+                  +£50-£150 per policy
                 </span>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function CommissionTiers() {
                   Advanced reporting and business intelligence tools.
                 </p>
                 <span className="inline-block text-sm text-primary font-semibold" data-testid="text-analytics-commission">
-                  +£100-£500 recurring
+                  +£25-£100 recurring
                 </span>
               </div>
             </div>

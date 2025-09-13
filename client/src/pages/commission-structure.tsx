@@ -68,7 +68,7 @@ export default function CommissionStructure() {
                 <ul className="text-left text-sm text-gray-600 space-y-2">
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-green-600" />
-                    £500 - £2,000 per deal
+                    £150 - £800 per deal
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-green-600" />
@@ -90,14 +90,14 @@ export default function CommissionStructure() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Level 2</h3>
                 <h4 className="text-lg font-semibold text-blue-600 mb-4">Partner Network</h4>
-                <div className="text-4xl font-bold text-blue-600 mb-4">25%</div>
+                <div className="text-4xl font-bold text-blue-600 mb-4">20%</div>
                 <p className="text-gray-600 mb-6">
                   Earn commissions from partners you've recruited to the platform
                 </p>
                 <ul className="text-left text-sm text-gray-600 space-y-2">
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-blue-600" />
-                    £200 - £800 per deal
+                    £30 - £160 per deal
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-blue-600" />
@@ -119,14 +119,14 @@ export default function CommissionStructure() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Level 3</h3>
                 <h4 className="text-lg font-semibold text-purple-600 mb-4">Extended Network</h4>
-                <div className="text-4xl font-bold text-purple-600 mb-4">15%</div>
+                <div className="text-4xl font-bold text-purple-600 mb-4">10%</div>
                 <p className="text-gray-600 mb-6">
                   Earn from your extended network as your partners recruit others
                 </p>
                 <ul className="text-left text-sm text-gray-600 space-y-2">
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-purple-600" />
-                    £100 - £500 per deal
+                    £15 - £80 per deal
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-purple-600" />
@@ -149,24 +149,25 @@ export default function CommissionStructure() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 <div>
-                  <div className="text-3xl font-bold text-green-600 mb-2">£3,600</div>
+                  <div className="text-3xl font-bold text-green-600 mb-2">£1,200</div>
                   <div className="text-sm text-gray-600 mb-2">3 Direct Referrals</div>
-                  <div className="text-xs text-gray-500">3 × £1,200 average</div>
+                  <div className="text-xs text-gray-500">3 × £400 average</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-blue-600 mb-2">£1,800</div>
+                  <div className="text-3xl font-bold text-blue-600 mb-2">£480</div>
                   <div className="text-sm text-gray-600 mb-2">6 Level 2 Commissions</div>
-                  <div className="text-xs text-gray-500">6 × £300 average</div>
+                  <div className="text-xs text-gray-500">6 × £80 average</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-purple-600 mb-2">£900</div>
+                  <div className="text-3xl font-bold text-purple-600 mb-2">£240</div>
                   <div className="text-sm text-gray-600 mb-2">6 Level 3 Commissions</div>
-                  <div className="text-xs text-gray-500">6 × £150 average</div>
+                  <div className="text-xs text-gray-500">6 × £40 average</div>
                 </div>
               </div>
               <div className="text-center mt-8 pt-8 border-t border-gray-200">
-                <div className="text-4xl font-bold text-gray-900 mb-2">£6,300</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">£1,920</div>
                 <div className="text-lg text-gray-600">Total Monthly Potential</div>
+                <div className="text-sm text-gray-500 mt-2">Build your team for ongoing monthly income</div>
               </div>
             </CardContent>
           </Card>
@@ -184,7 +185,7 @@ export default function CommissionStructure() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="p-6 bg-white border-0 shadow-lg text-center">
               <CardContent className="p-0">
-                <div className="text-2xl font-bold text-blue-600 mb-2">£500-£1,200</div>
+                <div className="text-2xl font-bold text-blue-600 mb-2">£150-£400</div>
                 <h3 className="font-semibold text-gray-900 mb-2">Card Machines</h3>
                 <p className="text-sm text-gray-600">Payment processing solutions for retail businesses</p>
               </CardContent>
@@ -192,7 +193,7 @@ export default function CommissionStructure() {
 
             <Card className="p-6 bg-white border-0 shadow-lg text-center">
               <CardContent className="p-0">
-                <div className="text-2xl font-bold text-green-600 mb-2">£800-£2,000</div>
+                <div className="text-2xl font-bold text-green-600 mb-2">£200-£600</div>
                 <h3 className="font-semibold text-gray-900 mb-2">Business Funding</h3>
                 <p className="text-sm text-gray-600">Merchant cash advances and business loans</p>
               </CardContent>
@@ -200,7 +201,7 @@ export default function CommissionStructure() {
 
             <Card className="p-6 bg-white border-0 shadow-lg text-center">
               <CardContent className="p-0">
-                <div className="text-2xl font-bold text-purple-600 mb-2">£300-£800</div>
+                <div className="text-2xl font-bold text-purple-600 mb-2">£75-£250</div>
                 <h3 className="font-semibold text-gray-900 mb-2">Business Utilities</h3>
                 <p className="text-sm text-gray-600">Energy, telecoms, and essential business services</p>
               </CardContent>
@@ -208,7 +209,7 @@ export default function CommissionStructure() {
 
             <Card className="p-6 bg-white border-0 shadow-lg text-center">
               <CardContent className="p-0">
-                <div className="text-2xl font-bold text-yellow-600 mb-2">£400-£1,000</div>
+                <div className="text-2xl font-bold text-yellow-600 mb-2">£100-£300</div>
                 <h3 className="font-semibold text-gray-900 mb-2">Business Insurance</h3>
                 <p className="text-sm text-gray-600">Comprehensive business protection packages</p>
               </CardContent>

@@ -50,22 +50,13 @@ export default function CommissionCalculator({ type = "payment", className = "" 
     };
   };
 
-  // Business funding commission calculation
+  // Business funding commission calculation - Fixed £250 per £10,000
   const calculateFundingCommission = () => {
     const funding = fundingAmount[0];
-    let commissionRate = 0;
     
-    // Commission rates based on funding amount
-    if (funding <= 10000) commissionRate = 0.05; // 5%
-    else if (funding <= 25000) commissionRate = 0.04; // 4%
-    else if (funding <= 50000) commissionRate = 0.035; // 3.5%
-    else if (funding <= 100000) commissionRate = 0.03; // 3%
-    else if (funding <= 250000) commissionRate = 0.025; // 2.5%
-    else commissionRate = 0.02; // 2%
-    
-    const baseCommission = Math.round(funding * commissionRate);
-    // Apply Level 1 upfront commission rate
-    const yourCommission = Math.round(baseCommission);
+    // Fixed rate: £250 commission per £10,000 funding
+    const baseCommission = Math.round((funding / 10000) * 250);
+    const yourCommission = Math.round(baseCommission * 0.6); // 60% commission structure
     
     return {
       baseCommission,
@@ -214,11 +205,11 @@ export default function CommissionCalculator({ type = "payment", className = "" 
             <div className="grid grid-cols-2 gap-4 p-4 bg-white/60 backdrop-blur-sm rounded-xl">
               <div className="text-center">
                 <div className="text-sm text-gray-600 mb-1">£10K Funded</div>
-                <div className="text-xl font-bold text-green-600">£300 Commission</div>
+                <div className="text-xl font-bold text-green-600">£150 Commission</div>
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-600 mb-1">£100K Funded</div>
-                <div className="text-xl font-bold text-green-600">£1,800 Commission</div>
+                <div className="text-xl font-bold text-green-600">£1,500 Commission</div>
               </div>
             </div>
 
