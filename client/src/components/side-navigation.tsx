@@ -27,7 +27,7 @@ export default function SideNavigation() {
     {
       icon: Home,
       label: "Dashboard",
-      path: "/",
+      path: "/dashboard",
       testId: "sidenav-dashboard"
     },
     {

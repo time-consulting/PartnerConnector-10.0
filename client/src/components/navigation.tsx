@@ -26,7 +26,8 @@ import {
   MessageSquare,
   Activity,
   Menu,
-  X
+  X,
+  Home
 } from "lucide-react";
 
 export default function Navigation() {
@@ -340,6 +341,19 @@ export default function Navigation() {
                             <p className="text-sm text-gray-600">{(user as any)?.email}</p>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Dashboard Quick Access */}
+                      <div className="border-b border-gray-200 pb-4">
+                        <Link href="/dashboard">
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all cursor-pointer">
+                            <Home className="w-5 h-5" />
+                            <div>
+                              <h4 className="font-medium">Go to Dashboard</h4>
+                              <p className="text-xs text-blue-100">Manage your referrals and earnings</p>
+                            </div>
+                          </div>
+                        </Link>
                       </div>
 
                       {/* User Settings */}

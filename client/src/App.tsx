@@ -86,8 +86,6 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
-
   return (
     <Switch>
       {/* Public routes available to everyone */}
@@ -99,17 +97,11 @@ function Router() {
       <Route path="/help-center" component={HelpCenter} />
       <Route path="/partner-recruitment" component={PartnerRecruitment} />
       
-      {/* Home route - Landing if not authenticated, Dashboard if authenticated */}
-      <Route path="/" component={() => {
-        if (isLoading) {
-          return (
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="text-lg">Loading...</div>
-            </div>
-          );
-        }
-        return isAuthenticated ? <Dashboard /> : <Landing />;
-      }} />
+      {/* Home route - Always shows Landing page for fast loading */}
+      <Route path="/" component={Landing} />
+      
+      {/* Dashboard route - Protected dashboard for authenticated users */}
+      <Route path="/dashboard" component={() => <PrivateRoute><Dashboard /></PrivateRoute>} />
       
       {/* Protected routes - always register but guard with PrivateRoute */}
       <Route path="/leads" component={() => <PrivateRoute><Leads /></PrivateRoute>} />

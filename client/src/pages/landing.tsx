@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,16 +14,117 @@ import {
   NetworkIcon,
   TargetIcon,
   CreditCardIcon,
-  HandshakeIcon
+  HandshakeIcon,
+  Home,
+  BarChart3
 } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Landing() {
+  const { isAuthenticated, user, isLoading } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navigation />
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20 lg:py-32">
+      
+      {/* Authenticated User Hero Section */}
+      {isAuthenticated && !isLoading && (
+        <section className="relative overflow-hidden bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 py-16 lg:py-24">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzMzMzMzMyIgZmlsbC1vcGFjaXR5PSIwLjEiLz4KPC9zdmc=')] opacity-30"></div>
+          
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="animate-fadeIn text-center lg:text-left">
+                <Badge className="mb-4 bg-green-100 text-green-700 hover:bg-green-200" data-testid="badge-welcome-back">
+                  Welcome back, {(user as any)?.firstName || 'Partner'}
+                </Badge>
+                
+                <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
+                  Ready to{" "}
+                  <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                    manage your success?
+                  </span>
+                </h1>
+                
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                  Access your dashboard to track referrals, monitor commissions, and manage your growing partner network.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                  <Link href="/dashboard">
+                    <Button 
+                      size="lg" 
+                      className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                      data-testid="button-go-dashboard"
+                    >
+                      <Home className="mr-2 w-5 h-5" />
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                  <Link href="/submit-referral">
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      className="w-full sm:w-auto border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-4 text-lg font-semibold transition-all duration-300"
+                      data-testid="button-submit-referral"
+                    >
+                      Submit New Referral
+                      <ArrowRightIcon className="ml-2 w-5 h-5" />
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Quick access shortcuts */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Link href="/leads">
+                    <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500">
+                      <div className="flex items-center gap-3">
+                        <UsersIcon className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <div className="font-medium text-gray-900">Leads</div>
+                          <div className="text-sm text-gray-600">Manage contacts</div>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                  <Link href="/track-referrals">
+                    <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-green-500">
+                      <div className="flex items-center gap-3">
+                        <BarChart3 className="w-5 h-5 text-green-600" />
+                        <div>
+                          <div className="font-medium text-gray-900">Track Progress</div>
+                          <div className="text-sm text-gray-600">View analytics</div>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                </div>
+              </div>
+              
+              {/* Dashboard Preview */}
+              <div className="relative animate-fadeIn">
+                <Card className="overflow-hidden shadow-2xl bg-gradient-to-br from-green-500 to-blue-600">
+                  <CardContent className="p-8 relative aspect-video flex items-center justify-center">
+                    <div className="relative w-full h-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center rounded-lg">
+                      <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
+                      
+                      <div className="relative z-10 text-center text-white">
+                        <Home className="w-16 h-16 mx-auto mb-4 animate-pulse" />
+                        <h3 className="text-2xl font-bold mb-2">Your Dashboard Awaits</h3>
+                        <p className="text-white/90">Manage your partnership success</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+      
+      {/* Standard Hero Section for Non-Authenticated Users */}
+      {!isAuthenticated && !isLoading && (
+        <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20 lg:py-32">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzMzMzMzMyIgZmlsbC1vcGFjaXR5PSIwLjEiLz4KPC9zdmc+')] opacity-30"></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -145,7 +247,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Partnership Features Section */}
+      )}
+      
+      {/* Partnership Features Section - Visible to all users */}
       <section id="platform-features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
