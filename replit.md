@@ -4,6 +4,16 @@ PartnerConnector is a professional referral platform designed for accountants, b
 
 # Recent Changes
 
+**Training System Redesign (September 2025)**
+- Complete transformation of training section into modern, gamified learning hub
+- **Product Training**: Comprehensive modules for Dojo card payments and business funding with competitive analysis, pricing mastery, and ROI calculators
+- **Platform Training**: Team invitation system with Level 2 (20%) and Extended network (10%) commission visualization and network growth strategies
+- **Platform Usage**: Step-by-step training for deal submission, referral tracking, payment processes, and dashboard navigation
+- **Enhanced Support**: Multi-channel support system with call booking, searchable knowledge base (15+ articles), and FAQ system with filtering
+- **Gamification System**: Bronze → Silver → Gold → Platinum Partner progression with 1850+ points, achievement badges, 7-day learning streaks, and celebration animations
+- Fixed critical framer-motion import errors and ensured consistent commission structure (L2=20%, Extended=10%) across all components
+- Added comprehensive data-testid attributes for testing and maintained responsive design with smooth animations
+
 **Dashboard UX Redesign (September 2025)**
 - Implemented comprehensive dashboard redesign with improved UX and navigation
 - Added desktop side navigation component with icon-based, expandable design (hover to expand from w-16 to w-64)
