@@ -1,31 +1,60 @@
 import { Switch, Route, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import Landing from "@/pages/landing";
-import Dashboard from "@/pages/dashboard";
-import SubmitReferral from "@/pages/submit-referral";
-import UploadBills from "@/pages/upload-bills";
-import AdminPortal from "@/pages/admin";
-import AdminDiagnostics from "@/pages/admin-diagnostics";
-import TrackReferrals from "@/pages/track-referrals";
-import TeamManagement from "@/pages/team-management";
-import Training from "@/pages/training";
-import Leads from "@/pages/leads";
-import PartnerOnboarding from "@/pages/partner-onboarding";
-import CommissionStructure from "@/pages/commission-structure";
-import LeadTracking from "@/pages/lead-tracking";
-import PartnerPortal from "@/pages/partner-portal";
-import About from "@/pages/about";
-import HelpCenter from "@/pages/help-center";
-import PartnerRecruitment from "@/pages/partner-recruitment";
-import ProfilePage from "@/pages/account/profile";
-import BankingPage from "@/pages/account/banking";
-import FeedbackPage from "@/pages/account/feedback";
-import NotFound from "@/pages/not-found";
+
+// Lazy load all pages for optimal bundle splitting
+const Landing = lazy(() => import("@/pages/landing"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const SubmitReferral = lazy(() => import("@/pages/submit-referral"));
+const UploadBills = lazy(() => import("@/pages/upload-bills"));
+const AdminPortal = lazy(() => import("@/pages/admin"));
+const AdminDiagnostics = lazy(() => import("@/pages/admin-diagnostics"));
+const TrackReferrals = lazy(() => import("@/pages/track-referrals"));
+const TeamManagement = lazy(() => import("@/pages/team-management"));
+const Training = lazy(() => import("@/pages/training"));
+const Leads = lazy(() => import("@/pages/leads"));
+const PartnerOnboarding = lazy(() => import("@/pages/partner-onboarding"));
+const CommissionStructure = lazy(() => import("@/pages/commission-structure"));
+const LeadTracking = lazy(() => import("@/pages/lead-tracking"));
+const PartnerPortal = lazy(() => import("@/pages/partner-portal"));
+const About = lazy(() => import("@/pages/about"));
+const HelpCenter = lazy(() => import("@/pages/help-center"));
+const PartnerRecruitment = lazy(() => import("@/pages/partner-recruitment"));
+const ProfilePage = lazy(() => import("@/pages/account/profile"));
+const BankingPage = lazy(() => import("@/pages/account/banking"));
+const FeedbackPage = lazy(() => import("@/pages/account/feedback"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+// Loading fallback component with app branding
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center" data-testid="loading-fallback">
+      <div className="text-center space-y-6 max-w-md px-6">
+        {/* Logo/Brand */}
+        <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        
+        {/* Loading Spinner */}
+        <div className="relative">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+        </div>
+        
+        {/* Brand Text */}
+        <div className="space-y-2">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">PartnerConnector</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Loading your experience...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Private route wrapper that redirects to login if not authenticated
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -106,7 +135,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <Suspense fallback={<LoadingFallback />}>
+          <Router />
+        </Suspense>
       </TooltipProvider>
     </QueryClientProvider>
   );
