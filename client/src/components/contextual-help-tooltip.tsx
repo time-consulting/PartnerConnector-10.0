@@ -1,7 +1,14 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, Suspense, lazy } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { HelpCircleIcon, InfoIcon, CircleHelpIcon } from "lucide-react";
+import { StaticTooltipFallback, StaticStatsHelpTooltip, StaticFeatureHelpTooltip, StaticActionButtonFallback } from "@/components/static-tooltip-fallback";
+import { AnimatedTooltipLoadingSkeleton } from "@/components/loading-states";
+
+// Lazy load animated components
+const LazyAnimatedTooltip = lazy(() => import("@/components/lazy-animated-tooltip").then(module => ({ default: module.LazyAnimatedTooltip })));
+const LazyStatsHelpTooltip = lazy(() => import("@/components/lazy-animated-tooltip").then(module => ({ default: module.LazyStatsHelpTooltip })));
+const LazyFeatureHelpTooltip = lazy(() => import("@/components/lazy-animated-tooltip").then(module => ({ default: module.LazyFeatureHelpTooltip })));
+const LazyAnimatedActionButton = lazy(() => import("@/components/lazy-animated-tooltip").then(module => ({ default: module.LazyAnimatedActionButton })));
 
 interface ContextualHelpTooltipProps {
   content: string | React.ReactNode;
@@ -30,110 +37,32 @@ export function ContextualHelpTooltip({
   iconClassName = "",
   maxWidth = "max-w-xs"
 }: ContextualHelpTooltipProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const IconComponent = iconTypes[type];
-
-  const contentVariants = {
-    hidden: {
-      opacity: 0,
-      scale: 0.95,
-      y: position === "top" ? 10 : position === "bottom" ? -10 : 0,
-      x: position === "left" ? 10 : position === "right" ? -10 : 0,
-    },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      x: 0,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 25,
-        duration: 0.3,
-      },
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.95,
-      transition: {
-        duration: 0.2,
-      },
-    },
-  };
-
-  const iconVariants = {
-    idle: { scale: 1, rotate: 0 },
-    hover: { 
-      scale: 1.1, 
-      rotate: 5,
-      transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 10,
-      }
-    },
-    tap: { 
-      scale: 0.95,
-      transition: {
-        duration: 0.1,
-      }
-    }
-  };
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-  };
-
-  const triggerElement = children || (
-    <motion.button
-      variants={iconVariants}
-      initial="idle"
-      whileHover="hover"
-      whileTap="tap"
-      className={`
-        inline-flex items-center justify-center rounded-full p-1
-        text-gray-500 hover:text-blue-600 hover:bg-blue-50
-        transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        ${iconClassName}
-      `}
-      data-testid={`tooltip-${type}-icon`}
-    >
-      <IconComponent className="w-4 h-4" />
-    </motion.button>
-  );
-
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip open={isOpen} onOpenChange={handleOpenChange}>
-        <TooltipTrigger asChild>
-          {triggerElement}
-        </TooltipTrigger>
-        <TooltipContent
-          side={position}
-          className={`
-            bg-gray-900 text-white border border-gray-700 shadow-xl
-            ${maxWidth} p-3 rounded-lg
-            ${className}
-          `}
-          sideOffset={8}
-          data-testid="contextual-help-content"
-        >
-          <AnimatePresence>
-            {isOpen && (
-              <motion.div
-                variants={contentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="text-sm leading-relaxed"
-              >
-                {content}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Suspense 
+      fallback={
+        <StaticTooltipFallback
+          content={content}
+          children={children}
+          type={type}
+          position={position}
+          trigger={trigger}
+          className={className}
+          iconClassName={iconClassName}
+          maxWidth={maxWidth}
+        />
+      }
+    >
+      <LazyAnimatedTooltip
+        content={content}
+        children={children}
+        type={type}
+        position={position}
+        trigger={trigger}
+        className={className}
+        iconClassName={iconClassName}
+        maxWidth={maxWidth}
+      />
+    </Suspense>
   );
 }
 
@@ -163,16 +92,21 @@ export function StatsHelpTooltip({
   ...props 
 }: Omit<ContextualHelpTooltipProps, 'type'>) {
   return (
-    <ContextualHelpTooltip
-      content={content}
-      type="info"
-      position="top"
-      className={`bg-green-900 border-green-700 ${className}`}
-      iconClassName="ml-1"
-      maxWidth="max-w-sm"
-      {...props}
-      data-testid="stats-help-tooltip"
-    />
+    <Suspense 
+      fallback={
+        <StaticStatsHelpTooltip
+          content={content}
+          className={className}
+          {...props}
+        />
+      }
+    >
+      <LazyStatsHelpTooltip
+        content={content}
+        className={className}
+        {...props}
+      />
+    </Suspense>
   );
 }
 
@@ -183,15 +117,21 @@ export function FeatureHelpTooltip({
   ...props 
 }: Omit<ContextualHelpTooltipProps, 'type'>) {
   return (
-    <ContextualHelpTooltip
-      content={content}
-      type="question"
-      position="bottom"
-      className={`bg-purple-900 border-purple-700 ${className}`}
-      maxWidth="max-w-md"
-      {...props}
-      data-testid="feature-help-tooltip"
-    />
+    <Suspense 
+      fallback={
+        <StaticFeatureHelpTooltip
+          content={content}
+          className={className}
+          {...props}
+        />
+      }
+    >
+      <LazyFeatureHelpTooltip
+        content={content}
+        className={className}
+        {...props}
+      />
+    </Suspense>
   );
 }
 
@@ -208,28 +148,22 @@ export function ActionTooltip({
   className = "",
   ...props
 }: ActionTooltipProps) {
+  const tooltipContent = (
+    <div className="space-y-3">
+      <div>{content}</div>
+      {onAction && (
+        <Suspense fallback={<StaticActionButtonFallback onClick={onAction}>{actionText}</StaticActionButtonFallback>}>
+          <LazyAnimatedActionButton onClick={onAction}>
+            {actionText}
+          </LazyAnimatedActionButton>
+        </Suspense>
+      )}
+    </div>
+  );
+
   return (
     <ContextualHelpTooltip
-      content={
-        <div className="space-y-3">
-          <div>{content}</div>
-          {onAction && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onAction}
-              className="
-                w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 
-                text-white text-xs rounded-md transition-colors duration-200
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900
-              "
-              data-testid="tooltip-action-button"
-            >
-              {actionText}
-            </motion.button>
-          )}
-        </div>
-      }
+      content={tooltipContent}
       className={`bg-gray-800 border-gray-600 ${className}`}
       maxWidth="max-w-sm"
       {...props}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,26 +13,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Area,
-  AreaChart,
-} from "recharts";
+import { 
+  StaticBarChartFallback, 
+  StaticLineChartFallback, 
+  StaticPieChartFallback, 
+  StaticAreaChartFallback 
+} from "@/components/static-chart-fallbacks";
+
+// Lazy load chart components
+const LazyBarChart = lazy(() => import("@/components/lazy-chart-components").then(module => ({ default: module.LazyBarChart })));
+const LazyLineChart = lazy(() => import("@/components/lazy-chart-components").then(module => ({ default: module.LazyLineChart })));
+const LazyPieChart = lazy(() => import("@/components/lazy-chart-components").then(module => ({ default: module.LazyPieChart })));
+const LazyAreaChart = lazy(() => import("@/components/lazy-chart-components").then(module => ({ default: module.LazyAreaChart })));
+const LazyAdvancedBarChart = lazy(() => import("@/components/lazy-chart-components").then(module => ({ default: module.LazyAdvancedBarChart })));
+const LazyAdvancedLineChart = lazy(() => import("@/components/lazy-chart-components").then(module => ({ default: module.LazyAdvancedLineChart })));
 import {
   Trophy,
   Users,
@@ -502,22 +496,25 @@ export default function TeamAnalytics({ isOpen, onClose, onRefresh }: TeamAnalyt
                     <CardTitle>Revenue & Growth Trends</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={chartConfig} className="h-80">
-                      <AreaChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Area
-                          type="monotone"
-                          dataKey="revenue"
-                          stackId="1"
-                          stroke="#10b981"
-                          fill="#10b981"
-                          fillOpacity={0.6}
+                    <Suspense 
+                      fallback={
+                        <StaticAreaChartFallback 
+                          title="Revenue & Growth Trends"
+                          description="Loading revenue chart..."
+                          height={320}
                         />
-                      </AreaChart>
-                    </ChartContainer>
+                      }
+                    >
+                      <LazyAreaChart
+                        data={chartData}
+                        config={chartConfig}
+                        className="h-80"
+                        dataKey="revenue"
+                        fill="#10b981"
+                        stroke="#10b981"
+                        xAxisDataKey="month"
+                      />
+                    </Suspense>
                   </CardContent>
                 </Card>
 
@@ -526,16 +523,26 @@ export default function TeamAnalytics({ isOpen, onClose, onRefresh }: TeamAnalyt
                     <CardTitle>Team Activity Overview</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={chartConfig} className="h-80">
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="invites" fill="#3b82f6" />
-                        <Bar dataKey="conversions" fill="#f59e0b" />
-                      </BarChart>
-                    </ChartContainer>
+                    <Suspense 
+                      fallback={
+                        <StaticBarChartFallback 
+                          title="Team Activity Overview"
+                          description="Loading activity chart..."
+                          height={320}
+                        />
+                      }
+                    >
+                      <LazyAdvancedBarChart
+                        data={chartData}
+                        config={chartConfig}
+                        className="h-80"
+                        xAxisDataKey="month"
+                        bars={[
+                          { dataKey: "invites", fill: "#3b82f6", name: "Invites" },
+                          { dataKey: "conversions", fill: "#f59e0b", name: "Conversions" }
+                        ]}
+                      />
+                    </Suspense>
                   </CardContent>
                 </Card>
 
@@ -544,28 +551,26 @@ export default function TeamAnalytics({ isOpen, onClose, onRefresh }: TeamAnalyt
                     <CardTitle>Performance Metrics Timeline</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={chartConfig} className="h-80">
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Line
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="#10b981"
-                          strokeWidth={2}
-                          dot={{ fill: "#10b981" }}
+                    <Suspense 
+                      fallback={
+                        <StaticLineChartFallback 
+                          title="Performance Metrics Timeline"
+                          description="Loading performance chart..."
+                          height={320}
                         />
-                        <Line
-                          type="monotone"
-                          dataKey="members"
-                          stroke="#ef4444"
-                          strokeWidth={2}
-                          dot={{ fill: "#ef4444" }}
-                        />
-                      </LineChart>
-                    </ChartContainer>
+                      }
+                    >
+                      <LazyAdvancedLineChart
+                        data={chartData}
+                        config={chartConfig}
+                        className="h-80"
+                        xAxisDataKey="month"
+                        lines={[
+                          { dataKey: "revenue", stroke: "#10b981", name: "Revenue", strokeWidth: 2 },
+                          { dataKey: "members", stroke: "#ef4444", name: "Members", strokeWidth: 2 }
+                        ]}
+                      />
+                    </Suspense>
                   </CardContent>
                 </Card>
               </div>
@@ -578,24 +583,23 @@ export default function TeamAnalytics({ isOpen, onClose, onRefresh }: TeamAnalyt
                     <CardTitle>Conversion Funnel</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={chartConfig} className="h-80">
-                      <PieChart>
-                        <Pie
-                          data={conversionFunnelData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={120}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {conversionFunnelData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                      </PieChart>
-                    </ChartContainer>
+                    <Suspense 
+                      fallback={
+                        <StaticPieChartFallback 
+                          title="Conversion Funnel"
+                          description="Loading funnel chart..."
+                          height={320}
+                        />
+                      }
+                    >
+                      <LazyPieChart
+                        data={conversionFunnelData}
+                        config={chartConfig}
+                        className="h-80"
+                        dataKey="value"
+                        nameKey="name"
+                      />
+                    </Suspense>
                   </CardContent>
                 </Card>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -23,23 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  DndContext, 
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCorners,
-  useDroppable
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+// @dnd-kit imports moved to lazy-loaded component
 import { 
   SearchIcon,
   PlusIcon,
@@ -73,7 +57,11 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertLeadSchema, type Lead, type InsertLead } from "@shared/schema";
+import { KanbanLoadingSkeleton } from "@/components/loading-states";
 import { z } from "zod";
+
+// Lazy load heavy components
+const LazyKanbanView = lazy(() => import("@/components/lazy-kanban-view"));
 
 // Enhanced form schema with additional validation
 const addLeadFormSchema = insertLeadSchema.extend({
@@ -162,266 +150,7 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-// Draggable Lead Card Component
-function LeadCard({ lead, onEditDetails }: { lead: Lead; onEditDetails: (lead: Lead) => void }) {
-  const { toast } = useToast();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: lead.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  // Handler for quick actions
-  const handleCall = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (lead.contactPhone) {
-      window.location.href = `tel:${lead.contactPhone}`;
-    } else {
-      toast({
-        title: "No Phone Number",
-        description: "This lead doesn't have a phone number.",
-        variant: "destructive",
-      });
-    }
-  }, [lead.contactPhone, toast]);
-
-  const handleEmail = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (lead.contactEmail) {
-      window.location.href = `mailto:${lead.contactEmail}?subject=Follow up from ${lead.businessName}`;
-    } else {
-      toast({
-        title: "No Email Address",
-        description: "This lead doesn't have an email address.",
-        variant: "destructive",
-      });
-    }
-  }, [lead.contactEmail, lead.businessName, toast]);
-
-  const handleQuoteRequest = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onEditDetails(lead);
-  }, [lead, onEditDetails]);
-
-  const handleEditDetails = useCallback((e: React.MouseEvent, openDetailsPanel: (lead: Lead) => void) => {
-    e.stopPropagation();
-    openDetailsPanel(lead);
-  }, []);
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`
-        bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm cursor-pointer
-        hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all
-        ${isDragging ? 'opacity-50' : ''}
-      `}
-      data-testid={`lead-card-${lead.id}`}
-      onClick={() => onEditDetails(lead)}
-    >
-      <div className="space-y-3">
-        {/* Drag handle area */}
-        <div {...attributes} {...listeners} className="space-y-3">
-          <div className="flex items-start justify-between">
-            <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight">
-              {lead.businessName}
-            </h3>
-            {lead.priority && (
-              <Badge 
-                className={`${getPriorityColor(lead.priority)} text-xs`}
-                variant="secondary"
-              >
-                {lead.priority}
-              </Badge>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-              <UserIcon className="h-3 w-3 flex-shrink-0" />
-              <span className="truncate">{lead.contactName}</span>
-            </div>
-            
-            {lead.contactEmail && (
-              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                <MailIcon className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{lead.contactEmail}</span>
-              </div>
-            )}
-            
-            {lead.contactPhone && (
-              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                <PhoneIcon className="h-3 w-3 flex-shrink-0" />
-                <span>{lead.contactPhone}</span>
-              </div>
-            )}
-            
-            {lead.businessType && (
-              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                <BuildingIcon className="h-3 w-3 flex-shrink-0" />
-                <span>{lead.businessType}</span>
-              </div>
-            )}
-            
-            {lead.estimatedMonthlyVolume && (
-              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                <TrendingUpIcon className="h-3 w-3 flex-shrink-0" />
-                <span>{lead.estimatedMonthlyVolume}</span>
-              </div>
-            )}
-          </div>
-
-          {lead.notes && (
-            <div className="bg-gray-50 dark:bg-gray-700 rounded p-2">
-              <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
-                {lead.notes}
-              </p>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-1">
-              <CalendarIcon className="h-3 w-3" />
-              {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : 'No date'}
-            </div>
-            {lead.leadSource && (
-              <span className="capitalize">{lead.leadSource.replace('_', ' ')}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Actions - Non-draggable */}
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
-          <div className="flex items-center justify-between gap-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-900/20 dark:hover:text-green-400"
-              onClick={(e) => { e.stopPropagation(); handleCall(e); }}
-              data-testid={`button-call-${lead.id}`}
-              disabled={!lead.contactPhone}
-              title={lead.contactPhone ? `Call ${lead.contactPhone}` : "No phone number"}
-            >
-              <PhoneIcon className="h-3 w-3" />
-            </Button>
-            
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-              onClick={(e) => { e.stopPropagation(); handleEmail(e); }}
-              data-testid={`button-email-${lead.id}`}
-              disabled={!lead.contactEmail}
-              title={lead.contactEmail ? `Email ${lead.contactEmail}` : "No email address"}
-            >
-              <MailIcon className="h-3 w-3" />
-            </Button>
-            
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-900/20 dark:hover:text-purple-400"
-              onClick={(e) => { e.stopPropagation(); handleQuoteRequest(e); }}
-              data-testid={`button-quote-${lead.id}`}
-              title="Request Quote"
-            >
-              <FileTextIcon className="h-3 w-3" />
-            </Button>
-            
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditDetails(lead);
-              }}
-              data-testid={`button-edit-${lead.id}`}
-              title="Edit Details"
-            >
-              <EditIcon className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Kanban Column Component
-function KanbanColumn({ 
-  column, 
-  leads, 
-  isLoading,
-  onEditDetails
-}: { 
-  column: typeof KANBAN_COLUMNS[0], 
-  leads: Lead[], 
-  isLoading: boolean,
-  onEditDetails: (lead: Lead) => void
-}) {
-  const columnLeads = leads.filter(lead => lead.status === column.id);
-  
-  const { setNodeRef, isOver } = useDroppable({
-    id: column.id,
-  });
-  
-  return (
-    <div className="flex-shrink-0 w-80">
-      <Card className={`h-full transition-colors ${isOver ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950' : ''}`}>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center justify-between text-sm">
-            <span>{column.title}</span>
-            <Badge className={column.color} variant="secondary">
-              {columnLeads.length}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <ScrollArea className="h-[600px] pr-4">
-            <div ref={setNodeRef} className="min-h-full">
-              <SortableContext
-                items={columnLeads.map(lead => lead.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3" data-testid={`column-${column.id}`}>
-                  {isLoading ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-32 w-full rounded-lg" />
-                    ))
-                  ) : columnLeads.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <ClipboardListIcon className="h-8 w-8 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">No leads yet</p>
-                      {isOver && (
-                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                          Drop lead here
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    columnLeads.map((lead) => (
-                      <LeadCard key={lead.id} lead={lead} onEditDetails={onEditDetails} />
-                    ))
-                  )}
-                </div>
-              </SortableContext>
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+// Components moved to lazy-loaded Kanban view
 
 // Add Lead Form Component
 function AddLeadForm({ onSubmit, isSubmitting }: { onSubmit: (data: AddLeadFormData) => void; isSubmitting: boolean }) {
@@ -1170,7 +899,7 @@ export default function Leads() {
   const { isAuthenticated, isLoading } = useAuth();
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [activeId, setActiveId] = useState<string | null>(null);
+  // Removed activeId state - moved to lazy component
   const [isAddLeadDialogOpen, setIsAddLeadDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false);
@@ -1196,14 +925,7 @@ export default function Leads() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Drag and drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
+  // Drag and drop functionality moved to lazy component
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -1376,16 +1098,11 @@ export default function Leads() {
     setDebouncedSearchTerm("");
   }, []);
 
-  // Handle drag start
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
+  // Drag start handling moved to lazy component
 
-  // Handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
+  // Handle drag end - business logic for updating lead status
+  const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    
-    setActiveId(null);
     
     if (!over) {
       return;
@@ -1452,8 +1169,7 @@ export default function Leads() {
     setTimeout(() => setSelectedLead(null), 300); // Delay to allow slide animation
   };
 
-  // Get the active lead for drag overlay
-  const activeLead = activeId ? filteredLeads.find(lead => lead.id === activeId) : null;
+  // Active lead handling moved to lazy component
 
   // Toggle sorting
   const handleSort = (field: string) => {
@@ -2075,35 +1791,14 @@ export default function Leads() {
             <div className="transition-all duration-500 ease-in-out">
               {viewMode === 'kanban' ? (
                 <div className="animate-fadeIn">
-                  {/* Kanban Board */}
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCorners}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <div className="overflow-x-auto">
-                      <div className="flex gap-6 min-w-fit pb-4">
-                        {KANBAN_COLUMNS.map((column) => (
-                          <KanbanColumn
-                            key={column.id}
-                            column={column}
-                            leads={filteredLeads}
-                            isLoading={leadsLoading}
-                            onEditDetails={handleOpenLeadDetails}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <DragOverlay>
-                      {activeLead ? (
-                        <div className="rotate-5 animate-pulse">
-                          <LeadCard lead={activeLead} onEditDetails={handleOpenLeadDetails} />
-                        </div>
-                      ) : null}
-                    </DragOverlay>
-                  </DndContext>
+                  <Suspense fallback={<KanbanLoadingSkeleton />}>
+                    <LazyKanbanView
+                      leads={filteredLeads}
+                      isLoading={leadsLoading}
+                      onEditDetails={handleOpenLeadDetails}
+                      onDragEnd={handleDragEnd}
+                    />
+                  </Suspense>
                 </div>
               ) : (
                 <div className="animate-fadeIn">
