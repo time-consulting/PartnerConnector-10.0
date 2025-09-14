@@ -102,38 +102,12 @@ export function LazyAnimatedTooltip({
     </motion.button>
   );
 
+  // Temporarily return simple fallback without tooltip functionality due to React hook violations
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip open={isOpen} onOpenChange={handleOpenChange}>
-        <TooltipTrigger asChild>
-          {triggerElement}
-        </TooltipTrigger>
-        <TooltipContent
-          side={position}
-          className={`
-            bg-gray-900 text-white border border-gray-700 shadow-xl
-            ${maxWidth} p-3 rounded-lg
-            ${className}
-          `}
-          sideOffset={8}
-          data-testid="animated-contextual-help-content"
-        >
-          <AnimatePresence>
-            {isOpen && (
-              <motion.div
-                variants={contentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="text-sm leading-relaxed"
-              >
-                {content}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="relative inline-flex">
+      {triggerElement}
+      {/* Tooltip functionality temporarily disabled */}
+    </div>
   );
 }
 
