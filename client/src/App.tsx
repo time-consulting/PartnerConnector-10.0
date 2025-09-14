@@ -127,12 +127,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Suspense fallback={<LoadingFallback />}>
-          <Router />
-        </Suspense>
-      </TooltipProvider>
+      <Toaster />
+      <Suspense fallback={<LoadingFallback />}>
+        <Router />
+      </Suspense>
     </QueryClientProvider>
   );
 }
