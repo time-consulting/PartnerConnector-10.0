@@ -76,12 +76,12 @@ export default function Landing() {
 
                 {/* Quick access shortcuts */}
                 <div className="grid grid-cols-2 gap-4">
-                  <Link href="/leads">
+                  <Link href="/opportunities">
                     <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500">
                       <div className="flex items-center gap-3">
                         <UsersIcon className="w-5 h-5 text-blue-600" />
                         <div>
-                          <div className="font-medium text-gray-900">Leads</div>
+                          <div className="font-medium text-gray-900">Opportunities</div>
                           <div className="text-sm text-gray-600">Manage contacts</div>
                         </div>
                       </div>

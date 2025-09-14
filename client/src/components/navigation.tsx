@@ -503,12 +503,12 @@ export default function Navigation() {
                       <span className="font-medium">Dashboard</span>
                     </div>
                   </Link>
-                  <Link href="/leads" onClick={handleMobileMenuClose}>
+                  <Link href="/opportunities" onClick={handleMobileMenuClose}>
                     <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                      isActive('/leads') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-                    }`} data-testid="mobile-link-leads">
+                      isActive('/opportunities') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`} data-testid="mobile-link-opportunities">
                       <BarChart3Icon className="w-5 h-5" />
-                      <span className="font-medium">Leads</span>
+                      <span className="font-medium">Opportunities</span>
                     </div>
                   </Link>
                   <Link href="/submit-referral" onClick={handleMobileMenuClose}>
