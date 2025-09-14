@@ -9,6 +9,8 @@ import {
   integer,
   decimal,
   boolean,
+  foreignKey,
+  check,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -48,12 +50,12 @@ export const users = pgTable("users", {
   businessAddress: text("business_address"),
   // Partner tracking and MLM structure
   partnerId: varchar("partner_id").unique(),
-  parentPartnerId: varchar("parent_partner_id"), // For MLM structure
+  parentPartnerId: varchar("parent_partner_id").references(() => users.id, { onDelete: "set null" }), // For MLM structure
   referralCode: varchar("referral_code").unique(),
   partnerLevel: integer("partner_level").default(1), // 1, 2, 3 for commission tiers
   // Team management
   teamRole: varchar("team_role").default("member"), // owner, admin, manager, member
-  teamId: varchar("team_id"),
+  teamId: varchar("team_id").references(() => teams.id, { onDelete: "set null" }),
   canSubmitReferrals: boolean("can_submit_referrals").default(true),
   canViewCommissions: boolean("can_view_commissions").default(true),
   canManageTeam: boolean("can_manage_team").default(false),
@@ -70,7 +72,13 @@ export const users = pgTable("users", {
   phone: varchar("phone"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("users_email_idx").on(table.email),
+  index("users_partner_id_idx").on(table.partnerId),
+  index("users_parent_partner_id_idx").on(table.parentPartnerId),
+  index("users_team_id_idx").on(table.teamId),
+  index("users_referral_code_idx").on(table.referralCode),
+]);
 
 export const businessTypes = pgTable("business_types", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -96,12 +104,12 @@ export const products = pgTable("products", {
 
 export const referrals = pgTable("referrals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  referrerId: varchar("referrer_id").notNull(),
+  referrerId: varchar("referrer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   businessName: varchar("business_name").notNull(),
   businessEmail: varchar("business_email").notNull(),
   businessPhone: varchar("business_phone"),
   businessAddress: text("business_address"),
-  businessTypeId: varchar("business_type_id").notNull(),
+  businessTypeId: varchar("business_type_id").notNull().references(() => businessTypes.id, { onDelete: "restrict" }),
   currentProcessor: varchar("current_processor"),
   monthlyVolume: varchar("monthly_volume"),
   currentRate: varchar("current_rate"),
@@ -120,28 +128,39 @@ export const referrals = pgTable("referrals", {
   gdprConsent: boolean("gdpr_consent").default(false),
   submittedAt: timestamp("submitted_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("referrals_referrer_id_idx").on(table.referrerId),
+  index("referrals_business_type_id_idx").on(table.businessTypeId),
+  index("referrals_status_idx").on(table.status),
+  index("referrals_submitted_at_idx").on(table.submittedAt),
+  index("referrals_referrer_status_idx").on(table.referrerId, table.status),
+]);
 
 export const billUploads = pgTable("bill_uploads", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  referralId: varchar("referral_id").notNull(),
+  referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
   fileName: varchar("file_name").notNull(),
   fileSize: integer("file_size"),
   mimeType: varchar("mime_type"),
   fileContent: text("file_content"), // Base64 encoded file content
   uploadedAt: timestamp("uploaded_at").defaultNow(),
-});
+}, (table) => [
+  index("bill_uploads_referral_id_idx").on(table.referralId),
+]);
 
 // Teams table for multi-user account management
 export const teams = pgTable("teams", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   description: text("description"),
-  ownerId: varchar("owner_id").notNull(),
+  ownerId: varchar("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("teams_owner_id_idx").on(table.ownerId),
+  index("teams_is_active_idx").on(table.isActive),
+]);
 
 // Multi-level commission tracking
 export const commissionPayments = pgTable("commission_payments", {
@@ -244,7 +263,72 @@ export const businessDetails = pgTable("business_details", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// CRM-style leads management
+// Contacts management for CRM-style contact handling
+export const contacts = pgTable("contacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  partnerId: varchar("partner_id").notNull().references(() => users.id, { onDelete: "cascade" }), // User who owns this contact
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  email: varchar("email"),
+  phone: varchar("phone"),
+  company: varchar("company"),
+  jobTitle: varchar("job_title"),
+  businessType: varchar("business_type"),
+  contactSource: varchar("contact_source"), // referral, networking, cold_outreach, website, etc.
+  tags: text("tags").array(), // Array of tags for categorization
+  notes: text("notes"),
+  // Product interests
+  interestedProducts: text("interested_products").array(), // Array of product categories
+  estimatedMonthlyVolume: varchar("estimated_monthly_volume"),
+  // Contact preferences
+  preferredContactMethod: varchar("preferred_contact_method").default("email"), // email, phone, meeting
+  lastContact: timestamp("last_contact"),
+  nextFollowUp: timestamp("next_follow_up"),
+  // Address information
+  addressLine1: varchar("address_line1"),
+  addressLine2: varchar("address_line2"),
+  city: varchar("city"),
+  postcode: varchar("postcode"),
+  country: varchar("country").default("gb"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("contacts_partner_id_idx").on(table.partnerId),
+  index("contacts_email_idx").on(table.email),
+  index("contacts_next_follow_up_idx").on(table.nextFollowUp),
+]);
+
+// Opportunities management (renamed from leads)
+export const opportunities = pgTable("opportunities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  partnerId: varchar("partner_id").notNull().references(() => users.id, { onDelete: "cascade" }), // User who owns this opportunity
+  contactId: varchar("contact_id").references(() => contacts.id, { onDelete: "set null" }), // Link to contact (can be null for legacy data)
+  businessName: varchar("business_name").notNull(),
+  contactName: varchar("contact_name").notNull(),
+  contactEmail: varchar("contact_email"),
+  contactPhone: varchar("contact_phone"),
+  businessType: varchar("business_type"),
+  estimatedMonthlyVolume: varchar("estimated_monthly_volume"),
+  opportunitySource: varchar("opportunity_source"), // referral, cold_call, networking, etc.
+  status: varchar("status").notNull().default("uploaded"), // uploaded, contacted, interested, quoted, converted, not_interested
+  priority: varchar("priority").default("medium"), // low, medium, high
+  notes: text("notes"),
+  lastContact: timestamp("last_contact"),
+  nextFollowUp: timestamp("next_follow_up"),
+  tags: text("tags").array(), // Array of tags for categorization
+  estimatedValue: varchar("estimated_value"),
+  probabilityScore: integer("probability_score").default(50), // 0-100 percentage
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("opportunities_partner_id_idx").on(table.partnerId),
+  index("opportunities_contact_id_idx").on(table.contactId),
+  index("opportunities_status_idx").on(table.status),
+  index("opportunities_next_follow_up_idx").on(table.nextFollowUp),
+  index("opportunities_partner_status_idx").on(table.partnerId, table.status),
+]);
+
+// Keep legacy leads table for backward compatibility during migration
 export const leads = pgTable("leads", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   partnerId: varchar("partner_id").notNull(), // User who owns this lead
@@ -267,7 +351,45 @@ export const leads = pgTable("leads", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Lead interactions/activity log
+// Contact interactions/activity log
+export const contactInteractions = pgTable("contact_interactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contactId: varchar("contact_id").notNull().references(() => contacts.id, { onDelete: "cascade" }),
+  partnerId: varchar("partner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  interactionType: varchar("interaction_type").notNull(), // call, email, meeting, note, status_change
+  subject: varchar("subject"),
+  details: text("details"),
+  outcome: varchar("outcome"), // positive, neutral, negative, follow_up_required
+  nextAction: text("next_action"),
+  attachments: text("attachments").array(), // File paths or references
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("contact_interactions_contact_id_idx").on(table.contactId),
+  index("contact_interactions_partner_id_idx").on(table.partnerId),
+  index("contact_interactions_created_at_idx").on(table.createdAt),
+  index("contact_interactions_type_idx").on(table.interactionType),
+]);
+
+// Opportunity interactions/activity log
+export const opportunityInteractions = pgTable("opportunity_interactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  opportunityId: varchar("opportunity_id").notNull().references(() => opportunities.id, { onDelete: "cascade" }),
+  partnerId: varchar("partner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  interactionType: varchar("interaction_type").notNull(), // call, email, meeting, note, status_change
+  subject: varchar("subject"),
+  details: text("details"),
+  outcome: varchar("outcome"), // positive, neutral, negative, follow_up_required
+  nextAction: text("next_action"),
+  attachments: text("attachments").array(), // File paths or references
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("opportunity_interactions_opportunity_id_idx").on(table.opportunityId),
+  index("opportunity_interactions_partner_id_idx").on(table.partnerId),
+  index("opportunity_interactions_created_at_idx").on(table.createdAt),
+  index("opportunity_interactions_type_idx").on(table.interactionType),
+]);
+
+// Keep legacy lead interactions for backward compatibility
 export const leadInteractions = pgTable("lead_interactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   leadId: varchar("lead_id").notNull(),
@@ -280,6 +402,41 @@ export const leadInteractions = pgTable("lead_interactions", {
   attachments: text("attachments").array(), // File paths or references
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Email communications for 2-way sync with Outlook
+export const emailCommunications = pgTable("email_communications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contactId: varchar("contact_id").references(() => contacts.id, { onDelete: "set null" }), // Link to contact
+  opportunityId: varchar("opportunity_id").references(() => opportunities.id, { onDelete: "set null" }), // Link to opportunity
+  partnerId: varchar("partner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  // Outlook/Graph API fields
+  outlookMessageId: varchar("outlook_message_id").unique(), // Unique ID from Outlook
+  conversationId: varchar("conversation_id"), // Groups emails in same thread
+  direction: varchar("direction").notNull(), // inbound, outbound
+  subject: varchar("subject"),
+  fromEmail: varchar("from_email").notNull(),
+  toEmails: text("to_emails").array(), // Array of recipient emails
+  ccEmails: text("cc_emails").array(), // Array of CC emails
+  bccEmails: text("bcc_emails").array(), // Array of BCC emails
+  bodyPreview: text("body_preview"), // First few lines of content
+  bodyContent: text("body_content"), // Full email content
+  isRead: boolean("is_read").default(false),
+  hasAttachments: boolean("has_attachments").default(false),
+  attachmentInfo: jsonb("attachment_info"), // Metadata about attachments
+  outlookCreatedAt: timestamp("outlook_created_at"), // Original timestamp from Outlook
+  outlookUpdatedAt: timestamp("outlook_updated_at"), // Last modified in Outlook
+  syncedAt: timestamp("synced_at").defaultNow(), // When we synced this email
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("email_communications_partner_id_idx").on(table.partnerId),
+  index("email_communications_contact_id_idx").on(table.contactId),
+  index("email_communications_opportunity_id_idx").on(table.opportunityId),
+  index("email_communications_conversation_id_idx").on(table.conversationId),
+  index("email_communications_outlook_message_id_idx").on(table.outlookMessageId),
+  index("email_communications_created_at_idx").on(table.createdAt),
+  // Ensure at least one of contactId or opportunityId is not null
+  check("email_has_link", sql`(contact_id IS NOT NULL OR opportunity_id IS NOT NULL)`),
+]);
 
 // Dojo partner information
 export const partners = pgTable("partners", {
@@ -316,23 +473,36 @@ export const partnerReviews = pgTable("partner_reviews", {
 // Notifications for user activity
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   type: varchar("type").notNull(), // quote_ready, status_update, commission_paid, team_invite, system_message
   title: varchar("title").notNull(),
   message: text("message").notNull(),
   read: boolean("read").default(false),
-  referralId: varchar("referral_id"), // Optional - for referral-related notifications
-  leadId: varchar("lead_id"), // Optional - for lead-related notifications
+  referralId: varchar("referral_id").references(() => referrals.id, { onDelete: "set null" }), // Optional - for referral-related notifications
+  leadId: varchar("lead_id").references(() => leads.id, { onDelete: "set null" }), // Optional - for lead-related notifications
+  contactId: varchar("contact_id").references(() => contacts.id, { onDelete: "set null" }), // Optional - for contact-related notifications
+  opportunityId: varchar("opportunity_id").references(() => opportunities.id, { onDelete: "set null" }), // Optional - for opportunity-related notifications
   businessName: varchar("business_name"), // For context in notifications
   metadata: jsonb("metadata"), // Additional data like commission amount, etc.
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("notifications_user_id_idx").on(table.userId),
+  index("notifications_type_idx").on(table.type),
+  index("notifications_read_idx").on(table.read),
+  index("notifications_created_at_idx").on(table.createdAt),
+  index("notifications_user_read_idx").on(table.userId, table.read),
+]);
 
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   referrals: many(referrals),
   leads: many(leads),
+  opportunities: many(opportunities),
+  contacts: many(contacts),
   leadInteractions: many(leadInteractions),
+  contactInteractions: many(contactInteractions),
+  opportunityInteractions: many(opportunityInteractions),
+  emailCommunications: many(emailCommunications),
   notifications: many(notifications),
   team: one(teams, {
     fields: [users.teamId],
@@ -432,6 +602,66 @@ export const businessDetailsRelations = relations(businessDetails, ({ one }) => 
   }),
 }));
 
+export const contactsRelations = relations(contacts, ({ one, many }) => ({
+  partner: one(users, {
+    fields: [contacts.partnerId],
+    references: [users.id],
+  }),
+  interactions: many(contactInteractions),
+  emailCommunications: many(emailCommunications),
+  opportunities: many(opportunities),
+}));
+
+export const opportunitiesRelations = relations(opportunities, ({ one, many }) => ({
+  partner: one(users, {
+    fields: [opportunities.partnerId],
+    references: [users.id],
+  }),
+  contact: one(contacts, {
+    fields: [opportunities.contactId],
+    references: [contacts.id],
+  }),
+  interactions: many(opportunityInteractions),
+  emailCommunications: many(emailCommunications),
+}));
+
+export const contactInteractionsRelations = relations(contactInteractions, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [contactInteractions.contactId],
+    references: [contacts.id],
+  }),
+  partner: one(users, {
+    fields: [contactInteractions.partnerId],
+    references: [users.id],
+  }),
+}));
+
+export const opportunityInteractionsRelations = relations(opportunityInteractions, ({ one }) => ({
+  opportunity: one(opportunities, {
+    fields: [opportunityInteractions.opportunityId],
+    references: [opportunities.id],
+  }),
+  partner: one(users, {
+    fields: [opportunityInteractions.partnerId],
+    references: [users.id],
+  }),
+}));
+
+export const emailCommunicationsRelations = relations(emailCommunications, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [emailCommunications.contactId],
+    references: [contacts.id],
+  }),
+  opportunity: one(opportunities, {
+    fields: [emailCommunications.opportunityId],
+    references: [opportunities.id],
+  }),
+  partner: one(users, {
+    fields: [emailCommunications.partnerId],
+    references: [users.id],
+  }),
+}));
+
 export const leadsRelations = relations(leads, ({ one, many }) => ({
   partner: one(users, {
     fields: [leads.partnerId],
@@ -474,6 +704,14 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   lead: one(leads, {
     fields: [notifications.leadId],
     references: [leads.id],
+  }),
+  contact: one(contacts, {
+    fields: [notifications.contactId],
+    references: [contacts.id],
+  }),
+  opportunity: one(opportunities, {
+    fields: [notifications.opportunityId],
+    references: [opportunities.id],
   }),
 }));
 
@@ -523,6 +761,34 @@ export const insertTeamInvitationSchema = createInsertSchema(teamInvitations).om
   createdAt: true,
 });
 
+export const insertContactSchema = createInsertSchema(contacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOpportunitySchema = createInsertSchema(opportunities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContactInteractionSchema = createInsertSchema(contactInteractions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOpportunityInteractionSchema = createInsertSchema(opportunityInteractions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEmailCommunicationSchema = createInsertSchema(emailCommunications).omit({
+  id: true,
+  syncedAt: true,
+  createdAt: true,
+});
+
 export const insertLeadSchema = createInsertSchema(leads).omit({
   id: true,
   createdAt: true,
@@ -553,6 +819,18 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type Contact = typeof contacts.$inferSelect;
+export type InsertContact = z.infer<typeof insertContactSchema>;
+export type Opportunity = typeof opportunities.$inferSelect;
+export type InsertOpportunity = z.infer<typeof insertOpportunitySchema>;
+export type ContactInteraction = typeof contactInteractions.$inferSelect;
+export type InsertContactInteraction = z.infer<typeof insertContactInteractionSchema>;
+export type OpportunityInteraction = typeof opportunityInteractions.$inferSelect;
+export type InsertOpportunityInteraction = z.infer<typeof insertOpportunityInteractionSchema>;
+export type EmailCommunication = typeof emailCommunications.$inferSelect;
+export type InsertEmailCommunication = z.infer<typeof insertEmailCommunicationSchema>;
+export type Lead = typeof leads.$inferSelect;
+export type InsertLead = z.infer<typeof insertLeadSchema>;
 
 // Audit trail table for tracking important actions
 export const audits = pgTable("audits", {
@@ -634,8 +912,6 @@ export type TeamInvitation = typeof teamInvitations.$inferSelect;
 export type PartnerHierarchy = typeof partnerHierarchy.$inferSelect;
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type InsertTeamInvitation = z.infer<typeof insertTeamInvitationSchema>;
-export type Lead = typeof leads.$inferSelect;
-export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type LeadInteraction = typeof leadInteractions.$inferSelect;
 export type InsertLeadInteraction = z.infer<typeof insertLeadInteractionSchema>;
 export type Partner = typeof partners.$inferSelect;
