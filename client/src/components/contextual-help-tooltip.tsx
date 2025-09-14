@@ -1,5 +1,5 @@
 import { useState, Suspense, lazy } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Temporarily disabled due to React hook violation
 import { HelpCircleIcon, InfoIcon, CircleHelpIcon } from "lucide-react";
 import { StaticTooltipFallback, StaticStatsHelpTooltip, StaticFeatureHelpTooltip, StaticActionButtonFallback } from "@/components/static-tooltip-fallback";
 import { AnimatedTooltipLoadingSkeleton } from "@/components/loading-states";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Temporarily disabled due to React hook violation
 import { HelpCircleIcon, InfoIcon, CircleHelpIcon } from "lucide-react";
 
 interface StaticTooltipProps {
