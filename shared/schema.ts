@@ -304,19 +304,36 @@ export const opportunities = pgTable("opportunities", {
   partnerId: varchar("partner_id").notNull().references(() => users.id, { onDelete: "cascade" }), // User who owns this opportunity
   contactId: varchar("contact_id").references(() => contacts.id, { onDelete: "set null" }), // Link to contact (can be null for legacy data)
   businessName: varchar("business_name").notNull(),
-  contactName: varchar("contact_name").notNull(),
+  // Contact information (denormalized for flexibility)
+  contactFirstName: varchar("contact_first_name"),
+  contactLastName: varchar("contact_last_name"),
+  contactName: varchar("contact_name"), // Legacy field, derived from first+last or entered directly
   contactEmail: varchar("contact_email"),
   contactPhone: varchar("contact_phone"),
   businessType: varchar("business_type"),
-  estimatedMonthlyVolume: varchar("estimated_monthly_volume"),
+  // Volume and value fields
+  estimatedMonthlyVolume: varchar("estimated_monthly_volume"), // Legacy field
+  currentMonthlyVolume: varchar("current_monthly_volume"), // Current processing volume
+  estimatedValue: varchar("estimated_value"),
+  // Pipeline management
   opportunitySource: varchar("opportunity_source"), // referral, cold_call, networking, etc.
-  status: varchar("status").notNull().default("uploaded"), // uploaded, contacted, interested, quoted, converted, not_interested
-  priority: varchar("priority").default("medium"), // low, medium, high
+  status: varchar("status").notNull().default("prospect"), // prospect, qualified, proposal, negotiation, closed_won, closed_lost, on_hold
+  stage: varchar("stage").notNull().default("initial_contact"), // initial_contact, qualified_lead, needs_analysis, proposal_development, etc.
+  priority: varchar("priority").default("medium"), // low, medium, high, urgent
+  assignedTo: varchar("assigned_to"), // Partner or team member assigned
+  expectedCloseDate: timestamp("expected_close_date"),
+  // Product and business info
+  productInterest: text("product_interest").array(), // Array of interested products
+  decisionMakers: text("decision_makers"), // Key decision makers and roles
+  painPoints: text("pain_points"), // Business challenges and pain points
+  competitorInfo: text("competitor_info"), // Current providers, competitor analysis
+  // Notes and actions
   notes: text("notes"),
+  nextSteps: text("next_steps"), // Planned next actions
+  // Legacy fields (keep for backwards compatibility)
   lastContact: timestamp("last_contact"),
   nextFollowUp: timestamp("next_follow_up"),
   tags: text("tags").array(), // Array of tags for categorization
-  estimatedValue: varchar("estimated_value"),
   probabilityScore: integer("probability_score").default(50), // 0-100 percentage
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -324,6 +341,10 @@ export const opportunities = pgTable("opportunities", {
   index("opportunities_partner_id_idx").on(table.partnerId),
   index("opportunities_contact_id_idx").on(table.contactId),
   index("opportunities_status_idx").on(table.status),
+  index("opportunities_stage_idx").on(table.stage),
+  index("opportunities_priority_idx").on(table.priority),
+  index("opportunities_assigned_to_idx").on(table.assignedTo),
+  index("opportunities_expected_close_date_idx").on(table.expectedCloseDate),
   index("opportunities_next_follow_up_idx").on(table.nextFollowUp),
   index("opportunities_partner_status_idx").on(table.partnerId, table.status),
 ]);

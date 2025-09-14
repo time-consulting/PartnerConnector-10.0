@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertReferralSchema } from "@shared/schema";
+import { insertReferralSchema, insertContactSchema, insertOpportunitySchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
 import multer from "multer";
@@ -1230,6 +1230,317 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error tracking analytics:", error);
       res.status(500).json({ success: false, message: "Failed to track analytics" });
+    }
+  });
+
+  // ============ CONTACTS ENDPOINTS ============
+  
+  // Get user's contacts
+  app.get('/api/contacts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contacts = await storage.getContactsByUserId(userId);
+      res.json(contacts);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      res.status(500).json({ message: "Failed to fetch contacts" });
+    }
+  });
+
+  // Create contact
+  app.post('/api/contacts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate request body with Zod schema
+      const validationResult = insertContactSchema.omit({ partnerId: true }).safeParse(req.body);
+      if (!validationResult.success) {
+        const errorMessage = fromZodError(validationResult.error);
+        return res.status(400).json({ 
+          message: "Invalid contact data", 
+          details: errorMessage.message 
+        });
+      }
+      
+      const contactData = {
+        ...validationResult.data,
+        partnerId: userId,
+      };
+      
+      const contact = await storage.createContact(contactData);
+      res.json(contact);
+    } catch (error) {
+      console.error("Error creating contact:", error);
+      res.status(500).json({ message: "Failed to create contact" });
+    }
+  });
+
+  // Get contact by ID
+  app.get('/api/contacts/:contactId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contactId } = req.params;
+      const userId = req.user.claims.sub;
+      const contact = await storage.getContactById(contactId, userId);
+      
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+      
+      res.json(contact);
+    } catch (error) {
+      console.error("Error fetching contact:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to fetch contact" });
+    }
+  });
+
+  // Update contact
+  app.put('/api/contacts/:contactId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contactId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Validate request body with Zod schema (partial for updates)
+      const validationResult = insertContactSchema.omit({ partnerId: true }).partial().safeParse(req.body);
+      if (!validationResult.success) {
+        const errorMessage = fromZodError(validationResult.error);
+        return res.status(400).json({ 
+          message: "Invalid contact data", 
+          details: errorMessage.message 
+        });
+      }
+      
+      const contact = await storage.updateContact(contactId, userId, validationResult.data);
+      res.json(contact);
+    } catch (error) {
+      console.error("Error updating contact:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to update contact" });
+    }
+  });
+
+  // Delete contact
+  app.delete('/api/contacts/:contactId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contactId } = req.params;
+      const userId = req.user.claims.sub;
+      await storage.deleteContact(contactId, userId);
+      res.json({ success: true, message: "Contact deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to delete contact" });
+    }
+  });
+
+  // Get contact interactions
+  app.get('/api/contacts/:contactId/interactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contactId } = req.params;
+      const userId = req.user.claims.sub;
+      const interactions = await storage.getContactInteractions(contactId, userId);
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error fetching contact interactions:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to fetch contact interactions" });
+    }
+  });
+
+  // Add contact interaction
+  app.post('/api/contacts/:contactId/interactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contactId } = req.params;
+      const userId = req.user.claims.sub;
+      const interaction = await storage.addContactInteraction(contactId, userId, req.body);
+      res.json(interaction);
+    } catch (error) {
+      console.error("Error adding contact interaction:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to add contact interaction" });
+    }
+  });
+
+  // ============ OPPORTUNITIES ENDPOINTS ============
+  
+  // Get user's opportunities
+  app.get('/api/opportunities', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const opportunities = await storage.getOpportunitiesByUserId(userId);
+      res.json(opportunities);
+    } catch (error) {
+      console.error("Error fetching opportunities:", error);
+      res.status(500).json({ message: "Failed to fetch opportunities" });
+    }
+  });
+
+  // Create opportunity
+  app.post('/api/opportunities', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate request body with Zod schema
+      const validationResult = insertOpportunitySchema.omit({ partnerId: true }).safeParse(req.body);
+      if (!validationResult.success) {
+        const errorMessage = fromZodError(validationResult.error);
+        return res.status(400).json({ 
+          message: "Invalid opportunity data", 
+          details: errorMessage.message 
+        });
+      }
+      
+      const opportunityData = {
+        ...validationResult.data,
+        partnerId: userId,
+      };
+      
+      const opportunity = await storage.createOpportunity(opportunityData);
+      res.json(opportunity);
+    } catch (error) {
+      console.error("Error creating opportunity:", error);
+      res.status(500).json({ message: "Failed to create opportunity" });
+    }
+  });
+
+  // Get opportunity by ID
+  app.get('/api/opportunities/:opportunityId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { opportunityId } = req.params;
+      const userId = req.user.claims.sub;
+      const opportunity = await storage.getOpportunityById(opportunityId, userId);
+      
+      if (!opportunity) {
+        return res.status(404).json({ message: "Opportunity not found" });
+      }
+      
+      res.json(opportunity);
+    } catch (error) {
+      console.error("Error fetching opportunity:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to fetch opportunity" });
+    }
+  });
+
+  // Update opportunity
+  app.put('/api/opportunities/:opportunityId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { opportunityId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Validate request body with Zod schema (partial for updates)
+      const validationResult = insertOpportunitySchema.omit({ partnerId: true }).partial().safeParse(req.body);
+      if (!validationResult.success) {
+        const errorMessage = fromZodError(validationResult.error);
+        return res.status(400).json({ 
+          message: "Invalid opportunity data", 
+          details: errorMessage.message 
+        });
+      }
+      
+      const opportunity = await storage.updateOpportunity(opportunityId, userId, validationResult.data);
+      res.json(opportunity);
+    } catch (error) {
+      console.error("Error updating opportunity:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to update opportunity" });
+    }
+  });
+
+  // Delete opportunity
+  app.delete('/api/opportunities/:opportunityId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { opportunityId } = req.params;
+      const userId = req.user.claims.sub;
+      await storage.deleteOpportunity(opportunityId, userId);
+      res.json({ success: true, message: "Opportunity deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting opportunity:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to delete opportunity" });
+    }
+  });
+
+  // Get opportunity interactions
+  app.get('/api/opportunities/:opportunityId/interactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { opportunityId } = req.params;
+      const userId = req.user.claims.sub;
+      const interactions = await storage.getOpportunityInteractions(opportunityId, userId);
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error fetching opportunity interactions:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to fetch opportunity interactions" });
+    }
+  });
+
+  // Add opportunity interaction
+  app.post('/api/opportunities/:opportunityId/interactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { opportunityId } = req.params;
+      const userId = req.user.claims.sub;
+      const interaction = await storage.addOpportunityInteraction(opportunityId, userId, req.body);
+      res.json(interaction);
+    } catch (error) {
+      console.error("Error adding opportunity interaction:", error);
+      if (error instanceof Error && error.message.includes('access denied')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.status(500).json({ message: "Failed to add opportunity interaction" });
+    }
+  });
+
+  // Convert contact to opportunity
+  app.post('/api/contacts/:contactId/convert-to-opportunity', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { contactId } = req.params;
+      const { opportunityData } = req.body;
+      
+      // Get the contact first (with user ownership check)
+      const contact = await storage.getContactById(contactId, userId);
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+      
+      // Create opportunity with contact data
+      const opportunity = await storage.createOpportunity({
+        ...opportunityData,
+        partnerId: userId,
+        contactId: contactId,
+        businessName: opportunityData.businessName || contact.company || `${contact.firstName} ${contact.lastName}`,
+        contactFirstName: contact.firstName,
+        contactLastName: contact.lastName,
+        contactEmail: contact.email,
+        contactPhone: contact.phone,
+        estimatedValue: opportunityData.estimatedValue || contact.estimatedMonthlyVolume || '0',
+        status: opportunityData.status || 'prospect',
+        stage: opportunityData.stage || 'initial_contact',
+      });
+      
+      res.json(opportunity);
+    } catch (error) {
+      console.error("Error converting contact to opportunity:", error);
+      res.status(500).json({ message: "Failed to convert contact to opportunity" });
     }
   });
 

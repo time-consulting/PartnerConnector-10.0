@@ -8,7 +8,9 @@ import {
   GraduationCap,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Contact,
+  Target
 } from "lucide-react";
 
 export default function SideNavigation() {
@@ -31,10 +33,16 @@ export default function SideNavigation() {
       testId: "sidenav-dashboard"
     },
     {
-      icon: Users,
-      label: "Leads", 
-      path: "/leads",
-      testId: "sidenav-leads"
+      icon: Contact,
+      label: "Contacts", 
+      path: "/contacts",
+      testId: "sidenav-contacts"
+    },
+    {
+      icon: Target,
+      label: "Opportunities", 
+      path: "/opportunities",
+      testId: "sidenav-opportunities"
     },
     {
       icon: Plus,

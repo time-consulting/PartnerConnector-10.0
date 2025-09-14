@@ -6,6 +6,11 @@ import {
   commissionPayments,
   leads,
   leadInteractions,
+  contacts,
+  contactInteractions,
+  opportunities,
+  opportunityInteractions,
+  emailCommunications,
   partners,
   partnerReviews,
   notifications,
@@ -26,6 +31,16 @@ import {
   type Referral,
   type BusinessType,
   type BillUpload,
+  type Contact,
+  type InsertContact,
+  type ContactInteraction,
+  type InsertContactInteraction,
+  type Opportunity,
+  type InsertOpportunity,
+  type OpportunityInteraction,
+  type InsertOpportunityInteraction,
+  type EmailCommunication,
+  type InsertEmailCommunication,
   type Notification,
   type InsertNotification,
   type InsertRate,
@@ -80,7 +95,31 @@ export interface IStorage {
   updateUser(userId: string, data: Partial<User>): Promise<User>;
   updateReferral(referralId: string, data: Partial<Referral>): Promise<Referral>;
   
-  // Leads operations
+  // Contacts operations
+  createContact(contact: InsertContact): Promise<Contact>;
+  getContactsByUserId(userId: string): Promise<Contact[]>;
+  getContactById(contactId: string, userId: string): Promise<Contact | undefined>;
+  updateContact(contactId: string, userId: string, updates: Partial<InsertContact>): Promise<Contact>;
+  deleteContact(contactId: string, userId: string): Promise<void>;
+  addContactInteraction(contactId: string, userId: string, interaction: InsertContactInteraction): Promise<ContactInteraction>;
+  getContactInteractions(contactId: string, userId: string): Promise<ContactInteraction[]>;
+
+  // Opportunities operations
+  createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity>;
+  getOpportunitiesByUserId(userId: string): Promise<Opportunity[]>;
+  getOpportunityById(opportunityId: string, userId: string): Promise<Opportunity | undefined>;
+  updateOpportunity(opportunityId: string, userId: string, updates: Partial<InsertOpportunity>): Promise<Opportunity>;
+  deleteOpportunity(opportunityId: string, userId: string): Promise<void>;
+  addOpportunityInteraction(opportunityId: string, userId: string, interaction: InsertOpportunityInteraction): Promise<OpportunityInteraction>;
+  getOpportunityInteractions(opportunityId: string, userId: string): Promise<OpportunityInteraction[]>;
+
+  // Email communications operations
+  createEmailCommunication(email: InsertEmailCommunication): Promise<EmailCommunication>;
+  getEmailCommunicationsByContact(contactId: string): Promise<EmailCommunication[]>;
+  getEmailCommunicationsByOpportunity(opportunityId: string): Promise<EmailCommunication[]>;
+  syncOutlookEmails(partnerId: string): Promise<void>;
+
+  // Leads operations (legacy)
   createLead(lead: any): Promise<any>;
   createLeadsBulk(leads: any[]): Promise<{ count: number }>;
   getLeadsByUserId(userId: string): Promise<any[]>;
@@ -213,6 +252,193 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return interaction;
+  }
+
+  // Contacts operations
+  async createContact(contactData: InsertContact): Promise<Contact> {
+    const [contact] = await db
+      .insert(contacts)
+      .values(contactData)
+      .returning();
+    return contact;
+  }
+
+  async getContactsByUserId(userId: string): Promise<Contact[]> {
+    return await db
+      .select()
+      .from(contacts)
+      .where(eq(contacts.partnerId, userId))
+      .orderBy(desc(contacts.createdAt));
+  }
+
+  async getContactById(contactId: string, userId: string): Promise<Contact | undefined> {
+    const [contact] = await db
+      .select()
+      .from(contacts)
+      .where(and(eq(contacts.id, contactId), eq(contacts.partnerId, userId)));
+    return contact;
+  }
+
+  async updateContact(contactId: string, userId: string, updates: Partial<InsertContact>): Promise<Contact> {
+    const [contact] = await db
+      .update(contacts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(contacts.id, contactId), eq(contacts.partnerId, userId)))
+      .returning();
+    if (!contact) {
+      throw new Error('Contact not found or access denied');
+    }
+    return contact;
+  }
+
+  async deleteContact(contactId: string, userId: string): Promise<void> {
+    const result = await db
+      .delete(contacts)
+      .where(and(eq(contacts.id, contactId), eq(contacts.partnerId, userId)))
+      .returning({ id: contacts.id });
+    if (result.length === 0) {
+      throw new Error('Contact not found or access denied');
+    }
+  }
+
+  async addContactInteraction(contactId: string, userId: string, interactionData: InsertContactInteraction): Promise<ContactInteraction> {
+    // First verify the contact belongs to the user
+    const contact = await this.getContactById(contactId, userId);
+    if (!contact) {
+      throw new Error('Contact not found or access denied');
+    }
+    
+    const [interaction] = await db
+      .insert(contactInteractions)
+      .values({
+        contactId,
+        ...interactionData,
+      })
+      .returning();
+    return interaction;
+  }
+
+  async getContactInteractions(contactId: string, userId: string): Promise<ContactInteraction[]> {
+    // First verify the contact belongs to the user
+    const contact = await this.getContactById(contactId, userId);
+    if (!contact) {
+      throw new Error('Contact not found or access denied');
+    }
+    
+    return await db
+      .select()
+      .from(contactInteractions)
+      .where(eq(contactInteractions.contactId, contactId))
+      .orderBy(desc(contactInteractions.createdAt));
+  }
+
+  // Opportunities operations
+  async createOpportunity(opportunityData: InsertOpportunity): Promise<Opportunity> {
+    const [opportunity] = await db
+      .insert(opportunities)
+      .values(opportunityData)
+      .returning();
+    return opportunity;
+  }
+
+  async getOpportunitiesByUserId(userId: string): Promise<Opportunity[]> {
+    return await db
+      .select()
+      .from(opportunities)
+      .where(eq(opportunities.partnerId, userId))
+      .orderBy(desc(opportunities.createdAt));
+  }
+
+  async getOpportunityById(opportunityId: string, userId: string): Promise<Opportunity | undefined> {
+    const [opportunity] = await db
+      .select()
+      .from(opportunities)
+      .where(and(eq(opportunities.id, opportunityId), eq(opportunities.partnerId, userId)));
+    return opportunity;
+  }
+
+  async updateOpportunity(opportunityId: string, userId: string, updates: Partial<InsertOpportunity>): Promise<Opportunity> {
+    const [opportunity] = await db
+      .update(opportunities)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(opportunities.id, opportunityId), eq(opportunities.partnerId, userId)))
+      .returning();
+    if (!opportunity) {
+      throw new Error('Opportunity not found or access denied');
+    }
+    return opportunity;
+  }
+
+  async deleteOpportunity(opportunityId: string, userId: string): Promise<void> {
+    const result = await db
+      .delete(opportunities)
+      .where(and(eq(opportunities.id, opportunityId), eq(opportunities.partnerId, userId)))
+      .returning({ id: opportunities.id });
+    if (result.length === 0) {
+      throw new Error('Opportunity not found or access denied');
+    }
+  }
+
+  async addOpportunityInteraction(opportunityId: string, userId: string, interactionData: InsertOpportunityInteraction): Promise<OpportunityInteraction> {
+    // First verify the opportunity belongs to the user
+    const opportunity = await this.getOpportunityById(opportunityId, userId);
+    if (!opportunity) {
+      throw new Error('Opportunity not found or access denied');
+    }
+    
+    const [interaction] = await db
+      .insert(opportunityInteractions)
+      .values({
+        opportunityId,
+        ...interactionData,
+      })
+      .returning();
+    return interaction;
+  }
+
+  async getOpportunityInteractions(opportunityId: string, userId: string): Promise<OpportunityInteraction[]> {
+    // First verify the opportunity belongs to the user
+    const opportunity = await this.getOpportunityById(opportunityId, userId);
+    if (!opportunity) {
+      throw new Error('Opportunity not found or access denied');
+    }
+    
+    return await db
+      .select()
+      .from(opportunityInteractions)
+      .where(eq(opportunityInteractions.opportunityId, opportunityId))
+      .orderBy(desc(opportunityInteractions.createdAt));
+  }
+
+  // Email communications operations
+  async createEmailCommunication(emailData: InsertEmailCommunication): Promise<EmailCommunication> {
+    const [email] = await db
+      .insert(emailCommunications)
+      .values(emailData)
+      .returning();
+    return email;
+  }
+
+  async getEmailCommunicationsByContact(contactId: string): Promise<EmailCommunication[]> {
+    return await db
+      .select()
+      .from(emailCommunications)
+      .where(eq(emailCommunications.contactId, contactId))
+      .orderBy(desc(emailCommunications.outlookCreatedAt));
+  }
+
+  async getEmailCommunicationsByOpportunity(opportunityId: string): Promise<EmailCommunication[]> {
+    return await db
+      .select()
+      .from(emailCommunications)
+      .where(eq(emailCommunications.opportunityId, opportunityId))
+      .orderBy(desc(emailCommunications.outlookCreatedAt));
+  }
+
+  async syncOutlookEmails(partnerId: string): Promise<void> {
+    // TODO: Implement Outlook email sync using the integration
+    // This will be implemented when we integrate the email functionality
+    console.log('Outlook email sync not yet implemented for partner:', partnerId);
   }
 
   // Partner operations

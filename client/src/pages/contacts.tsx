@@ -1,0 +1,906 @@
+import { useState, Suspense } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Plus, Search, Filter, ArrowUpDown, Mail, Phone, Building, User, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import type { Contact } from "@shared/schema";
+import { insertContactSchema } from "@shared/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { z } from "zod";
+
+// Define form schema with proper validation
+const contactFormSchema = insertContactSchema.extend({
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
+  phone: z.string().optional(),
+});
+
+type ContactFormData = z.infer<typeof contactFormSchema>;
+
+const getInitialFormData = (contact?: Contact): ContactFormData => ({
+  partnerId: "", // Will be set by the backend from session
+  firstName: contact?.firstName || "",
+  lastName: contact?.lastName || "",
+  email: contact?.email || "",
+  phone: contact?.phone || "",
+  company: contact?.company || "",
+  jobTitle: contact?.jobTitle || "",
+  businessType: contact?.businessType || "",
+  contactSource: contact?.contactSource || "",
+  tags: contact?.tags || [],
+  notes: contact?.notes || "",
+  interestedProducts: contact?.interestedProducts || [],
+  estimatedMonthlyVolume: contact?.estimatedMonthlyVolume || "",
+  preferredContactMethod: contact?.preferredContactMethod || "email",
+  lastContact: contact?.lastContact || undefined,
+  nextFollowUp: contact?.nextFollowUp || undefined,
+  addressLine1: contact?.addressLine1 || "",
+  addressLine2: contact?.addressLine2 || "",
+  city: contact?.city || "",
+  postcode: contact?.postcode || "",
+  country: contact?.country || "gb"
+});
+
+const contactSources = [
+  "Referral",
+  "Networking",
+  "Cold Outreach", 
+  "Website",
+  "Social Media",
+  "Event",
+  "Partner",
+  "Other"
+];
+
+const businessTypes = [
+  "Retail",
+  "Restaurant",
+  "Professional Services",
+  "Healthcare",
+  "E-commerce",
+  "Manufacturing",
+  "Technology",
+  "Construction",
+  "Other"
+];
+
+const productCategories = [
+  "Card Machines",
+  "Business Funding",
+  "Utilities",
+  "Insurance",
+  "Banking",
+  "POS Systems"
+];
+
+const monthlyVolumeOptions = [
+  "£0 - £5,000",
+  "£5,000 - £25,000", 
+  "£25,000 - £100,000",
+  "£100,000 - £500,000",
+  "£500,000+"
+];
+
+function ContactForm({ 
+  contact, 
+  onClose, 
+  onSave 
+}: { 
+  contact?: Contact; 
+  onClose: () => void;
+  onSave: (data: ContactFormData) => void;
+}) {
+  const form = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: getInitialFormData(contact),
+  });
+
+  const onSubmit = (data: ContactFormData) => {
+    onSave(data);
+  };
+
+  const toggleProductInterest = (product: string) => {
+    const current = form.getValues("interestedProducts");
+    const updated = current.includes(product)
+      ? current.filter(p => p !== product)
+      : [...current, product];
+    form.setValue("interestedProducts", updated);
+  };
+
+  return (
+    <div className="max-h-[90vh] overflow-y-auto">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Tabs defaultValue="contact-info" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="contact-info" data-testid="tab-contact-info">Contact Info</TabsTrigger>
+            <TabsTrigger value="product-interest" data-testid="tab-product-interest">Product Interest</TabsTrigger>
+            <TabsTrigger value="notes" data-testid="tab-notes">Notes</TabsTrigger>
+            <TabsTrigger value="communication" data-testid="tab-communication">Communication</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="contact-info" className="space-y-4 mt-6">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        data-testid="input-first-name"
+                        placeholder="Enter first name"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        data-testid="input-last-name"
+                        placeholder="Enter last name"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="email"
+                        data-testid="input-email"
+                        placeholder="Enter email address"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        data-testid="input-phone"
+                        placeholder="Enter phone number"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        data-testid="input-company"
+                        placeholder="Enter company name"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="jobTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Job Title</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        data-testid="input-job-title"
+                        placeholder="Enter job title"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="businessType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-business-type">
+                          <SelectValue placeholder="Select business type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {businessTypes.map(type => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="contactSource"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contact Source</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-contact-source">
+                          <SelectValue placeholder="Select contact source" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {contactSources.map(source => (
+                          <SelectItem key={source} value={source}>{source}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="addressLine1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address Line 1</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      data-testid="input-address-line1"
+                      placeholder="Enter address line 1"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="addressLine2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address Line 2</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      data-testid="input-address-line2"
+                      placeholder="Enter address line 2"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        data-testid="input-city"
+                        placeholder="Enter city"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="postcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Postcode</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        data-testid="input-postcode"
+                        placeholder="Enter postcode"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Country</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-country">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="gb">United Kingdom</SelectItem>
+                        <SelectItem value="ie">Ireland</SelectItem>
+                        <SelectItem value="us">United States</SelectItem>
+                        <SelectItem value="ca">Canada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="product-interest" className="space-y-4 mt-6">
+            <div>
+              <Label>Product Interests</Label>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                {productCategories.map(product => {
+                  const currentValues = form.watch("interestedProducts") || [];
+                  return (
+                    <label key={product} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={currentValues.includes(product)}
+                        onChange={() => toggleProductInterest(product)}
+                        className="rounded border-gray-300"
+                        data-testid={`checkbox-product-${product.toLowerCase().replace(/\s+/g, '-')}`}
+                      />
+                      <span className="text-sm">{product}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="estimatedMonthlyVolume"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estimated Monthly Volume</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-monthly-volume">
+                        <SelectValue placeholder="Select monthly volume" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {monthlyVolumeOptions.map(volume => (
+                        <SelectItem key={volume} value={volume}>{volume}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="preferredContactMethod"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preferred Contact Method</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-contact-method">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="meeting">In-Person Meeting</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+
+          <TabsContent value="notes" className="space-y-4 mt-6">
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Add notes about this contact..."
+                      className="min-h-[200px] resize-y"
+                      data-testid="textarea-notes"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+
+          <TabsContent value="communication" className="space-y-4 mt-6">
+            <div className="text-center py-8 text-gray-500">
+              <Mail className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <p>Email communication history will appear here</p>
+              <p className="text-sm mt-2">Connect your email to see 2-way communication sync</p>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex justify-end space-x-3 pt-6 border-t">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            data-testid="button-cancel"
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit"
+            data-testid="button-save-contact"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting 
+              ? (contact ? "Updating..." : "Creating...") 
+              : (contact ? "Update Contact" : "Create Contact")
+            }
+          </Button>
+        </div>
+        </form>
+      </Form>
+    </div>
+  );
+}
+
+export default function ContactsPage() {
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [filterBy, setFilterBy] = useState<string>("all");
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // Query for contacts
+  const { data: contacts = [], isLoading } = useQuery({
+    queryKey: ['/api/contacts'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/contacts");
+      if (!response.ok) {
+        throw new Error('Failed to fetch contacts');
+      }
+      return response.json();
+    },
+  });
+
+  const filteredAndSortedContacts = contacts
+    .filter((contact: Contact) => {
+      const matchesSearch = `${contact.firstName} ${contact.lastName} ${contact.email} ${contact.company}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      
+      if (filterBy === "all") return matchesSearch;
+      // Add more filter logic here
+      return matchesSearch;
+    })
+    .sort((a: Contact, b: Contact) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case "name":
+          aValue = `${a.firstName} ${a.lastName}`;
+          bValue = `${b.firstName} ${b.lastName}`;
+          break;
+        case "company":
+          aValue = a.company || "";
+          bValue = b.company || "";
+          break;
+        case "createdAt":
+          aValue = new Date(a.createdAt);
+          bValue = new Date(b.createdAt);
+          break;
+        default:
+          aValue = a.firstName;
+          bValue = b.firstName;
+      }
+      
+      if (sortOrder === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+  // Create contact mutation
+  const createContactMutation = useMutation({
+    mutationFn: async (data: ContactFormData) => {
+      const response = await apiRequest("POST", "/api/contacts", data);
+      if (!response.ok) {
+        throw new Error('Failed to create contact');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Contact created successfully",
+      });
+      setIsFormOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create contact",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update contact mutation
+  const updateContactMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: ContactFormData }) => {
+      const response = await apiRequest("PUT", `/api/contacts/${id}`, data);
+      if (!response.ok) {
+        throw new Error('Failed to update contact');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success", 
+        description: "Contact updated successfully",
+      });
+      setSelectedContact(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update contact",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete contact mutation
+  const deleteContactMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/contacts/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to delete contact');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Contact deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete contact",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateContact = (data: ContactFormData) => {
+    createContactMutation.mutate(data);
+  };
+
+  const handleUpdateContact = (data: ContactFormData) => {
+    if (selectedContact?.id) {
+      updateContactMutation.mutate({ id: selectedContact.id, data });
+    }
+  };
+
+  const handleDeleteContact = (id: string) => {
+    if (confirm("Are you sure you want to delete this contact? This action cannot be undone.")) {
+      deleteContactMutation.mutate(id);
+    }
+  };
+
+  const handleConvertToOpportunity = (contact: Contact) => {
+    // TODO: Navigate to opportunity creation with contact pre-filled
+    console.log("Converting contact to opportunity:", contact);
+    toast({
+      title: "Success",
+      description: "Contact converted to opportunity",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading contacts...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white" data-testid="page-title">
+                Contacts
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Manage your business contacts and relationships
+              </p>
+            </div>
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  data-testid="button-add-contact"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Contact
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Create New Contact</DialogTitle>
+                </DialogHeader>
+                <ContactForm 
+                  onClose={() => setIsFormOpen(false)}
+                  onSave={handleCreateContact}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search contacts by name, email, or company..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                data-testid="input-search-contacts"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40" data-testid="select-sort-by">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Sort by Name</SelectItem>
+                  <SelectItem value="company">Sort by Company</SelectItem>
+                  <SelectItem value="createdAt">Sort by Date</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                data-testid="button-sort-order"
+              >
+                <ArrowUpDown className="w-4 h-4" />
+              </Button>
+              <Select value={filterBy} onValueChange={setFilterBy}>
+                <SelectTrigger className="w-40" data-testid="select-filter-by">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Contacts</SelectItem>
+                  <SelectItem value="recent">Recent</SelectItem>
+                  <SelectItem value="prospects">Prospects</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Contacts List */}
+        <div className="grid gap-4">
+          {filteredAndSortedContacts.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <User className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  No contacts found
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Get started by creating your first contact
+                </p>
+                <Button 
+                  onClick={() => setIsFormOpen(true)}
+                  data-testid="button-create-first-contact"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Contact
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredAndSortedContacts.map((contact: Contact) => (
+              <Card 
+                key={contact.id} 
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                data-testid={`contact-card-${contact.id}`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        {contact.firstName.charAt(0)}{contact.lastName.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {contact.firstName} {contact.lastName}
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                          {contact.company && (
+                            <div className="flex items-center">
+                              <Building className="w-3 h-3 mr-1" />
+                              {contact.company}
+                            </div>
+                          )}
+                          {contact.email && (
+                            <div className="flex items-center">
+                              <Mail className="w-3 h-3 mr-1" />
+                              {contact.email}
+                            </div>
+                          )}
+                          {contact.phone && (
+                            <div className="flex items-center">
+                              <Phone className="w-3 h-3 mr-1" />
+                              {contact.phone}
+                            </div>
+                          )}
+                        </div>
+                        {contact.interestedProducts && contact.interestedProducts.length > 0 && (
+                          <div className="flex gap-1 mt-2">
+                            {contact.interestedProducts.slice(0, 3).map(product => (
+                              <Badge key={product} variant="secondary" className="text-xs">
+                                {product}
+                              </Badge>
+                            ))}
+                            {contact.interestedProducts.length > 3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{contact.interestedProducts.length - 3} more
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConvertToOpportunity(contact)}
+                        data-testid={`button-convert-${contact.id}`}
+                      >
+                        Convert to Opportunity
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" data-testid={`button-menu-${contact.id}`}>
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem 
+                            onClick={() => setSelectedContact(contact)}
+                            data-testid={`menu-edit-${contact.id}`}
+                          >
+                            <Edit3 className="w-4 h-4 mr-2" />
+                            Edit Contact
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteContact(contact.id)}
+                            data-testid={`menu-delete-${contact.id}`}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Contact
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Edit Contact Dialog */}
+        <Dialog 
+          open={!!selectedContact} 
+          onOpenChange={(open) => !open && setSelectedContact(null)}
+        >
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>
+                Edit Contact: {selectedContact?.firstName} {selectedContact?.lastName}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedContact && (
+              <ContactForm 
+                contact={selectedContact}
+                onClose={() => setSelectedContact(null)}
+                onSave={handleUpdateContact}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}

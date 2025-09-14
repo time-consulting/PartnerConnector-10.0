@@ -16,7 +16,8 @@ const AdminDiagnostics = lazy(() => import("@/pages/admin-diagnostics"));
 const TrackReferrals = lazy(() => import("@/pages/track-referrals"));
 const TeamManagement = lazy(() => import("@/pages/team-management"));
 const Training = lazy(() => import("@/pages/training"));
-const Leads = lazy(() => import("@/pages/leads"));
+const Opportunities = lazy(() => import("@/pages/opportunities"));
+const Contacts = lazy(() => import("@/pages/contacts"));
 const PartnerOnboarding = lazy(() => import("@/pages/partner-onboarding"));
 const CommissionStructure = lazy(() => import("@/pages/commission-structure"));
 const LeadTracking = lazy(() => import("@/pages/lead-tracking"));
@@ -104,7 +105,8 @@ function Router() {
       <Route path="/dashboard" component={() => <PrivateRoute><Dashboard /></PrivateRoute>} />
       
       {/* Protected routes - always register but guard with PrivateRoute */}
-      <Route path="/leads" component={() => <PrivateRoute><Leads /></PrivateRoute>} />
+      <Route path="/opportunities" component={() => <PrivateRoute><Opportunities /></PrivateRoute>} />
+      <Route path="/contacts" component={() => <PrivateRoute><Contacts /></PrivateRoute>} />
       <Route path="/submit-referral" component={() => <PrivateRoute><SubmitReferral /></PrivateRoute>} />
       <Route path="/training" component={() => <PrivateRoute><Training /></PrivateRoute>} />
       <Route path="/upload-bills" component={() => <PrivateRoute><UploadBills /></PrivateRoute>} />
