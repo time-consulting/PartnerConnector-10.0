@@ -45,7 +45,7 @@ import OnboardingWizard from "@/components/onboarding-wizard";
 import TrainingModules from "@/components/training-modules";
 import KnowledgeBase from "@/components/knowledge-base";
 import DownloadableResources from "@/components/downloadable-resources";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/toast-noop";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Achievement {

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/toast-noop";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Contact } from "@shared/schema";
 import { insertContactSchema, insertOpportunitySchema } from "@shared/schema";
@@ -739,7 +739,7 @@ export default function ContactsPage() {
         priority: "medium",
         source: "contact_conversion",
         notes: `Converted from contact: ${contact.notes || "No notes"}`,
-        estimatedValue: contact.estimatedMonthlyVolume ? parseEstimatedValue(contact.estimatedMonthlyVolume) : undefined,
+        estimatedValue: contact.estimatedMonthlyVolume ? parseEstimatedValue(contact.estimatedMonthlyVolume).toString() : "",
         expectedCloseDate: undefined
       };
 

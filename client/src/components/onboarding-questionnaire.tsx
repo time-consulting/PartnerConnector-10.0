@@ -17,7 +17,7 @@ import {
   ArrowLeftIcon,
   StarIcon
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/toast-noop";
 
 interface OnboardingData {
   // Personal Information

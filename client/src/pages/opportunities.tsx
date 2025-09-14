@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+// import { useToast } from "@/hooks/use-toast"; // Temporarily disabled due to React hook violations
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Opportunity } from "@shared/schema";
 
@@ -493,7 +493,7 @@ function OpportunityForm({
 }
 
 export default function OpportunitiesPage() {
-  const { toast } = useToast();
+  // const { toast } = useToast(); // Temporarily disabled due to React hook violations
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<string>("business");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -524,19 +524,12 @@ export default function OpportunitiesPage() {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Opportunity created successfully",
-      });
+      console.log("Opportunity created successfully");
       setIsFormOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create opportunity",
-        variant: "destructive",
-      });
+      console.error("Failed to create opportunity:", error.message || error);
     },
   });
 
@@ -550,19 +543,12 @@ export default function OpportunitiesPage() {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Success", 
-        description: "Opportunity updated successfully",
-      });
+      console.log("Opportunity updated successfully");
       setSelectedOpportunity(null);
       queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update opportunity",
-        variant: "destructive",
-      });
+      console.error("Failed to update opportunity:", error.message || error);
     },
   });
 
@@ -579,11 +565,7 @@ export default function OpportunitiesPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to move opportunity",
-        variant: "destructive",
-      });
+      console.error("Failed to move opportunity:", error.message || error);
     },
   });
 

@@ -2,7 +2,6 @@ import { Switch, Route, useLocation } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -127,10 +126,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Suspense fallback={<LoadingFallback />}>
-        <Router />
-      </Suspense>
+      <TooltipProvider>
+        <Suspense fallback={<LoadingFallback />}>
+          <Router />
+        </Suspense>
+        {/* <Toaster /> - Temporarily disabled due to React hook violation */}
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

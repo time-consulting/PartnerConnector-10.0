@@ -792,6 +792,21 @@ export const insertOpportunitySchema = createInsertSchema(opportunities).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  // Handle empty string dates by transforming to null
+  expectedCloseDate: z.union([
+    z.string().transform((val) => val === "" ? null : new Date(val)),
+    z.date(),
+    z.null()
+  ]).optional(),
+  // Handle number values for estimatedValue by converting to string
+  estimatedValue: z.union([
+    z.string(),
+    z.number().transform((val) => val.toString())
+  ]).optional(),
+  // Handle array fields that might be undefined
+  productInterest: z.array(z.string()).default([]),
+  tags: z.array(z.string()).default([]),
 });
 
 export const insertContactInteractionSchema = createInsertSchema(contactInteractions).omit({

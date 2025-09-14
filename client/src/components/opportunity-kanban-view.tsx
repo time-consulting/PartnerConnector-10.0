@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
+// import { useToast } from "@/hooks/use-toast"; // Temporarily disabled due to React hook violations
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +88,7 @@ const getPriorityColor = (priority: string) => {
 
 // Draggable Opportunity Card Component
 function OpportunityCard({ opportunity, onEditDetails }: { opportunity: Opportunity; onEditDetails: (opportunity: Opportunity) => void }) {
-  const { toast } = useToast();
+  // const { toast } = useToast(); // Temporarily disabled due to React hook violations
   const {
     attributes,
     listeners,
@@ -109,26 +109,18 @@ function OpportunityCard({ opportunity, onEditDetails }: { opportunity: Opportun
     if (opportunity.contactPhone) {
       window.location.href = `tel:${opportunity.contactPhone}`;
     } else {
-      toast({
-        title: "No Phone Number",
-        description: "This opportunity doesn't have a phone number.",
-        variant: "destructive",
-      });
+      console.log("No phone number available for this opportunity");
     }
-  }, [opportunity.contactPhone, toast]);
+  }, [opportunity.contactPhone]);
 
   const handleEmail = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (opportunity.contactEmail) {
       window.location.href = `mailto:${opportunity.contactEmail}?subject=Follow up regarding ${opportunity.businessName}`;
     } else {
-      toast({
-        title: "No Email Address",
-        description: "This opportunity doesn't have an email address.",
-        variant: "destructive",
-      });
+      console.log("No email address available for this opportunity");
     }
-  }, [opportunity.contactEmail, opportunity.businessName, toast]);
+  }, [opportunity.contactEmail, opportunity.businessName]);
 
   const formatCurrency = (value: string) => {
     if (!value) return "—";

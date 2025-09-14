@@ -15,7 +15,7 @@ import {
   CalendarIcon,
   TrendingUpIcon
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/toast-noop";
 
 interface WeeklyTask {
   id: string;
