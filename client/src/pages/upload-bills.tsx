@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/toast-noop";
+import { useToast } from "@/hooks/toast-disabled";
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

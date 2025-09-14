@@ -44,7 +44,7 @@ import {
   PhoneIcon,
   MessageCircleIcon
 } from "lucide-react";
-import { useToast } from "@/hooks/toast-noop";
+import { useToast } from "@/hooks/toast-disabled";
 // Removed unused framer-motion import
 
 interface TrainingModule {

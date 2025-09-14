@@ -21,7 +21,7 @@ import {
   CheckCircle,
   Zap
 } from "lucide-react";
-import { useToast } from "@/hooks/toast-noop";
+import { useToast } from "@/hooks/toast-disabled";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 

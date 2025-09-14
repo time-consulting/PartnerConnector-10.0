@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UploadIcon, FileIcon, CheckIcon, XIcon } from "lucide-react";
-import { useToast } from "@/hooks/toast-noop";
+import { useToast } from "@/hooks/toast-disabled";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface BillUploadProps {
