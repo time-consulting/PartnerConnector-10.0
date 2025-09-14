@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Contact } from "@shared/schema";
-import { insertContactSchema } from "@shared/schema";
+import { insertContactSchema, insertOpportunitySchema } from "@shared/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -29,6 +29,39 @@ const contactFormSchema = insertContactSchema.extend({
 });
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
+
+// Helper function to parse estimated monthly volume into annual value
+const parseEstimatedValue = (monthlyVolume: string): number => {
+  // Remove currency symbols and spaces
+  const cleanValue = monthlyVolume.replace(/[£$€,\s]/g, "");
+  
+  // Handle ranges like "5000-25000" or "5,000 - 25,000"
+  if (cleanValue.includes("-")) {
+    const [min, max] = cleanValue.split("-").map(val => parseFloat(val.trim()));
+    if (!isNaN(min) && !isNaN(max)) {
+      // Return midpoint of range * 12 months
+      return ((min + max) / 2) * 12;
+    }
+  }
+  
+  // Handle "500000+" format
+  if (cleanValue.includes("+")) {
+    const baseValue = parseFloat(cleanValue.replace("+", ""));
+    if (!isNaN(baseValue)) {
+      // Use the base value for "+" ranges * 12 months
+      return baseValue * 12;
+    }
+  }
+  
+  // Handle single numeric values
+  const numericValue = parseFloat(cleanValue);
+  if (!isNaN(numericValue)) {
+    return numericValue * 12;
+  }
+  
+  // Default fallback if parsing fails
+  return 0;
+};
 
 const getInitialFormData = (contact?: Contact): ContactFormData => ({
   partnerId: "", // Will be set by the backend from session
@@ -651,6 +684,48 @@ export default function ContactsPage() {
     },
   });
 
+  // Convert contact to opportunity mutation
+  const convertToOpportunityMutation = useMutation({
+    mutationFn: async (contact: Contact) => {
+      const opportunityData = {
+        businessName: contact.company || `${contact.firstName} ${contact.lastName}`,
+        contactFirstName: contact.firstName,
+        contactLastName: contact.lastName,
+        contactEmail: contact.email || "",
+        contactPhone: contact.phone || "",
+        businessType: contact.businessType || "other",
+        status: "prospect",
+        stage: "initial_contact",
+        priority: "medium",
+        source: "contact_conversion",
+        notes: `Converted from contact: ${contact.notes || "No notes"}`,
+        estimatedValue: contact.estimatedMonthlyVolume ? parseEstimatedValue(contact.estimatedMonthlyVolume) : undefined,
+        expectedCloseDate: undefined
+      };
+
+      const response = await apiRequest("POST", "/api/opportunities", opportunityData);
+      if (!response.ok) {
+        throw new Error('Failed to convert contact to opportunity');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Contact successfully converted to opportunity! Check your opportunities pipeline.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to convert contact to opportunity",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateContact = (data: ContactFormData) => {
     createContactMutation.mutate(data);
   };
@@ -668,12 +743,7 @@ export default function ContactsPage() {
   };
 
   const handleConvertToOpportunity = (contact: Contact) => {
-    // TODO: Navigate to opportunity creation with contact pre-filled
-    console.log("Converting contact to opportunity:", contact);
-    toast({
-      title: "Success",
-      description: "Contact converted to opportunity",
-    });
+    convertToOpportunityMutation.mutate(contact);
   };
 
   if (isLoading) {
@@ -844,9 +914,10 @@ export default function ContactsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleConvertToOpportunity(contact)}
+                        disabled={convertToOpportunityMutation.isPending}
                         data-testid={`button-convert-${contact.id}`}
                       >
-                        Convert to Opportunity
+                        {convertToOpportunityMutation.isPending ? "Converting..." : "Convert to Opportunity"}
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
