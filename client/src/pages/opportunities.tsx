@@ -553,6 +553,24 @@ export default function OpportunitiesPage() {
     },
   });
 
+  // Delete opportunity mutation
+  const deleteOpportunityMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      const response = await apiRequest("DELETE", `/api/opportunities/${opportunityId}`);
+      if (!response.ok) {
+        throw new Error('Failed to delete opportunity');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      console.log("Opportunity deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
+    },
+    onError: (error: any) => {
+      console.error("Failed to delete opportunity:", error.message || error);
+    },
+  });
+
   // Drag and drop mutation for Kanban
   const updateOpportunityStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -808,6 +826,7 @@ export default function OpportunitiesPage() {
               opportunities={filteredAndSortedOpportunities}
               isLoading={isLoading}
               onEditDetails={handleEditDetails}
+              onDelete={deleteOpportunityMutation.mutate}
               onDragEnd={handleDragEnd}
             />
           </Suspense>

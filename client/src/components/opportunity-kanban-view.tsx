@@ -31,7 +31,8 @@ import {
   TrendingUpIcon,
   DollarSignIcon,
   EditIcon,
-  FileTextIcon
+  FileTextIcon,
+  Trash2Icon
 } from "lucide-react";
 import type { Opportunity } from "@shared/schema";
 
@@ -87,7 +88,15 @@ const getPriorityColor = (priority: string) => {
 };
 
 // Draggable Opportunity Card Component
-function OpportunityCard({ opportunity, onEditDetails }: { opportunity: Opportunity; onEditDetails: (opportunity: Opportunity) => void }) {
+function OpportunityCard({ 
+  opportunity, 
+  onEditDetails,
+  onDelete
+}: { 
+  opportunity: Opportunity; 
+  onEditDetails: (opportunity: Opportunity) => void;
+  onDelete: (opportunityId: string) => void;
+}) {
   // const { toast } = useToast(); // Temporarily disabled due to React hook violations
   const {
     attributes,
@@ -272,11 +281,11 @@ function OpportunityCard({ opportunity, onEditDetails }: { opportunity: Opportun
 
         {/* Modern Action Buttons - Non-draggable */}
         <div className="border-t border-gradient-to-r from-gray-100 to-slate-200 dark:from-gray-700 dark:to-gray-800 pt-4 mt-4">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button
               size="sm"
               variant="ghost"
-              className="h-9 px-3 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 
+              className="h-9 px-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 
                         text-green-700 hover:text-green-800 dark:from-green-900/20 dark:to-emerald-900/20 
                         dark:hover:from-green-800/30 dark:hover:to-emerald-800/30 dark:text-green-400 dark:hover:text-green-300
                         rounded-lg border-0 font-semibold transition-all duration-200 transform hover:scale-105"
@@ -292,7 +301,7 @@ function OpportunityCard({ opportunity, onEditDetails }: { opportunity: Opportun
             <Button
               size="sm"
               variant="ghost"
-              className="h-9 px-3 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 
+              className="h-9 px-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 
                         text-blue-700 hover:text-blue-800 dark:from-blue-900/20 dark:to-indigo-900/20 
                         dark:hover:from-blue-800/30 dark:hover:to-indigo-800/30 dark:text-blue-400 dark:hover:text-blue-300
                         rounded-lg border-0 font-semibold transition-all duration-200 transform hover:scale-105"
@@ -308,7 +317,7 @@ function OpportunityCard({ opportunity, onEditDetails }: { opportunity: Opportun
             <Button
               size="sm"
               variant="ghost"
-              className="h-9 px-3 bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 
+              className="h-9 px-2 bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 
                         text-purple-700 hover:text-purple-800 dark:from-purple-900/20 dark:to-violet-900/20 
                         dark:hover:from-purple-800/30 dark:hover:to-violet-800/30 dark:text-purple-400 dark:hover:text-purple-300
                         rounded-lg border-0 font-semibold transition-all duration-200 transform hover:scale-105"
@@ -323,7 +332,7 @@ function OpportunityCard({ opportunity, onEditDetails }: { opportunity: Opportun
             <Button
               size="sm"
               variant="ghost"
-              className="h-9 px-3 bg-gradient-to-r from-gray-50 to-slate-100 hover:from-gray-100 hover:to-slate-200 
+              className="h-9 px-2 bg-gradient-to-r from-gray-50 to-slate-100 hover:from-gray-100 hover:to-slate-200 
                         text-gray-700 hover:text-gray-800 dark:from-gray-800/50 dark:to-slate-800/50 
                         dark:hover:from-gray-700/60 dark:hover:to-slate-700/60 dark:text-gray-300 dark:hover:text-gray-200
                         rounded-lg border-0 font-semibold transition-all duration-200 transform hover:scale-105"
@@ -337,6 +346,26 @@ function OpportunityCard({ opportunity, onEditDetails }: { opportunity: Opportun
               <EditIcon className="h-4 w-4 mr-1" />
               Edit
             </Button>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-9 px-2 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 
+                        text-red-700 hover:text-red-800 dark:from-red-900/20 dark:to-rose-900/20 
+                        dark:hover:from-red-800/30 dark:hover:to-rose-800/30 dark:text-red-400 dark:hover:text-red-300
+                        rounded-lg border-0 font-semibold transition-all duration-200 transform hover:scale-105"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm(`Are you sure you want to delete the opportunity for ${opportunity.businessName}?`)) {
+                  onDelete(opportunity.id);
+                }
+              }}
+              data-testid={`button-delete-${opportunity.id}`}
+              title="Delete Opportunity"
+            >
+              <Trash2Icon className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
           </div>
         </div>
       </div>
@@ -349,12 +378,14 @@ function OpportunityColumn({
   column, 
   opportunities, 
   isLoading,
-  onEditDetails
+  onEditDetails,
+  onDelete
 }: { 
   column: typeof KANBAN_COLUMNS[0], 
   opportunities: Opportunity[], 
   isLoading: boolean,
-  onEditDetails: (opportunity: Opportunity) => void
+  onEditDetails: (opportunity: Opportunity) => void,
+  onDelete: (opportunityId: string) => void
 }) {
   const columnOpportunities = opportunities.filter(opportunity => opportunity.status === column.id);
   
@@ -434,7 +465,7 @@ function OpportunityColumn({
                     </div>
                   ) : (
                     columnOpportunities.map((opportunity) => (
-                      <OpportunityCard key={opportunity.id} opportunity={opportunity} onEditDetails={onEditDetails} />
+                      <OpportunityCard key={opportunity.id} opportunity={opportunity} onEditDetails={onEditDetails} onDelete={onDelete} />
                     ))
                   )}
                 </div>
@@ -451,6 +482,7 @@ interface OpportunityKanbanViewProps {
   opportunities: Opportunity[];
   isLoading: boolean;
   onEditDetails: (opportunity: Opportunity) => void;
+  onDelete: (opportunityId: string) => void;
   onDragEnd: (event: DragEndEvent) => void;
 }
 
@@ -458,6 +490,7 @@ export default function OpportunityKanbanView({
   opportunities, 
   isLoading, 
   onEditDetails, 
+  onDelete,
   onDragEnd 
 }: OpportunityKanbanViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -508,6 +541,7 @@ export default function OpportunityKanbanView({
                 opportunities={opportunities}
                 isLoading={isLoading}
                 onEditDetails={onEditDetails}
+                onDelete={onDelete}
               />
             ))}
           </div>
@@ -516,7 +550,7 @@ export default function OpportunityKanbanView({
         <DragOverlay>
           {activeOpportunity ? (
             <div className="transform rotate-6 scale-105">
-              <OpportunityCard opportunity={activeOpportunity} onEditDetails={onEditDetails} />
+              <OpportunityCard opportunity={activeOpportunity} onEditDetails={onEditDetails} onDelete={onDelete} />
             </div>
           ) : null}
         </DragOverlay>
