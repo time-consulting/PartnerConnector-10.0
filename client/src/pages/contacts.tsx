@@ -819,8 +819,10 @@ export default function ContactsPage() {
   };
 
   const handleGoToOpportunity = (opportunityId: string) => {
+    // Navigate to opportunities page with the specific opportunity highlighted
     setLocation('/opportunities');
-    // TODO: Add logic to filter/highlight the specific opportunity
+    // Store the opportunity ID to highlight in local storage for the opportunities page to pick up
+    localStorage.setItem('highlightOpportunityId', opportunityId);
   };
 
   if (isLoading) {
