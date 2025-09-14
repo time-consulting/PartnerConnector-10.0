@@ -1390,13 +1390,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       
+      
+      // Convert date strings to Date objects for timestamp fields
+      const requestData = { ...req.body };
+      if (requestData.expectedCloseDate && typeof requestData.expectedCloseDate === 'string') {
+        requestData.expectedCloseDate = new Date(requestData.expectedCloseDate);
+      }
+      if (requestData.lastContact && typeof requestData.lastContact === 'string') {
+        requestData.lastContact = new Date(requestData.lastContact);
+      }
+      if (requestData.nextFollowUp && typeof requestData.nextFollowUp === 'string') {
+        requestData.nextFollowUp = new Date(requestData.nextFollowUp);
+      }
+      
       // Validate request body with Zod schema
-      const validationResult = insertOpportunitySchema.omit({ partnerId: true }).safeParse(req.body);
+      const validationResult = insertOpportunitySchema.omit({ partnerId: true }).safeParse(requestData);
       if (!validationResult.success) {
         const errorMessage = fromZodError(validationResult.error);
+        console.error('Opportunity validation failed:', {
+          errors: validationResult.error.errors,
+          requestBody: requestData,
+          formattedError: errorMessage.message
+        });
         return res.status(400).json({ 
           message: "Invalid opportunity data", 
-          details: errorMessage.message 
+          details: errorMessage.message,
+          validationErrors: validationResult.error.errors
         });
       }
       
@@ -1440,13 +1459,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { opportunityId } = req.params;
       const userId = req.user.claims.sub;
       
+      // Convert date strings to Date objects for timestamp fields
+      const requestData = { ...req.body };
+      if (requestData.expectedCloseDate && typeof requestData.expectedCloseDate === 'string') {
+        requestData.expectedCloseDate = new Date(requestData.expectedCloseDate);
+      }
+      if (requestData.lastContact && typeof requestData.lastContact === 'string') {
+        requestData.lastContact = new Date(requestData.lastContact);
+      }
+      if (requestData.nextFollowUp && typeof requestData.nextFollowUp === 'string') {
+        requestData.nextFollowUp = new Date(requestData.nextFollowUp);
+      }
+      
       // Validate request body with Zod schema (partial for updates)
-      const validationResult = insertOpportunitySchema.omit({ partnerId: true }).partial().safeParse(req.body);
+      const validationResult = insertOpportunitySchema.omit({ partnerId: true }).partial().safeParse(requestData);
       if (!validationResult.success) {
         const errorMessage = fromZodError(validationResult.error);
+        console.error('Opportunity update validation failed:', {
+          errors: validationResult.error.errors,
+          requestBody: requestData,
+          formattedError: errorMessage.message
+        });
         return res.status(400).json({ 
           message: "Invalid opportunity data", 
-          details: errorMessage.message 
+          details: errorMessage.message,
+          validationErrors: validationResult.error.errors
         });
       }
       
