@@ -299,7 +299,13 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
 }
 
 // Step 1: Client Information Component
-function ClientStep({ form, businessTypes, onDraftSave }: { form: any; businessTypes: any[]; onDraftSave?: (data: any) => void }) {
+interface ClientStepProps {
+  form: any;
+  businessTypes: any[];
+  onDraftSave?: (data: any) => void;
+}
+
+function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
   const [businessLookupResults, setBusinessLookupResults] = useState<any[]>([]);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [monthlyVolume, setMonthlyVolume] = useState([50000]);
