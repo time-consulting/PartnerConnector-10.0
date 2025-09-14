@@ -311,8 +311,8 @@ export class DatabaseStorage implements IStorage {
     const [interaction] = await db
       .insert(contactInteractions)
       .values({
-        contactId,
         ...interactionData,
+        contactId,
       })
       .returning();
     return interaction;
@@ -389,8 +389,8 @@ export class DatabaseStorage implements IStorage {
     const [interaction] = await db
       .insert(opportunityInteractions)
       .values({
-        opportunityId,
         ...interactionData,
+        opportunityId,
       })
       .returning();
     return interaction;
