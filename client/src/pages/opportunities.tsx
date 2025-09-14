@@ -1,6 +1,7 @@
-import { useState, Suspense } from "react";
+import { useState, Suspense, lazy } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Search, Filter, ArrowUpDown, Mail, Phone, Building, User, Edit3, MoreHorizontal, TrendingUp, DollarSign, Calendar, Target } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpDown, Mail, Phone, Building, User, Edit3, MoreHorizontal, TrendingUp, DollarSign, Calendar, Target, Grid3X3, List, Layers } from "lucide-react";
+import { DragEndEvent } from '@dnd-kit/core';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Opportunity } from "@shared/schema";
+
+const OpportunityKanbanView = lazy(() => import("@/components/opportunity-kanban-view"));
 
 interface OpportunityFormData {
   businessName: string;
@@ -454,6 +457,7 @@ export default function OpportunitiesPage() {
   const [filterBy, setFilterBy] = useState<string>("all");
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
 
   // Query for opportunities
   const { data: opportunities = [], isLoading } = useQuery({
@@ -519,6 +523,27 @@ export default function OpportunitiesPage() {
     },
   });
 
+  // Drag and drop mutation for Kanban
+  const updateOpportunityStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const response = await apiRequest("PUT", `/api/opportunities/${id}`, { status });
+      if (!response.ok) {
+        throw new Error('Failed to update opportunity status');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to move opportunity",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredAndSortedOpportunities = opportunities
     .filter((opportunity: Opportunity) => {
       const matchesSearch = `${opportunity.businessName} ${opportunity.contactFirstName} ${opportunity.contactLastName} ${opportunity.contactEmail}`
@@ -571,6 +596,37 @@ export default function OpportunitiesPage() {
     }
   };
 
+  // Handle drag and drop for Kanban
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+    
+    const opportunityId = active.id as string;
+    const newStatus = over.id as string;
+    
+    // Find the opportunity being dragged
+    const opportunity = opportunities.find((opp: Opportunity) => opp.id === opportunityId);
+    if (!opportunity || opportunity.status === newStatus) return;
+    
+    // Optimistically update the UI
+    queryClient.setQueryData(['/api/opportunities'], (old: Opportunity[] = []) => 
+      old.map((opp) => 
+        opp.id === opportunityId ? { ...opp, status: newStatus } : opp
+      )
+    );
+    
+    // Update on server
+    updateOpportunityStatusMutation.mutate({ 
+      id: opportunityId, 
+      status: newStatus 
+    });
+  };
+
+  const handleEditDetails = (opportunity: Opportunity) => {
+    setSelectedOpportunity(opportunity);
+  };
+
   const getStatusColor = (status: string) => {
     const statusOption = statusOptions.find(s => s.value === status);
     return statusOption?.color || "bg-gray-100 text-gray-800";
@@ -603,26 +659,52 @@ export default function OpportunitiesPage() {
                 Track your sales pipeline and manage deal progression
               </p>
             </div>
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  data-testid="button-add-opportunity"
+            <div className="flex items-center gap-3">
+              {/* View Toggle */}
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                <Button
+                  variant={viewMode === "kanban" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("kanban")}
+                  className="h-8 px-3"
+                  data-testid="button-kanban-view"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Opportunity
+                  <Layers className="h-4 w-4 mr-1" />
+                  Kanban
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                  <DialogTitle>Create New Opportunity</DialogTitle>
-                </DialogHeader>
-                <OpportunityForm 
-                  onClose={() => setIsFormOpen(false)}
-                  onSave={handleCreateOpportunity}
-                />
-              </DialogContent>
-            </Dialog>
+                <Button
+                  variant={viewMode === "list" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                  className="h-8 px-3"
+                  data-testid="button-list-view"
+                >
+                  <List className="h-4 w-4 mr-1" />
+                  List
+                </Button>
+              </div>
+              
+              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    data-testid="button-add-opportunity"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Opportunity
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>Create New Opportunity</DialogTitle>
+                  </DialogHeader>
+                  <OpportunityForm 
+                    onClose={() => setIsFormOpen(false)}
+                    onSave={handleCreateOpportunity}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Search and Filters */}
@@ -673,29 +755,38 @@ export default function OpportunitiesPage() {
           </div>
         </div>
 
-        {/* Opportunities List */}
-        <div className="grid gap-4">
-          {filteredAndSortedOpportunities.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <Target className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  No opportunities found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Start tracking your sales pipeline by creating your first opportunity
-                </p>
-                <Button 
-                  onClick={() => setIsFormOpen(true)}
-                  data-testid="button-create-first-opportunity"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Opportunity
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredAndSortedOpportunities.map((opportunity: Opportunity) => (
+        {/* Opportunities View */}
+        {filteredAndSortedOpportunities.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Target className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No opportunities found
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Start tracking your sales pipeline by creating your first opportunity
+              </p>
+              <Button 
+                onClick={() => setIsFormOpen(true)}
+                data-testid="button-create-first-opportunity"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Opportunity
+              </Button>
+            </CardContent>
+          </Card>
+        ) : viewMode === "kanban" ? (
+          <Suspense fallback={<div className="text-center py-8">Loading Kanban view...</div>}>
+            <OpportunityKanbanView
+              opportunities={filteredAndSortedOpportunities}
+              isLoading={isLoading}
+              onEditDetails={handleEditDetails}
+              onDragEnd={handleDragEnd}
+            />
+          </Suspense>
+        ) : (
+          <div className="grid gap-4" data-testid="opportunities-list">
+            {filteredAndSortedOpportunities.map((opportunity: Opportunity) => (
               <Card 
                 key={opportunity.id} 
                 className="hover:shadow-md transition-shadow cursor-pointer"
@@ -782,9 +873,9 @@ export default function OpportunitiesPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Edit Opportunity Dialog */}
         <Dialog 
