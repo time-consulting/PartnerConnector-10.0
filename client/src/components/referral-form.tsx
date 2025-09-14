@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import ProductSelection from "@/components/product-selection";
 import { FieldHelpTooltip } from "@/components/contextual-help-tooltip";
 
@@ -70,7 +71,8 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
   const selectedType = businessTypes?.find(type => type.id === selectedBusinessType);
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
       {/* Business Information */}
       <Card>
         <CardHeader>
@@ -300,22 +302,27 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
           <CardTitle>Privacy & Consent</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id="gdprConsent"
-              checked={form.watch("gdprConsent")}
-              onCheckedChange={(checked) => form.setValue("gdprConsent", checked as boolean)}
-              data-testid="checkbox-gdpr-consent"
-            />
-            <Label htmlFor="gdprConsent" className="text-sm leading-5">
-              I consent to the processing of the business data provided for the purpose of generating competitive quotes and managing referral commissions. The business owner will be contacted regarding this referral opportunity. I understand this consent can be withdrawn at any time.
-            </Label>
-          </div>
-          {form.formState.errors.gdprConsent && (
-            <p className="text-destructive text-sm">
-              {form.formState.errors.gdprConsent.message}
-            </p>
-          )}
+          <FormField
+            control={form.control}
+            name="gdprConsent"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    data-testid="checkbox-gdpr-consent"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-sm leading-5">
+                    I consent to the processing of the business data provided for the purpose of generating competitive quotes and managing referral commissions. The business owner will be contacted regarding this referral opportunity. I understand this consent can be withdrawn at any time.
+                  </FormLabel>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
           
           <p className="text-xs text-muted-foreground">
             By submitting this referral, you confirm that you have appropriate authority to refer this business and that the business owner will be contacted directly for quote comparison. All data is processed securely in compliance with GDPR regulations.
@@ -332,6 +339,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
       >
         {isSubmitting ? "Submitting..." : "Submit Referral"}
       </Button>
-    </form>
+      </form>
+    </Form>
   );
 }
