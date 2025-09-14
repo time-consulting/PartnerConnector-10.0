@@ -161,57 +161,96 @@ function OpportunityForm({
   };
 
   return (
-    <div className="max-h-[90vh] overflow-y-auto">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 rounded-2xl p-6">
+      {/* Modern Dialog Header */}
+      <div className="text-center mb-8 pb-6 border-b border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-xl">
+          <Plus className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent mb-2">
+          {opportunity ? "Edit Opportunity" : "Create New Opportunity"}
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">
+          {opportunity ? "Update the details below to modify this opportunity" : "Fill in the details below to create a new sales opportunity"}
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
         <Tabs defaultValue="opportunity-info" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="opportunity-info" data-testid="tab-opportunity-info">Opportunity Info</TabsTrigger>
-            <TabsTrigger value="contact-details" data-testid="tab-contact-details">Contact Details</TabsTrigger>
-            <TabsTrigger value="deal-info" data-testid="tab-deal-info">Deal Info</TabsTrigger>
-            <TabsTrigger value="notes-actions" data-testid="tab-notes-actions">Notes & Actions</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-gray-100 to-slate-200 dark:from-gray-800 dark:to-gray-700 p-1 rounded-xl shadow-lg">
+            <TabsTrigger 
+              value="opportunity-info" 
+              data-testid="tab-opportunity-info"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
+            >
+              Opportunity Info
+            </TabsTrigger>
+            <TabsTrigger 
+              value="contact-details" 
+              data-testid="tab-contact-details"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
+            >
+              Contact Details
+            </TabsTrigger>
+            <TabsTrigger 
+              value="deal-info" 
+              data-testid="tab-deal-info"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
+            >
+              Deal Info
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notes-actions" 
+              data-testid="tab-notes-actions"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
+            >
+              Notes & Actions
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="opportunity-info" className="space-y-4 mt-6">
-            <div>
-              <Label htmlFor="businessName">Business Name *</Label>
+          <TabsContent value="opportunity-info" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+            <div className="space-y-2">
+              <Label htmlFor="businessName" className="text-gray-900 dark:text-white font-semibold text-sm">Business Name *</Label>
               <Input
                 id="businessName"
                 value={formData.businessName}
                 onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
                 data-testid="input-business-name"
                 required
+                className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg h-11 text-gray-900 dark:text-white bg-white dark:bg-gray-800 shadow-sm transition-all duration-200"
+                placeholder="Enter business name"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="status">Status</Label>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="status" className="text-gray-900 dark:text-white font-semibold text-sm">Status</Label>
                 <Select 
                   value={formData.status} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
                 >
-                  <SelectTrigger data-testid="select-status">
+                  <SelectTrigger data-testid="select-status" className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg h-11 text-gray-900 dark:text-white bg-white dark:bg-gray-800 shadow-sm transition-all duration-200">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
                     {statusOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      <SelectItem key={option.value} value={option.value} className="hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 cursor-pointer">{option.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="stage">Stage</Label>
+              <div className="space-y-2">
+                <Label htmlFor="stage" className="text-gray-900 dark:text-white font-semibold text-sm">Stage</Label>
                 <Select 
                   value={formData.stage} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, stage: value }))}
                 >
-                  <SelectTrigger data-testid="select-stage">
+                  <SelectTrigger data-testid="select-stage" className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg h-11 text-gray-900 dark:text-white bg-white dark:bg-gray-800 shadow-sm transition-all duration-200">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
                     {stageOptions.map(stage => (
-                      <SelectItem key={stage} value={stage}>
+                      <SelectItem key={stage} value={stage} className="hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 cursor-pointer">
                         {stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </SelectItem>
                     ))}
@@ -255,26 +294,28 @@ function OpportunityForm({
               </div>
             </div>
 
-            <div>
-              <Label>Product Interests</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {productCategories.map(product => (
-                  <label key={product} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.productInterest.includes(product)}
-                      onChange={() => toggleProductInterest(product)}
-                      className="rounded border-gray-300"
-                      data-testid={`checkbox-product-${product.toLowerCase().replace(/\s+/g, '-')}`}
-                    />
-                    <span className="text-sm">{product}</span>
-                  </label>
-                ))}
+            <div className="space-y-4">
+              <Label className="text-gray-900 dark:text-white font-semibold text-sm">Product Interests</Label>
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200/50 dark:border-blue-700/50">
+                <div className="grid grid-cols-2 gap-4">
+                  {productCategories.map(product => (
+                    <label key={product} className="flex items-center space-x-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={formData.productInterest.includes(product)}
+                        onChange={() => toggleProductInterest(product)}
+                        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-2 w-4 h-4 transition-all duration-200"
+                        data-testid={`checkbox-product-${product.toLowerCase().replace(/\s+/g, '-')}`}
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">{product}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="contact-details" className="space-y-4 mt-6">
+          <TabsContent value="contact-details" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="contactFirstName">Contact First Name</Label>
@@ -330,7 +371,7 @@ function OpportunityForm({
             </div>
           </TabsContent>
 
-          <TabsContent value="deal-info" className="space-y-4 mt-6">
+          <TabsContent value="deal-info" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="estimatedValue">Estimated Value (£)</Label>
@@ -400,7 +441,7 @@ function OpportunityForm({
             </div>
           </TabsContent>
 
-          <TabsContent value="notes-actions" className="space-y-4 mt-6">
+          <TabsContent value="notes-actions" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
             <div>
               <Label htmlFor="notes">Notes</Label>
               <Textarea
@@ -427,21 +468,23 @@ function OpportunityForm({
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end space-x-3 pt-6 border-t">
+        {/* Modern Submit Buttons */}
+        <div className="flex justify-end space-x-4 pt-8 mt-8 border-t border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
           <Button 
             type="button" 
             variant="outline" 
             onClick={onClose}
             data-testid="button-cancel"
+            className="h-12 px-8 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
           >
             Cancel
           </Button>
           <Button 
             type="submit"
             data-testid="button-save-opportunity"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold shadow-xl transition-all duration-200 transform hover:scale-105 hover:shadow-2xl"
           >
-            {opportunity ? "Update Opportunity" : "Create Opportunity"}
+            {opportunity ? "🚀 Update Opportunity" : "✨ Create Opportunity"}
           </Button>
         </div>
       </form>

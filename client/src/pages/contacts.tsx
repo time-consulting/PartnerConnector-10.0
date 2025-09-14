@@ -154,30 +154,68 @@ function ContactForm({
   };
 
   return (
-    <div className="max-h-[90vh] overflow-y-auto">
+    <div className="max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 rounded-2xl p-6">
+      {/* Modern Dialog Header */}
+      <div className="text-center mb-8 pb-6 border-b border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
+        <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-xl">
+          <User className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-green-800 to-teal-800 dark:from-white dark:via-green-200 dark:to-teal-200 bg-clip-text text-transparent mb-2">
+          {contact ? "Edit Contact" : "Add New Contact"}
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">
+          {contact ? "Update the contact information below" : "Fill in the details to add a new contact to your network"}
+        </p>
+      </div>
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs defaultValue="contact-info" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="contact-info" data-testid="tab-contact-info">Contact Info</TabsTrigger>
-            <TabsTrigger value="product-interest" data-testid="tab-product-interest">Product Interest</TabsTrigger>
-            <TabsTrigger value="notes" data-testid="tab-notes">Notes</TabsTrigger>
-            <TabsTrigger value="communication" data-testid="tab-communication">Communication</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-gray-100 to-slate-200 dark:from-gray-800 dark:to-gray-700 p-1 rounded-xl shadow-lg">
+            <TabsTrigger 
+              value="contact-info" 
+              data-testid="tab-contact-info"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
+            >
+              Contact Info
+            </TabsTrigger>
+            <TabsTrigger 
+              value="product-interest" 
+              data-testid="tab-product-interest"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
+            >
+              Product Interest
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notes" 
+              data-testid="tab-notes"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
+            >
+              Notes
+            </TabsTrigger>
+            <TabsTrigger 
+              value="communication" 
+              data-testid="tab-communication"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
+            >
+              Communication
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="contact-info" className="space-y-4 mt-6">
-            <div className="grid grid-cols-2 gap-4">
+          <TabsContent value="contact-info" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+            <div className="grid grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name *</FormLabel>
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-gray-900 dark:text-white font-semibold text-sm">First Name *</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         data-testid="input-first-name"
                         placeholder="Enter first name"
+                        className="border-gray-300 dark:border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 rounded-lg h-11 text-gray-900 dark:text-white bg-white dark:bg-gray-800 shadow-sm transition-all duration-200"
                       />
                     </FormControl>
                     <FormMessage />
@@ -521,24 +559,26 @@ function ContactForm({
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end space-x-3 pt-6 border-t">
+        {/* Modern Submit Buttons */}
+        <div className="flex justify-end space-x-4 pt-8 mt-8 border-t border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
           <Button 
             type="button" 
             variant="outline" 
             onClick={onClose}
             data-testid="button-cancel"
+            className="h-12 px-8 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
           >
             Cancel
           </Button>
           <Button 
             type="submit"
             data-testid="button-save-contact"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="h-12 px-8 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white rounded-xl font-bold shadow-xl transition-all duration-200 transform hover:scale-105 hover:shadow-2xl"
             disabled={form.formState.isSubmitting}
           >
             {form.formState.isSubmitting 
-              ? (contact ? "Updating..." : "Creating...") 
-              : (contact ? "Update Contact" : "Create Contact")
+              ? (contact ? "🔄 Updating..." : "🔄 Creating...") 
+              : (contact ? "📝 Update Contact" : "⭐ Create Contact")
             }
           </Button>
         </div>
