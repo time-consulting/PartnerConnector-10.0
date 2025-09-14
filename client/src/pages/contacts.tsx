@@ -1,6 +1,7 @@
 import { useState, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Search, Filter, ArrowUpDown, Mail, Phone, Building, User, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpDown, Mail, Phone, Building, User, Edit3, MoreHorizontal, Trash2, ExternalLink } from "lucide-react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,14 @@ const contactFormSchema = insertContactSchema.extend({
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
   phone: z.string().optional(),
+}).refine((data) => {
+  // Require either email or phone to be provided
+  const hasEmail = data.email && data.email.trim() !== "";
+  const hasPhone = data.phone && data.phone.trim() !== "";
+  return hasEmail || hasPhone;
+}, {
+  message: "Either email or phone number is required",
+  path: ["email"], // Show error on email field
 });
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
@@ -597,6 +606,7 @@ export default function ContactsPage() {
   const [filterBy, setFilterBy] = useState<string>("all");
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Query for contacts
   const { data: contacts = [], isLoading } = useQuery({
@@ -609,6 +619,26 @@ export default function ContactsPage() {
       return response.json();
     },
   });
+
+  // Query for opportunities to create contact-opportunity mapping
+  const { data: opportunities = [] } = useQuery({
+    queryKey: ['/api/opportunities'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/opportunities");
+      if (!response.ok) {
+        throw new Error('Failed to fetch opportunities');
+      }
+      return response.json();
+    },
+  });
+
+  // Create mapping of contactId to opportunityId
+  const contactOpportunityMap = opportunities.reduce((map: Record<string, string>, opportunity: any) => {
+    if (opportunity.contactId) {
+      map[opportunity.contactId] = opportunity.id;
+    }
+    return map;
+  }, {});
 
   const filteredAndSortedContacts = contacts
     .filter((contact: Contact) => {
@@ -730,33 +760,34 @@ export default function ContactsPage() {
     mutationFn: async (contact: Contact) => {
       const opportunityData = {
         businessName: contact.company || `${contact.firstName} ${contact.lastName}`,
-        contactFirstName: contact.firstName,
-        contactLastName: contact.lastName,
-        contactEmail: contact.email || "",
-        contactPhone: contact.phone || "",
         businessType: contact.businessType || "other",
         status: "prospect",
         stage: "initial_contact",
         priority: "medium",
-        source: "contact_conversion",
         notes: `Converted from contact: ${contact.notes || "No notes"}`,
         estimatedValue: contact.estimatedMonthlyVolume ? parseEstimatedValue(contact.estimatedMonthlyVolume).toString() : "",
-        expectedCloseDate: undefined
+        productInterest: contact.interestedProducts || [],
       };
 
-      const response = await apiRequest("POST", "/api/opportunities", opportunityData);
+      const response = await apiRequest("POST", `/api/contacts/${contact.id}/convert-to-opportunity`, { opportunityData });
       if (!response.ok) {
         throw new Error('Failed to convert contact to opportunity');
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, contact) => {
       toast({
         title: "Success",
         description: "Contact successfully converted to opportunity! Check your opportunities pipeline.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/opportunities'] });
       queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      // Store the conversion information for this contact
+      queryClient.setQueryData(['contact-opportunity-mapping'], (oldData: any) => {
+        const newData = oldData || {};
+        newData[contact.id] = data.id;
+        return newData;
+      });
     },
     onError: (error: any) => {
       toast({
@@ -785,6 +816,11 @@ export default function ContactsPage() {
 
   const handleConvertToOpportunity = (contact: Contact) => {
     convertToOpportunityMutation.mutate(contact);
+  };
+
+  const handleGoToOpportunity = (opportunityId: string) => {
+    setLocation('/opportunities');
+    // TODO: Add logic to filter/highlight the specific opportunity
   };
 
   if (isLoading) {
@@ -952,15 +988,28 @@ export default function ContactsPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleConvertToOpportunity(contact)}
-                        disabled={convertToOpportunityMutation.isPending}
-                        data-testid={`button-convert-${contact.id}`}
-                      >
-                        {convertToOpportunityMutation.isPending ? "Converting..." : "Convert to Opportunity"}
-                      </Button>
+                      {contactOpportunityMap[contact.id] ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleGoToOpportunity(contactOpportunityMap[contact.id])}
+                          data-testid={`button-go-to-opportunity-${contact.id}`}
+                          className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          Go to Opportunity
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleConvertToOpportunity(contact)}
+                          disabled={convertToOpportunityMutation.isPending}
+                          data-testid={`button-convert-${contact.id}`}
+                        >
+                          {convertToOpportunityMutation.isPending ? "Converting..." : "Convert to Opportunity"}
+                        </Button>
+                      )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" data-testid={`button-menu-${contact.id}`}>

@@ -1488,6 +1488,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const opportunity = await storage.updateOpportunity(opportunityId, userId, validationResult.data);
+      
+      // Synchronize related contact data if the opportunity is linked to a contact
+      if (opportunity.contactId && validationResult.data) {
+        const contactUpdates: any = {};
+        
+        // Map opportunity fields to contact fields that should be synchronized
+        if (validationResult.data.contactEmail) {
+          contactUpdates.email = validationResult.data.contactEmail;
+        }
+        if (validationResult.data.contactPhone) {
+          contactUpdates.phone = validationResult.data.contactPhone;
+        }
+        if (validationResult.data.contactFirstName) {
+          contactUpdates.firstName = validationResult.data.contactFirstName;
+        }
+        if (validationResult.data.contactLastName) {
+          contactUpdates.lastName = validationResult.data.contactLastName;
+        }
+        if (validationResult.data.businessName) {
+          contactUpdates.company = validationResult.data.businessName;
+        }
+        if (validationResult.data.businessType) {
+          contactUpdates.businessType = validationResult.data.businessType;
+        }
+        
+        // Update the contact if there are any changes
+        if (Object.keys(contactUpdates).length > 0) {
+          try {
+            await storage.updateContact(opportunity.contactId, userId, contactUpdates);
+            console.log(`Contact ${opportunity.contactId} synchronized with opportunity ${opportunityId} updates`);
+          } catch (error) {
+            console.error(`Failed to synchronize contact ${opportunity.contactId}:`, error);
+            // Continue execution - don't fail the opportunity update if contact sync fails
+          }
+        }
+      }
+      
       res.json(opportunity);
     } catch (error) {
       console.error("Error updating opportunity:", error);
