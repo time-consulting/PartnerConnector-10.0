@@ -19,6 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
+import SideNavigation from "@/components/side-navigation";
 
 // Define form schema with proper validation
 const contactFormSchema = insertContactSchema.extend({
@@ -796,6 +797,7 @@ export default function ContactsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <SideNavigation />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

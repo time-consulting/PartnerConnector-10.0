@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 // import { useToast } from "@/hooks/use-toast"; // Temporarily disabled due to React hook violations
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Opportunity } from "@shared/schema";
+import SideNavigation from "@/components/side-navigation";
 
 const OpportunityKanbanView = lazy(() => import("@/components/opportunity-kanban-view"));
 
@@ -672,6 +673,7 @@ export default function OpportunitiesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <SideNavigation />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
