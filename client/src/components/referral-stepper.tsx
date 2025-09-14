@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { CheckCircle, ChevronLeft, ChevronRight, Search, AlertCircle, DollarSign, Building, Mail, Phone, Globe, Save, X, Upload, FileText } from "lucide-react";
 
 // Form schema for the complete stepper
@@ -160,7 +161,8 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <Form {...form}>
+      <div className="w-full max-w-4xl mx-auto">
       {/* Progress Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -1217,31 +1219,33 @@ function FilesConsentStep({ form, isSubmitting }: { form: any; isSubmitting: boo
       {/* GDPR Consent */}
       <Card className="border-2 border-blue-100">
         <CardContent className="p-6">
-          <div className="flex items-start space-x-3">
-            <Checkbox 
-              id="gdprConsent"
-              {...form.register("gdprConsent")}
-              className="mt-1"
-              data-testid="checkbox-gdpr-consent"
-            />
-            <div className="flex-1">
-              <Label htmlFor="gdprConsent" className="text-base font-medium cursor-pointer">
-                I have client permission to share their details for quotes *
-              </Label>
-              <p className="text-sm text-gray-600 mt-2">
-                By checking this box, you confirm that you have the client's explicit consent 
-                to share their business information with our funding partners for the purpose 
-                of obtaining competitive quotes. This ensures compliance with GDPR and data protection regulations.
-              </p>
-              
-              {form.formState.errors.gdprConsent && (
-                <p className="text-red-600 text-sm mt-2 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {form.formState.errors.gdprConsent.message}
-                </p>
-              )}
-            </div>
-          </div>
+          <FormField
+            control={form.control}
+            name="gdprConsent"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="mt-1"
+                    data-testid="checkbox-gdpr-consent"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none flex-1">
+                  <FormLabel className="text-base font-medium cursor-pointer">
+                    I have client permission to share their details for quotes *
+                  </FormLabel>
+                  <p className="text-sm text-gray-600 mt-2">
+                    By checking this box, you confirm that you have the client's explicit consent 
+                    to share their business information with our funding partners for the purpose 
+                    of obtaining competitive quotes. This ensures compliance with GDPR and data protection regulations.
+                  </p>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
         </CardContent>
       </Card>
 
@@ -1272,6 +1276,7 @@ function FilesConsentStep({ form, isSubmitting }: { form: any; isSubmitting: boo
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </Form>
   );
 }
