@@ -295,14 +295,15 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
         </div>
       </div>
     </div>
+    </Form>
   );
 }
 
 // Step 1: Client Information Component
 interface ClientStepProps {
-  form: any;
-  businessTypes: any[];
-  onDraftSave?: (data: any) => void;
+  form: any
+  businessTypes: any[]
+  onDraftSave?: (data: any) => void
 }
 
 function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
@@ -405,7 +406,7 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
               <Input
                 id="businessName"
                 {...form.register("businessName", {
-                  onChange: (e) => handleBusinessLookup(e.target.value)
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleBusinessLookup(e.target.value)
                 })}
                 placeholder="Start typing business name..."
                 className="pr-10"
@@ -452,7 +453,7 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
               id="businessEmail"
               type="email"
               {...form.register("businessEmail", {
-                onChange: (e) => handleEmailCheck(e.target.value)
+                onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleEmailCheck(e.target.value)
               })}
               placeholder="contact@business.com"
               className={showDuplicateWarning ? "border-orange-300 focus:ring-orange-500" : ""}
@@ -1282,7 +1283,6 @@ function FilesConsentStep({ form, isSubmitting }: { form: any; isSubmitting: boo
           </div>
         </div>
       </div>
-      </div>
-    </Form>
+    </div>
   );
 }
