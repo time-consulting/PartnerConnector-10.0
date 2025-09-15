@@ -259,39 +259,72 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between mt-6">
-        <Button 
-          variant="outline" 
-          onClick={handlePrevious}
-          disabled={currentStep === 1}
-          data-testid="button-previous"
-          className="flex items-center space-x-2"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span>Previous</span>
-        </Button>
-
-        <div className="flex space-x-3">
-          {currentStep < steps.length ? (
-            <Button 
-              onClick={handleNext}
-              data-testid="button-next"
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            >
-              <span>Continue</span>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              data-testid="button-submit"
-              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-            >
-              {isSubmitting ? "Submitting..." : "Submit Referral"}
-            </Button>
-          )}
+      {/* Navigation Buttons - Enhanced for Mobile */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 pt-4 pb-4 sm:pb-6 mt-6 -mx-8 px-8 z-10 shadow-lg">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center">
+          {/* Previous Button */}
+          <div className="order-2 sm:order-1">
+            {currentStep > 1 && (
+              <Button 
+                variant="outline" 
+                onClick={handlePrevious}
+                data-testid="button-previous"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto h-12 sm:h-auto"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Previous</span>
+              </Button>
+            )}
+          </div>
+          
+          {/* Next/Submit Button - Prominent on Mobile */}
+          <div className="order-1 sm:order-2">
+            {currentStep < steps.length ? (
+              <Button 
+                onClick={handleNext}
+                data-testid="button-next"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto h-14 sm:h-auto text-lg sm:text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
+              >
+                <span>Continue to {steps[currentStep] ? steps[currentStep].title : 'Next Step'}</span>
+                <ChevronRight className="w-5 h-5 sm:w-4 sm:h-4" />
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                data-testid="button-submit"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto h-16 sm:h-auto text-lg sm:text-base font-bold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-xl transform hover:scale-105 transition-all duration-200"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🎯 Submit Referral</span>
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Mobile Progress Indicator */}
+        <div className="mt-4 sm:hidden">
+          <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+            <span>Step {currentStep} of {steps.length}</span>
+            <div className="flex space-x-1">
+              {steps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full ${
+                    index + 1 <= currentStep ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
