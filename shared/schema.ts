@@ -28,7 +28,7 @@ export const sessions = pgTable(
 );
 
 // User storage table - mandatory for Replit Auth
-export const users = pgTable("users", {
+export const users: any = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
@@ -50,7 +50,7 @@ export const users = pgTable("users", {
   businessAddress: text("business_address"),
   // Partner tracking and MLM structure
   partnerId: varchar("partner_id").unique(),
-  parentPartnerId: varchar("parent_partner_id").references(() => users.id, { onDelete: "set null" }), // For MLM structure
+  parentPartnerId: varchar("parent_partner_id").references((): any => users.id, { onDelete: "set null" }), // For MLM structure
   referralCode: varchar("referral_code").unique(),
   partnerLevel: integer("partner_level").default(1), // 1, 2, 3 for commission tiers
   // Team management
@@ -126,12 +126,20 @@ export const referrals = pgTable("referrals", {
   notes: text("notes"),
   adminNotes: text("admin_notes"),
   gdprConsent: boolean("gdpr_consent").default(false),
+  // Enhanced admin fields for deal management
+  dealStage: varchar("deal_stage").notNull().default("quote_request_received"), // quote_request_received, quote_sent, quote_approved, docs_out_confirmation, docs_received, processing, completed
+  quoteRates: jsonb("quote_rates"), // Store detailed rate information for quotes
+  docsOutConfirmed: boolean("docs_out_confirmed").default(false),
+  docsOutConfirmedAt: timestamp("docs_out_confirmed_at"),
+  requiredDocuments: text("required_documents").array().default(sql`ARRAY['identification', 'proof_of_bank']::text[]`), // Default required docs
+  receivedDocuments: text("received_documents").array().default(sql`ARRAY[]::text[]`), // Docs that have been received
   submittedAt: timestamp("submitted_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("referrals_referrer_id_idx").on(table.referrerId),
   index("referrals_business_type_id_idx").on(table.businessTypeId),
   index("referrals_status_idx").on(table.status),
+  index("referrals_deal_stage_idx").on(table.dealStage),
   index("referrals_submitted_at_idx").on(table.submittedAt),
   index("referrals_referrer_status_idx").on(table.referrerId, table.status),
 ]);
@@ -490,6 +498,77 @@ export const partnerReviews = pgTable("partner_reviews", {
   helpfulCount: integer("helpful_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Admin actions audit table for tracking all admin changes
+export const adminActions = pgTable("admin_actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actorId: varchar("actor_id").notNull().references(() => users.id, { onDelete: "cascade" }), // Admin user who performed action
+  entityType: varchar("entity_type").notNull(), // referral, user, commission, etc.
+  entityId: varchar("entity_id").notNull(), // ID of the entity being modified
+  action: varchar("action").notNull(), // create, update, delete, status_change, etc.
+  fieldChanges: jsonb("field_changes"), // JSON of before/after values
+  description: text("description"), // Human-readable description of the action
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("admin_actions_actor_id_idx").on(table.actorId),
+  index("admin_actions_entity_idx").on(table.entityType, table.entityId),
+  index("admin_actions_created_at_idx").on(table.createdAt),
+]);
+
+// Deal stages configuration for workflow management
+export const dealStages = pgTable("deal_stages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  slug: varchar("slug").notNull().unique(),
+  description: text("description"),
+  orderIndex: integer("order_index").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("deal_stages_order_idx").on(table.orderIndex),
+  index("deal_stages_slug_idx").on(table.slug),
+]);
+
+// Document requirements tracking
+export const documentRequirements = pgTable("document_requirements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
+  documentType: varchar("document_type").notNull(), // identification, proof_of_bank, business_registration, etc.
+  isRequired: boolean("is_required").default(true),
+  isReceived: boolean("is_received").default(false),
+  receivedAt: timestamp("received_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("document_requirements_referral_id_idx").on(table.referralId),
+  index("document_requirements_type_idx").on(table.documentType),
+]);
+
+// Enhanced quote management
+export const quotes = pgTable("quotes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
+  version: integer("version").notNull().default(1), // For quote versioning
+  ratesData: jsonb("rates_data").notNull(), // Detailed rate breakdown
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
+  validUntil: timestamp("valid_until"),
+  sentAt: timestamp("sent_at"),
+  viewedAt: timestamp("viewed_at"),
+  approvedAt: timestamp("approved_at"),
+  rejectedAt: timestamp("rejected_at"),
+  status: varchar("status").notNull().default("draft"), // draft, sent, viewed, approved, rejected, expired
+  adminNotes: text("admin_notes"),
+  clientFeedback: text("client_feedback"),
+  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("quotes_referral_id_idx").on(table.referralId),
+  index("quotes_status_idx").on(table.status),
+  index("quotes_created_by_idx").on(table.createdBy),
+]);
 
 // Notifications for user activity
 export const notifications = pgTable("notifications", {
@@ -956,3 +1035,34 @@ export type PartnerReview = typeof partnerReviews.$inferSelect;
 export type InsertPartnerReview = z.infer<typeof insertPartnerReviewSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+// Admin-specific Zod schemas for type safety
+export const insertAdminAction = createInsertSchema(adminActions);
+export const selectAdminAction = adminActions.$inferSelect;
+export type InsertAdminAction = z.infer<typeof insertAdminAction>;
+export type AdminAction = typeof adminActions.$inferSelect;
+
+export const insertDealStage = createInsertSchema(dealStages);
+export const selectDealStage = dealStages.$inferSelect;
+export type InsertDealStage = z.infer<typeof insertDealStage>;
+export type DealStage = typeof dealStages.$inferSelect;
+
+export const insertDocumentRequirement = createInsertSchema(documentRequirements);
+export const selectDocumentRequirement = documentRequirements.$inferSelect;
+export type InsertDocumentRequirement = z.infer<typeof insertDocumentRequirement>;
+export type DocumentRequirement = typeof documentRequirements.$inferSelect;
+
+export const insertQuote = createInsertSchema(quotes);
+export const selectQuote = quotes.$inferSelect;
+export type InsertQuote = z.infer<typeof insertQuote>;
+export type Quote = typeof quotes.$inferSelect;
+
+// Enhanced referral update schema for admin use
+export const adminReferralUpdateSchema = createInsertSchema(referrals).omit({
+  id: true,
+  referrerId: true,
+  submittedAt: true,
+  createdAt: true,
+}).partial();
+
+export type AdminReferralUpdate = z.infer<typeof adminReferralUpdateSchema>;

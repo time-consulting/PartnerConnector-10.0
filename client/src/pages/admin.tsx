@@ -1,1624 +1,897 @@
-import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/toast-disabled";
-import Navigation from "@/components/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@lib/queryClient";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Users, 
-  FileText, 
-  DollarSign, 
-  TrendingUp, 
-  Mail,
-  Edit,
+import { Checkbox } from "@/components/ui/checkbox";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import SideNavigation from "@/components/side-navigation";
+import Navigation from "@/components/navigation";
+import {
+  Search,
+  Filter,
   Eye,
-  Check,
-  X,
-  CreditCard,
-  Plus,
+  Edit,
+  FileText,
+  Send,
   CheckCircle,
-  XCircle,
-  Activity,
-  Zap
+  Clock,
+  AlertCircle,
+  Building,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  DollarSign,
+  Settings,
+  Download,
+  Upload,
+  Users,
+  TrendingUp,
+  RefreshCw
 } from "lucide-react";
-import { isUnauthorizedError } from "@/lib/authUtils";
 
-export default function AdminPortal() {
-  const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const [selectedTab, setSelectedTab] = useState("overview");
+// Quote form schema
+const quoteFormSchema = z.object({
+  totalAmount: z.string().min(1, "Amount is required"),
+  cardRate: z.string().min(1, "Card rate is required"),
+  businessFundingRate: z.string().optional(),
+  adminNotes: z.string().optional(),
+  validUntil: z.string().optional(),
+});
 
-  // Redirect to home if not authenticated or not admin
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-    
-    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have admin privileges to access this area.",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
-      return;
-    }
-  }, [isAuthenticated, isLoading, user, toast]);
+// Document requirements schema
+const documentRequirementsSchema = z.object({
+  requiredDocuments: z.array(z.string()).min(1, "At least one document is required"),
+  notes: z.string().optional(),
+});
 
-  const { data: adminStats } = useQuery({
-    queryKey: ["/api/admin/stats"],
-    enabled: !!(user as any)?.isAdmin,
-    retry: false,
-  });
+// Stage update schema
+const stageUpdateSchema = z.object({
+  stage: z.string().min(1, "Stage is required"),
+  notes: z.string().optional(),
+});
 
-  const { data: allUsers } = useQuery({
-    queryKey: ["/api/admin/users"],
-    enabled: !!(user as any)?.isAdmin && selectedTab === "users",
-    retry: false,
-  });
+export default function AdminDashboard() {
+  const { user, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedReferral, setSelectedReferral] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [showStageModal, setShowStageModal] = useState(false);
 
-  const { data: allReferrals } = useQuery({
-    queryKey: ["/api/admin/referrals"],
-    enabled: !!(user as any)?.isAdmin && selectedTab === "referrals",
-    retry: false,
-  });
-
-  const sendPasswordResetMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return await apiRequest(`/api/admin/users/${userId}/reset-password`, "POST");
-    },
-    onSuccess: () => {
-      toast({
-        title: "Password Reset Sent",
-        description: "Password reset email has been sent to the user.",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to send password reset email.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, data }: { userId: string; data: any }) => {
-      return await apiRequest(`/api/admin/users/${userId}`, "PATCH", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "User Updated",
-        description: "User account has been updated successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to update user account.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateReferralMutation = useMutation({
-    mutationFn: async ({ referralId, data }: { referralId: string; data: any }) => {
-      return await apiRequest(`/api/admin/referrals/${referralId}`, "PATCH", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Referral Updated",
-        description: "Referral has been updated successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/referrals"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to update referral.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const sendQuoteMutation = useMutation({
-    mutationFn: async ({ referralId, quoteData }: { referralId: string; quoteData: any }) => {
-      return await apiRequest(`/api/admin/referrals/${referralId}/send-quote`, "POST", quoteData);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Quote Sent Successfully",
-        description: "The quote has been sent to the customer's portal and they've been notified.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/referrals"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to send quote.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const sendQuoteToCustomer = (referralId: string, quoteData: any) => {
-    sendQuoteMutation.mutate({ referralId, quoteData });
-  };
-
-  // ============ RATES MANAGEMENT ============
-  const { data: rates = [], refetch: refetchRates } = useQuery<any[]>({
-    queryKey: ["/api/admin/rates"],
-    enabled: selectedTab === "rates"
-  });
-
-  const createRateMutation = useMutation({
-    mutationFn: async (rateData: any) => {
-      return await apiRequest("/api/admin/rates", "POST", rateData);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Rate Created",
-        description: "Rate has been created successfully.",
-      });
-      refetchRates();
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to create rate.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateRateMutation = useMutation({
-    mutationFn: async ({ rateId, data }: { rateId: string; data: any }) => {
-      return await apiRequest(`/api/admin/rates/${rateId}`, "PATCH", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Rate Updated",
-        description: "Rate has been updated successfully.",
-      });
-      refetchRates();
-    },
-  });
-
-  // ============ COMMISSION APPROVAL MANAGEMENT ============
-  const { data: commissionApprovals = [], refetch: refetchCommissions } = useQuery<any[]>({
-    queryKey: ["/api/admin/commission-approvals"],
-    enabled: selectedTab === "commissions"
-  });
-
-  const createCommissionApprovalMutation = useMutation({
-    mutationFn: async ({ referralId, actualCommission, adminNotes }: { referralId: string; actualCommission: number; adminNotes?: string }) => {
-      return await apiRequest(`/api/admin/referrals/${referralId}/create-commission-approval`, "POST", {
-        actualCommission,
-        adminNotes
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Commission Approval Created",
-        description: "Commission approval has been sent to the user for approval.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/referrals"] });
-      refetchCommissions();
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized", 
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to create commission approval.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const processPaymentMutation = useMutation({
-    mutationFn: async ({ approvalId, paymentReference }: { approvalId: string; paymentReference?: string }) => {
-      return await apiRequest(`/api/admin/commission-approvals/${approvalId}/process-payment`, "POST", {
-        paymentReference
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Payment Processed",
-        description: "Commission payment has been processed successfully.",
-      });
-      refetchCommissions();
-    },
-  });
-
-  if (isLoading || !isAuthenticated) {
-    return <div>Loading...</div>;
+  // Check if user is admin
+  if (authLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  // Restrict admin access to specific email only
-  if ((user as any)?.email !== 'd.skeats@gmail.com') {
+  if (!user?.isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
-          <p className="text-muted-foreground">You don't have permission to access this area.</p>
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <SideNavigation />
+        <div className="lg:ml-16">
+          <Navigation />
+          <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-red-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Access Denied</h1>
+            <p className="text-gray-600 text-lg">You don't have admin privileges to access this area.</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  const tabs = [
-    { id: "overview", name: "Overview", icon: TrendingUp },
-    { id: "users", name: "Users", icon: Users },
-    { id: "referrals", name: "Referrals", icon: FileText },
-    { id: "commissions", name: "Commissions", icon: CreditCard },
-    { id: "diagnostics", name: "Diagnostics", icon: Activity },
+  // Fetch admin referrals
+  const { data: referralsData, isLoading: referralsLoading } = useQuery({
+    queryKey: ['/api/admin/referrals', { search: searchTerm, status: statusFilter, page: currentPage }],
+    enabled: !!user?.isAdmin,
+  });
+
+  // Fetch admin users
+  const { data: users, isLoading: usersLoading } = useQuery({
+    queryKey: ['/api/admin/users'],
+    enabled: !!user?.isAdmin,
+  });
+
+  // Quote form
+  const quoteForm = useForm<z.infer<typeof quoteFormSchema>>({
+    resolver: zodResolver(quoteFormSchema),
+    defaultValues: {
+      totalAmount: "",
+      cardRate: "1.5",
+      businessFundingRate: "",
+      adminNotes: "",
+      validUntil: "",
+    },
+  });
+
+  // Document requirements form
+  const documentForm = useForm<z.infer<typeof documentRequirementsSchema>>({
+    resolver: zodResolver(documentRequirementsSchema),
+    defaultValues: {
+      requiredDocuments: [],
+      notes: "",
+    },
+  });
+
+  // Stage update form
+  const stageForm = useForm<z.infer<typeof stageUpdateSchema>>({
+    resolver: zodResolver(stageUpdateSchema),
+    defaultValues: {
+      stage: "",
+      notes: "",
+    },
+  });
+
+  // Send quote mutation
+  const sendQuoteMutation = useMutation({
+    mutationFn: async (data: { referralId: string; quoteData: any }) => {
+      return apiRequest(`/api/admin/referrals/${data.referralId}/send-quote`, {
+        method: 'POST',
+        body: JSON.stringify(data.quoteData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+      setShowQuoteModal(false);
+      quoteForm.reset();
+    },
+  });
+
+  // Update document requirements mutation
+  const updateDocumentsMutation = useMutation({
+    mutationFn: async (data: { referralId: string; documentsData: any }) => {
+      return apiRequest(`/api/admin/referrals/${data.referralId}/document-requirements`, {
+        method: 'POST',
+        body: JSON.stringify(data.documentsData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+      setShowDocumentsModal(false);
+      documentForm.reset();
+    },
+  });
+
+  // Update stage mutation
+  const updateStageMutation = useMutation({
+    mutationFn: async (data: { referralId: string; stageData: any }) => {
+      return apiRequest(`/api/admin/referrals/${data.referralId}/stage`, {
+        method: 'PATCH',
+        body: JSON.stringify(data.stageData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+      setShowStageModal(false);
+      stageForm.reset();
+    },
+  });
+
+  // Docs out confirmation mutation
+  const docsOutMutation = useMutation({
+    mutationFn: async (referralId: string) => {
+      return apiRequest(`/api/admin/referrals/${referralId}/docs-out-confirmation`, {
+        method: 'POST',
+        body: JSON.stringify({
+          documentsSent: ['agreement', 'terms'],
+          recipientEmail: selectedReferral?.businessEmail || '',
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+    },
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'quote_sent': return 'bg-blue-100 text-blue-800';
+      case 'quote_approved': return 'bg-green-100 text-green-800';
+      case 'docs_out_confirmation': return 'bg-orange-100 text-orange-800';
+      case 'processing': return 'bg-purple-100 text-purple-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const availableDocuments = [
+    'identification',
+    'proof_of_bank',
+    'business_registration',
+    'vat_certificate',
+    'proof_of_address',
+  ];
+
+  const dealStages = [
+    { value: 'quote_request_received', label: 'Quote Request Received' },
+    { value: 'quote_sent', label: 'Quote Sent' },
+    { value: 'quote_approved', label: 'Quote Approved' },
+    { value: 'docs_out_confirmation', label: 'Docs Out Confirmation' },
+    { value: 'docs_received', label: 'Documents Received' },
+    { value: 'processing', label: 'Processing' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'rejected', label: 'Rejected' },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Admin Portal</h1>
-          <p className="text-muted-foreground mt-2">Manage users, referrals, and system settings</p>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="border-b border-border mb-6">
-          <nav className="-mb-px flex space-x-8">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedTab(tab.id)}
-                  className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
-                    selectedTab === tab.id
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
-                  }`}
-                  data-testid={`tab-${tab.id}`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.name}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        {selectedTab === "overview" && (
-          <div className="space-y-6">
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold" data-testid="stat-total-users">
-                    {(adminStats as any)?.totalUsers || 0}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Referrals</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold" data-testid="stat-total-referrals">
-                    {(adminStats as any)?.totalReferrals || 0}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-orange-600" data-testid="stat-pending-reviews">
-                    {(adminStats as any)?.pendingReferrals || 0}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Commissions</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600" data-testid="stat-total-commissions">
-                    £{(adminStats as any)?.totalCommissions || 0}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {selectedTab === "users" && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">User Management</h2>
-            </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <SideNavigation />
+      <div className="lg:ml-16">
+        <Navigation />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header Section */}
+          <section className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-800 relative overflow-hidden mb-8 rounded-2xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-purple-600/20"></div>
             
-            <div className="grid grid-cols-1 gap-4">
-              {(allUsers as any[])?.map((user: any) => (
-                <Card key={user.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{user.firstName} {user.lastName}</h3>
-                            {user.isAdmin && (
-                              <Badge variant="destructive" className="text-xs">Admin</Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                          <p className="text-xs text-muted-foreground">{user.profession} at {user.company}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" data-testid={`button-edit-user-${user.id}`}>
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Edit User: {user.firstName} {user.lastName}</DialogTitle>
-                            </DialogHeader>
-                            <UserEditForm user={user} onSave={(data) => updateUserMutation.mutate({ userId: user.id, data })} />
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => sendPasswordResetMutation.mutate(user.id)}
-                          disabled={sendPasswordResetMutation.isPending}
-                          data-testid={`button-reset-password-${user.id}`}
-                        >
-                          <Mail className="w-4 h-4 mr-1" />
-                          Reset Password
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {selectedTab === "referrals" && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Referral Management</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4">
-              {(allReferrals as any[])?.map((referral: any) => (
-                <Card key={referral.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{referral.businessName}</h3>
-                          <Badge 
-                            variant={referral.status === "pending" ? "outline" : 
-                                   referral.status === "approved" ? "default" : "destructive"}
-                          >
-                            {referral.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{referral.businessEmail}</p>
-                        <p className="text-sm">Monthly Volume: £{referral.monthlyVolume || "Not specified"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Submitted: {new Date(referral.submittedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" data-testid={`button-view-referral-${referral.id}`}>
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl bg-white dark:bg-gray-900">
-                            <DialogHeader>
-                              <DialogTitle>Referral Details: {referral.businessName}</DialogTitle>
-                            </DialogHeader>
-                            <ReferralDetailsView 
-                              referral={referral} 
-                              onUpdate={(data) => updateReferralMutation.mutate({ referralId: referral.id, data })} 
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              size="sm" 
-                              disabled={referral.status === "quote_sent" || referral.status === "quote_approved"}
-                              data-testid={`button-send-quote-${referral.id}`}
-                            >
-                              <Mail className="w-4 h-4 mr-1" />
-                              Send Quote
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl bg-white dark:bg-gray-900">
-                            <DialogHeader>
-                              <DialogTitle>Send Quote - {referral.businessName}</DialogTitle>
-                            </DialogHeader>
-                            <QuoteForm 
-                              referral={referral} 
-                              onSend={(quoteData) => sendQuoteToCustomer(referral.id, quoteData)} 
-                            />
-                          </DialogContent>
-                        </Dialog>
-
-                        {!referral.actualCommission && (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="secondary" data-testid={`button-set-commission-${referral.id}`}>
-                                <DollarSign className="w-4 h-4 mr-1" />
-                                Set Commission
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-lg bg-white dark:bg-gray-900">
-                              <DialogHeader>
-                                <DialogTitle>Set Actual Commission - {referral.businessName}</DialogTitle>
-                              </DialogHeader>
-                              <CommissionApprovalForm 
-                                referral={referral}
-                                onSubmit={(commissionData) => createCommissionApprovalMutation.mutate({
-                                  referralId: referral.id,
-                                  actualCommission: commissionData.actualCommission,
-                                  adminNotes: commissionData.adminNotes
-                                })}
-                                isSubmitting={createCommissionApprovalMutation.isPending}
-                              />
-                            </DialogContent>
-                          </Dialog>
-                        )}
-
-                        {referral.actualCommission && (
-                          <div className="text-sm text-green-600 font-medium">
-                            Commission Set: £{Number(referral.actualCommission).toLocaleString()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Rates Management Tab */}
-        {selectedTab === "rates" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Rates Management</h2>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add New Rate
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">Admin Dashboard</h1>
+                  <p className="text-white/90 text-lg md:text-xl">Comprehensive submissions portal and deal management</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                    onClick={() => queryClient.invalidateQueries()}
+                    data-testid="button-refresh-data"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh Data
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Rate</DialogTitle>
-                  </DialogHeader>
-                  <NewRateForm onSave={(data) => createRateMutation.mutate(data)} />
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rates.map((rate: any) => (
-                <Card key={rate.id} className="relative">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{rate.name}</CardTitle>
-                        <Badge variant={rate.category === 'payment_processing' ? 'default' : 'secondary'}>
-                          {rate.category.replace('_', ' ').toUpperCase()}
-                        </Badge>
-                      </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Rate</DialogTitle>
-                          </DialogHeader>
-                          <EditRateForm 
-                            rate={rate} 
-                            onSave={(data) => updateRateMutation.mutate({ rateId: rate.id, data })} 
-                          />
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-primary">
-                        {rate.value}%
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {rate.description}
-                      </p>
-                      <div className="text-xs text-muted-foreground">
-                        Type: {rate.rateType}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Commission Approvals Tab */}
-        {selectedTab === "commissions" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Commission Approvals</h2>
-              <div className="text-sm text-muted-foreground">
-                Total Pending: {commissionApprovals.filter((c: any) => c.approvalStatus === 'pending').length}
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="grid grid-cols-1 gap-4">
-              {commissionApprovals.map((approval: any) => (
-                <Card key={approval.id} className="relative">
-                  <CardContent className="pt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                      <div>
-                        <div className="font-medium">{approval.clientBusinessName}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Referral ID: {approval.referralId.slice(0, 8)}...
+          <Tabs defaultValue="submissions" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
+              <TabsTrigger value="submissions" data-testid="tab-submissions">
+                <FileText className="w-4 h-4 mr-2" />
+                Submissions Portal
+              </TabsTrigger>
+              <TabsTrigger value="users" data-testid="tab-users">
+                <Users className="w-4 h-4 mr-2" />
+                User Management
+              </TabsTrigger>
+              <TabsTrigger value="analytics" data-testid="tab-analytics">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="settings" data-testid="tab-settings">
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="submissions">
+              <div className="space-y-6">
+                {/* Search and Filter */}
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <Input
+                            placeholder="Search referrals by business name, email, or notes..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-12 h-12 text-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                            data-testid="input-search-admin-referrals"
+                          />
                         </div>
                       </div>
-                      
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          £{Number(approval.commissionAmount).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Commission</div>
-                      </div>
-
-                      <div className="text-center">
-                        <Badge 
-                          variant={
-                            approval.approvalStatus === 'approved' ? 'default' :
-                            approval.approvalStatus === 'rejected' ? 'destructive' : 'secondary'
-                          }
-                          className="mb-2"
-                        >
-                          {approval.approvalStatus.toUpperCase()}
-                        </Badge>
-                        {approval.paymentStatus && (
-                          <div className="text-xs">
-                            Payment: {approval.paymentStatus}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="text-right">
-                        {approval.approvalStatus === 'approved' && approval.paymentStatus === 'pending' && (
-                          <Button
-                            onClick={() => processPaymentMutation.mutate({ approvalId: approval.id })}
-                            disabled={processPaymentMutation.isPending}
-                            className="flex items-center gap-2"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            Process Payment
-                          </Button>
-                        )}
-                        {approval.paymentStatus === 'completed' && (
-                          <div className="text-sm text-green-600">
-                            ✓ Paid: {approval.paymentReference}
-                          </div>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <Filter className="w-5 h-5 text-gray-400" />
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="w-48 h-12 border-gray-200" data-testid="select-status-filter">
+                            <SelectValue placeholder="Filter by status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="submitted">Submitted</SelectItem>
+                            <SelectItem value="quote_sent">Quote Sent</SelectItem>
+                            <SelectItem value="quote_approved">Quote Approved</SelectItem>
+                            <SelectItem value="docs_out_confirmation">Docs Out</SelectItem>
+                            <SelectItem value="processing">Processing</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    
-                    {approval.adminNotes && (
-                      <div className="mt-4 pt-4 border-t">
-                        <div className="text-xs text-muted-foreground">Admin Notes:</div>
-                        <div className="text-sm">{approval.adminNotes}</div>
+                  </CardContent>
+                </Card>
+
+                {/* Referrals List */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b">
+                    <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                      <Building className="w-6 h-6 text-blue-600" />
+                      Submissions Portal ({referralsData?.total || 0} deals)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {referralsLoading ? (
+                      <div className="space-y-4 p-6">
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i} className="animate-pulse border-b border-gray-100 p-6">
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-2">
+                                <div className="h-6 bg-gray-200 rounded w-64"></div>
+                                <div className="h-4 bg-gray-200 rounded w-48"></div>
+                                <div className="h-4 bg-gray-200 rounded w-32"></div>
+                              </div>
+                              <div className="flex gap-2">
+                                <div className="h-8 bg-gray-200 rounded w-20"></div>
+                                <div className="h-8 bg-gray-200 rounded w-24"></div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : referralsData?.referrals?.length > 0 ? (
+                      <div className="space-y-1">
+                        {referralsData.referrals.map((referral: any, index: number) => (
+                          <div
+                            key={referral.id}
+                            className={`p-6 hover:bg-blue-50/50 transition-all duration-200 border-l-4 ${
+                              referral.status === 'completed' ? 'border-l-green-500 bg-green-50/30' :
+                              referral.status === 'processing' ? 'border-l-orange-500 bg-orange-50/30' :
+                              referral.status === 'quote_sent' ? 'border-l-blue-500 bg-blue-50/30' :
+                              'border-l-gray-300'
+                            } ${index !== referralsData.referrals.length - 1 ? 'border-b border-gray-100' : ''}`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
+                                  <Badge className={`${getStatusColor(referral.status)} border-0 font-medium px-3 py-1`}>
+                                    {referral.status.replace('_', ' ').toUpperCase()}
+                                  </Badge>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <Mail className="w-4 h-4" />
+                                    <span className="text-sm">{referral.businessEmail}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <Phone className="w-4 h-4" />
+                                    <span className="text-sm">{referral.businessPhone || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <Calendar className="w-4 h-4" />
+                                    <span className="text-sm">
+                                      {new Date(referral.submittedAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {referral.estimatedCommission && (
+                                  <div className="flex items-center gap-2 bg-green-100 text-green-700 rounded-lg px-3 py-1 font-medium inline-flex">
+                                    <DollarSign className="w-4 h-4" />
+                                    £{referral.estimatedCommission} Commission
+                                  </div>
+                                )}
+
+                                {referral.adminNotes && (
+                                  <div className="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                                    <p className="text-sm text-gray-700"><strong>Admin Notes:</strong> {referral.adminNotes}</p>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex flex-col gap-2 ml-6">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedReferral(referral);
+                                    setShowQuoteModal(true);
+                                  }}
+                                  className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                                  data-testid={`button-send-quote-${referral.id}`}
+                                >
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Send Quote
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => docsOutMutation.mutate(referral.id)}
+                                  disabled={docsOutMutation.isPending}
+                                  className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
+                                  data-testid={`button-docs-out-${referral.id}`}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Docs Out
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedReferral(referral);
+                                    setShowDocumentsModal(true);
+                                  }}
+                                  className="bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+                                  data-testid={`button-document-requirements-${referral.id}`}
+                                >
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Documents
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedReferral(referral);
+                                    setShowStageModal(true);
+                                  }}
+                                  className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                                  data-testid={`button-edit-stage-${referral.id}`}
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit Stage
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16 px-6">
+                        <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                          <Building className="w-10 h-10 text-blue-600" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-3">No submissions found</h3>
+                        <p className="text-gray-600 text-lg">
+                          {searchTerm || statusFilter !== 'all' 
+                            ? "Try adjusting your search or filter criteria"
+                            : "No referral submissions have been made yet"
+                          }
+                        </p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
-              ))}
-            </div>
 
-            {commissionApprovals.length === 0 && (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <div className="text-muted-foreground">No commission approvals found</div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Diagnostics Tab */}
-        {selectedTab === "diagnostics" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">System Diagnostics</h2>
-              <Button 
-                onClick={() => window.open('/admin/diagnostics', '_blank')}
-                className="flex items-center gap-2"
-                data-testid="open-diagnostics"
-              >
-                <Activity className="w-4 h-4" />
-                Open Full Diagnostics
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="w-5 h-5" />
-                    Request Monitoring
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Monitor HTTP requests, response times, and error rates
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => window.open('/admin/diagnostics?tab=requests', '_blank')}
-                    className="w-full"
-                    data-testid="view-requests"
-                  >
-                    View Request Logs
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Audit Trail
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Track user actions and system changes for compliance
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => window.open('/admin/diagnostics?tab=audits', '_blank')}
-                    className="w-full"
-                    data-testid="view-audits"
-                  >
-                    View Audit Logs
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="w-5 h-5" />
-                    Webhooks
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Monitor webhook deliveries and failures
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => window.open('/admin/diagnostics?tab=webhooks', '_blank')}
-                    className="w-full"
-                    data-testid="view-webhooks"
-                  >
-                    View Webhook Logs
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Health Check</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Application Status: Healthy</span>
+                {/* Pagination */}
+                {referralsData?.pagination && referralsData.pagination.totalPages > 1 && (
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      data-testid="button-previous-page"
+                    >
+                      Previous
+                    </Button>
+                    <span className="flex items-center px-4 py-2 text-sm text-gray-600">
+                      Page {currentPage} of {referralsData.pagination.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === referralsData.pagination.totalPages}
+                      data-testid="button-next-page"
+                    >
+                      Next
+                    </Button>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Database: Connected</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <span className="text-sm">Monitoring: Active</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ============ NEW FORM COMPONENTS ============
-
-function NewRateForm({ onSave }: { onSave: (data: any) => void }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "payment_processing",
-    rateType: "percentage",
-    value: "",
-    description: "",
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Rate Name</Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Headline Debit Rate"
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="category">Category</Label>
-        <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="payment_processing">Payment Processing</SelectItem>
-            <SelectItem value="business_funding">Business Funding</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="rateType">Rate Type</Label>
-        <Select value={formData.rateType} onValueChange={(value) => setFormData({ ...formData, rateType: value })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="percentage">Percentage</SelectItem>
-            <SelectItem value="fixed">Fixed Amount</SelectItem>
-            <SelectItem value="tiered">Tiered</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="value">Rate Value</Label>
-        <Input
-          id="value"
-          value={formData.value}
-          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-          placeholder="e.g., 1.5 (for percentage rates)"
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Brief description of this rate..."
-          rows={3}
-        />
-      </div>
-
-      <Button type="submit" className="w-full">Create Rate</Button>
-    </form>
-  );
-}
-
-function EditRateForm({ rate, onSave }: { rate: any; onSave: (data: any) => void }) {
-  const [formData, setFormData] = useState({
-    name: rate.name || "",
-    category: rate.category || "payment_processing",
-    rateType: rate.rateType || "percentage",
-    value: rate.value || "",
-    description: rate.description || "",
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Rate Name</Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="category">Category</Label>
-        <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="payment_processing">Payment Processing</SelectItem>
-            <SelectItem value="business_funding">Business Funding</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="rateType">Rate Type</Label>
-        <Select value={formData.rateType} onValueChange={(value) => setFormData({ ...formData, rateType: value })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="percentage">Percentage</SelectItem>
-            <SelectItem value="fixed">Fixed Amount</SelectItem>
-            <SelectItem value="tiered">Tiered</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="value">Rate Value</Label>
-        <Input
-          id="value"
-          value={formData.value}
-          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          rows={3}
-        />
-      </div>
-
-      <Button type="submit" className="w-full">Update Rate</Button>
-    </form>
-  );
-}
-
-// ============ COMMISSION APPROVAL FORM ============
-
-function CommissionApprovalForm({ referral, onSubmit, isSubmitting }: { referral: any; onSubmit: (data: any) => void; isSubmitting: boolean }) {
-  const [formData, setFormData] = useState({
-    actualCommission: "",
-    adminNotes: "",
-    // Payment processing rates
-    debitRate: "1.5",
-    creditRate: "2.1", 
-    corporateRate: "2.3",
-    internationalRate: "2.8",
-    amexRate: "3.2",
-    secureTransactionFee: "1.5", // in pence
-    platformFee: "10",
-    fasterSettlement: false,
-    terminalFee: "15"
-  });
-  
-  const [activeTab, setActiveTab] = useState("savings");
-  const [showBreakdown, setShowBreakdown] = useState(false);
-
-  const monthlyVolume = parseFloat(referral.monthlyVolume?.replace(/[£,]/g, '') || "0");
-  const commission = parseFloat(formData.actualCommission || "0");
-
-  // Calculate estimated monthly savings for client
-  const calculateSavings = () => {
-    if (monthlyVolume <= 0) return { totalSavings: 0, breakdown: {} };
-
-    // Assume typical competitor rates are higher
-    const currentRates = {
-      debit: 1.8, // vs our 1.5%
-      credit: 2.5, // vs our 2.1%  
-      corporate: 2.8, // vs our 2.3%
-      platformFee: 25, // vs our £10
-      terminalFee: 25 // vs our £15
-    };
-
-    const ourRates = {
-      debit: parseFloat(formData.debitRate),
-      credit: parseFloat(formData.creditRate),
-      corporate: parseFloat(formData.corporateRate),
-      platformFee: parseFloat(formData.platformFee),
-      terminalFee: parseFloat(formData.terminalFee)
-    };
-
-    // Estimate transaction breakdown (60% debit, 30% credit, 10% corporate)
-    const debitVolume = monthlyVolume * 0.6;
-    const creditVolume = monthlyVolume * 0.3;
-    const corporateVolume = monthlyVolume * 0.1;
-
-    const debitSavings = (debitVolume * (currentRates.debit - ourRates.debit)) / 100;
-    const creditSavings = (creditVolume * (currentRates.credit - ourRates.credit)) / 100;
-    const corporateSavings = (corporateVolume * (currentRates.corporate - ourRates.corporate)) / 100;
-    const platformSavings = currentRates.platformFee - ourRates.platformFee;
-    const terminalSavings = currentRates.terminalFee - ourRates.terminalFee;
-
-    const totalSavings = debitSavings + creditSavings + corporateSavings + platformSavings + terminalSavings;
-
-    return {
-      totalSavings,
-      breakdown: {
-        debitSavings,
-        creditSavings, 
-        corporateSavings,
-        platformSavings,
-        terminalSavings,
-        debitVolume,
-        creditVolume,
-        corporateVolume
-      }
-    };
-  };
-
-  const savingsData = calculateSavings();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      actualCommission: parseFloat(formData.actualCommission),
-      adminNotes: formData.adminNotes,
-      ratesData: {
-        debitRate: formData.debitRate,
-        creditRate: formData.creditRate,
-        corporateRate: formData.corporateRate,
-        internationalRate: formData.internationalRate,
-        amexRate: formData.amexRate,
-        secureTransactionFee: formData.secureTransactionFee,
-        platformFee: formData.platformFee,
-        fasterSettlement: formData.fasterSettlement,
-        terminalFee: formData.terminalFee,
-        estimatedMonthlySavings: savingsData.totalSavings
-      }
-    });
-  };
-
-  return (
-    <div className="space-y-4">
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex">
-          <button
-            onClick={() => setActiveTab("savings")}
-            className={`mr-8 py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "savings" 
-                ? "border-green-500 text-green-600 bg-green-50" 
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            💰 Client Savings
-          </button>
-          <button
-            onClick={() => setActiveTab("rates")}
-            className={`mr-8 py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "rates" 
-                ? "border-blue-500 text-blue-600" 
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            📊 Rates Setup
-          </button>
-        </nav>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {activeTab === "savings" && (
-          <div className="space-y-4">
-            {/* Highlighted Savings Display */}
-            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
-              <div className="text-center">
-                <h3 className="text-2xl font-bold text-green-800 mb-2">
-                  Monthly Savings: £{savingsData.totalSavings.toFixed(2)}
-                </h3>
-                <p className="text-green-700">
-                  Annual Savings: £{(savingsData.totalSavings * 12).toFixed(2)}
-                </p>
-                <p className="text-sm text-green-600 mt-2">
-                  Based on £{monthlyVolume.toLocaleString()} monthly volume
-                </p>
+                )}
               </div>
-            </div>
+            </TabsContent>
 
-            {/* Commission Input */}
-            <div>
-              <Label htmlFor="actualCommission">Actual Commission Amount (£)</Label>
-              <Input
-                id="actualCommission"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.actualCommission}
-                onChange={(e) => setFormData({ ...formData, actualCommission: e.target.value })}
-                placeholder="e.g., 1500.00"
-                required
-              />
-            </div>
-
-            {/* Expandable Breakdown */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowBreakdown(!showBreakdown)}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                {showBreakdown ? "Hide" : "View"} Detailed Breakdown
-              </button>
-              
-              {showBreakdown && (
-                <div className="mt-2 p-4 bg-gray-50 rounded-lg border text-xs text-gray-600">
-                  <p className="text-xs text-gray-500 italic mb-3">View Only - Internal Use</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <strong>Transaction Savings:</strong><br />
-                      Debit (60%): £{savingsData.breakdown.debitSavings?.toFixed(2)}<br />
-                      Credit (30%): £{savingsData.breakdown.creditSavings?.toFixed(2)}<br />
-                      Corporate (10%): £{savingsData.breakdown.corporateSavings?.toFixed(2)}
+            <TabsContent value="users">
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <Users className="w-6 h-6 text-blue-600" />
+                    User Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {usersLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="animate-pulse border rounded-lg p-4">
+                          <div className="flex justify-between items-center">
+                            <div className="space-y-2">
+                              <div className="h-4 bg-gray-200 rounded w-48"></div>
+                              <div className="h-3 bg-gray-200 rounded w-32"></div>
+                            </div>
+                            <div className="h-6 bg-gray-200 rounded w-20"></div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <strong>Fixed Savings:</strong><br />
-                      Platform Fee: £{savingsData.breakdown.platformSavings?.toFixed(2)}<br />
-                      Terminal Fee: £{savingsData.breakdown.terminalSavings?.toFixed(2)}
+                  ) : (
+                    <div className="space-y-4">
+                      {users?.map((user: any) => (
+                        <div key={user.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h3 className="font-semibold">{user.firstName} {user.lastName}</h3>
+                              <p className="text-sm text-gray-600">{user.email}</p>
+                              <p className="text-xs text-gray-500">
+                                Partner ID: {user.partnerId || 'Not assigned'}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {user.isAdmin && (
+                                <Badge className="bg-red-100 text-red-800">Admin</Badge>
+                              )}
+                              <Badge className="bg-blue-100 text-blue-800">
+                                Level {user.partnerLevel || 1}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <TrendingUp className="w-6 h-6 text-blue-600" />
+                    Analytics Dashboard
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-blue-50 rounded-lg p-6">
+                      <h3 className="font-semibold text-blue-900 mb-2">Total Submissions</h3>
+                      <p className="text-3xl font-bold text-blue-700">
+                        {referralsData?.total || 0}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-6">
+                      <h3 className="font-semibold text-green-900 mb-2">Active Users</h3>
+                      <p className="text-3xl font-bold text-green-700">
+                        {users?.length || 0}
+                      </p>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-6">
+                      <h3 className="font-semibold text-purple-900 mb-2">Conversion Rate</h3>
+                      <p className="text-3xl font-bold text-purple-700">
+                        {referralsData?.total > 0 
+                          ? Math.round((referralsData.referrals?.filter((r: any) => r.status === 'completed').length / referralsData.total) * 100)
+                          : 0
+                        }%
+                      </p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <Settings className="w-6 h-6 text-blue-600" />
+                    System Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="font-semibold mb-4">Deal Stage Configuration</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {dealStages.map((stage) => (
+                          <div key={stage.value} className="border rounded-lg p-4">
+                            <h4 className="font-medium">{stage.label}</h4>
+                            <p className="text-sm text-gray-600">Stage: {stage.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Quote Modal */}
+        <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
+          <DialogContent className="sm:max-w-[600px]" data-testid="modal-send-quote">
+            <DialogHeader>
+              <DialogTitle>Send Quote - {selectedReferral?.businessName}</DialogTitle>
+            </DialogHeader>
+            <Form {...quoteForm}>
+              <form onSubmit={quoteForm.handleSubmit((data) => {
+                sendQuoteMutation.mutate({
+                  referralId: selectedReferral.id,
+                  quoteData: data
+                });
+              })} className="space-y-4">
+                <FormField
+                  control={quoteForm.control}
+                  name="totalAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Total Quote Amount (£)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="e.g., 1500" data-testid="input-quote-amount" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={quoteForm.control}
+                  name="cardRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Card Processing Rate (%)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="1.5" data-testid="input-card-rate" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={quoteForm.control}
+                  name="businessFundingRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Funding Rate (%) - Optional</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="5.9" data-testid="input-funding-rate" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={quoteForm.control}
+                  name="adminNotes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Admin Notes</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="Internal notes about this quote..."
+                          data-testid="textarea-admin-notes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowQuoteModal(false)}
+                    data-testid="button-cancel-quote"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={sendQuoteMutation.isPending}
+                    data-testid="button-send-quote"
+                  >
+                    {sendQuoteMutation.isPending ? 'Sending...' : 'Send Quote'}
+                  </Button>
                 </div>
-              )}
-            </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
 
-            <div>
-              <Label htmlFor="adminNotes">Admin Notes (Optional)</Label>
-              <Textarea
-                id="adminNotes"
-                value={formData.adminNotes}
-                onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
-                placeholder="Any additional notes for the user..."
-                rows={3}
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === "rates" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Debit Rate (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.debitRate}
-                  onChange={(e) => setFormData({ ...formData, debitRate: e.target.value })}
+        {/* Document Requirements Modal */}
+        <Dialog open={showDocumentsModal} onOpenChange={setShowDocumentsModal}>
+          <DialogContent className="sm:max-w-[500px]" data-testid="modal-document-requirements">
+            <DialogHeader>
+              <DialogTitle>Document Requirements - {selectedReferral?.businessName}</DialogTitle>
+            </DialogHeader>
+            <Form {...documentForm}>
+              <form onSubmit={documentForm.handleSubmit((data) => {
+                updateDocumentsMutation.mutate({
+                  referralId: selectedReferral.id,
+                  documentsData: data
+                });
+              })} className="space-y-4">
+                <FormField
+                  control={documentForm.control}
+                  name="requiredDocuments"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Required Documents</FormLabel>
+                      <div className="space-y-2">
+                        {availableDocuments.map((doc) => (
+                          <FormField
+                            key={doc}
+                            control={documentForm.control}
+                            name="requiredDocuments"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={doc}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(doc)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, doc])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== doc
+                                              )
+                                            )
+                                      }}
+                                      data-testid={`checkbox-document-${doc}`}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal capitalize">
+                                    {doc.replace('_', ' ')}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label>Credit Rate (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.creditRate}
-                  onChange={(e) => setFormData({ ...formData, creditRate: e.target.value })}
+
+                <FormField
+                  control={documentForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Additional Notes</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="Any additional document requirements or notes..."
+                          data-testid="textarea-document-notes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label>Corporate Rate (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.corporateRate}
-                  onChange={(e) => setFormData({ ...formData, corporateRate: e.target.value })}
+
+                <div className="flex justify-end gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowDocumentsModal(false)}
+                    data-testid="button-cancel-documents"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateDocumentsMutation.isPending}
+                    data-testid="button-update-documents"
+                  >
+                    {updateDocumentsMutation.isPending ? 'Updating...' : 'Update Requirements'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Stage Update Modal */}
+        <Dialog open={showStageModal} onOpenChange={setShowStageModal}>
+          <DialogContent className="sm:max-w-[500px]" data-testid="modal-edit-stage">
+            <DialogHeader>
+              <DialogTitle>Edit Deal Stage - {selectedReferral?.businessName}</DialogTitle>
+            </DialogHeader>
+            <Form {...stageForm}>
+              <form onSubmit={stageForm.handleSubmit((data) => {
+                updateStageMutation.mutate({
+                  referralId: selectedReferral.id,
+                  stageData: data
+                });
+              })} className="space-y-4">
+                <FormField
+                  control={stageForm.control}
+                  name="stage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Deal Stage</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-deal-stage">
+                            <SelectValue placeholder="Select a stage" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {dealStages.map((stage) => (
+                            <SelectItem key={stage.value} value={stage.value}>
+                              {stage.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label>International Rate (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.internationalRate}
-                  onChange={(e) => setFormData({ ...formData, internationalRate: e.target.value })}
+
+                <FormField
+                  control={stageForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stage Change Notes</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="Reason for stage change or additional notes..."
+                          data-testid="textarea-stage-notes"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label>AMEX Rate (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.amexRate}
-                  onChange={(e) => setFormData({ ...formData, amexRate: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Secure Transaction Fee (pence)</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="5"
-                  value={formData.secureTransactionFee}
-                  onChange={(e) => setFormData({ ...formData, secureTransactionFee: e.target.value })}
-                  placeholder="e.g., 1.5"
-                />
-              </div>
-              <div>
-                <Label>Platform Fee (£)</Label>
-                <Select 
-                  value={formData.platformFee} 
-                  onValueChange={(value) => setFormData({ ...formData, platformFee: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">£0</SelectItem>
-                    <SelectItem value="10">£10</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Terminal Fee - Dojo Go (£)</Label>
-                <Input
-                  type="number"
-                  value={formData.terminalFee}
-                  onChange={(e) => setFormData({ ...formData, terminalFee: e.target.value })}
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="fasterSettlement"
-                checked={formData.fasterSettlement}
-                onChange={(e) => setFormData({ ...formData, fasterSettlement: e.target.checked })}
-              />
-              <Label htmlFor="fasterSettlement">Faster Settlement (+£10/month)</Label>
-            </div>
-          </div>
-        )}
 
-        <div className="flex gap-3 pt-4">
-          <Button type="submit" disabled={isSubmitting} className="flex-1">
-            {isSubmitting ? "Updating..." : "Update Commission"}
-          </Button>
-          <Button type="button" variant="outline" className="flex-1">
-            Send Quote to Client
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-function UserEditForm({ user, onSave }: { user: any; onSave: (data: any) => void }) {
-  const [formData, setFormData] = useState({
-    firstName: user.firstName || "",
-    lastName: user.lastName || "",
-    email: user.email || "",
-    profession: user.profession || "",
-    company: user.company || "",
-    isAdmin: user.isAdmin || false,
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="firstName">First Name</Label>
-          <Input
-            id="firstName"
-            value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="lastName">Last Name</Label>
-          <Input
-            id="lastName"
-            value={formData.lastName}
-            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-          />
-        </div>
+                <div className="flex justify-end gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowStageModal(false)}
+                    data-testid="button-cancel-stage"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateStageMutation.isPending}
+                    data-testid="button-update-stage"
+                  >
+                    {updateStageMutation.isPending ? 'Updating...' : 'Update Stage'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
-      
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-        />
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="profession">Profession</Label>
-          <Input
-            id="profession"
-            value={formData.profession}
-            onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="company">Company</Label>
-          <Input
-            id="company"
-            value={formData.company}
-            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-          />
-        </div>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          id="isAdmin"
-          checked={formData.isAdmin}
-          onChange={(e) => setFormData({ ...formData, isAdmin: e.target.checked })}
-        />
-        <Label htmlFor="isAdmin">Admin Access</Label>
-      </div>
-      
-      <Button type="submit" className="w-full">Save Changes</Button>
-    </form>
-  );
-}
-
-function QuoteForm({ referral, onSend }: { referral: any; onSend: (quoteData: any) => void }) {
-  const [formData, setFormData] = useState({
-    debitCardRate: "",
-    creditCardRate: "",
-    corporateCardRate: "",
-    securityFee: "",
-    platformFee: "",
-    terminalCost: "",
-    notes: ""
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSend(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="debitCardRate">Debit Card Rate (%)</Label>
-          <Input
-            id="debitCardRate"
-            placeholder="e.g., 0.15"
-            value={formData.debitCardRate}
-            onChange={(e) => setFormData({ ...formData, debitCardRate: e.target.value })}
-            required
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="creditCardRate">Credit Card Rate (%)</Label>
-          <Input
-            id="creditCardRate"
-            placeholder="e.g., 0.95"
-            value={formData.creditCardRate}
-            onChange={(e) => setFormData({ ...formData, creditCardRate: e.target.value })}
-            required
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="corporateCardRate">Corporate Card Rate (%)</Label>
-          <Input
-            id="corporateCardRate"
-            placeholder="e.g., 1.25"
-            value={formData.corporateCardRate}
-            onChange={(e) => setFormData({ ...formData, corporateCardRate: e.target.value })}
-            required
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="securityFee">Security Fee (£)</Label>
-          <Input
-            id="securityFee"
-            placeholder="e.g., 9.95"
-            value={formData.securityFee}
-            onChange={(e) => setFormData({ ...formData, securityFee: e.target.value })}
-            required
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="platformFee">Platform Fee (£)</Label>
-          <Input
-            id="platformFee"
-            placeholder="e.g., 15.00"
-            value={formData.platformFee}
-            onChange={(e) => setFormData({ ...formData, platformFee: e.target.value })}
-            required
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="terminalCost">Terminal Cost (£)</Label>
-          <Input
-            id="terminalCost"
-            placeholder="e.g., 25.00"
-            value={formData.terminalCost}
-            onChange={(e) => setFormData({ ...formData, terminalCost: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="notes">Additional Notes</Label>
-        <Textarea
-          id="notes"
-          placeholder="Any additional information or special terms..."
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          rows={3}
-        />
-      </div>
-      
-      <Button type="submit" className="w-full">Send Quote to Customer</Button>
-    </form>
-  );
-}
-
-function ReferralDetailsView({ referral, onUpdate }: { referral: any; onUpdate: (data: any) => void }) {
-  const [formData, setFormData] = useState({
-    status: referral.status,
-    estimatedCommission: referral.estimatedCommission || "",
-    actualCommission: referral.actualCommission || "",
-    adminNotes: referral.adminNotes || "",
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onUpdate(formData);
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Business Details */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Business Name</Label>
-          <p className="text-sm text-muted-foreground">{referral.businessName}</p>
-        </div>
-        <div>
-          <Label>Business Email</Label>
-          <p className="text-sm text-muted-foreground">{referral.businessEmail}</p>
-        </div>
-        <div>
-          <Label>Business Phone</Label>
-          <p className="text-sm text-muted-foreground">{referral.businessPhone || "Not provided"}</p>
-        </div>
-        <div>
-          <Label>Monthly Volume</Label>
-          <p className="text-sm text-muted-foreground">£{referral.monthlyVolume || "Not specified"}</p>
-        </div>
-      </div>
-      
-      {referral.businessAddress && (
-        <div>
-          <Label>Business Address</Label>
-          <p className="text-sm text-muted-foreground">{referral.businessAddress}</p>
-        </div>
-      )}
-      
-      {referral.notes && (
-        <div>
-          <Label>Referrer Notes</Label>
-          <p className="text-sm text-muted-foreground">{referral.notes}</p>
-        </div>
-      )}
-
-      {/* Admin Update Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 border-t pt-4">
-        <h4 className="font-semibold">Admin Actions</h4>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="quoted">Quoted</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="estimatedCommission">Estimated Commission (£)</Label>
-            <Input
-              id="estimatedCommission"
-              type="number"
-              step="0.01"
-              value={formData.estimatedCommission}
-              onChange={(e) => setFormData({ ...formData, estimatedCommission: e.target.value })}
-            />
-          </div>
-        </div>
-        
-        <div>
-          <Label htmlFor="actualCommission">Actual Commission (£)</Label>
-          <Input
-            id="actualCommission"
-            type="number"
-            step="0.01"
-            value={formData.actualCommission}
-            onChange={(e) => setFormData({ ...formData, actualCommission: e.target.value })}
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="adminNotes">Admin Notes</Label>
-          <Textarea
-            id="adminNotes"
-            rows={3}
-            value={formData.adminNotes}
-            onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
-            placeholder="Internal notes about this referral..."
-          />
-        </div>
-        
-        <Button type="submit" className="w-full">Update Referral</Button>
-      </form>
     </div>
   );
 }

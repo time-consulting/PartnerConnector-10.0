@@ -7,6 +7,7 @@ import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
 import multer from "multer";
 import { requestIdMiddleware, loggingMiddleware, errorHandlingMiddleware } from "./middleware/requestId";
+import { requireAdmin, auditAdminAction } from "./middleware/adminAuth";
 import { healthzHandler, readyzHandler, metricsHandler } from "./health";
 import { logAudit } from "./logger";
 
@@ -692,10 +693,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/referrals', async (req: any, res) => {
+  // Enhanced admin referrals list with search and filtering
+  app.get('/api/admin/referrals', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const referrals = await storage.getAllReferrals();
-      res.json(referrals);
+      const { 
+        search, 
+        status, 
+        stage,
+        page = 1, 
+        limit = 50,
+        sortBy = 'submittedAt',
+        sortOrder = 'desc' 
+      } = req.query;
+
+      let referrals = await storage.getAllReferrals();
+      
+      // Apply search filter
+      if (search) {
+        const searchTerm = search.toString().toLowerCase();
+        referrals = referrals.filter((r: any) => 
+          r.businessName?.toLowerCase().includes(searchTerm) ||
+          r.businessEmail?.toLowerCase().includes(searchTerm) ||
+          r.notes?.toLowerCase().includes(searchTerm) ||
+          r.adminNotes?.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // Apply status filter
+      if (status && status !== 'all') {
+        referrals = referrals.filter((r: any) => r.status === status);
+      }
+
+      // Apply pagination
+      const pageNum = parseInt(page.toString());
+      const limitNum = parseInt(limit.toString());
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = startIndex + limitNum;
+
+      // Sort referrals
+      referrals.sort((a: any, b: any) => {
+        const aVal = a[sortBy.toString()];
+        const bVal = b[sortBy.toString()];
+        
+        if (sortOrder === 'asc') {
+          return aVal > bVal ? 1 : -1;
+        } else {
+          return aVal < bVal ? 1 : -1;
+        }
+      });
+
+      const paginatedReferrals = referrals.slice(startIndex, endIndex);
+
+      res.json({
+        referrals: paginatedReferrals,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: referrals.length,
+          totalPages: Math.ceil(referrals.length / limitNum)
+        },
+        filters: {
+          search: search || '',
+          status: status || 'all',
+          stage: stage || 'all'
+        }
+      });
     } catch (error) {
       console.error("Error fetching all referrals:", error);
       res.status(500).json({ message: "Failed to fetch referrals" });
@@ -715,21 +777,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/referrals/:referralId', async (req: any, res) => {
+  // Enhanced admin referral update with audit trail
+  app.patch('/api/admin/referrals/:referralId', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const updateData = req.body;
       
-      const referral = await storage.updateReferral(referralId, updateData);
-      res.json(referral);
+      // Get current referral for audit trail
+      const allReferrals = await storage.getAllReferrals();
+      const currentReferral = allReferrals.find((r: any) => r.id === referralId);
+      
+      if (!currentReferral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Add admin audit info
+      const auditInfo = {
+        updatedBy: req.user.claims.email,
+        updatedAt: new Date(),
+        previousValues: {
+          status: currentReferral.status,
+          estimatedCommission: currentReferral.estimatedCommission,
+          actualCommission: currentReferral.actualCommission
+        }
+      };
+
+      // Append audit info to admin notes
+      const adminAuditNote = `\n[${new Date().toLocaleString()}] Updated by admin ${req.user.claims.email}`;
+      const updatedAdminNotes = (currentReferral.adminNotes || '') + adminAuditNote;
+
+      const referral = await storage.updateReferral(referralId, {
+        ...updateData,
+        adminNotes: updatedAdminNotes,
+        updatedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        referral,
+        auditInfo
+      });
     } catch (error) {
       console.error("Error updating referral:", error);
       res.status(500).json({ message: "Failed to update referral" });
     }
   });
 
-  // Admin send quote to customer
-  app.post('/api/admin/referrals/:referralId/send-quote', async (req: any, res) => {
+  // Admin referrer reassignment
+  app.post('/api/admin/referrals/:referralId/reassign', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { newReferrerId, reason } = req.body;
+
+      // Verify new referrer exists
+      const newReferrer = await storage.getUser(newReferrerId);
+      if (!newReferrer) {
+        return res.status(404).json({ message: "New referrer not found" });
+      }
+
+      // Get current referral
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      const auditNote = `\n[${new Date().toLocaleString()}] Referral reassigned from ${referral.referrerId} to ${newReferrerId} by admin ${req.user.claims.email}. Reason: ${reason}`;
+      
+      await storage.updateReferral(referralId, {
+        referrerId: newReferrerId,
+        adminNotes: (referral.adminNotes || '') + auditNote,
+        updatedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: "Referral reassigned successfully",
+        previousReferrer: referral.referrerId,
+        newReferrer: newReferrerId,
+        reason
+      });
+    } catch (error) {
+      console.error("Error reassigning referral:", error);
+      res.status(500).json({ message: "Failed to reassign referral" });
+    }
+  });
+
+  // Enhanced admin quote management
+  app.post('/api/admin/referrals/:referralId/send-quote', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const quoteData = req.body;
@@ -742,19 +877,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Referral not found" });
       }
 
-      // Update referral status to quote_sent
-      await storage.updateReferralStatus(referralId, 'quote_sent');
+      // Update referral with quote information
+      await storage.updateReferral(referralId, {
+        status: 'quote_sent',
+        quoteAmount: quoteData.totalAmount,
+        quoteGenerated: true,
+        adminNotes: quoteData.adminNotes || '',
+        updatedAt: new Date()
+      });
       
-      // Store quote data (you may want to create a separate quotes table)
-      console.log('Quote sent for referral:', referralId, quoteData);
+      // Log admin action
+      console.log('Quote sent by admin for referral:', referralId, {
+        admin: req.user.claims.email,
+        quoteAmount: quoteData.totalAmount,
+        rates: quoteData.rates
+      });
       
       res.json({ 
         success: true,
-        message: "Quote sent to customer successfully" 
+        message: "Quote sent to customer successfully",
+        quoteData: {
+          referralId,
+          totalAmount: quoteData.totalAmount,
+          sentAt: new Date()
+        }
       });
     } catch (error) {
       console.error("Error sending quote:", error);
       res.status(500).json({ message: "Failed to send quote" });
+    }
+  });
+
+  // Admin document management
+  app.post('/api/admin/referrals/:referralId/docs-out-confirmation', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { documentsSent, recipientEmail } = req.body;
+
+      const referral = await storage.updateReferral(referralId, {
+        status: 'docs_out_confirmation',
+        adminNotes: `Documents sent to ${recipientEmail} on ${new Date().toLocaleDateString()}. Documents: ${documentsSent?.join(', ') || 'Agreement documents'}`,
+        updatedAt: new Date()
+      });
+
+      res.json({ 
+        success: true,
+        message: "Documents confirmation updated successfully",
+        referral 
+      });
+    } catch (error) {
+      console.error("Error updating docs confirmation:", error);
+      res.status(500).json({ message: "Failed to update documents confirmation" });
+    }
+  });
+
+  // Admin document requirements management
+  app.post('/api/admin/referrals/:referralId/document-requirements', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { requiredDocuments, notes } = req.body;
+
+      // Update referral with document requirements
+      const updatedNotes = `Required documents: ${requiredDocuments.join(', ')}. ${notes || ''}`;
+      
+      await storage.updateReferral(referralId, {
+        adminNotes: updatedNotes,
+        updatedAt: new Date()
+      });
+
+      res.json({ 
+        success: true,
+        message: "Document requirements updated successfully",
+        requiredDocuments
+      });
+    } catch (error) {
+      console.error("Error updating document requirements:", error);
+      res.status(500).json({ message: "Failed to update document requirements" });
+    }
+  });
+
+  // Admin deal stage management
+  app.patch('/api/admin/referrals/:referralId/stage', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { stage, notes } = req.body;
+
+      // Valid stages for admin override
+      const validStages = [
+        'quote_request_received',
+        'quote_sent', 
+        'quote_approved',
+        'docs_out_confirmation',
+        'docs_received',
+        'processing',
+        'completed',
+        'rejected'
+      ];
+
+      if (!validStages.includes(stage)) {
+        return res.status(400).json({ 
+          message: "Invalid stage",
+          validStages 
+        });
+      }
+
+      const adminNoteEntry = `Stage changed to ${stage} by admin on ${new Date().toLocaleDateString()}. ${notes || ''}`;
+      
+      await storage.updateReferral(referralId, {
+        status: stage,
+        adminNotes: adminNoteEntry,
+        updatedAt: new Date()
+      });
+
+      res.json({ 
+        success: true,
+        message: `Deal stage updated to ${stage}`,
+        stage,
+        updatedAt: new Date()
+      });
+    } catch (error) {
+      console.error("Error updating deal stage:", error);
+      res.status(500).json({ message: "Failed to update deal stage" });
     }
   });
 
