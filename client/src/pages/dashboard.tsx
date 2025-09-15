@@ -212,10 +212,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Simple top bar with only notification bell */}
-      <div className="flex justify-end p-4">
-        <NotificationCenter onQuoteClick={handleQuoteClick} />
-      </div>
+      <SideNavigation />
+      <div className="lg:ml-16">
+        {/* Simple top bar with only notification bell */}
+        <div className="flex justify-end p-4">
+          <NotificationCenter onQuoteClick={handleQuoteClick} />
+        </div>
       
         {/* === HERO OVERVIEW SECTION (TOP) === */}
         <section className="bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 relative overflow-hidden">
