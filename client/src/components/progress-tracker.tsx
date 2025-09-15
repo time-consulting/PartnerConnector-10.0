@@ -18,7 +18,6 @@ import {
   FileText,
   CreditCard
 } from "lucide-react";
-import LOAForm, { LOAFormData } from "./loa-form";
 import ContractPreview from "./contract-preview";
 
 interface ProgressStep {
@@ -44,9 +43,7 @@ interface ProgressTrackerProps {
 }
 
 export default function ProgressTracker({ isOpen, onClose, referral }: ProgressTrackerProps) {
-  const [showLOAForm, setShowLOAForm] = useState(false);
   const [showContractPreview, setShowContractPreview] = useState(false);
-  const [currentWorkflowStep, setCurrentWorkflowStep] = useState(referral.status);
 
   const getProgressSteps = (): ProgressStep[] => {
     const baseSteps: ProgressStep[] = [
@@ -86,17 +83,9 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
         id: "approval",
         title: "Quote Approval",
         description: "Waiting for business to approve the payment processing quote",
-        status: ["loa_required", "contract_review", "processing", "approved", "paid"].includes(referral.status) ? "completed" :
-                referral.status === "quote_approved" ? "current" : "pending",
-        completedAt: ["loa_required", "contract_review", "processing", "approved", "paid"].includes(referral.status) ? "Approved" : undefined
-      },
-      {
-        id: "loa_form",
-        title: "Letter of Authority",
-        description: "Complete LOA form to authorize services on client's behalf",
         status: ["contract_review", "processing", "approved", "paid"].includes(referral.status) ? "completed" :
-                referral.status === "loa_required" ? "current" : "pending",
-        completedAt: ["contract_review", "processing", "approved", "paid"].includes(referral.status) ? "Authorized" : undefined
+                referral.status === "quote_approved" ? "current" : "pending",
+        completedAt: ["contract_review", "processing", "approved", "paid"].includes(referral.status) ? "Approved" : undefined
       },
       {
         id: "contract_generation",
@@ -269,20 +258,7 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
                   <p>The business has received their quote. We'll notify you once they respond.</p>
                 )}
                 {referral.status === "quote_approved" && (
-                  <p>Great! The quote has been approved. Next step is to complete the Letter of Authority (LOA) form.</p>
-                )}
-                {referral.status === "loa_required" && (
-                  <div className="space-y-3">
-                    <p>Complete the Letter of Authority form to authorize services on the client's behalf.</p>
-                    <Button
-                      onClick={() => setShowLOAForm(true)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                      data-testid="button-complete-loa"
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Complete LOA Form
-                    </Button>
-                  </div>
+                  <p>Great! The quote has been approved. We'll now generate the service agreement for client signature.</p>
                 )}
                 {referral.status === "contract_review" && (
                   <div className="space-y-3">
@@ -318,27 +294,6 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
         </div>
       </DialogContent>
 
-      {/* LOA Form Modal */}
-      {showLOAForm && (
-        <Dialog open={showLOAForm} onOpenChange={setShowLOAForm}>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
-            <LOAForm
-              referral={{
-                businessName: referral.businessName,
-                businessEmail: referral.businessEmail,
-                contactName: referral.businessName.split(' ')[0],
-                estimatedCommission: referral.estimatedCommission
-              }}
-              onSubmit={(formData: LOAFormData) => {
-                console.log('LOA Form submitted:', formData);
-                setCurrentWorkflowStep('contract_review');
-                setShowLOAForm(false);
-              }}
-              onCancel={() => setShowLOAForm(false)}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* Contract Preview Modal */}
       {showContractPreview && (
@@ -354,7 +309,6 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
               }}
               onApprove={() => {
                 console.log('Contract approved');
-                setCurrentWorkflowStep('processing');
                 setShowContractPreview(false);
               }}
               onReject={() => {
@@ -363,7 +317,6 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
               }}
               onSendToClient={() => {
                 console.log('Contract sent to client');
-                setCurrentWorkflowStep('processing');
                 setShowContractPreview(false);
               }}
             />

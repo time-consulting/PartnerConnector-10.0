@@ -40,6 +40,7 @@ export default function TrackReferrals() {
       case 'in_review': return 'bg-yellow-100 text-yellow-800';
       case 'quote_sent': return 'bg-purple-100 text-purple-800';
       case 'quote_approved': return 'bg-green-100 text-green-800';
+      case 'contract_review': return 'bg-indigo-100 text-indigo-800';
       case 'processing': return 'bg-orange-100 text-orange-800';
       case 'approved': return 'bg-emerald-100 text-emerald-800';
       case 'paid': return 'bg-green-100 text-green-800';
@@ -60,12 +61,12 @@ export default function TrackReferrals() {
     return statusMap[status] || 0;
   };
 
-  const filteredReferrals = referrals?.filter((referral: any) => {
+  const filteredReferrals = Array.isArray(referrals) ? referrals.filter((referral: any) => {
     const matchesSearch = referral.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          referral.businessEmail.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || referral.status === statusFilter;
     return matchesSearch && matchesStatus;
-  }) || [];
+  }) : [];
 
   const handleViewProgress = (referral: any) => {
     setSelectedReferral(referral);
@@ -172,7 +173,7 @@ export default function TrackReferrals() {
         {/* Search and Filter */}
         <Card className="mb-8">
           <CardContent className="p-6">
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -180,28 +181,55 @@ export default function TrackReferrals() {
                     placeholder="Search by business name or email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-11"
+                    data-testid="input-search-referrals"
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-fit">
                 <Filter className="w-4 h-4 text-muted-foreground" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 border border-input rounded-md bg-background"
+                  className="px-4 py-2.5 h-11 border border-input rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  data-testid="select-status-filter"
                 >
                   <option value="all">All Status</option>
                   <option value="submitted">Submitted</option>
                   <option value="in_review">Under Review</option>
                   <option value="quote_sent">Quote Sent</option>
                   <option value="quote_approved">Quote Approved</option>
+                  <option value="contract_review">Contract Review</option>
                   <option value="processing">Processing</option>
                   <option value="approved">Approved</option>
                   <option value="paid">Paid</option>
                 </select>
               </div>
+              {(searchTerm || statusFilter !== 'all') && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                  }}
+                  className="h-11 px-4"
+                  data-testid="button-clear-filters"
+                >
+                  Clear Filters
+                </Button>
+              )}
             </div>
+            {(searchTerm || statusFilter !== 'all') && (
+              <div className="mt-4 text-sm text-muted-foreground">
+                Showing {filteredReferrals.length} of {Array.isArray(referrals) ? referrals.length : 0} referrals
+                {searchTerm && (
+                  <span> matching "{searchTerm}"</span>
+                )}
+                {statusFilter !== 'all' && (
+                  <span> with status "{statusFilter.replace('_', ' ').toUpperCase()}"</span>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
