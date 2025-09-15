@@ -399,7 +399,7 @@ export default function AdminDashboard() {
                           </div>
                         ))}
                       </div>
-                    ) : referralsData?.referrals?.length > 0 ? (
+                    ) : referralsData?.referrals && referralsData.referrals.length > 0 ? (
                       <div className="space-y-1">
                         {referralsData.referrals.map((referral: any, index: number) => (
                           <div
@@ -409,7 +409,7 @@ export default function AdminDashboard() {
                               referral.status === 'processing' ? 'border-l-orange-500 bg-orange-50/30' :
                               referral.status === 'quote_sent' ? 'border-l-blue-500 bg-blue-50/30' :
                               'border-l-gray-300'
-                            } ${index !== referralsData.referrals.length - 1 ? 'border-b border-gray-100' : ''}`}
+                            } ${index !== (referralsData.referrals?.length || 0) - 1 ? 'border-b border-gray-100' : ''}`}
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
@@ -606,67 +606,6 @@ export default function AdminDashboard() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="analytics">
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <TrendingUp className="w-6 h-6 text-blue-600" />
-                    Analytics Dashboard
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-blue-50 rounded-lg p-6">
-                      <h3 className="font-semibold text-blue-900 mb-2">Total Submissions</h3>
-                      <p className="text-3xl font-bold text-blue-700">
-                        {referralsData?.total || 0}
-                      </p>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-6">
-                      <h3 className="font-semibold text-green-900 mb-2">Active Users</h3>
-                      <p className="text-3xl font-bold text-green-700">
-                        {users?.length || 0}
-                      </p>
-                    </div>
-                    <div className="bg-purple-50 rounded-lg p-6">
-                      <h3 className="font-semibold text-purple-900 mb-2">Conversion Rate</h3>
-                      <p className="text-3xl font-bold text-purple-700">
-                        {referralsData?.total > 0 
-                          ? Math.round((referralsData.referrals?.filter((r: any) => r.status === 'completed').length / referralsData.total) * 100)
-                          : 0
-                        }%
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="settings">
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <Settings className="w-6 h-6 text-blue-600" />
-                    System Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="font-semibold mb-4">Deal Stage Configuration</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {dealStages.map((stage) => (
-                          <div key={stage.value} className="border rounded-lg p-4">
-                            <h4 className="font-medium">{stage.label}</h4>
-                            <p className="text-sm text-gray-600">Stage: {stage.value}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
         </div>
 
