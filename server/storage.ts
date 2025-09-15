@@ -19,6 +19,7 @@ import {
   audits,
   requestLogs,
   webhookLogs,
+  adminAuditLogs,
   type User,
   type UpsertUser,
   type Audit,
@@ -47,6 +48,8 @@ import {
   type Rate,
   type InsertCommissionApproval,
   type CommissionApproval,
+  type InsertAdminAuditLog,
+  type AdminAuditLog,
 } from "@shared/schema";
 import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
@@ -94,6 +97,10 @@ export interface IStorage {
   getAllReferrals(): Promise<Referral[]>;
   updateUser(userId: string, data: Partial<User>): Promise<User>;
   updateReferral(referralId: string, data: Partial<Referral>): Promise<Referral>;
+  
+  // Admin audit logging
+  createAdminAuditLog(auditLog: InsertAdminAuditLog): Promise<AdminAuditLog>;
+  getAdminAuditLogs(limit?: number): Promise<AdminAuditLog[]>;
   
   // Contacts operations
   createContact(contact: InsertContact): Promise<Contact>;
@@ -1038,6 +1045,20 @@ export class DatabaseStorage implements IStorage {
     const feedbackId = `feedback_${Date.now()}`;
     console.log(`Feedback submitted:`, feedbackData);
     return feedbackId;
+  }
+
+  // Admin audit logging operations
+  async createAdminAuditLog(auditLog: InsertAdminAuditLog): Promise<AdminAuditLog> {
+    const [log] = await db.insert(adminAuditLogs).values(auditLog).returning();
+    return log;
+  }
+
+  async getAdminAuditLogs(limit: number = 100): Promise<AdminAuditLog[]> {
+    return await db
+      .select()
+      .from(adminAuditLogs)
+      .orderBy(desc(adminAuditLogs.createdAt))
+      .limit(limit);
   }
 }
 

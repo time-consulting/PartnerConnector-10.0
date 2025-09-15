@@ -1036,6 +1036,19 @@ export type InsertPartnerReview = z.infer<typeof insertPartnerReviewSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
+// Admin audit logging table for tracking admin actions
+export const adminAuditLogs = pgTable("admin_audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  action: varchar("action").notNull(), // 'send_quote', 'update_stage', 'update_documents', etc.
+  entityType: varchar("entity_type").notNull(), // 'referral', 'user', etc.
+  entityId: varchar("entity_id").notNull(),
+  actorId: varchar("actor_id").notNull(), // The admin user who performed the action
+  metadata: jsonb("metadata"), // Additional context about the action
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Admin-specific Zod schemas for type safety
 export const insertAdminAction = createInsertSchema(adminActions);
 export const selectAdminAction = adminActions.$inferSelect;
@@ -1066,3 +1079,8 @@ export const adminReferralUpdateSchema = createInsertSchema(referrals).omit({
 }).partial();
 
 export type AdminReferralUpdate = z.infer<typeof adminReferralUpdateSchema>;
+
+// Admin audit log types
+export const insertAdminAuditLog = createInsertSchema(adminAuditLogs);
+export type InsertAdminAuditLog = z.infer<typeof insertAdminAuditLog>;
+export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;

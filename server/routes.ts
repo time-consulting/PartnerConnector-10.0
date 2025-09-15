@@ -673,7 +673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  app.get('/api/admin/stats', async (req: any, res) => {
+  app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const stats = await storage.getAdminStats();
       res.json(stats);
@@ -683,7 +683,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/users', async (req: any, res) => {
+  app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -764,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/users/:userId', async (req: any, res) => {
+  app.patch('/api/admin/users/:userId', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const updateData = req.body;
@@ -1001,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/users/:userId/reset-password', async (req: any, res) => {
+  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const user = await storage.getUser(userId);

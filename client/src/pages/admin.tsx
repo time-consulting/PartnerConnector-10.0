@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,7 +78,7 @@ export default function AdminDashboard() {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  if (!user?.isAdmin) {
+  if (!(user as any)?.isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         <SideNavigation />
@@ -97,15 +97,24 @@ export default function AdminDashboard() {
   }
 
   // Fetch admin referrals
-  const { data: referralsData, isLoading: referralsLoading } = useQuery({
+  const { data: referralsData, isLoading: referralsLoading } = useQuery<{
+    referrals: any[];
+    total: number;
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>({
     queryKey: ['/api/admin/referrals', { search: searchTerm, status: statusFilter, page: currentPage }],
-    enabled: !!user?.isAdmin,
+    enabled: !!(user as any)?.isAdmin,
   });
 
   // Fetch admin users
-  const { data: users, isLoading: usersLoading } = useQuery({
+  const { data: users, isLoading: usersLoading } = useQuery<any[]>({
     queryKey: ['/api/admin/users'],
-    enabled: !!user?.isAdmin,
+    enabled: !!(user as any)?.isAdmin,
   });
 
   // Quote form
