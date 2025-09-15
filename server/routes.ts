@@ -491,7 +491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Password reset functionality
-  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const user = await storage.getUser(userId);
@@ -530,7 +530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ RATES MANAGEMENT ENDPOINTS ============
   
   // Get all rates
-  app.get('/api/admin/rates', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get('/api/admin/rates', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const rates = await storage.getRates();
       res.json(rates);
@@ -541,7 +541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new rate
-  app.post('/api/admin/rates', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/rates', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const rate = await storage.createRate(req.body);
       res.json(rate);
@@ -552,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update rate
-  app.patch('/api/admin/rates/:rateId', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch('/api/admin/rates/:rateId', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { rateId } = req.params;
       const rate = await storage.updateRate(rateId, req.body);
@@ -564,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete rate
-  app.delete('/api/admin/rates/:rateId', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.delete('/api/admin/rates/:rateId', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { rateId } = req.params;
       await storage.deleteRate(rateId);
@@ -578,7 +578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ COMMISSION APPROVAL ENDPOINTS ============
   
   // Create commission approval when admin enters actual commission
-  app.post('/api/admin/referrals/:referralId/create-commission-approval', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/create-commission-approval', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { actualCommission, adminNotes, ratesData } = req.body;
@@ -640,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all commission approvals (admin view)
-  app.get('/api/admin/commission-approvals', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get('/api/admin/commission-approvals', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const approvals = await storage.getAllCommissionApprovals();
       res.json(approvals);
@@ -651,7 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Process commission payment (admin)
-  app.post('/api/admin/commission-approvals/:approvalId/process-payment', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/commission-approvals/:approvalId/process-payment', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { approvalId } = req.params;
       const { paymentReference } = req.body;
@@ -673,7 +673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get('/api/admin/stats', isAuthenticated, requireAdmin, auditAdminAction('view_stats', 'admin'), async (req: any, res) => {
     try {
       const stats = await storage.getAdminStats();
       res.json(stats);
@@ -683,7 +683,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -694,7 +694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced admin referrals list with search and filtering
-  app.get('/api/admin/referrals', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get('/api/admin/referrals', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { 
         search, 
@@ -764,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/users/:userId', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch('/api/admin/users/:userId', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const updateData = req.body;
@@ -778,7 +778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced admin referral update with audit trail
-  app.patch('/api/admin/referrals/:referralId', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch('/api/admin/referrals/:referralId', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const updateData = req.body;
@@ -824,7 +824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin referrer reassignment
-  app.post('/api/admin/referrals/:referralId/reassign', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/reassign', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { newReferrerId, reason } = req.body;
@@ -864,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced admin quote management
-  app.post('/api/admin/referrals/:referralId/send-quote', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/send-quote', isAuthenticated, requireAdmin, auditAdminAction('send_quote', 'referral'), async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const quoteData = req.body;
@@ -909,7 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin document management
-  app.post('/api/admin/referrals/:referralId/docs-out-confirmation', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/docs-out-confirmation', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { documentsSent, recipientEmail } = req.body;
@@ -932,7 +932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin document requirements management
-  app.post('/api/admin/referrals/:referralId/document-requirements', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/document-requirements', isAuthenticated, requireAdmin, auditAdminAction('update_document_requirements', 'referral'), async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { requiredDocuments, notes } = req.body;
@@ -957,7 +957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin deal stage management
-  app.patch('/api/admin/referrals/:referralId/stage', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch('/api/admin/referrals/:referralId/stage', isAuthenticated, requireAdmin, auditAdminAction('update_stage', 'referral'), async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { stage, notes } = req.body;
@@ -1001,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const user = await storage.getUser(userId);
