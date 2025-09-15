@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import SideNavigation from "@/components/side-navigation";
 import Navigation from "@/components/navigation";
+import MlmVisualization from "@/components/mlm-visualization";
 import {
   Search,
   Filter,
@@ -314,7 +315,7 @@ export default function AdminDashboard() {
           </section>
 
           <Tabs defaultValue="submissions" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsList className="grid w-full grid-cols-5 mb-8">
               <TabsTrigger value="submissions" data-testid="tab-submissions">
                 <FileText className="w-4 h-4 mr-2" />
                 Submissions Portal
@@ -322,6 +323,10 @@ export default function AdminDashboard() {
               <TabsTrigger value="users" data-testid="tab-users">
                 <Users className="w-4 h-4 mr-2" />
                 User Management
+              </TabsTrigger>
+              <TabsTrigger value="mlm" data-testid="tab-mlm">
+                <Target className="w-4 h-4 mr-2" />
+                MLM Network
               </TabsTrigger>
               <TabsTrigger value="analytics" data-testid="tab-analytics">
                 <TrendingUp className="w-4 h-4 mr-2" />
@@ -420,7 +425,7 @@ export default function AdminDashboard() {
                                   </Badge>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                                   <div className="flex items-center gap-2 text-gray-600">
                                     <Mail className="w-4 h-4" />
                                     <span className="text-sm">{referral.businessEmail}</span>
@@ -433,6 +438,12 @@ export default function AdminDashboard() {
                                     <Calendar className="w-4 h-4" />
                                     <span className="text-sm">
                                       {new Date(referral.submittedAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <Target className="w-4 h-4" />
+                                    <span className="text-sm font-medium">
+                                      Level {referral.referralLevel || 1} ({referral.commissionPercentage || '60.00'}%)
                                     </span>
                                   </div>
                                 </div>
@@ -604,6 +615,10 @@ export default function AdminDashboard() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="mlm">
+              <MlmVisualization userId={(user as any)?.id} showFullTree={true} />
             </TabsContent>
 
           </Tabs>

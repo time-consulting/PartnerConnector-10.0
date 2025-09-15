@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validationError.message });
       }
 
-      const referral = await storage.createReferral(validation.data);
+      const referral = await storage.createReferralWithLevel(validation.data, userId);
       
       // Create notification for referral submission
       await createNotificationForUser(userId, {
@@ -669,6 +669,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing commission payment:", error);
       res.status(500).json({ message: "Failed to process commission payment" });
+    }
+  });
+
+  // MLM hierarchy routes
+  app.get('/api/admin/mlm-hierarchy/:userId?', isAuthenticated, requireAdmin, auditAdminAction('view_mlm_hierarchy', 'admin'), async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const rootUserId = userId || req.user.claims.sub;
+      
+      const allUsers = await storage.getAllUsers();
+      
+      // Build MLM tree structure
+      const buildMlmTree = async (users: any[], rootId: string): Promise<any> => {
+        const user = users.find(u => u.id === rootId);
+        if (!user) return null;
+        
+        const children = users.filter(u => u.parentPartnerId === rootId);
+        const userReferrals = await storage.getReferralsByUserId(rootId);
+        
+        const childNodes = [];
+        for (const child of children) {
+          const childNode = await buildMlmTree(users, child.id);
+          if (childNode) childNodes.push(childNode);
+        }
+        
+        return {
+          id: user.id,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User',
+          email: user.email || '',
+          partnerId: user.partnerId || '',
+          level: user.partnerLevel || 1,
+          children: childNodes,
+          totalReferrals: userReferrals.length,
+          totalCommissions: userReferrals.reduce((sum: number, ref: any) => sum + parseFloat(ref.actualCommission || '0'), 0),
+          parentPartnerId: user.parentPartnerId
+        };
+      };
+      
+      const tree = await buildMlmTree(allUsers, rootUserId);
+      
+      // Calculate stats
+      const levelDistribution: { [key: number]: number } = {};
+      allUsers.forEach(user => {
+        const level = user.partnerLevel || 1;
+        levelDistribution[level] = (levelDistribution[level] || 0) + 1;
+      });
+      
+      const stats = {
+        totalLevels: Math.max(...allUsers.map(u => u.partnerLevel || 1)),
+        totalUsers: allUsers.length,
+        levelDistribution
+      };
+      
+      res.json({ tree, stats });
+    } catch (error) {
+      console.error("Error fetching MLM hierarchy:", error);
+      res.status(500).json({ message: "Failed to fetch MLM hierarchy" });
+    }
+  });
+
+  app.get('/api/admin/user-details/:userId', isAuthenticated, requireAdmin, auditAdminAction('view_user_details', 'admin'), async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const referrals = await storage.getReferralsByUserId(userId);
+      const referralsByLevel = await storage.getReferralsByLevel(userId);
+      
+      res.json({
+        user,
+        referrals,
+        referralsByLevel,
+        totalCommissions: referrals.reduce((sum: number, ref: any) => sum + parseFloat(ref.actualCommission || '0'), 0)
+      });
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      res.status(500).json({ message: "Failed to fetch user details" });
     }
   });
 

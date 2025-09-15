@@ -86,6 +86,13 @@ export interface IStorage {
   generatePartnerId(userId: string): Promise<string>;
   getUserByPartnerId(partnerId: string): Promise<User | undefined>;
   
+  // MLM level tracking operations
+  calculateReferralLevel(referrerId: string): Promise<number>;
+  getCommissionPercentage(level: number): number;
+  getMlmHierarchy(userId: string): Promise<{ children: User[]; parents: User[]; level: number }>;
+  getReferralsByLevel(userId: string): Promise<{ [key: number]: Referral[] }>;
+  createReferralWithLevel(referralData: InsertReferral, referrerId: string): Promise<Referral>;
+  
   // Admin operations
   getAdminStats(): Promise<{
     totalUsers: number;
@@ -1059,6 +1066,109 @@ export class DatabaseStorage implements IStorage {
       .from(adminAuditLogs)
       .orderBy(desc(adminAuditLogs.createdAt))
       .limit(limit);
+  }
+
+  // MLM level tracking operations
+  async calculateReferralLevel(referrerId: string): Promise<number> {
+    // Get the referrer's information
+    const referrer = await this.getUser(referrerId);
+    if (!referrer) return 1;
+    
+    // Calculate the referrer's level in the MLM hierarchy
+    // Level 1 = direct (original partner), Level 2 = partner's referral, Level 3 = level 2's referral
+    let level = 1;
+    let currentUserId = referrerId;
+    
+    // Traverse up the MLM chain to find the level
+    while (level < 3) {
+      const currentUser = await this.getUser(currentUserId);
+      if (!currentUser?.parentPartnerId) break;
+      
+      level++;
+      currentUserId = currentUser.parentPartnerId;
+    }
+    
+    return Math.min(level, 3); // Cap at level 3
+  }
+
+  getCommissionPercentage(level: number): number {
+    const commissionRates: { [key: number]: number } = {
+      1: 60.00, // Level 1 - Direct referrals get 60%
+      2: 20.00, // Level 2 - Second level gets 20%  
+      3: 10.00  // Level 3 - Third level gets 10%
+    };
+    return commissionRates[level] || 0;
+  }
+
+  async getMlmHierarchy(userId: string): Promise<{ children: User[]; parents: User[]; level: number }> {
+    // Get direct children (users who have this user as parent)
+    const children = await db
+      .select()
+      .from(users)
+      .where(eq(users.parentPartnerId, userId));
+    
+    // Get parent chain
+    const parents: User[] = [];
+    let currentUserId = userId;
+    let level = 1;
+    
+    while (parents.length < 3) { // Limit to 3 levels
+      const currentUser = await this.getUser(currentUserId);
+      if (!currentUser?.parentPartnerId) break;
+      
+      const parent = await this.getUser(currentUser.parentPartnerId);
+      if (!parent) break;
+      
+      parents.push(parent);
+      currentUserId = parent.id;
+      level++;
+    }
+    
+    return { children, parents, level };
+  }
+
+  async getReferralsByLevel(userId: string): Promise<{ [key: number]: Referral[] }> {
+    const allReferrals = await db
+      .select()
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId))
+      .orderBy(desc(referrals.submittedAt));
+    
+    // Group referrals by level
+    const referralsByLevel: { [key: number]: Referral[] } = { 1: [], 2: [], 3: [] };
+    
+    allReferrals.forEach(referral => {
+      const level = referral.referralLevel || 1;
+      if (referralsByLevel[level]) {
+        referralsByLevel[level].push(referral);
+      }
+    });
+    
+    return referralsByLevel;
+  }
+
+  async createReferralWithLevel(referralData: InsertReferral, referrerId: string): Promise<Referral> {
+    // Calculate the referral level based on MLM hierarchy
+    const referralLevel = await this.calculateReferralLevel(referrerId);
+    const commissionPercentage = this.getCommissionPercentage(referralLevel);
+    
+    // Find the parent referrer (who will get commission for this referral)
+    const referrer = await this.getUser(referrerId);
+    let parentReferrerId = null;
+    
+    if (referrer?.parentPartnerId && referralLevel > 1) {
+      parentReferrerId = referrer.parentPartnerId;
+    }
+    
+    // Create the referral with level information
+    const referralWithLevel = {
+      ...referralData,
+      referralLevel,
+      parentReferrerId,
+      commissionPercentage: commissionPercentage.toString()
+    };
+    
+    return this.createReferral(referralWithLevel);
   }
 }
 

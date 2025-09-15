@@ -116,6 +116,10 @@ export const referrals = pgTable("referrals", {
   // Product selection and card machine requirements
   selectedProducts: text("selected_products").array(), // Array of product IDs
   cardMachineQuantity: integer("card_machine_quantity").default(1),
+  // MLM level tracking
+  referralLevel: integer("referral_level").notNull().default(1), // 1 = direct (60%), 2 = level 2 (20%), 3 = level 3 (10%)
+  parentReferrerId: varchar("parent_referrer_id").references(() => users.id, { onDelete: "set null" }), // Who in the chain gets the commission
+  commissionPercentage: decimal("commission_percentage", { precision: 5, scale: 2 }).notNull().default("60.00"), // Commission % for this referral level
   // Quote and commission tracking
   quoteGenerated: boolean("quote_generated").default(false),
   quoteAmount: decimal("quote_amount", { precision: 10, scale: 2 }),
@@ -142,6 +146,8 @@ export const referrals = pgTable("referrals", {
   index("referrals_deal_stage_idx").on(table.dealStage),
   index("referrals_submitted_at_idx").on(table.submittedAt),
   index("referrals_referrer_status_idx").on(table.referrerId, table.status),
+  index("referrals_level_idx").on(table.referralLevel),
+  index("referrals_parent_referrer_id_idx").on(table.parentReferrerId),
 ]);
 
 export const billUploads = pgTable("bill_uploads", {
@@ -654,6 +660,10 @@ export const referralsRelations = relations(referrals, ({ one, many }) => ({
     fields: [referrals.referrerId],
     references: [users.id],
   }),
+  parentReferrer: one(users, {
+    fields: [referrals.parentReferrerId],
+    references: [users.id],
+  }),
   businessType: one(businessTypes, {
     fields: [referrals.businessTypeId],
     references: [businessTypes.id],
@@ -1075,7 +1085,7 @@ export const adminReferralUpdateSchema = createInsertSchema(referrals).omit({
   id: true,
   referrerId: true,
   submittedAt: true,
-  createdAt: true,
+  updatedAt: true,
 }).partial();
 
 export type AdminReferralUpdate = z.infer<typeof adminReferralUpdateSchema>;
