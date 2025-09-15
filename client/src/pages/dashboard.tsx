@@ -36,7 +36,16 @@ import {
   NetworkIcon,
   UserPlusIcon,
   DollarSignIcon,
-  UsersIcon
+  UsersIcon,
+  HelpCircleIcon,
+  Bell,
+  Menu,
+  X,
+  User,
+  ChevronDownIcon,
+  Settings,
+  CreditCard,
+  LogOut
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -49,6 +58,8 @@ export default function Dashboard() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // New onboarding hooks
   const { isTourVisible, tourCompleted, startTour, completeTour, skipTour } = useTourState();
@@ -218,9 +229,112 @@ export default function Dashboard() {
             </Link>
           </div>
           
-          {/* Navigation & Notifications - Right */}
-          <div className="flex items-center">
-            <Navigation />
+          {/* Right-side Navigation Elements */}
+          <div className="flex items-center space-x-2">
+            {/* Help Icon */}
+            <Link href="/help-center" 
+              className="hidden md:inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-gray-100 h-9 w-9 text-gray-600 hover:text-blue-600"
+              data-testid="button-help"
+            >
+              <HelpCircleIcon className="w-5 h-5" />
+            </Link>
+            
+            {/* Notifications Bell */}
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-600 hover:text-blue-600 hover:bg-gray-100 h-9 w-9 p-0 relative"
+                data-testid="button-notifications"
+              >
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+              </Button>
+            )}
+            
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden text-gray-600 hover:text-blue-600 hover:bg-gray-100 h-9 w-9 p-0"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              data-testid="button-mobile-menu"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+            
+            {/* User Account Dropdown */}
+            {isAuthenticated && (
+              <div className="relative ml-2">
+                <button
+                  className="flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded-md px-3 py-2 text-sm font-medium transition-colors gap-2"
+                  onClick={() => setOpenDropdown(openDropdown === 'account' ? null : 'account')}
+                  data-testid="dropdown-account"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="hidden sm:inline">{(user as any)?.firstName || 'Account'}</span>
+                  <ChevronDownIcon className="w-4 h-4" />
+                </button>
+                
+                {openDropdown === 'account' && (
+                  <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-6 px-6 z-[9999]">
+                    <div className="space-y-4">
+                      {/* User Info Section */}
+                      <div className="border-b border-gray-200 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                            <User className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{(user as any)?.firstName} {(user as any)?.lastName}</h4>
+                            <p className="text-sm text-gray-600">{(user as any)?.email}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* User Settings */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3">ACCOUNT SETTINGS</h3>
+                        <div className="space-y-2">
+                          <Link href="/account/profile">
+                            <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                              <Settings className="w-4 h-4 text-gray-600" />
+                              <span className="text-sm text-gray-700">Personal Information</span>
+                            </div>
+                          </Link>
+                          <Link href="/account/banking">
+                            <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                              <CreditCard className="w-4 h-4 text-gray-600" />
+                              <span className="text-sm text-gray-700">Banking Details</span>
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+
+                      {/* Logout Section */}
+                      <div className="border-t border-gray-200 pt-4">
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => {
+                            setOpenDropdown(null);
+                            // Add logout functionality
+                            window.location.href = "/api/logout";
+                          }}
+                          data-testid="button-logout"
+                          className="w-full justify-start text-gray-700 hover:bg-gray-50 p-2"
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Logout
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <NotificationCenter onQuoteClick={handleQuoteClick} />
           </div>
         </div>
