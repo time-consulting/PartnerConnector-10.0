@@ -38,7 +38,23 @@ import {
   Upload,
   Users,
   TrendingUp,
-  RefreshCw
+  RefreshCw,
+  BarChart3,
+  PieChart,
+  Activity,
+  Target,
+  Zap,
+  ArrowUp,
+  ArrowDown,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+  ExternalLink,
+  Shield,
+  Bell,
+  Home,
+  Database,
+  FileBarChart
 } from "lucide-react";
 
 // Quote form schema
@@ -72,6 +88,9 @@ export default function AdminDashboard() {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [showStageModal, setShowStageModal] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedReferrals, setSelectedReferrals] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Check if user is admin
   if (authLoading) {
@@ -117,6 +136,21 @@ export default function AdminDashboard() {
     enabled: !!(user as any)?.isAdmin,
   });
 
+  // Fetch admin stats
+  const { data: adminStats, isLoading: statsLoading } = useQuery<{
+    totalUsers: number;
+    totalReferrals: number;
+    pendingReferrals: number;
+    totalCommissions: number;
+    recentActivity: any[];
+    conversionRate: number;
+    monthlyGrowth: number;
+  }>({
+    queryKey: ['/api/admin/stats'],
+    enabled: !!(user as any)?.isAdmin,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   // Quote form
   const quoteForm = useForm<z.infer<typeof quoteFormSchema>>({
     resolver: zodResolver(quoteFormSchema),
@@ -150,10 +184,12 @@ export default function AdminDashboard() {
   // Send quote mutation
   const sendQuoteMutation = useMutation({
     mutationFn: async (data: { referralId: string; quoteData: any }) => {
-      return apiRequest(`/api/admin/referrals/${data.referralId}/send-quote`, {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/send-quote`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.quoteData),
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
@@ -165,10 +201,12 @@ export default function AdminDashboard() {
   // Update document requirements mutation
   const updateDocumentsMutation = useMutation({
     mutationFn: async (data: { referralId: string; documentsData: any }) => {
-      return apiRequest(`/api/admin/referrals/${data.referralId}/document-requirements`, {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/document-requirements`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.documentsData),
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
@@ -180,10 +218,12 @@ export default function AdminDashboard() {
   // Update stage mutation
   const updateStageMutation = useMutation({
     mutationFn: async (data: { referralId: string; stageData: any }) => {
-      return apiRequest(`/api/admin/referrals/${data.referralId}/stage`, {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/stage`, {
         method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.stageData),
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
@@ -195,13 +235,15 @@ export default function AdminDashboard() {
   // Docs out confirmation mutation
   const docsOutMutation = useMutation({
     mutationFn: async (referralId: string) => {
-      return apiRequest(`/api/admin/referrals/${referralId}/docs-out-confirmation`, {
+      const response = await fetch(`/api/admin/referrals/${referralId}/docs-out-confirmation`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           documentsSent: ['agreement', 'terms'],
           recipientEmail: selectedReferral?.businessEmail || '',
         }),
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
