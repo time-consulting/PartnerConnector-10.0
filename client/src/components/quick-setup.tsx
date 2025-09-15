@@ -221,23 +221,23 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
 
   return (
     <div className="max-w-2xl mx-auto p-6" data-testid="quick-setup">
-      <Card className="shadow-lg border-2 border-blue-100">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-gray-900">
-            Quick Setup
+      <Card className="shadow-2xl border-0 bg-white dark:bg-gray-900 backdrop-blur-sm">
+        <CardHeader className="pb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 rounded-t-lg">
+          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+            Welcome to PartnerConnector
           </CardTitle>
-          <p className="text-sm text-gray-600">
-            Just the basics to get started. Everything else is optional.
+          <p className="text-gray-700 dark:text-gray-300 mt-2">
+            Let's get your account set up in just a few steps. This will help us personalize your experience.
           </p>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 bg-white dark:bg-gray-900 p-8">
           {/* Main Form */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Left Column - Required Fields */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium">
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="firstName" className="text-sm font-semibold text-gray-900 dark:text-white">
                   First Name *
                 </Label>
                 <div className="relative">
@@ -246,8 +246,8 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                     value={formData.firstName}
                     onChange={(e) => updateField('firstName', e.target.value)}
                     onBlur={(e) => handleBlur('firstName', e.target.value)}
-                    placeholder="Enter first name"
-                    className="pr-8"
+                    placeholder="Enter your first name"
+                    className="pr-10 h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
                     data-testid="input-first-name"
                   />
                   {fieldStates.firstName?.saving && (
@@ -263,8 +263,8 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium">
+              <div className="space-y-3">
+                <Label htmlFor="lastName" className="text-sm font-semibold text-gray-900 dark:text-white">
                   Last Name *
                 </Label>
                 <div className="relative">
@@ -273,8 +273,8 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                     value={formData.lastName}
                     onChange={(e) => updateField('lastName', e.target.value)}
                     onBlur={(e) => handleBlur('lastName', e.target.value)}
-                    placeholder="Enter last name"
-                    className="pr-8"
+                    placeholder="Enter your last name"
+                    className="pr-10 h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
                     data-testid="input-last-name"
                   />
                   {fieldStates.lastName?.saving && (
@@ -290,8 +290,8 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium">
+              <div className="space-y-3">
+                <Label htmlFor="phone" className="text-sm font-semibold text-gray-900 dark:text-white">
                   Phone *
                 </Label>
                 <div className="relative">
@@ -302,7 +302,7 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                     onChange={(e) => updateField('phone', e.target.value)}
                     onBlur={(e) => handleBlur('phone', e.target.value)}
                     placeholder="+44 7XXX XXX XXX"
-                    className="pr-8"
+                    className="pr-10 h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
                     data-testid="input-phone"
                   />
                   {fieldStates.phone?.saving && (
@@ -320,10 +320,10 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
             </div>
 
             {/* Right Column - Optional Fields */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="companyName" className="text-sm font-medium text-gray-600">
-                  Company Name
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="companyName" className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Company Name <span className="text-gray-500 dark:text-gray-400">(optional)</span>
                 </Label>
                 <div className="relative">
                   <Input
@@ -333,7 +333,7 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                     onBlur={(e) => handleBlur('companyName', e.target.value)}
                     placeholder="Your company name"
                     disabled={formData.hasNoCompany}
-                    className="pr-8"
+                    className="pr-10 h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:text-gray-500"
                     data-testid="input-company-name"
                   />
                   {fieldStates.companyName?.saved && (
@@ -342,7 +342,7 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                     </div>
                   )}
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3 mt-3">
                   <Checkbox
                     id="hasNoCompany"
                     checked={formData.hasNoCompany}
@@ -351,21 +351,28 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                       if (checked) updateField('companyName', '');
                     }}
                     data-testid="checkbox-no-company"
+                    className="border-gray-300 dark:border-gray-600"
                   />
-                  <Label htmlFor="hasNoCompany" className="text-xs text-gray-500">
-                    No company yet
+                  <Label htmlFor="hasNoCompany" className="text-sm text-gray-600 dark:text-gray-400">
+                    I don't have a company yet
                   </Label>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-600">Role</Label>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Role <span className="text-gray-500 dark:text-gray-400">(optional)</span>
+                </Label>
+                <div className="flex flex-wrap gap-3">
                   {ROLE_OPTIONS.map((option) => (
                     <Badge
                       key={option.value}
                       variant={formData.role === option.value ? "default" : "outline"}
-                      className="cursor-pointer transition-colors hover:bg-blue-100"
+                      className={`cursor-pointer transition-all duration-200 py-2 px-4 text-sm font-medium ${
+                        formData.role === option.value
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:border-blue-300"
+                      }`}
                       onClick={() => {
                         updateField('role', option.value);
                         handleBlur('role', option.value);
@@ -384,8 +391,10 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-600">Country</Label>
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Country <span className="text-gray-500 dark:text-gray-400">(optional)</span>
+                </Label>
                 <Select 
                   value={formData.country} 
                   onValueChange={(value) => {
@@ -393,12 +402,19 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                     handleBlur('country', value);
                   }}
                 >
-                  <SelectTrigger data-testid="select-country">
-                    <SelectValue placeholder="Select country" />
+                  <SelectTrigger 
+                    data-testid="select-country"
+                    className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <SelectValue placeholder="Select your country" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                     {COUNTRY_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
+                      <SelectItem 
+                        key={option.value} 
+                        value={option.value}
+                        className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
                         {option.label}
                       </SelectItem>
                     ))}
@@ -416,17 +432,17 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
 
           {/* Payout Banner */}
           {showPayoutBanner && (
-            <Alert className="border-orange-200 bg-orange-50">
-              <CreditCard className="h-4 w-4 text-orange-600" />
+            <Alert className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 dark:border-amber-700">
+              <CreditCard className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               <AlertDescription className="flex items-center justify-between">
-                <span className="text-sm text-orange-800">
-                  Add payout details to get paid faster.
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                  💰 Add payout details to get paid faster when referrals convert.
                 </span>
                 <div className="flex gap-2">
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="h-7 px-3 text-xs border-orange-300 text-orange-700 hover:bg-orange-100"
+                    className="h-8 px-4 text-sm font-medium border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/40"
                     data-testid="button-add-payout"
                   >
                     Add now
@@ -435,7 +451,7 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
                     size="sm" 
                     variant="ghost" 
                     onClick={handlePayoutLater}
-                    className="h-7 px-3 text-xs text-orange-600 hover:bg-orange-100"
+                    className="h-8 px-4 text-sm font-medium text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/40"
                     data-testid="button-payout-later"
                   >
                     Later
@@ -446,31 +462,37 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-center pt-4">
+          <div className="flex justify-center pt-6">
             <Button
               onClick={handleSubmit}
               disabled={!isFormValid() || saveProfileMutation.isPending}
-              className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              className="w-full md:w-auto px-12 py-3 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="button-save-continue"
             >
               {saveProfileMutation.isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  Saving...
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                  Setting up your account...
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4" />
-                  Save & continue
+                <div className="flex items-center gap-3">
+                  <Star className="h-5 w-5" />
+                  Complete Setup & Continue
                 </div>
               )}
             </Button>
           </div>
 
           {/* Progress indicator */}
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              {isFormValid() ? '✓ Ready to save' : 'Complete required fields to continue'}
+          <div className="text-center pt-4">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              {isFormValid() ? (
+                <span className="text-green-600 dark:text-green-400">
+                  ✓ Ready to complete setup
+                </span>
+              ) : (
+                'Complete the required fields above to continue'
+              )}
             </p>
           </div>
         </CardContent>
