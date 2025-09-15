@@ -27,12 +27,36 @@ const logFormat = winston.format.combine(
   winston.format.errors({ stack: true }),
   winston.format.json(),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    return JSON.stringify({
-      timestamp,
-      level,
-      message,
-      ...meta
-    });
+    // Handle circular references safely
+    const safeStringify = (obj: any) => {
+      const seen = new Set();
+      return JSON.stringify(obj, (key, val) => {
+        if (typeof val === "object" && val !== null) {
+          if (seen.has(val)) {
+            return "[Circular]";
+          }
+          seen.add(val);
+        }
+        return val;
+      });
+    };
+    
+    try {
+      return safeStringify({
+        timestamp,
+        level,
+        message,
+        ...meta
+      });
+    } catch (error) {
+      // Fallback if even safe stringify fails
+      return JSON.stringify({
+        timestamp,
+        level,
+        message: typeof message === 'string' ? message : String(message),
+        meta: '[Unable to serialize]'
+      });
+    }
   })
 );
 
