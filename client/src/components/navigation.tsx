@@ -736,6 +736,23 @@ export default function Navigation() {
           onClick={handleDropdownClose}
         />
       )}
+
+      {/* Floating Action Button for Mobile - Submit Referral */}
+      {isAuthenticated && (
+        <div className="fixed bottom-6 right-6 sm:hidden z-50">
+          <Link href="/submit-referral">
+            <Button
+              size="lg"
+              className="h-14 w-14 rounded-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105"
+              data-testid="button-floating-submit"
+            >
+              <div className="flex flex-col items-center">
+                <UsersIcon className="w-6 h-6" />
+              </div>
+            </Button>
+          </Link>
+        </div>
+      )}
     </nav>
   );
 }
