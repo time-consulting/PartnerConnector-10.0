@@ -102,7 +102,10 @@ export async function setupAuth(app: Express) {
     // Use http for localhost/127.0.0.1, https for others
     const isLocal = ['localhost', '127.0.0.1'].includes(domain);
     const protocol = isLocal ? 'http' : 'https';
-    const callbackURL = `${protocol}://${domain}:5000/api/callback`;
+    // Only include port for local development domains
+    const callbackURL = isLocal 
+      ? `${protocol}://${domain}:5000/api/callback`
+      : `${protocol}://${domain}/api/callback`;
     
     const strategy = new Strategy(
       {
