@@ -87,32 +87,55 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  // Get domains and add localhost/127.0.0.1 for development
+  let domains = process.env.REPLIT_DOMAINS!.split(",").map(d => d.trim());
+  
+  // Add localhost domains for development
+  if (process.env.NODE_ENV === 'development') {
+    domains.push('localhost', '127.0.0.1');
+  }
+  
+  // Remove duplicates
+  domains = Array.from(new Set(domains));
+
+  for (const domain of domains) {
+    // Use http for localhost/127.0.0.1, https for others
+    const isLocal = ['localhost', '127.0.0.1'].includes(domain);
+    const protocol = isLocal ? 'http' : 'https';
+    const callbackURL = `${protocol}://${domain}:5000/api/callback`;
+    
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
         config,
         scope: "openid email profile offline_access",
-        callbackURL: `https://${domain}/api/callback`,
+        callbackURL,
       },
       verify,
     );
     passport.use(strategy);
   }
 
+  // Strategy resolver to handle runtime hostnames
+  function strategyForHost(host: string): string {
+    const allowedDomains = domains.map(d => d.toLowerCase());
+    const hostname = host.toLowerCase();
+    const domain = allowedDomains.includes(hostname) ? hostname : allowedDomains[0];
+    return `replitauth:${domain}`;
+  }
+
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    passport.authenticate(strategyForHost(req.hostname), {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    passport.authenticate(strategyForHost(req.hostname), {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
