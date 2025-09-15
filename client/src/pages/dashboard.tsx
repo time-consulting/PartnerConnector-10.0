@@ -204,8 +204,25 @@ export default function Dashboard() {
       <SideNavigation />
       <div className="lg:ml-16">
         <div className="flex items-center justify-between p-4 border-b bg-white/80 backdrop-blur-sm">
-          <Navigation />
-          <NotificationCenter onQuoteClick={handleQuoteClick} />
+          {/* Logo Section - Left */}
+          <div className="flex items-center">
+            <Link href="/">
+              <div className="flex items-center cursor-pointer" data-testid="link-logo">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                  <NetworkIcon className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  PartnerConnector
+                </h1>
+              </div>
+            </Link>
+          </div>
+          
+          {/* Navigation & Notifications - Right */}
+          <div className="flex items-center">
+            <Navigation />
+            <NotificationCenter onQuoteClick={handleQuoteClick} />
+          </div>
         </div>
       
         {/* === HERO OVERVIEW SECTION (TOP) === */}
