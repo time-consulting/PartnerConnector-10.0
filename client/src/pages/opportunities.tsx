@@ -164,7 +164,7 @@ function OpportunityForm({
   };
 
   return (
-    <div className="max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 rounded-2xl p-6">
+    <div className="max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 rounded-2xl p-4 sm:p-6 dialog-content-mobile">
       {/* Modern Dialog Header */}
       <div className="text-center mb-8 pb-6 border-b border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
         <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-xl">
@@ -225,7 +225,7 @@ function OpportunityForm({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="status" className="text-gray-900 dark:text-white font-semibold text-sm">Status</Label>
                 <Select 
@@ -262,7 +262,7 @@ function OpportunityForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="priority">Priority</Label>
                 <Select 
@@ -300,7 +300,7 @@ function OpportunityForm({
             <div className="space-y-4">
               <Label className="text-gray-900 dark:text-white font-semibold text-sm">Product Interests</Label>
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200/50 dark:border-blue-700/50">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {productCategories.map(product => (
                     <label key={product} className="flex items-center space-x-3 cursor-pointer group">
                       <input
@@ -319,7 +319,7 @@ function OpportunityForm({
           </TabsContent>
 
           <TabsContent value="contact-details" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="contactFirstName">Contact First Name</Label>
                 <Input
@@ -340,7 +340,7 @@ function OpportunityForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="contactEmail">Contact Email</Label>
                 <Input
@@ -375,7 +375,7 @@ function OpportunityForm({
           </TabsContent>
 
           <TabsContent value="deal-info" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="estimatedValue">Estimated Value (£)</Label>
                 <Input
@@ -398,7 +398,7 @@ function OpportunityForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="expectedCloseDate">Expected Close Date</Label>
                 <Input
