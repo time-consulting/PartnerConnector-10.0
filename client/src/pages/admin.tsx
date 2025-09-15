@@ -73,10 +73,26 @@ const documentRequirementsSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Stage update schema
-const stageUpdateSchema = z.object({
+// Stage form schema
+const stageFormSchema = z.object({
   stage: z.string().min(1, "Stage is required"),
   notes: z.string().optional(),
+});
+
+// Stage override schema
+const stageOverrideSchema = z.object({
+  dealStage: z.string().min(1, "Stage is required"),
+  status: z.string().optional(),
+  overrideReason: z.string().min(1, "Override reason is required"),
+  adminNotes: z.string().optional(),
+});
+
+// Confirm payment schema
+const confirmPaymentSchema = z.object({
+  actualCommission: z.string().min(1, "Commission amount is required"),
+  paymentReference: z.string().min(1, "Payment reference is required"),
+  paymentMethod: z.string().optional(),
+  paymentNotes: z.string().optional(),
 });
 
 export default function AdminDashboard() {
@@ -89,9 +105,12 @@ export default function AdminDashboard() {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [showStageModal, setShowStageModal] = useState(false);
+  const [showStageOverrideModal, setShowStageOverrideModal] = useState(false);
+  const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedReferrals, setSelectedReferrals] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [seedingTestData, setSeedingTestData] = useState(false);
 
   // Check if user is admin
   if (authLoading) {
@@ -173,12 +192,34 @@ export default function AdminDashboard() {
     },
   });
 
-  // Stage update form
-  const stageForm = useForm<z.infer<typeof stageUpdateSchema>>({
-    resolver: zodResolver(stageUpdateSchema),
+  // Stage form
+  const stageForm = useForm<z.infer<typeof stageFormSchema>>({
+    resolver: zodResolver(stageFormSchema),
     defaultValues: {
       stage: "",
       notes: "",
+    },
+  });
+
+  // Stage override form
+  const stageOverrideForm = useForm<z.infer<typeof stageOverrideSchema>>({
+    resolver: zodResolver(stageOverrideSchema),
+    defaultValues: {
+      dealStage: "",
+      status: "",
+      overrideReason: "",
+      adminNotes: "",
+    },
+  });
+
+  // Confirm payment form
+  const confirmPaymentForm = useForm<z.infer<typeof confirmPaymentSchema>>({
+    resolver: zodResolver(confirmPaymentSchema),
+    defaultValues: {
+      actualCommission: "",
+      paymentReference: "",
+      paymentMethod: "Bank Transfer",
+      paymentNotes: "",
     },
   });
 
@@ -218,9 +259,9 @@ export default function AdminDashboard() {
 
   // Update stage mutation
   const updateStageMutation = useMutation({
-    mutationFn: async (data: { referralId: string; stageData: any }) => {
-      const response = await fetch(`/api/admin/referrals/${data.referralId}/stage`, {
-        method: 'PATCH',
+    mutationFn: async (data: { referralId: string; stageData: z.infer<typeof stageFormSchema> }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/update-stage`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.stageData),
       });
@@ -230,6 +271,58 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setShowStageModal(false);
       stageForm.reset();
+    },
+  });
+
+  // Stage override mutation
+  const stageOverrideMutation = useMutation({
+    mutationFn: async (data: { referralId: string; overrideData: any }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/override-stage`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data.overrideData),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+      setShowStageOverrideModal(false);
+      stageOverrideForm.reset();
+    },
+  });
+
+  // Confirm payment mutation
+  const confirmPaymentMutation = useMutation({
+    mutationFn: async (data: { referralId: string; paymentData: any }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/confirm-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data.paymentData),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+      setShowConfirmPaymentModal(false);
+      confirmPaymentForm.reset();
+    },
+  });
+
+  // Seed test data mutation
+  const seedTestDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/admin/seed-test-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+      setSeedingTestData(false);
+    },
+    onError: () => {
+      setSeedingTestData(false);
     },
   });
 

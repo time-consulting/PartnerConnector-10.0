@@ -904,6 +904,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Seed test data for demonstrating referral system functionality
+  app.post('/api/admin/seed-test-data', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      await storage.seedTestReferrals();
+      res.json({ 
+        success: true, 
+        message: "Test referrals seeded successfully" 
+      });
+    } catch (error) {
+      console.error("Error seeding test data:", error);
+      res.status(500).json({ message: "Failed to seed test data" });
+    }
+  });
+
+  // Enhanced stage override functionality for admin
+  app.patch('/api/admin/referrals/:referralId/override-stage', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { dealStage, status, adminNotes, overrideReason } = req.body;
+
+      // Get current referral for audit trail
+      const allReferrals = await storage.getAllReferrals();
+      const currentReferral = allReferrals.find((r: any) => r.id === referralId);
+      
+      if (!currentReferral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Create audit trail
+      const auditNote = `\n[${new Date().toLocaleString()}] Stage override by admin ${req.user.claims.email}: ${currentReferral.dealStage} → ${dealStage}. Reason: ${overrideReason || 'No reason provided'}`;
+      const updatedAdminNotes = (adminNotes || currentReferral.adminNotes || '') + auditNote;
+
+      // Update the referral stage and status
+      const updateData = {
+        dealStage,
+        status: status || currentReferral.status,
+        adminNotes: updatedAdminNotes,
+        updatedAt: new Date()
+      };
+
+      const updatedReferral = await storage.updateReferral(referralId, updateData);
+
+      // Create notification for the referrer if stage changed significantly
+      if (dealStage !== currentReferral.dealStage) {
+        const stageNotifications: { [key: string]: { title: string; message: string } } = {
+          'quote_sent': {
+            title: 'Quote Sent',
+            message: `A competitive quote has been sent to ${currentReferral.businessName}`
+          },
+          'quote_approved': {
+            title: 'Quote Approved',
+            message: `${currentReferral.businessName} has approved the quote and is ready to proceed`
+          },
+          'processing': {
+            title: 'Application Processing',
+            message: `${currentReferral.businessName} application is now being processed`
+          },
+          'completed': {
+            title: 'Referral Complete',
+            message: `Your referral for ${currentReferral.businessName} has been successfully completed`
+          }
+        };
+
+        const notificationData = stageNotifications[dealStage];
+        if (notificationData) {
+          await createNotificationForUser(currentReferral.referrerId, {
+            type: 'status_update',
+            title: notificationData.title,
+            message: notificationData.message,
+            referralId: referralId,
+            businessName: currentReferral.businessName
+          });
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Stage override applied successfully",
+        referral: updatedReferral,
+        previousStage: currentReferral.dealStage,
+        newStage: dealStage
+      });
+    } catch (error) {
+      console.error("Error overriding referral stage:", error);
+      res.status(500).json({ message: "Failed to override referral stage" });
+    }
+  });
+
+  // Confirm payment section for commission amounts
+  app.post('/api/admin/referrals/:referralId/confirm-payment', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { actualCommission, paymentReference, paymentMethod, paymentNotes } = req.body;
+
+      // Get referral details
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
+      
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Update referral with payment confirmation
+      const paymentConfirmationNote = `\n[${new Date().toLocaleString()}] Payment confirmed by admin ${req.user.claims.email}: £${actualCommission} via ${paymentMethod || 'Bank Transfer'}. Reference: ${paymentReference}. Notes: ${paymentNotes || 'No additional notes'}`;
+      
+      const updateData = {
+        actualCommission: actualCommission.toString(),
+        status: 'paid',
+        dealStage: 'completed',
+        adminNotes: (referral.adminNotes || '') + paymentConfirmationNote,
+        updatedAt: new Date()
+      };
+
+      const updatedReferral = await storage.updateReferral(referralId, updateData);
+
+      // Create or update commission approval record
+      const approval = await storage.createCommissionApproval({
+        referralId: referralId,
+        userId: referral.referrerId,
+        commissionAmount: actualCommission.toString(),
+        clientBusinessName: referral.businessName,
+        approvalStatus: 'approved',
+        approvedAt: new Date(),
+        paymentStatus: 'completed',
+        paymentDate: new Date(),
+        paymentReference: paymentReference,
+        adminNotes: paymentNotes,
+        ratesData: {
+          baseCommission: actualCommission,
+          commissionRate: referral.commissionPercentage || '60%',
+          level: referral.referralLevel || 1,
+          paymentMethod: paymentMethod || 'Bank Transfer'
+        }
+      });
+
+      // Create notification for user
+      await createNotificationForUser(referral.referrerId, {
+        type: 'commission_paid',
+        title: 'Commission Payment Confirmed',
+        message: `Your commission of £${actualCommission} for ${referral.businessName} has been paid. Reference: ${paymentReference}`,
+        referralId: referralId,
+        businessName: referral.businessName,
+        metadata: {
+          amount: actualCommission,
+          paymentReference: paymentReference,
+          paymentMethod: paymentMethod || 'Bank Transfer'
+        }
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Payment confirmed and commission processed successfully",
+        referral: updatedReferral,
+        approval: approval,
+        paymentDetails: {
+          amount: actualCommission,
+          reference: paymentReference,
+          method: paymentMethod || 'Bank Transfer',
+          date: new Date()
+        }
+      });
+    } catch (error) {
+      console.error("Error confirming payment:", error);
+      res.status(500).json({ message: "Failed to confirm payment" });
+    }
+  });
+
   // Admin referrer reassignment
   app.post('/api/admin/referrals/:referralId/reassign', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {

@@ -179,16 +179,19 @@ export interface IStorage {
   createWebhookLog(logData: InsertWebhookLog): Promise<WebhookLog>;
   getWebhookLogs(limit?: number): Promise<WebhookLog[]>;
   getFailedWebhooks(): Promise<WebhookLog[]>;
+
+  // Test data seeding
+  seedTestReferrals(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
+    const result = await db
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
@@ -199,7 +202,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    return user;
+    return (result as User[])[0];
   }
 
   async getBusinessTypes(): Promise<BusinessType[]> {
@@ -904,6 +907,222 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await db.insert(rates).values(defaultRates);
+  }
+
+  // Test data seeding function for demonstrating referral system functionality
+  async seedTestReferrals(): Promise<void> {
+    try {
+      // Get a test user (preferably admin) to assign referrals to
+      const [testUser] = await db.select().from(users).where(eq(users.isAdmin, true)).limit(1);
+      if (!testUser) {
+        console.log('No admin user found - skipping test referral seeding');
+        return;
+      }
+
+      // Check if test referrals already exist
+      const existingTestReferrals = await db.select()
+        .from(referrals)
+        .where(eq(referrals.referrerId, testUser.id))
+        .limit(1);
+      
+      if (existingTestReferrals.length > 0) {
+        console.log('Test referrals already exist - skipping seeding');
+        return;
+      }
+
+      // Get business types for referral assignment
+      const businessTypes = await this.getBusinessTypes();
+      if (businessTypes.length === 0) {
+        await this.seedBusinessTypes();
+      }
+      const updatedBusinessTypes = await this.getBusinessTypes();
+
+      const testReferrals = [
+        {
+          referrerId: testUser.id,
+          businessName: "Bella Vista Italian Restaurant",
+          businessEmail: "owner@bellavistaitalia.co.uk",
+          businessPhone: "+44 20 7123 4567",
+          businessAddress: "15 High Street, London, SW1A 1AA",
+          businessTypeId: updatedBusinessTypes[1]?.id || updatedBusinessTypes[0]?.id, // Restaurant
+          currentProcessor: "Square",
+          monthlyVolume: "£85,000",
+          currentRate: "2.2%",
+          referralLevel: 1,
+          commissionPercentage: "60.00",
+          dealStage: "quote_sent",
+          status: "quoted",
+          estimatedCommission: "500.00",
+          quoteAmount: "5000.00",
+          quoteGenerated: true,
+          notes: "High volume restaurant looking for better rates on card processing",
+          adminNotes: "Competitive quote sent - strong conversion potential",
+          gdprConsent: true,
+          quoteRates: {
+            debitRate: "1.4%",
+            creditRate: "1.9%",
+            monthlyFee: "£25",
+            terminalRental: "£15/month"
+          },
+          requiredDocuments: ["identification", "proof_of_bank", "business_registration"],
+          receivedDocuments: [],
+        },
+        {
+          referrerId: testUser.id,
+          businessName: "TechStart Solutions Ltd",
+          businessEmail: "finance@techstartsolutions.com",
+          businessPhone: "+44 161 789 1234",
+          businessAddress: "45 Innovation Drive, Manchester, M1 4AX",
+          businessTypeId: updatedBusinessTypes[0]?.id, // Small Business
+          currentProcessor: "Worldpay",
+          monthlyVolume: "£25,000",
+          currentRate: "2.5%",
+          referralLevel: 1,
+          commissionPercentage: "60.00",
+          dealStage: "quote_approved",
+          status: "approved",
+          estimatedCommission: "150.00",
+          actualCommission: "150.00",
+          quoteAmount: "2500.00",
+          clientApproved: true,
+          quoteGenerated: true,
+          notes: "Tech startup looking for competitive processing rates",
+          adminNotes: "Client approved quote - awaiting documentation",
+          gdprConsent: true,
+          quoteRates: {
+            debitRate: "1.5%",
+            creditRate: "2.1%",
+            monthlyFee: "£20",
+            terminalRental: "£12/month"
+          },
+          requiredDocuments: ["identification", "proof_of_bank"],
+          receivedDocuments: ["identification"],
+          docsOutConfirmed: true,
+          docsOutConfirmedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        },
+        {
+          referrerId: testUser.id,
+          businessName: "Green Garden Center",
+          businessEmail: "info@greengardencenter.co.uk",
+          businessPhone: "+44 1234 567890",
+          businessAddress: "78 Garden Road, Birmingham, B15 3TG",
+          businessTypeId: updatedBusinessTypes[0]?.id, // Small Business
+          currentProcessor: "Stripe",
+          monthlyVolume: "£15,000",
+          currentRate: "2.9%",
+          referralLevel: 1,
+          commissionPercentage: "60.00",
+          dealStage: "processing",
+          status: "approved",
+          estimatedCommission: "150.00",
+          actualCommission: "150.00",
+          quoteAmount: "2000.00",
+          clientApproved: true,
+          quoteGenerated: true,
+          notes: "Garden center seeking better processing rates for seasonal business",
+          adminNotes: "All documentation received - processing application",
+          gdprConsent: true,
+          quoteRates: {
+            debitRate: "1.6%",
+            creditRate: "2.2%",
+            monthlyFee: "£18",
+            terminalRental: "£10/month"
+          },
+          requiredDocuments: ["identification", "proof_of_bank", "business_registration"],
+          receivedDocuments: ["identification", "proof_of_bank", "business_registration"],
+          docsOutConfirmed: true,
+          docsOutConfirmedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        },
+        {
+          referrerId: testUser.id,
+          businessName: "Premium Fitness Studio",
+          businessEmail: "admin@premiumfitness.co.uk",
+          businessPhone: "+44 207 987 6543",
+          businessAddress: "92 Wellness Avenue, London, EC2A 1BB",
+          businessTypeId: updatedBusinessTypes[1]?.id || updatedBusinessTypes[0]?.id, // Hospitality
+          currentProcessor: "iZettle",
+          monthlyVolume: "£45,000",
+          currentRate: "2.3%",
+          referralLevel: 1,
+          commissionPercentage: "60.00",
+          dealStage: "completed",
+          status: "paid",
+          estimatedCommission: "300.00",
+          actualCommission: "300.00",
+          quoteAmount: "4000.00",
+          clientApproved: true,
+          quoteGenerated: true,
+          notes: "Fitness studio looking for reliable payment processing for memberships",
+          adminNotes: "Successfully onboarded - commission paid",
+          gdprConsent: true,
+          quoteRates: {
+            debitRate: "1.3%",
+            creditRate: "1.8%",
+            monthlyFee: "£22",
+            terminalRental: "£14/month"
+          },
+          requiredDocuments: ["identification", "proof_of_bank"],
+          receivedDocuments: ["identification", "proof_of_bank"],
+          docsOutConfirmed: true,
+          docsOutConfirmedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+        },
+        {
+          referrerId: testUser.id,
+          businessName: "City Electronics Repair",
+          businessEmail: "service@cityelectronics.co.uk",
+          businessPhone: "+44 141 555 7890",
+          businessAddress: "23 Repair Street, Glasgow, G1 2HF",
+          businessTypeId: updatedBusinessTypes[0]?.id, // Small Business
+          currentProcessor: "PayPal Here",
+          monthlyVolume: "£8,000",
+          currentRate: "3.4%",
+          referralLevel: 1,
+          commissionPercentage: "60.00",
+          dealStage: "quote_request_received",
+          status: "pending",
+          estimatedCommission: "100.00",
+          quoteGenerated: false,
+          notes: "Small repair shop looking to reduce high processing fees",
+          adminNotes: "New referral - need to prepare competitive quote",
+          gdprConsent: true,
+          requiredDocuments: ["identification", "proof_of_bank"],
+          receivedDocuments: [],
+        },
+      ];
+
+      // Insert test referrals
+      const insertedReferrals = await db.insert(referrals).values(testReferrals).returning();
+      
+      // Create commission approvals for completed referrals
+      const commissionApprovalsData = insertedReferrals
+        .filter(r => r.status === 'paid' && r.actualCommission)
+        .map(referral => ({
+          referralId: referral.id,
+          userId: testUser.id,
+          commissionAmount: referral.actualCommission!,
+          clientBusinessName: referral.businessName,
+          approvalStatus: 'approved' as const,
+          approvedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+          paymentStatus: 'completed' as const,
+          paymentDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+          paymentReference: `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          adminNotes: 'Commission processed via automated system',
+          ratesData: {
+            baseCommission: referral.actualCommission,
+            commissionRate: '60%',
+            level: 1
+          }
+        }));
+
+      if (commissionApprovalsData.length > 0) {
+        await db.insert(commissionApprovals).values(commissionApprovalsData);
+      }
+
+      console.log(`Successfully seeded ${insertedReferrals.length} test referrals and ${commissionApprovalsData.length} commission approvals`);
+    } catch (error) {
+      console.error('Error seeding test referrals:', error);
+      throw error;
+    }
   }
 
   // Commission approval operations
