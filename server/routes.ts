@@ -111,12 +111,14 @@ async function addToGHLWorkflow(contactId: string, workflowId: string, apiKey: s
 
 // GHL Integration function for waitlist submissions
 async function submitWaitlistToGHL(waitlistEntry: any) {
+  console.log('🔥 DEBUG: submitWaitlistToGHL called with entry:', waitlistEntry.id, waitlistEntry.email);
   try {
     // Check if GHL credentials are configured
     if (!process.env.GHL_API_KEY || !process.env.GHL_LOCATION_ID) {
-      console.log('GHL credentials not configured - skipping waitlist submission');
+      console.log('❌ GHL credentials not configured - skipping waitlist submission');
       return { success: true, ghlContactId: `mock_${Date.now()}`, skipped: true };
     }
+    console.log('✅ GHL credentials found, proceeding with webhook submission');
 
     const ghlApiKey = process.env.GHL_API_KEY;
     const locationId = process.env.GHL_LOCATION_ID;
@@ -146,6 +148,7 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
 
     // Submit to GHL Webhook (more reliable than API)
     const webhookUrl = `https://services.leadconnectorhq.com/hooks/${locationId}/webhook-trigger/d30b9f55-149f-4e5d-8b9a-9116b0d82415`;
+    console.log('🌐 GHL Webhook URL:', webhookUrl);
     
     const webhookData = {
       source: 'PartnerConnector Waitlist',
@@ -167,6 +170,8 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
       leadSource: 'PartnerConnector Waitlist'
     };
 
+    console.log('📤 Sending webhook data:', JSON.stringify(webhookData, null, 2));
+
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
@@ -174,6 +179,8 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
       },
       body: JSON.stringify(webhookData)
     });
+    
+    console.log('📡 GHL Response status:', response.status, response.statusText);
 
     if (!response.ok) {
       const error = await response.text();
