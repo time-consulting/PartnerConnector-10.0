@@ -149,25 +149,26 @@ export default function CommissionStructure() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 <div>
-                  <div className="text-3xl font-bold text-green-600 mb-2">£1,200</div>
+                  <div className="text-3xl font-bold text-green-600 mb-2">£1,800</div>
                   <div className="text-sm text-gray-600 mb-2">3 Direct Referrals</div>
-                  <div className="text-xs text-gray-500">3 × £400 average</div>
+                  <div className="text-xs text-gray-500">3 × £600 average</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-blue-600 mb-2">£480</div>
+                  <div className="text-3xl font-bold text-blue-600 mb-2">£1,800</div>
                   <div className="text-sm text-gray-600 mb-2">6 Level 2 Commissions</div>
-                  <div className="text-xs text-gray-500">6 × £80 average</div>
+                  <div className="text-xs text-gray-500">6 × £300 average</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-purple-600 mb-2">£240</div>
+                  <div className="text-3xl font-bold text-purple-600 mb-2">£600</div>
                   <div className="text-sm text-gray-600 mb-2">6 Level 3 Commissions</div>
-                  <div className="text-xs text-gray-500">6 × £40 average</div>
+                  <div className="text-xs text-gray-500">6 × £100 average</div>
                 </div>
               </div>
               <div className="text-center mt-8 pt-8 border-t border-gray-200">
-                <div className="text-4xl font-bold text-gray-900 mb-2">£1,920</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">£4,200</div>
                 <div className="text-lg text-gray-600">Total Monthly Potential</div>
                 <div className="text-sm text-gray-500 mt-2">Build your team for ongoing monthly income</div>
+                <div className="text-xs text-gray-400 mt-2 italic">*Higher earnings available for switching business</div>
               </div>
             </CardContent>
           </Card>
