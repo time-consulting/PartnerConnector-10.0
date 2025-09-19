@@ -414,7 +414,7 @@ export default function Landing() {
               <Card className="p-6 text-center border-0 bg-gradient-to-b from-purple-50 to-white">
                 <UsersIcon className="w-12 h-12 text-purple-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-gray-900 mb-2">Partners</h3>
-                <p className="text-sm text-gray-600">Access to network of 10,000+ verified partners</p>
+                <p className="text-sm text-gray-600">Access to network of verified partners</p>
               </Card>
               
               <Card className="p-6 text-center border-0 bg-gradient-to-b from-yellow-50 to-white">
