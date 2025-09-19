@@ -144,33 +144,49 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
       tags: ['PartnerConnector Waitlist', `Experience: ${waitlistEntry.experienceLevel || 'Unknown'}`, `Business: ${waitlistEntry.businessType || 'Unknown'}`]
     };
 
-    // Submit to GHL API (v2 endpoint)
-    const response = await fetch(`https://services.leadconnectorhq.com/contacts/`, {
+    // Submit to GHL Webhook (more reliable than API)
+    const webhookUrl = `https://services.leadconnectorhq.com/hooks/${locationId}/webhook-trigger/d30b9f55-149f-4e5d-8b9a-9116b0d82415`;
+    
+    const webhookData = {
+      source: 'PartnerConnector Waitlist',
+      firstName: waitlistEntry.firstName,
+      lastName: waitlistEntry.lastName,
+      email: waitlistEntry.email,
+      phone: waitlistEntry.phone || '',
+      companyName: waitlistEntry.companyName || '',
+      businessType: waitlistEntry.businessType || '',
+      currentClientBase: waitlistEntry.currentClientBase || '',
+      experienceLevel: waitlistEntry.experienceLevel || '',
+      interests: Array.isArray(waitlistEntry.interests) ? waitlistEntry.interests.join(', ') : '',
+      howDidYouHear: waitlistEntry.howDidYouHear || '',
+      additionalInfo: waitlistEntry.additionalInfo || '',
+      marketingConsent: waitlistEntry.marketingConsent ? 'Yes' : 'No',
+      status: waitlistEntry.status || 'pending',
+      waitlistId: waitlistEntry.id,
+      submissionDate: new Date().toISOString(),
+      leadSource: 'PartnerConnector Waitlist'
+    };
+
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${ghlApiKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(contactData)
+      body: JSON.stringify(webhookData)
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('GHL API Error for waitlist:', response.status, error);
-      throw new Error(`GHL API error: ${response.status}`);
+      console.error('GHL Webhook Error for waitlist:', response.status, error);
+      throw new Error(`GHL Webhook error: ${response.status}`);
     }
 
     const result = await response.json();
-    console.log(`Waitlist entry ${waitlistEntry.id} successfully submitted to GHL. Contact ID: ${result.contact?.id}`);
-    
-    // Add to appropriate workflow/campaign if configured
-    if (process.env.GHL_WORKFLOW_ID && result.contact?.id) {
-      await addToGHLWorkflow(result.contact.id, process.env.GHL_WORKFLOW_ID, ghlApiKey);
-    }
+    console.log(`Waitlist entry ${waitlistEntry.id} successfully submitted to GHL webhook:`, result);
 
     return { 
       success: true, 
-      ghlContactId: result.contact?.id,
+      ghlContactId: 'webhook_triggered',
       ghlResponse: result
     };
   } catch (error) {
