@@ -111,44 +111,17 @@ async function addToGHLWorkflow(contactId: string, workflowId: string, apiKey: s
 
 // GHL Integration function for waitlist submissions
 async function submitWaitlistToGHL(waitlistEntry: any) {
-  console.log('🔥 DEBUG: submitWaitlistToGHL called with entry:', waitlistEntry.id, waitlistEntry.email);
   try {
     // Check if GHL credentials are configured
     if (!process.env.GHL_API_KEY || !process.env.GHL_LOCATION_ID) {
-      console.log('❌ GHL credentials not configured - skipping waitlist submission');
-      return { success: true, ghlContactId: `mock_${Date.now()}`, skipped: true };
+      console.log('GHL credentials not configured - skipping waitlist submission');
+      return { success: false, ghlContactId: null, skipped: true };
     }
-    console.log('✅ GHL credentials found, proceeding with webhook submission');
 
-    const ghlApiKey = process.env.GHL_API_KEY;
     const locationId = process.env.GHL_LOCATION_ID;
-    
-    // Create contact/lead in GoHighLevel with waitlist data (v2 API format)
-    const contactData = {
-      name: `${waitlistEntry.firstName} ${waitlistEntry.lastName}`,
-      email: waitlistEntry.email,
-      phone: waitlistEntry.phone || '',
-      companyName: waitlistEntry.companyName || '',
-      customField: {
-        // Waitlist-specific custom fields
-        waitlist_business_type: waitlistEntry.businessType || '',
-        waitlist_client_base: waitlistEntry.currentClientBase || '',
-        waitlist_experience_level: waitlistEntry.experienceLevel || '',
-        waitlist_interests: Array.isArray(waitlistEntry.interests) ? waitlistEntry.interests.join(', ') : '',
-        waitlist_how_did_you_hear: waitlistEntry.howDidYouHear || '',
-        waitlist_additional_info: waitlistEntry.additionalInfo || '',
-        waitlist_marketing_consent: waitlistEntry.marketingConsent ? 'Yes' : 'No',
-        waitlist_status: waitlistEntry.status || 'pending',
-        lead_source: 'PartnerConnector Waitlist',
-        waitlist_id: waitlistEntry.id,
-        waitlist_submission_date: new Date().toISOString()
-      },
-      tags: ['PartnerConnector Waitlist', `Experience: ${waitlistEntry.experienceLevel || 'Unknown'}`, `Business: ${waitlistEntry.businessType || 'Unknown'}`]
-    };
 
     // Submit to GHL Webhook (more reliable than API)
     const webhookUrl = `https://services.leadconnectorhq.com/hooks/${locationId}/webhook-trigger/d30b9f55-149f-4e5d-8b9a-9116b0d82415`;
-    console.log('🌐 GHL Webhook URL:', webhookUrl);
     
     const webhookData = {
       source: 'PartnerConnector Waitlist',
@@ -170,8 +143,6 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
       leadSource: 'PartnerConnector Waitlist'
     };
 
-    console.log('📤 Sending webhook data:', JSON.stringify(webhookData, null, 2));
-
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
@@ -179,8 +150,6 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
       },
       body: JSON.stringify(webhookData)
     });
-    
-    console.log('📡 GHL Response status:', response.status, response.statusText);
 
     if (!response.ok) {
       const error = await response.text();
@@ -446,13 +415,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Submit to Go High Level CRM
       const ghlResult = await submitWaitlistToGHL(entry);
       
-      // Log the waitlist submission
+      // Log the waitlist submission (mask email for privacy)
+      const maskedEmail = entry.email.replace(/(.{2}).*(@.*)/, '$1***$2');
       console.log('Waitlist submission:', {
         waitlistId: entry.id,
-        email: entry.email,
+        email: maskedEmail,
         businessType: entry.businessType,
         experienceLevel: entry.experienceLevel,
         ghlSubmitted: ghlResult.success,
+        ghlSkipped: ghlResult.skipped || false,
         ghlContactId: ghlResult.ghlContactId,
         timestamp: new Date().toISOString()
       });
@@ -463,6 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: entry.status,
         ghlIntegration: {
           success: ghlResult.success,
+          skipped: ghlResult.skipped || false,
           contactId: ghlResult.ghlContactId
         }
       });
