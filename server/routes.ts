@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertReferralSchema, insertContactSchema, insertOpportunitySchema } from "@shared/schema";
+import { insertReferralSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
 import multer from "multer";
@@ -302,6 +302,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching business types:", error);
       res.status(500).json({ message: "Failed to fetch business types" });
+    }
+  });
+
+  // Waitlist submission (public route)
+  app.post('/api/waitlist', async (req, res) => {
+    try {
+      // Validate request body
+      const validationResult = insertWaitlistSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        const formattedError = fromZodError(validationResult.error);
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: formattedError.details 
+        });
+      }
+
+      const waitlistData = validationResult.data;
+
+      // Check if email already exists in waitlist
+      const existingEntry = await storage.getWaitlistEntryByEmail(waitlistData.email);
+      if (existingEntry) {
+        return res.status(409).json({ 
+          message: "Email already registered on waitlist",
+          status: existingEntry.status
+        });
+      }
+
+      // Create waitlist entry with database-level duplicate handling
+      let entry;
+      try {
+        entry = await storage.createWaitlistEntry(waitlistData);
+      } catch (dbError: any) {
+        // Handle database unique constraint violation (concurrent submissions)
+        if (dbError.code === '23505' && dbError.constraint === 'waitlist_email_unique') {
+          return res.status(409).json({ 
+            message: "Email already registered on waitlist",
+            status: "pending"
+          });
+        }
+        // Re-throw other database errors
+        throw dbError;
+      }
+
+      // Log the waitlist submission
+      console.log('Waitlist submission:', {
+        waitlistId: entry.id,
+        email: entry.email,
+        businessType: entry.businessType,
+        experienceLevel: entry.experienceLevel,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json({ 
+        message: "Successfully joined waitlist",
+        id: entry.id,
+        status: entry.status
+      });
+    } catch (error) {
+      console.error("Error creating waitlist entry:", error);
+      res.status(500).json({ message: "Failed to join waitlist" });
     }
   });
 

@@ -20,6 +20,7 @@ import {
   requestLogs,
   webhookLogs,
   adminAuditLogs,
+  waitlist,
   type User,
   type UpsertUser,
   type Audit,
@@ -50,6 +51,8 @@ import {
   type CommissionApproval,
   type InsertAdminAuditLog,
   type AdminAuditLog,
+  type Waitlist,
+  type InsertWaitlist,
 } from "@shared/schema";
 import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
@@ -179,6 +182,12 @@ export interface IStorage {
   createWebhookLog(logData: InsertWebhookLog): Promise<WebhookLog>;
   getWebhookLogs(limit?: number): Promise<WebhookLog[]>;
   getFailedWebhooks(): Promise<WebhookLog[]>;
+
+  // Waitlist operations
+  createWaitlistEntry(waitlistData: InsertWaitlist): Promise<Waitlist>;
+  getWaitlistEntries(): Promise<Waitlist[]>;
+  getWaitlistEntryByEmail(email: string): Promise<Waitlist | undefined>;
+  updateWaitlistStatus(id: string, status: string): Promise<Waitlist>;
 
   // Test data seeding
   seedTestReferrals(): Promise<void>;
@@ -1388,6 +1397,42 @@ export class DatabaseStorage implements IStorage {
     };
     
     return this.createReferral(referralWithLevel);
+  }
+
+  // Waitlist operations
+  async createWaitlistEntry(waitlistData: InsertWaitlist): Promise<Waitlist> {
+    const [entry] = await db
+      .insert(waitlist)
+      .values(waitlistData)
+      .returning();
+    return entry;
+  }
+
+  async getWaitlistEntries(): Promise<Waitlist[]> {
+    return await db
+      .select()
+      .from(waitlist)
+      .orderBy(desc(waitlist.createdAt));
+  }
+
+  async getWaitlistEntryByEmail(email: string): Promise<Waitlist | undefined> {
+    const [entry] = await db
+      .select()
+      .from(waitlist)
+      .where(eq(waitlist.email, email));
+    return entry;
+  }
+
+  async updateWaitlistStatus(id: string, status: string): Promise<Waitlist> {
+    const [entry] = await db
+      .update(waitlist)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(waitlist.id, id))
+      .returning();
+    if (!entry) {
+      throw new Error('Waitlist entry not found');
+    }
+    return entry;
   }
 }
 

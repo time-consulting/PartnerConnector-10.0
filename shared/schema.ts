@@ -1046,6 +1046,30 @@ export type InsertPartnerReview = z.infer<typeof insertPartnerReviewSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
+// Waitlist table for partnership lead generation
+export const waitlist = pgTable("waitlist", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  email: varchar("email").notNull().unique(),
+  phone: varchar("phone"),
+  companyName: varchar("company_name"),
+  businessType: varchar("business_type"),
+  currentClientBase: varchar("current_client_base"), // Small, Medium, Large
+  experienceLevel: varchar("experience_level"), // New to partnerships, Some experience, Experienced
+  interests: text("interests").array(), // What they're interested in
+  howDidYouHear: varchar("how_did_you_hear"), // Referral, Online search, Social media, etc.
+  additionalInfo: text("additional_info"), // Optional additional information
+  marketingConsent: boolean("marketing_consent").default(false),
+  status: varchar("status").notNull().default("pending"), // pending, contacted, qualified, enrolled, not_interested
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("waitlist_email_idx").on(table.email),
+  index("waitlist_status_idx").on(table.status),
+  index("waitlist_created_at_idx").on(table.createdAt),
+]);
+
 // Admin audit logging table for tracking admin actions
 export const adminAuditLogs = pgTable("admin_audit_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1089,6 +1113,15 @@ export const adminReferralUpdateSchema = createInsertSchema(referrals).omit({
 }).partial();
 
 export type AdminReferralUpdate = z.infer<typeof adminReferralUpdateSchema>;
+
+// Waitlist schemas
+export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
+export type Waitlist = typeof waitlist.$inferSelect;
 
 // Admin audit log types
 export const insertAdminAuditLog = createInsertSchema(adminAuditLogs);
