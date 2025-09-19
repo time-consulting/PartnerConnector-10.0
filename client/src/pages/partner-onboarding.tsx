@@ -183,7 +183,7 @@ export default function PartnerOnboarding() {
                   <UsersIcon className="w-6 h-6 text-yellow-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Network Access</h3>
-                <p className="text-sm text-gray-600">Connect with our network of 10,000+ verified partners and clients</p>
+                <p className="text-sm text-gray-600">Connect with our network of verified partners and clients</p>
               </CardContent>
             </Card>
           </div>
