@@ -156,7 +156,7 @@ function ContactForm({
   };
 
   const toggleProductInterest = (product: string) => {
-    const current = form.getValues("interestedProducts");
+    const current = form.getValues("interestedProducts") || [];
     const updated = current.includes(product)
       ? current.filter(p => p !== product)
       : [...current, product];
@@ -299,6 +299,7 @@ function ContactForm({
                     <FormControl>
                       <Input
                         {...field}
+                        value={field.value || ""}
                         data-testid="input-company"
                         placeholder="Enter company name"
                       />
@@ -316,6 +317,7 @@ function ContactForm({
                     <FormControl>
                       <Input
                         {...field}
+                        value={field.value || ""}
                         data-testid="input-job-title"
                         placeholder="Enter job title"
                       />
@@ -333,7 +335,7 @@ function ContactForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Business Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                       <FormControl>
                         <SelectTrigger data-testid="select-business-type">
                           <SelectValue placeholder="Select business type" />
@@ -355,7 +357,7 @@ function ContactForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contact Source</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                       <FormControl>
                         <SelectTrigger data-testid="select-contact-source">
                           <SelectValue placeholder="Select contact source" />
@@ -382,6 +384,7 @@ function ContactForm({
                   <FormControl>
                     <Input
                       {...field}
+                      value={field.value || ""}
                       data-testid="input-address-line1"
                       placeholder="Enter address line 1"
                     />
@@ -400,6 +403,7 @@ function ContactForm({
                   <FormControl>
                     <Input
                       {...field}
+                      value={field.value || ""}
                       data-testid="input-address-line2"
                       placeholder="Enter address line 2"
                     />
@@ -419,6 +423,7 @@ function ContactForm({
                     <FormControl>
                       <Input
                         {...field}
+                        value={field.value || ""}
                         data-testid="input-city"
                         placeholder="Enter city"
                       />
@@ -436,6 +441,7 @@ function ContactForm({
                     <FormControl>
                       <Input
                         {...field}
+                        value={field.value || ""}
                         data-testid="input-postcode"
                         placeholder="Enter postcode"
                       />
@@ -450,7 +456,7 @@ function ContactForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Country</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                       <FormControl>
                         <SelectTrigger data-testid="select-country">
                           <SelectValue />
@@ -498,7 +504,7 @@ function ContactForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Estimated Monthly Volume</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                     <FormControl>
                       <SelectTrigger data-testid="select-monthly-volume">
                         <SelectValue placeholder="Select monthly volume" />
@@ -521,7 +527,7 @@ function ContactForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Preferred Contact Method</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                     <FormControl>
                       <SelectTrigger data-testid="select-contact-method">
                         <SelectValue />
@@ -549,6 +555,7 @@ function ContactForm({
                   <FormControl>
                     <Textarea
                       {...field}
+                      value={field.value || ""}
                       placeholder="Add notes about this contact..."
                       className="min-h-[200px] resize-y"
                       data-testid="textarea-notes"
@@ -663,8 +670,8 @@ export default function ContactsPage() {
           bValue = b.company || "";
           break;
         case "createdAt":
-          aValue = new Date(a.createdAt);
-          bValue = new Date(b.createdAt);
+          aValue = new Date(a.createdAt || new Date());
+          bValue = new Date(b.createdAt || new Date());
           break;
         default:
           aValue = a.firstName;
@@ -1049,7 +1056,7 @@ export default function ContactsPage() {
           open={!!selectedContact} 
           onOpenChange={(open) => !open && setSelectedContact(null)}
         >
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-7xl w-[95vw] max-h-[95vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 Edit Contact: {selectedContact?.firstName} {selectedContact?.lastName}
