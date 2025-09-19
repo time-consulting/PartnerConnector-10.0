@@ -143,6 +143,51 @@ export default function KnowledgeBase() {
       tags: ['timeline', 'conversion', 'process'],
       helpful: 36,
       views: 201
+    },
+    {
+      id: '9',
+      question: 'What is LTR and how do I calculate it for Dojo partnerships?',
+      answer: 'LTR (Lifetime Rate) is calculated using a customer\'s card payment statement and is essential for Dojo partnerships. It helps you show how Dojo reduces costs, verify turnover, and spot high-risk businesses. Always get a statement before making an offer - you can help customers log in to their provider\'s portal or request a copy. The LTR calculation shows the true cost comparison between their current provider and Dojo\'s offering.',
+      category: 'products-services',
+      tags: ['ltr', 'dojo', 'calculation', 'statements', 'lifetime-rate'],
+      helpful: 48,
+      views: 312
+    },
+    {
+      id: '10',
+      question: 'How do I access customer statements from different card acquirers?',
+      answer: 'Each card acquirer has different access methods. Major providers include: Elavon (UK: 0345 850 0195, Portal: www.elavonconnect.com), Worldpay (Portal: mybusiness.worldpay.com), Barclaycard Payzone (Support: 0844 822 2040), and Global Payments (Portal: Business View). Most require customer ID and bank details for registration. Call their support lines for assistance with account setup and statement access.',
+      category: 'products-services',
+      tags: ['statements', 'acquirers', 'access', 'elavon', 'worldpay', 'barclaycard'],
+      helpful: 52,
+      views: 289
+    },
+    {
+      id: '11',
+      question: 'What should I look for when analyzing a switcher statement?',
+      answer: 'When reviewing switcher statements, focus on three key areas: Trust (statements prove true costs and provider setup), Accuracy (prevents wrong rate quotes), and Conversion (make offers while statement is open for higher sign-up rates). Compare current fees with Dojo\'s offer, highlighting per-transaction savings, monthly fixed fee reductions, and faster settlement times (Dojo offers next-day settlement).',
+      category: 'sales-process',
+      tags: ['switcher-statements', 'analysis', 'comparison', 'dojo', 'savings'],
+      helpful: 41,
+      views: 234
+    },
+    {
+      id: '12',
+      question: 'Which card acquirers require special access procedures?',
+      answer: 'Several acquirers have specific requirements: First Data/Cardnet requires MID & bank details for ClientLine enrollment. SumUp needs password reset via registered email. AIB Merchant Services requires a phone call for 5-minute setup. Valitor uses email password reset links. Each provider has unique portals and contact methods - refer to our comprehensive acquirer guide in the Dojo training module for detailed step-by-step instructions.',
+      category: 'products-services',
+      tags: ['acquirers', 'access-procedures', 'first-data', 'sumup', 'aib', 'valitor'],
+      helpful: 33,
+      views: 178
+    },
+    {
+      id: '13',
+      question: 'How do I use statements to demonstrate Dojo\'s cost savings?',
+      answer: 'Use statements to build trust and show concrete savings. Highlight three key advantages: per-transaction cost reductions, lower monthly fixed fees, and faster settlement (Dojo provides next-day settlement vs. longer periods with other providers). Always make your Dojo offer while the customer\'s statement is open - this significantly increases conversion rates as they can see the direct comparison in real-time.',
+      category: 'sales-process',
+      tags: ['cost-savings', 'dojo', 'comparison', 'settlement', 'conversion'],
+      helpful: 44,
+      views: 267
     }
   ];
 
