@@ -422,19 +422,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw dbError;
       }
 
+      // Submit to Go High Level CRM
+      const ghlResult = await submitWaitlistToGHL(entry);
+      
       // Log the waitlist submission
       console.log('Waitlist submission:', {
         waitlistId: entry.id,
         email: entry.email,
         businessType: entry.businessType,
         experienceLevel: entry.experienceLevel,
+        ghlSubmitted: ghlResult.success,
+        ghlContactId: ghlResult.ghlContactId,
         timestamp: new Date().toISOString()
       });
 
       res.status(201).json({ 
         message: "Successfully joined waitlist",
         id: entry.id,
-        status: entry.status
+        status: entry.status,
+        ghlIntegration: {
+          success: ghlResult.success,
+          contactId: ghlResult.ghlContactId
+        }
       });
     } catch (error) {
       console.error("Error creating waitlist entry:", error);
