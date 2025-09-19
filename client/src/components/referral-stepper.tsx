@@ -162,16 +162,16 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
 
   return (
     <Form {...form}>
-      <div className="w-full max-w-4xl mx-auto">
-      {/* Progress Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Submit New Lead</h2>
-          <div className="flex items-center space-x-2">
-            <div className="text-sm text-gray-600">Progress</div>
-            <div className="relative w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="w-full max-w-4xl mx-auto px-4">
+      {/* Mobile-First Progress Header */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-0">Submit New Lead</h2>
+          <div className="flex items-center space-x-3">
+            <div className="text-sm text-gray-600 hidden sm:block">Progress</div>
+            <div className="relative w-20 sm:w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div 
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300"
+                className="absolute left-0 top-0 h-full bg-gradient-to-r from-teal-500 to-green-600 transition-all duration-300"
                 style={{ width: `${calculateProgress()}%` }}
               />
             </div>
@@ -181,8 +181,8 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
           </div>
         </div>
 
-        {/* Step Navigation */}
-        <div className="flex items-center justify-between relative">
+        {/* Mobile-Optimized Step Navigation */}
+        <div className="hidden sm:flex items-center justify-between relative">
           {steps.map((step, index) => {
             const isCompleted = completedSteps.includes(step.id);
             const isCurrent = currentStep === step.id;
@@ -194,11 +194,11 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
                 <div 
                   className={`relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all cursor-pointer ${
                     isCompleted 
-                      ? 'bg-green-600 border-green-600 text-white' 
+                      ? 'bg-teal-600 border-teal-600 text-white' 
                       : isCurrent 
-                      ? 'bg-blue-600 border-blue-600 text-white' 
+                      ? 'bg-teal-500 border-teal-500 text-white' 
                       : isClickable
-                      ? 'bg-white border-gray-300 text-gray-600 hover:border-blue-300'
+                      ? 'bg-white border-gray-300 text-gray-600 hover:border-teal-300'
                       : 'bg-gray-100 border-gray-200 text-gray-400'
                   }`}
                   onClick={() => isClickable && handleStepClick(step.id)}
@@ -214,7 +214,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
                 {/* Step Details */}
                 <div className="ml-4 flex-1">
                   <div className={`text-sm font-medium ${
-                    isCurrent ? 'text-blue-600' : 'text-gray-900'
+                    isCurrent ? 'text-teal-600' : 'text-gray-900'
                   }`}>
                     {step.title}
                   </div>
@@ -226,18 +226,38 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
                 {/* Connector Line */}
                 {index < steps.length - 1 && (
                   <div className={`h-0.5 w-full mx-4 ${
-                    completedSteps.includes(step.id) ? 'bg-green-600' : 'bg-gray-200'
+                    completedSteps.includes(step.id) ? 'bg-teal-600' : 'bg-gray-200'
                   }`} />
                 )}
               </div>
             );
           })}
         </div>
+
+        {/* Mobile Simple Step Indicator */}
+        <div className="sm:hidden">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-teal-500 text-white rounded-xl flex items-center justify-center font-semibold">
+                  {steps[currentStep - 1]?.icon || currentStep}
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{steps[currentStep - 1]?.title}</div>
+                  <div className="text-sm text-gray-500">{steps[currentStep - 1]?.description}</div>
+                </div>
+              </div>
+              <div className="text-sm font-medium text-gray-500">
+                {currentStep} of {steps.length}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Step Content */}
-      <Card className="border-0 shadow-lg">
-        <CardContent className="p-8">
+      {/* Step Content - Mobile-First Clear Boxing */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="p-4 sm:p-8">
           {currentStep === 1 && (
             <ClientStep 
               form={form} 
@@ -256,11 +276,11 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
               isSubmitting={isSubmitting}
             />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Navigation Buttons - Enhanced for Mobile */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 pt-4 pb-4 sm:pb-6 mt-6 -mx-8 px-8 z-10 shadow-lg">
+      {/* Navigation Buttons - Mobile-First with Dojo Styling */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 pt-4 pb-safe mt-6 -mx-4 px-4 z-10 shadow-lg">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center">
           {/* Previous Button */}
           <div className="order-2 sm:order-1">
@@ -283,7 +303,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
               <Button 
                 onClick={handleNext}
                 data-testid="button-next"
-                className="flex items-center justify-center space-x-2 w-full sm:w-auto h-14 sm:h-auto text-lg sm:text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto h-14 sm:h-auto text-lg sm:text-base font-semibold bg-gradient-to-r from-teal-500 to-green-600 hover:from-teal-600 hover:to-green-700 shadow-lg rounded-xl"
               >
                 <span>Continue to {steps[currentStep] ? steps[currentStep].title : 'Next Step'}</span>
                 <ChevronRight className="w-5 h-5 sm:w-4 sm:h-4" />
@@ -293,7 +313,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 data-testid="button-submit"
-                className="flex items-center justify-center space-x-2 w-full sm:w-auto h-16 sm:h-auto text-lg sm:text-base font-bold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-xl transform hover:scale-105 transition-all duration-200"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto h-16 sm:h-auto text-lg sm:text-base font-bold bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700 shadow-xl transform hover:scale-105 transition-all duration-200 rounded-xl"
               >
                 {isSubmitting ? (
                   <>
@@ -416,82 +436,85 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
   const selectedBusinessType = businessTypes?.find(type => type.id === form.watch('businessTypeId'));
 
   return (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Client Information</h3>
-        <p className="text-gray-600">Tell us about your potential client</p>
-        <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-blue-600 bg-blue-50 rounded-lg px-4 py-2 w-fit mx-auto">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="text-center mb-6">
+        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Client Information</h3>
+        <p className="text-gray-600 text-sm sm:text-base">Tell us about your potential client</p>
+        <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-teal-700 bg-teal-50 rounded-xl px-4 py-3 w-fit mx-auto border border-teal-100">
           <AlertCircle className="w-4 h-4" />
           <span>We'll auto-check duplicates to keep your pipeline clean</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column */}
-        <div className="space-y-6">
-          {/* Business Name with Auto-lookup */}
-          <div className="space-y-3">
-            <Label htmlFor="businessName" className="text-base font-semibold flex items-center gap-2">
-              <Building className="w-4 h-4 text-blue-600" />
-              Business Name *
-            </Label>
-            <div className="relative">
-              <Input
-                id="businessName"
-                {...form.register("businessName", {
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleBusinessLookup(e.target.value)
-                })}
-                placeholder="Start typing business name..."
-                className="pr-10"
-                data-testid="input-business-name"
-              />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              
-              {/* Lookup Results */}
-              {businessLookupResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                  {businessLookupResults.map((result, index) => (
-                    <div 
-                      key={index}
-                      className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                      onClick={() => {
-                        form.setValue('businessName', result.name);
-                        form.setValue('businessAddress', result.address);
-                        setBusinessLookupResults([]);
-                      }}
-                    >
-                      <div className="font-medium text-gray-900">{result.name}</div>
-                      <div className="text-sm text-gray-600">{result.address}</div>
-                      <div className="text-xs text-blue-600 mt-1">{result.type}</div>
-                    </div>
-                  ))}
-                </div>
+      <div className="flex flex-col space-y-4 sm:space-y-6">
+        {/* Business Details Box */}
+        <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-100">
+          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Building className="w-5 h-5 text-teal-600" />
+            Business Details
+          </h4>
+          <div className="space-y-4">
+            {/* Business Name with Auto-lookup */}
+            <div className="space-y-2">
+              <Label htmlFor="businessName" className="text-sm font-medium text-gray-700">
+                Business Name *
+              </Label>
+              <div className="relative">
+                <Input
+                  id="businessName"
+                  {...form.register("businessName", {
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleBusinessLookup(e.target.value)
+                  })}
+                  placeholder="Start typing business name..."
+                  className="pr-10 h-12 rounded-xl border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                  data-testid="input-business-name"
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                
+                {/* Lookup Results */}
+                {businessLookupResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-48 overflow-y-auto">
+                    {businessLookupResults.map((result, index) => (
+                      <div 
+                        key={index}
+                        className="p-3 hover:bg-teal-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                        onClick={() => {
+                          form.setValue('businessName', result.name);
+                          form.setValue('businessAddress', result.address);
+                          setBusinessLookupResults([]);
+                        }}
+                      >
+                        <div className="font-medium text-gray-900">{result.name}</div>
+                        <div className="text-sm text-gray-600">{result.address}</div>
+                        <div className="text-xs text-teal-600 mt-1">{result.type}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {form.formState.errors.businessName && (
+                <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {form.formState.errors.businessName.message}
+                </p>
               )}
             </div>
-            {form.formState.errors.businessName && (
-              <p className="text-red-600 text-sm flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" />
-                {form.formState.errors.businessName.message}
-              </p>
-            )}
-          </div>
 
-          {/* Contact Email with Duplicate Check */}
-          <div className="space-y-3">
-            <Label htmlFor="businessEmail" className="text-base font-semibold flex items-center gap-2">
-              <Mail className="w-4 h-4 text-blue-600" />
-              Contact Email *
-            </Label>
-            <Input
-              id="businessEmail"
-              type="email"
-              {...form.register("businessEmail", {
-                onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleEmailCheck(e.target.value)
-              })}
-              placeholder="contact@business.com"
-              className={showDuplicateWarning ? "border-orange-300 focus:ring-orange-500" : ""}
-              data-testid="input-business-email"
-            />
+            {/* Contact Email with Duplicate Check */}
+            <div className="space-y-2">
+              <Label htmlFor="businessEmail" className="text-sm font-medium text-gray-700">
+                Contact Email *
+              </Label>
+              <Input
+                id="businessEmail"
+                type="email"
+                {...form.register("businessEmail", {
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleEmailCheck(e.target.value)
+                })}
+                placeholder="contact@business.com"
+                className={`h-12 rounded-xl border-gray-200 focus:border-teal-500 focus:ring-teal-500 ${showDuplicateWarning ? "border-orange-300 focus:ring-orange-500" : ""}`}
+                data-testid="input-business-email"
+              />
             {showDuplicateWarning && (
               <div className="text-orange-600 text-sm flex items-center gap-2 bg-orange-50 p-3 rounded-lg">
                 <AlertCircle className="w-4 h-4" />
@@ -663,10 +686,12 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
 // Step 2: Services Selection Component
 function ServicesStep({ form }: { form: any }) {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [showCommissionModal, setShowCommissionModal] = useState(false);
-  const [selectedFundingPurpose, setSelectedFundingPurpose] = useState("");
-  const [selectedTermPreference, setSelectedTermPreference] = useState("");
-  const [selectedUrgency, setSelectedUrgency] = useState("");
+
+  // Sync local state with form values on mount
+  useEffect(() => {
+    const formProducts = form.getValues('selectedProducts') || [];
+    setSelectedServices(formProducts);
+  }, [form]);
 
   const services = [
     {
@@ -674,16 +699,14 @@ function ServicesStep({ form }: { form: any }) {
       title: "Card Payments",
       description: "Payment processing solutions",
       commission: "£150-£5,000",
-      icon: "💳",
-      color: "blue"
+      icon: "💳"
     },
     {
       id: "business-funding",
       title: "Business Funding", 
       description: "Merchant cash advance",
       commission: "£1,000-£25,000",
-      icon: "💰",
-      color: "green"
+      icon: "💰"
     }
   ];
 
@@ -720,83 +743,106 @@ function ServicesStep({ form }: { form: any }) {
     form.setValue('selectedProducts', newSelected);
   };
 
-  const isPaymentsSelected = selectedServices.includes('card-payments');
-  const isFundingSelected = selectedServices.includes('business-funding');
-
   return (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Select Services</h3>
-        <p className="text-gray-600">Choose the services your client needs</p>
-        <button
-          onClick={() => setShowCommissionModal(true)}
-          className="mt-4 text-blue-600 hover:text-blue-700 underline text-sm font-medium"
-          data-testid="link-commission-modal"
-        >
-          How commission is calculated →
-        </button>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="text-center mb-6">
+        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Select Services</h3>
+        <p className="text-gray-600 text-sm sm:text-base">Choose the services your client needs</p>
+        <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-teal-700 bg-teal-50 rounded-xl px-4 py-3 w-fit mx-auto border border-teal-100">
+          <DollarSign className="w-4 h-4" />
+          <span>Commission earnings: £150 - £25,000</span>
+        </div>
       </div>
 
-      {/* Service Selection Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Service Selection - Mobile-First Stack */}
+      <div className="space-y-4">
         {services.map((service) => {
           const isSelected = selectedServices.includes(service.id);
           
           return (
-            <Card 
+            <div 
               key={service.id}
-              className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
+              className={`bg-white border-2 rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:shadow-md ${
                 isSelected 
-                  ? `ring-2 ring-${service.color}-500 bg-${service.color}-50 border-${service.color}-200`
-                  : 'hover:shadow-md border-gray-200 hover:border-gray-300'
+                  ? 'border-teal-500 bg-teal-50 shadow-lg' 
+                  : 'border-gray-200 hover:border-teal-300'
               }`}
               onClick={() => handleServiceToggle(service.id)}
-              data-testid={`card-service-${service.id}`}
+              data-testid={`toggle-service-${service.id}`}
             >
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className={`text-3xl ${isSelected ? 'scale-110' : ''} transition-transform`}>
-                    {service.icon}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-lg font-semibold text-gray-900">{service.title}</h4>
-                      <Checkbox 
-                        checked={isSelected}
-                        className="ml-2"
-                        data-testid={`checkbox-service-${service.id}`}
-                      />
+              <div className="flex items-center space-x-4">
+                <div className={`text-2xl ${isSelected ? 'scale-110' : ''} transition-transform`}>
+                  {service.icon}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{service.title}</h4>
+                      <p className="text-gray-600 text-sm">{service.description}</p>
+                      <p className="text-teal-600 text-sm font-medium">{service.commission}</p>
                     </div>
-                    <p className="text-gray-600 text-sm mb-3">{service.description}</p>
-                    <Badge 
-                      variant="secondary" 
-                      className={`${isSelected ? `bg-${service.color}-100 text-${service.color}-700` : ''}`}
-                    >
-                      Commission: {service.commission}
-                    </Badge>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      isSelected 
+                        ? 'bg-teal-500 border-teal-500' 
+                        : 'border-gray-300'
+                    }`}>
+                      {isSelected && <div className="w-3 h-3 bg-white rounded-full" />}
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
+    </div>
+  );
+}
 
-      {/* Conditional Fields */}
-      {(isPaymentsSelected || isFundingSelected) && (
-        <div className="space-y-6 mt-8">
-          {/* Card Payments Fields */}
-          {isPaymentsSelected && (
-            <Card>
-              <CardContent className="p-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  💳 Card Payments Details
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="currentProcessor" className="text-base font-medium">
-                      Current Processor
-                    </Label>
+// Step 3: Files & Consent Component  
+function FilesConsentStep({ form, isSubmitting }: { form: any; isSubmitting?: boolean }) {
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="text-center mb-6">
+        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Files & Consent</h3>
+        <p className="text-gray-600 text-sm sm:text-base">Complete your referral submission</p>
+        <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-teal-700 bg-teal-50 rounded-xl px-4 py-3 w-fit mx-auto border border-teal-100">
+          <Shield className="w-4 h-4" />
+          <span>GDPR compliant processing</span>
+        </div>
+      </div>
+
+      {/* GDPR Consent - Mobile-First Clear Box */}
+      <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-6">
+        <FormField
+          control={form.control}
+          name="gdprConsent"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  data-testid="checkbox-gdpr-consent"
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="text-sm sm:text-base font-medium">
+                  I consent to processing this referral *
+                </FormLabel>
+                <FormDescription className="text-xs sm:text-sm text-gray-600">
+                  By checking this box, you confirm that you have permission to refer this business
+                  and consent to us processing their details for commission tracking purposes.
+                </FormDescription>
+                <FormMessage />
+              </div>
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
+  );
+}
                     <Input
                       id="currentProcessor"
                       {...form.register("currentProcessor")}
