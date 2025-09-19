@@ -142,7 +142,7 @@ export default function Landing() {
               </h1>
               
               <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-lg">
-                Your clients need card payment solutions and business funding. You control the connections, earn substantial commissions, and grow your professional network with services they're already seeking.
+                Connect your clients with the services they need. Stay in control, strengthen relationships, and earn from every partnership.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
