@@ -109,6 +109,83 @@ async function addToGHLWorkflow(contactId: string, workflowId: string, apiKey: s
   }
 }
 
+// GHL Integration function for waitlist submissions
+async function submitWaitlistToGHL(waitlistEntry: any) {
+  try {
+    // Check if GHL credentials are configured
+    if (!process.env.GHL_API_KEY || !process.env.GHL_LOCATION_ID) {
+      console.log('GHL credentials not configured - skipping waitlist submission');
+      return { success: true, ghlContactId: `mock_${Date.now()}`, skipped: true };
+    }
+
+    const ghlApiKey = process.env.GHL_API_KEY;
+    const locationId = process.env.GHL_LOCATION_ID;
+    
+    // Create contact/lead in GoHighLevel with waitlist data
+    const contactData = {
+      firstName: waitlistEntry.firstName,
+      lastName: waitlistEntry.lastName,
+      email: waitlistEntry.email,
+      phone: waitlistEntry.phone || '',
+      companyName: waitlistEntry.companyName || '',
+      customFields: {
+        // Waitlist-specific custom fields
+        waitlist_business_type: waitlistEntry.businessType || '',
+        waitlist_client_base: waitlistEntry.currentClientBase || '',
+        waitlist_experience_level: waitlistEntry.experienceLevel || '',
+        waitlist_interests: Array.isArray(waitlistEntry.interests) ? waitlistEntry.interests.join(', ') : '',
+        waitlist_how_did_you_hear: waitlistEntry.howDidYouHear || '',
+        waitlist_additional_info: waitlistEntry.additionalInfo || '',
+        waitlist_marketing_consent: waitlistEntry.marketingConsent ? 'Yes' : 'No',
+        waitlist_status: waitlistEntry.status || 'pending',
+        lead_source: 'PartnerConnector Waitlist',
+        waitlist_id: waitlistEntry.id,
+        waitlist_submission_date: new Date().toISOString()
+      },
+      tags: ['PartnerConnector Waitlist', `Experience: ${waitlistEntry.experienceLevel || 'Unknown'}`, `Business: ${waitlistEntry.businessType || 'Unknown'}`]
+    };
+
+    // Submit to GHL API
+    const response = await fetch(`https://services.leadconnectorhq.com/locations/${locationId}/contacts`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ghlApiKey}`,
+        'Content-Type': 'application/json',
+        'Version': '2021-07-28'
+      },
+      body: JSON.stringify(contactData)
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('GHL API Error for waitlist:', response.status, error);
+      throw new Error(`GHL API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log(`Waitlist entry ${waitlistEntry.id} successfully submitted to GHL. Contact ID: ${result.contact?.id}`);
+    
+    // Add to appropriate workflow/campaign if configured
+    if (process.env.GHL_WORKFLOW_ID && result.contact?.id) {
+      await addToGHLWorkflow(result.contact.id, process.env.GHL_WORKFLOW_ID, ghlApiKey);
+    }
+
+    return { 
+      success: true, 
+      ghlContactId: result.contact?.id,
+      ghlResponse: result
+    };
+  } catch (error) {
+    console.error(`Failed to submit waitlist entry ${waitlistEntry.id} to GHL:`, error);
+    // Don't fail the entire waitlist submission if GHL fails
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      ghlContactId: null
+    };
+  }
+}
+
 // Helper function to create notifications
 async function createNotificationForUser(userId: string, notification: any) {
   try {
