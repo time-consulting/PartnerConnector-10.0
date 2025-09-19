@@ -121,14 +121,13 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
     const ghlApiKey = process.env.GHL_API_KEY;
     const locationId = process.env.GHL_LOCATION_ID;
     
-    // Create contact/lead in GoHighLevel with waitlist data
+    // Create contact/lead in GoHighLevel with waitlist data (v2 API format)
     const contactData = {
-      firstName: waitlistEntry.firstName,
-      lastName: waitlistEntry.lastName,
+      name: `${waitlistEntry.firstName} ${waitlistEntry.lastName}`,
       email: waitlistEntry.email,
       phone: waitlistEntry.phone || '',
       companyName: waitlistEntry.companyName || '',
-      customFields: {
+      customField: {
         // Waitlist-specific custom fields
         waitlist_business_type: waitlistEntry.businessType || '',
         waitlist_client_base: waitlistEntry.currentClientBase || '',
@@ -145,13 +144,12 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
       tags: ['PartnerConnector Waitlist', `Experience: ${waitlistEntry.experienceLevel || 'Unknown'}`, `Business: ${waitlistEntry.businessType || 'Unknown'}`]
     };
 
-    // Submit to GHL API
-    const response = await fetch(`https://services.leadconnectorhq.com/locations/${locationId}/contacts`, {
+    // Submit to GHL API (v2 endpoint)
+    const response = await fetch(`https://services.leadconnectorhq.com/contacts/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ghlApiKey}`,
-        'Content-Type': 'application/json',
-        'Version': '2021-07-28'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(contactData)
     });
