@@ -471,43 +471,87 @@ function OpportunityForm({
           </TabsContent>
         </Tabs>
 
-        {/* Modern Submit Buttons */}
-        <div className="flex justify-between items-center pt-8 mt-8 border-t border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
-          {/* Delete Button - only show when editing existing opportunity */}
-          {opportunity && onDelete && (
-            <Button 
-              type="button" 
-              variant="destructive"
-              onClick={() => {
-                if (window.confirm('Are you sure you want to delete this opportunity? This action cannot be undone.')) {
-                  onDelete(opportunity.id);
-                }
-              }}
-              data-testid="button-delete-opportunity"
-              className="h-12 px-6 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Opportunity
-            </Button>
-          )}
+        {/* Modern Submit Buttons - Mobile-Responsive */}
+        <div className="pt-8 mt-8 border-t border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
           
-          <div className="flex space-x-4">
+          {/* Mobile Layout - Stacked buttons */}
+          <div className="flex flex-col space-y-4 sm:hidden">
+            {/* Primary action button first on mobile */}
+            <Button 
+              type="submit"
+              data-testid="button-save-opportunity"
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold shadow-xl transition-all duration-200"
+            >
+              {opportunity ? "🚀 Update" : "✨ Create"}
+            </Button>
+            
             <Button 
               type="button" 
               variant="outline" 
               onClick={onClose}
               data-testid="button-cancel"
-              className="h-12 px-8 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+              className="w-full h-12 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl font-semibold transition-all duration-200"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit"
-              data-testid="button-save-opportunity"
-              className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold shadow-xl transition-all duration-200 transform hover:scale-105 hover:shadow-2xl"
-            >
-              {opportunity ? "🚀 Update Opportunity" : "✨ Create Opportunity"}
-            </Button>
+            
+            {/* Delete Button - only show when editing existing opportunity */}
+            {opportunity && onDelete && (
+              <Button 
+                type="button" 
+                variant="destructive"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete this opportunity? This action cannot be undone.')) {
+                    onDelete(opportunity.id);
+                  }
+                }}
+                data-testid="button-delete-opportunity"
+                className="w-full h-12 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </Button>
+            )}
+          </div>
+
+          {/* Desktop Layout - Horizontal layout */}
+          <div className="hidden sm:flex justify-between items-center">
+            {/* Delete Button - only show when editing existing opportunity */}
+            {opportunity && onDelete && (
+              <Button 
+                type="button" 
+                variant="destructive"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete this opportunity? This action cannot be undone.')) {
+                    onDelete(opportunity.id);
+                  }
+                }}
+                data-testid="button-delete-opportunity"
+                className="h-12 px-6 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Opportunity
+              </Button>
+            )}
+            
+            <div className="flex space-x-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                data-testid="button-cancel"
+                className="h-12 px-8 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                data-testid="button-save-opportunity"
+                className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold shadow-xl transition-all duration-200 transform hover:scale-105 hover:shadow-2xl"
+              >
+                {opportunity ? "🚀 Update Opportunity" : "✨ Create Opportunity"}
+              </Button>
+            </div>
           </div>
         </div>
       </form>
