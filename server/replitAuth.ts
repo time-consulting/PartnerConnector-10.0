@@ -9,6 +9,12 @@ import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import { pool } from "./db";
 
+declare module "express-session" {
+  interface SessionData {
+    referralCode?: string;
+  }
+}
+
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
@@ -59,6 +65,7 @@ function updateUserSession(
 
 async function upsertUser(
   claims: any,
+  referralCode?: string,
 ) {
   await storage.upsertUser({
     id: claims["sub"],
@@ -66,7 +73,7 @@ async function upsertUser(
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
-  });
+  }, referralCode);
 }
 
 export async function setupAuth(app: Express) {
@@ -77,14 +84,24 @@ export async function setupAuth(app: Express) {
 
   const config = await getOidcConfig();
 
-  const verify: VerifyFunction = async (
-    tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-    verified: passport.AuthenticateCallback
-  ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+  const createVerifyFunction = (): any => {
+    return async (
+      req: any,
+      tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
+      verified: passport.AuthenticateCallback
+    ) => {
+      const user = {};
+      updateUserSession(user, tokens);
+      
+      const referralCode = req?.session?.referralCode;
+      await upsertUser(tokens.claims(), referralCode);
+      
+      if (referralCode && req?.session) {
+        delete req.session.referralCode;
+      }
+      
+      verified(null, user);
+    };
   };
 
   // Get domains and add localhost/127.0.0.1 for development
@@ -113,8 +130,9 @@ export async function setupAuth(app: Express) {
         config,
         scope: "openid email profile offline_access",
         callbackURL,
+        passReqToCallback: true,
       },
-      verify,
+      createVerifyFunction(),
     );
     passport.use(strategy);
   }
@@ -131,6 +149,12 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    const referralCode = req.query.ref as string | undefined;
+    if (referralCode) {
+      req.session.referralCode = referralCode;
+      console.log('Referral code captured in session:', referralCode);
+    }
+    
     passport.authenticate(strategyForHost(req.hostname), {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],

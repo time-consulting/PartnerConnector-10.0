@@ -21,6 +21,7 @@ import {
   webhookLogs,
   adminAuditLogs,
   waitlist,
+  partnerHierarchy,
   type User,
   type UpsertUser,
   type Audit,
@@ -61,7 +62,9 @@ import { eq, desc, and, sql } from "drizzle-orm";
 export interface IStorage {
   // User operations - mandatory for Replit Auth
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  upsertUser(user: UpsertUser, referralCode?: string): Promise<User>;
+  getUserByReferralCode(referralCode: string): Promise<User | undefined>;
+  setupReferralHierarchy(newUserId: string, referrerUserId: string): Promise<void>;
   
   // Business type operations
   getBusinessTypes(): Promise<BusinessType[]>;
@@ -199,7 +202,10 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async upsertUser(userData: UpsertUser, referralCode?: string): Promise<User> {
+    const existingUser = await this.getUser(userData.id);
+    const isNewUser = !existingUser;
+
     const result = await db
       .insert(users)
       .values(userData)
@@ -211,7 +217,106 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    return (result as User[])[0];
+    
+    const user = (result as User[])[0];
+
+    if (isNewUser && referralCode) {
+      try {
+        const referrer = await this.getUserByReferralCode(referralCode);
+        if (referrer && referrer.id !== user.id) {
+          await this.setupReferralHierarchy(user.id, referrer.id);
+        }
+      } catch (error) {
+        console.error('Error setting up referral hierarchy:', error);
+      }
+    }
+
+    return user;
+  }
+
+  async getUserByReferralCode(referralCode: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.referralCode, referralCode));
+    return user;
+  }
+
+  async setupReferralHierarchy(newUserId: string, referrerUserId: string): Promise<void> {
+    const newUser = await this.getUser(newUserId);
+    const referrer = await this.getUser(referrerUserId);
+    
+    if (!newUser || !referrer) {
+      throw new Error('User or referrer not found');
+    }
+
+    if (newUser.id === referrer.id) {
+      console.log('Self-referral detected, skipping hierarchy setup');
+      return;
+    }
+
+    const referralChain: { userId: string; level: number; commissionPercentage: number }[] = [];
+    
+    referralChain.push({
+      userId: referrerUserId,
+      level: 1,
+      commissionPercentage: 60.00
+    });
+
+    if (referrer.parentPartnerId) {
+      const level2User = await this.getUser(referrer.parentPartnerId);
+      if (level2User) {
+        referralChain.push({
+          userId: level2User.id,
+          level: 2,
+          commissionPercentage: 20.00
+        });
+
+        if (level2User.parentPartnerId) {
+          const level3User = await this.getUser(level2User.parentPartnerId);
+          if (level3User) {
+            referralChain.push({
+              userId: level3User.id,
+              level: 3,
+              commissionPercentage: 10.00
+            });
+          }
+        }
+      }
+    }
+
+    for (const entry of referralChain) {
+      await db.insert(partnerHierarchy).values({
+        childId: newUserId,
+        parentId: entry.userId,
+        level: entry.level,
+      });
+    }
+
+    let referralCodeToSet = newUser.referralCode;
+    if (!referralCodeToSet) {
+      if (!newUser.partnerId) {
+        await this.generatePartnerId(newUserId);
+        const updatedUser = await this.getUser(newUserId);
+        referralCodeToSet = updatedUser?.partnerId || `REF-${Date.now().toString().slice(-8)}`;
+      } else {
+        referralCodeToSet = newUser.partnerId;
+      }
+    }
+
+    let partnerLevel = 1;
+    if (referrer.partnerLevel) {
+      partnerLevel = Math.min(referrer.partnerLevel + 1, 3);
+    }
+
+    await db
+      .update(users)
+      .set({
+        parentPartnerId: referrerUserId,
+        referralCode: referralCodeToSet,
+        partnerLevel,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, newUserId));
+
+    console.log(`Referral hierarchy set up for user ${newUserId} with referrer ${referrerUserId}. Chain length: ${referralChain.length}`);
   }
 
   async getBusinessTypes(): Promise<BusinessType[]> {
