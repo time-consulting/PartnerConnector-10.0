@@ -28,6 +28,7 @@ const ProfilePage = lazy(() => import("@/pages/account/profile"));
 const BankingPage = lazy(() => import("@/pages/account/banking"));
 const FeedbackPage = lazy(() => import("@/pages/account/feedback"));
 const WaitlistPage = lazy(() => import("@/pages/waitlist"));
+const SignupPage = lazy(() => import("@/pages/signup"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component with app branding
@@ -90,6 +91,7 @@ function Router() {
   return (
     <Switch>
       {/* Public routes available to everyone */}
+      <Route path="/signup" component={SignupPage} />
       <Route path="/waitlist" component={WaitlistPage} />
       <Route path="/partner-onboarding" component={PartnerOnboarding} />
       <Route path="/commission-structure" component={CommissionStructure} />
