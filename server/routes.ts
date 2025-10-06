@@ -309,7 +309,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Auto-generate referralCode if user doesn't have one
+      if (!user.referralCode) {
+        // Check if user has required profile information
+        if (user.firstName && user.lastName) {
+          // Generate partnerId if it doesn't exist
+          if (!user.partnerId) {
+            await storage.generatePartnerId(userId);
+            user = await storage.getUser(userId);
+          }
+          
+          // Set referralCode to partnerId
+          if (user && user.partnerId && !user.referralCode) {
+            await storage.updateUser(userId, { referralCode: user.partnerId });
+            user = await storage.getUser(userId);
+          }
+        }
+        // If firstName/lastName are missing, skip generation - it will happen later when they complete their profile
+      }
+      
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
