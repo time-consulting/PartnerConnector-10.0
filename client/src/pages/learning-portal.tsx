@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/toast-disabled";
+import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import CommissionCalculator from "@/components/commission-calculator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

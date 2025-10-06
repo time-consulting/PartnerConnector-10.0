@@ -16,7 +16,7 @@ import {
   FilterIcon,
   StarIcon
 } from "lucide-react";
-import { useToast } from "@/hooks/toast-disabled";
+import { useToast } from "@/hooks/use-toast";
 
 interface Resource {
   id: string;

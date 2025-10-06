@@ -17,7 +17,7 @@ import {
   ArrowLeftIcon,
   StarIcon
 } from "lucide-react";
-import { useToast } from "@/hooks/toast-disabled";
+import { useToast } from "@/hooks/use-toast";
 
 interface OnboardingStep {
   id: string;

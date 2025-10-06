@@ -17,7 +17,7 @@ import {
   BookOpenIcon,
   HelpCircleIcon
 } from "lucide-react";
-import { useToast } from "@/hooks/toast-disabled";
+import { useToast } from "@/hooks/use-toast";
 
 interface TourStep {
   id: string;
