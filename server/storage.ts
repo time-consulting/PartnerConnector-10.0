@@ -192,6 +192,24 @@ export interface IStorage {
   getWaitlistEntryByEmail(email: string): Promise<Waitlist | undefined>;
   updateWaitlistStatus(id: string, status: string): Promise<Waitlist>;
 
+  // Team referral statistics operations
+  getTeamReferralStats(userId: string): Promise<{
+    sent: number;
+    opened: number;
+    clicked: number;
+    registered: number;
+    active: number;
+  }>;
+  getTeamReferrals(userId: string): Promise<Array<{
+    id: string;
+    name: string;
+    email: string;
+    status: string;
+    joinedAt: Date;
+    referralCode: string | null;
+    hasSubmittedDeals: number;
+  }>>;
+
   // Test data seeding
   seedTestReferrals(): Promise<void>;
 }
@@ -1021,6 +1039,83 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await db.insert(rates).values(defaultRates);
+  }
+
+  async getTeamReferralStats(userId: string): Promise<{
+    sent: number;
+    opened: number;
+    clicked: number;
+    registered: number;
+    active: number;
+  }> {
+    // Efficient SQL: Single query with aggregations
+    const stats = await db
+      .select({
+        total: sql<number>`COUNT(*)`,
+        registered: sql<number>`COUNT(CASE WHEN ${users.partnerId} IS NOT NULL OR ${users.referralCode} IS NOT NULL THEN 1 END)`,
+        active: sql<number>`COUNT(CASE WHEN EXISTS (
+          SELECT 1 FROM ${users} children 
+          WHERE children.parent_partner_id = ${users.id}
+        ) THEN 1 END)`
+      })
+      .from(users)
+      .where(eq(users.parentPartnerId, userId));
+    
+    const result = stats[0] || { total: 0, registered: 0, active: 0 };
+    
+    return {
+      sent: result.total,
+      opened: result.registered,
+      clicked: result.registered,
+      registered: result.registered,
+      active: result.active
+    };
+  }
+
+  async getTeamReferrals(userId: string): Promise<Array<{
+    id: string;
+    name: string;
+    email: string;
+    status: string;
+    joinedAt: Date;
+    referralCode: string | null;
+    hasSubmittedDeals: number;
+  }>> {
+    // Efficient SQL: Single query with LEFT JOIN to get referral counts
+    const teamReferrals = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        createdAt: users.createdAt,
+        partnerId: users.partnerId,
+        referralCode: users.referralCode,
+        referralCount: sql<number>`COUNT(${referrals.id})`,
+        hasChildren: sql<number>`(SELECT COUNT(*) FROM ${users} children WHERE children.parent_partner_id = ${users.id})`
+      })
+      .from(users)
+      .leftJoin(referrals, eq(referrals.referrerId, users.id))
+      .where(eq(users.parentPartnerId, userId))
+      .groupBy(users.id, users.firstName, users.lastName, users.email, users.createdAt, users.partnerId, users.referralCode);
+    
+    return teamReferrals.map((member) => {
+      // Simple status: 'active' if has children, else 'registered'
+      let status = 'registered';
+      if (member.hasChildren > 0) {
+        status = 'active';
+      }
+      
+      return {
+        id: member.id,
+        name: `${member.firstName || ''} ${member.lastName || ''}`.trim() || member.email,
+        email: member.email,
+        status,
+        joinedAt: member.createdAt,
+        referralCode: member.referralCode,
+        hasSubmittedDeals: member.referralCount
+      };
+    });
   }
 
   // Test data seeding function for demonstrating referral system functionality

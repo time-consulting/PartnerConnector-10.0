@@ -6,34 +6,26 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Send, 
-  Eye, 
-  MousePointer, 
+  Users, 
   UserPlus, 
   CheckCircle,
   TrendingUp,
   TrendingDown,
   Calendar,
-  MapPin,
   Smartphone,
   Monitor,
   Tablet,
-  Clock,
   ArrowRight,
-  Filter,
   Download,
   RefreshCw,
   AlertCircle,
-  Users,
   BarChart3,
-  PieChart,
-  Activity
+  Activity,
+  UserCheck
 } from "lucide-react";
 
 interface InviteMetrics {
-  sent: number;
-  opened: number;
-  clicked: number;
+  teamMembers: number;
   registered: number;
   active: number;
 }
@@ -42,18 +34,10 @@ interface Invite {
   id: string;
   email: string;
   name?: string;
-  status: 'sent' | 'opened' | 'clicked' | 'registered' | 'active' | 'expired';
-  sentAt: Date;
-  openedAt?: Date;
-  clickedAt?: Date;
-  registeredAt?: Date;
-  activatedAt?: Date;
-  source: string;
-  device?: 'mobile' | 'tablet' | 'desktop';
-  location?: string;
+  status: 'registered' | 'active';
+  joinedAt: Date;
   referralCode: string;
-  remindersSent: number;
-  lastActivity?: Date;
+  hasSubmittedDeals?: number;
 }
 
 interface InviteTrackerProps {
@@ -77,11 +61,30 @@ export default function InviteTracker({
   const [selectedTimeRange, setSelectedTimeRange] = useState("30d");
 
   const funnelSteps = [
-    { key: 'sent', label: 'Sent', icon: Send, value: metrics.sent, color: 'bg-blue-500' },
-    { key: 'opened', label: 'Opened', icon: Eye, value: metrics.opened, color: 'bg-purple-500' },
-    { key: 'clicked', label: 'Clicked', icon: MousePointer, value: metrics.clicked, color: 'bg-orange-500' },
-    { key: 'registered', label: 'Registered', icon: UserPlus, value: metrics.registered, color: 'bg-green-500' },
-    { key: 'active', label: 'Active', icon: CheckCircle, value: metrics.active, color: 'bg-emerald-500' }
+    { 
+      key: 'teamMembers', 
+      label: 'Team Members', 
+      description: 'Total people you\'ve referred',
+      icon: Users, 
+      value: metrics.teamMembers, 
+      color: 'bg-blue-500' 
+    },
+    { 
+      key: 'registered', 
+      label: 'Registered', 
+      description: 'Have completed signup',
+      icon: UserCheck, 
+      value: metrics.registered, 
+      color: 'bg-green-500' 
+    },
+    { 
+      key: 'active', 
+      label: 'Active', 
+      description: 'Building their own teams',
+      icon: CheckCircle, 
+      value: metrics.active, 
+      color: 'bg-emerald-500' 
+    }
   ];
 
   const getConversionRate = (current: number, previous: number) => {
@@ -90,25 +93,17 @@ export default function InviteTracker({
 
   const getStatusIcon = (status: string, className: string = "w-4 h-4") => {
     const icons = {
-      sent: Send,
-      opened: Eye,
-      clicked: MousePointer,
-      registered: UserPlus,
-      active: CheckCircle,
-      expired: AlertCircle
+      registered: UserCheck,
+      active: CheckCircle
     };
-    const IconComponent = icons[status as keyof typeof icons] || Send;
+    const IconComponent = icons[status as keyof typeof icons] || UserCheck;
     return <IconComponent className={className} />;
   };
 
   const getStatusColor = (status: string) => {
     const colors = {
-      sent: 'bg-blue-100 text-blue-700',
-      opened: 'bg-purple-100 text-purple-700',
-      clicked: 'bg-orange-100 text-orange-700',
       registered: 'bg-green-100 text-green-700',
-      active: 'bg-emerald-100 text-emerald-700',
-      expired: 'bg-red-100 text-red-700'
+      active: 'bg-emerald-100 text-emerald-700'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700';
   };
@@ -135,13 +130,9 @@ export default function InviteTracker({
   ];
 
   const statusOptions = [
-    { value: 'all', label: 'All Invites' },
-    { value: 'sent', label: 'Sent' },
-    { value: 'opened', label: 'Opened' },
-    { value: 'clicked', label: 'Clicked' },
+    { value: 'all', label: 'All Team Members' },
     { value: 'registered', label: 'Registered' },
-    { value: 'active', label: 'Active' },
-    { value: 'expired', label: 'Expired' }
+    { value: 'active', label: 'Active' }
   ];
 
   const formatRelativeTime = (date: Date) => {
@@ -159,8 +150,8 @@ export default function InviteTracker({
       {/* Header with Refresh and Filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-2xl font-bold text-gray-900">Invite Analytics</h3>
-          <p className="text-gray-600">Track your invitation funnel and conversions</p>
+          <h3 className="text-2xl font-bold text-gray-900">Team Analytics</h3>
+          <p className="text-gray-600">Track your team growth and member activity</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -180,18 +171,18 @@ export default function InviteTracker({
         </div>
       </div>
 
-      {/* Conversion Funnel */}
+      {/* Team Growth Funnel */}
       <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            Conversion Funnel
+            Team Growth Funnel
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {/* Funnel Steps */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {funnelSteps.map((step, index) => {
                 const IconComponent = step.icon;
                 const prevStep = index > 0 ? funnelSteps[index - 1] : null;
@@ -205,7 +196,8 @@ export default function InviteTracker({
                           <IconComponent className="w-6 h-6 text-white" />
                         </div>
                         <div className="text-2xl font-bold text-gray-900">{step.value}</div>
-                        <div className="text-sm text-gray-600 mb-2">{step.label}</div>
+                        <div className="text-sm font-medium text-gray-900 mb-1">{step.label}</div>
+                        <div className="text-xs text-gray-500 mb-2">{step.description}</div>
                         {index > 0 && (
                           <Badge variant="outline" className="text-xs">
                             {conversionRate}%
@@ -226,30 +218,20 @@ export default function InviteTracker({
             </div>
 
             {/* Overall Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
               <div className="text-center">
                 <div className="text-xl font-bold text-green-600">
-                  {getConversionRate(metrics.active, metrics.sent)}%
+                  {getConversionRate(metrics.registered, metrics.teamMembers)}%
                 </div>
-                <div className="text-sm text-gray-600">Overall Conversion</div>
+                <div className="text-sm text-gray-600">Signup Rate</div>
+                <div className="text-xs text-gray-400 mt-1">Members who completed signup</div>
               </div>
               <div className="text-center">
                 <div className="text-xl font-bold text-blue-600">
-                  {getConversionRate(metrics.opened, metrics.sent)}%
+                  {getConversionRate(metrics.active, metrics.teamMembers)}%
                 </div>
-                <div className="text-sm text-gray-600">Open Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-bold text-purple-600">
-                  {getConversionRate(metrics.clicked, metrics.opened)}%
-                </div>
-                <div className="text-sm text-gray-600">Click-through Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-bold text-orange-600">
-                  {getConversionRate(metrics.registered, metrics.clicked)}%
-                </div>
-                <div className="text-sm text-gray-600">Registration Rate</div>
+                <div className="text-sm text-gray-600">Team Building Rate</div>
+                <div className="text-xs text-gray-400 mt-1">Members building their own teams</div>
               </div>
             </div>
           </div>
@@ -262,7 +244,7 @@ export default function InviteTracker({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle className="flex items-center gap-2">
               <Activity className="w-5 h-5" />
-              Invite Details ({filteredInvites.length})
+              Team Member Details ({filteredInvites.length})
             </CardTitle>
             <div className="flex gap-2">
               <Select value={selectedFilter} onValueChange={setSelectedFilter}>
@@ -296,8 +278,8 @@ export default function InviteTracker({
           {filteredInvites.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>No invites found</p>
-              <p className="text-sm">Start inviting team members to see analytics here</p>
+              <p>No team members found</p>
+              <p className="text-sm">Start inviting team members to see them here</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -321,76 +303,42 @@ export default function InviteTracker({
                         {getStatusIcon(invite.status, "w-3 h-3 mr-1")}
                         {invite.status.charAt(0).toUpperCase() + invite.status.slice(1)}
                       </Badge>
-                      {invite.status === 'sent' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onSendReminder(invite.id)}
-                          data-testid={`button-remind-${invite.id}`}
-                        >
-                          Remind
-                        </Button>
-                      )}
                     </div>
                   </div>
 
-                  {/* Timeline */}
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3">
+                  {/* Timeline - Simplified to show real data only */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
                     <div className="flex items-center gap-2 text-sm">
-                      <Send className="w-4 h-4 text-blue-500" />
+                      <Calendar className="w-4 h-4 text-blue-500" />
                       <span className="text-gray-600">
-                        {formatRelativeTime(invite.sentAt)}
+                        Joined {formatRelativeTime(invite.joinedAt)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                      <Eye className={`w-4 h-4 ${invite.openedAt ? 'text-purple-500' : 'text-gray-300'}`} />
-                      <span className={invite.openedAt ? 'text-gray-600' : 'text-gray-400'}>
-                        {invite.openedAt ? formatRelativeTime(invite.openedAt) : 'Not opened'}
+                      <Users className="w-4 h-4 text-green-500" />
+                      <span className="text-gray-600">
+                        Status: {invite.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <MousePointer className={`w-4 h-4 ${invite.clickedAt ? 'text-orange-500' : 'text-gray-300'}`} />
-                      <span className={invite.clickedAt ? 'text-gray-600' : 'text-gray-400'}>
-                        {invite.clickedAt ? formatRelativeTime(invite.clickedAt) : 'Not clicked'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <UserPlus className={`w-4 h-4 ${invite.registeredAt ? 'text-green-500' : 'text-gray-300'}`} />
-                      <span className={invite.registeredAt ? 'text-gray-600' : 'text-gray-400'}>
-                        {invite.registeredAt ? formatRelativeTime(invite.registeredAt) : 'Not registered'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className={`w-4 h-4 ${invite.activatedAt ? 'text-emerald-500' : 'text-gray-300'}`} />
-                      <span className={invite.activatedAt ? 'text-gray-600' : 'text-gray-400'}>
-                        {invite.activatedAt ? formatRelativeTime(invite.activatedAt) : 'Not active'}
-                      </span>
-                    </div>
+                    {invite.hasSubmittedDeals !== undefined && invite.hasSubmittedDeals > 0 && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="w-4 h-4 text-emerald-500" />
+                        <span className="text-gray-600">
+                          {invite.hasSubmittedDeals} deal{invite.hasSubmittedDeals !== 1 ? 's' : ''} submitted
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Metadata */}
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      {getDeviceIcon(invite.device)}
-                      <span>{invite.device || 'Unknown'}</span>
+                  {/* Referral Code */}
+                  {invite.referralCode && (
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
+                      <Activity className="w-4 h-4" />
+                      <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                        {invite.referralCode}
+                      </span>
                     </div>
-                    {invite.location && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{invite.location}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>Source: {invite.source}</span>
-                    </div>
-                    {invite.remindersSent > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{invite.remindersSent} reminder{invite.remindersSent > 1 ? 's' : ''}</span>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               ))}
             </div>

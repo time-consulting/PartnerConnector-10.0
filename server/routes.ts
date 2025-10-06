@@ -533,6 +533,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Team referral statistics
+  app.get('/api/team/referral-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stats = await storage.getTeamReferralStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching team referral stats:", error);
+      res.status(500).json({ message: "Failed to fetch team referral stats" });
+    }
+  });
+
+  // Team referrals list
+  app.get('/api/team/referrals', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const referrals = await storage.getTeamReferrals(userId);
+      res.json(referrals);
+    } catch (error) {
+      console.error("Error fetching team referrals:", error);
+      res.status(500).json({ message: "Failed to fetch team referrals" });
+    }
+  });
+
   // Bill upload
   app.post('/api/referrals/:id/upload-bill', upload.array('bills', 5), async (req: any, res) => {
     try {

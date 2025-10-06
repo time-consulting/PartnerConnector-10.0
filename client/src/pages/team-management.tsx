@@ -185,61 +185,31 @@ export default function TeamManagement() {
     }
   ];
 
-  const mockInvites = [
-    {
-      id: "1",
-      email: "sarah@techcorp.com",
-      name: "Sarah Johnson",
-      status: 'active' as const,
-      sentAt: new Date('2024-01-15'),
-      openedAt: new Date('2024-01-15'),
-      clickedAt: new Date('2024-01-16'),
-      registeredAt: new Date('2024-01-16'),
-      activatedAt: new Date('2024-01-17'),
-      source: "LinkedIn",
-      device: 'desktop' as const,
-      location: "London, UK",
-      referralCode: "user123-sarah",
-      remindersSent: 0
-    },
-    {
-      id: "2",
-      email: "mike@growthco.com",
-      name: "Mike Chen",
-      status: 'registered' as const,
-      sentAt: new Date('2024-01-20'),
-      openedAt: new Date('2024-01-20'),
-      clickedAt: new Date('2024-01-21'),
-      registeredAt: new Date('2024-01-22'),
-      source: "Email",
-      device: 'mobile' as const,
-      location: "Manchester, UK",
-      referralCode: "user123-mike",
-      remindersSent: 1
-    },
-    {
-      id: "3",
-      email: "lisa@innovatetech.com",
-      name: "Lisa Rodriguez",
-      status: 'clicked' as const,
-      sentAt: new Date('2024-01-25'),
-      openedAt: new Date('2024-01-25'),
-      clickedAt: new Date('2024-01-26'),
-      source: "WhatsApp",
-      device: 'mobile' as const,
-      location: "Birmingham, UK",
-      referralCode: "user123-lisa",
-      remindersSent: 0
-    }
-  ];
+  const { data: referralStats, isLoading: isLoadingStats, refetch: refetchStats } = useQuery({
+    queryKey: ['/api/team/referral-stats'],
+    enabled: isAuthenticated,
+  });
 
-  const inviteMetrics = {
-    sent: 25,
-    opened: 18,
-    clicked: 15,
-    registered: 12,
-    active: 12
+  const { data: teamReferrals, isLoading: isLoadingReferrals, refetch: refetchReferrals } = useQuery({
+    queryKey: ['/api/team/referrals'],
+    enabled: isAuthenticated,
+  });
+
+  const inviteMetrics = referralStats || {
+    teamMembers: 0,
+    registered: 0,
+    active: 0
   };
+
+  const mappedInvites = (teamReferrals || []).map((member: any) => ({
+    id: member.id,
+    email: member.email,
+    name: member.name,
+    status: member.status as 'registered' | 'active',
+    joinedAt: new Date(member.joinedAt),
+    referralCode: member.referralCode || '',
+    hasSubmittedDeals: member.hasSubmittedDeals || 0
+  }));
 
   // Typed mutations for better type safety
   const createLinkMutation = useMutation({
@@ -390,9 +360,14 @@ export default function TeamManagement() {
   };
 
   const handleRefreshInvites = async () => {
-    // Mock refresh API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    queryClient.invalidateQueries({ queryKey: ['/api/invites'] });
+    await Promise.all([
+      refetchStats(),
+      refetchReferrals()
+    ]);
+    toast({
+      title: "Refreshed",
+      description: "Team data has been refreshed",
+    });
   };
 
   if (isLoading || !isAuthenticated) {
@@ -448,7 +423,7 @@ export default function TeamManagement() {
                     </TabsTrigger>
                     <TabsTrigger value="invite-tracking" className="flex items-center gap-2" data-testid="tab-invite-tracking">
                       <Target className="w-4 h-4" />
-                      Invite Tracking
+                      Team Tracking
                     </TabsTrigger>
                   </TabsList>
 
@@ -468,8 +443,9 @@ export default function TeamManagement() {
 
                   <TabsContent value="invite-tracking" className="space-y-6">
                     <InviteTracker 
-                      invites={mockInvites}
+                      invites={mappedInvites}
                       metrics={inviteMetrics}
+                      isLoading={isLoadingStats || isLoadingReferrals}
                       onResendInvite={handleResendInvite}
                       onSendReminder={handleSendReminder}
                       onRefresh={handleRefreshInvites}
@@ -547,26 +523,71 @@ export default function TeamManagement() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Network className="w-5 h-5" />
-                          Team Stats
+                          Team Overview
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Team Size</span>
-                          <span className="font-semibold">{userStats.teamSize}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Total Earnings</span>
-                          <span className="font-semibold text-green-600">£{userStats.earnings}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Active Invites</span>
-                          <span className="font-semibold">{inviteMetrics.active}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Conversion Rate</span>
-                          <span className="font-semibold text-blue-600">{Math.round((inviteMetrics.active / inviteMetrics.sent) * 100)}%</span>
-                        </div>
+                        {isLoadingStats ? (
+                          <div className="text-center py-4">
+                            <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+                          </div>
+                        ) : inviteMetrics.teamMembers === 0 ? (
+                          <div className="text-center py-6 space-y-2" data-testid="text-zero-state">
+                            <Users2 className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600 font-medium">No team members yet</p>
+                            <p className="text-xs text-gray-500">Invite your first team member to get started!</p>
+                            <Button 
+                              size="sm"
+                              className="mt-3"
+                              onClick={handleOpenInviteDialog}
+                              data-testid="button-invite-first-member"
+                            >
+                              <Users2 className="w-4 h-4 mr-2" />
+                              Invite Team Member
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="text-gray-600">Total Team Members</span>
+                                <p className="text-xs text-gray-400">People who signed up with your referral code</p>
+                              </div>
+                              <span className="font-semibold text-lg" data-testid="stat-total-members">{inviteMetrics.teamMembers}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="text-gray-600">Registered</span>
+                                <p className="text-xs text-gray-400">Completed profile setup</p>
+                              </div>
+                              <span className="font-semibold text-lg" data-testid="stat-registered">{inviteMetrics.registered}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="text-gray-600">Active Referrers</span>
+                                <p className="text-xs text-gray-400">Actively building their own teams</p>
+                              </div>
+                              <span className="font-semibold text-lg text-green-600" data-testid="stat-active">{inviteMetrics.active}</span>
+                            </div>
+                            <div className="border-t pt-4">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <span className="text-gray-600">Team Building Rate</span>
+                                  <p className="text-xs text-gray-400">Active referrers / Total team members</p>
+                                </div>
+                                <span className="font-semibold text-lg text-blue-600" data-testid="stat-conversion">
+                                  {inviteMetrics.teamMembers > 0 ? Math.round((inviteMetrics.active / inviteMetrics.teamMembers) * 100) : 0}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div 
+                                  className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all" 
+                                  style={{ width: `${inviteMetrics.teamMembers > 0 ? Math.round((inviteMetrics.active / inviteMetrics.teamMembers) * 100) : 0}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </CardContent>
                     </Card>
 
