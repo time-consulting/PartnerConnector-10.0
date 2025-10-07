@@ -30,6 +30,34 @@ import {
 import { isUnauthorizedError } from "@/lib/authUtils";
 
 // Type definitions for better type safety
+interface User {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  referralCode?: string;
+  partnerId?: string;
+  partnerLevel?: number;
+  teamRole?: string;
+  isAdmin?: boolean;
+}
+
+interface ProgressionData {
+  partnerLevel: string;
+  teamSize: number;
+  totalRevenue: number;
+  directRevenue: number;
+  overrideRevenue: number;
+  totalInvites: number;
+  successfulInvites: number;
+}
+
+interface InviteMetrics {
+  teamMembers: number;
+  registered: number;
+  active: number;
+}
+
 interface ReferralLinkData {
   id: string;
   name: string;
@@ -63,12 +91,6 @@ interface ShareData {
   customData?: any;
 }
 
-interface UserStats {
-  level: string;
-  earnings: number;
-  teamSize: number;
-}
-
 export default function TeamManagement() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -76,6 +98,9 @@ export default function TeamManagement() {
   const [showTeamAnalytics, setShowTeamAnalytics] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const queryClient = useQueryClient();
+  
+  // Type cast user to User interface
+  const typedUser = user as User | undefined;
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -92,110 +117,23 @@ export default function TeamManagement() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Mock data for gamified system - would be from API in production
-  const userStats = {
-    level: "Gold Partner",
-    earnings: 4350,
-    teamSize: 12
-  };
+  // Fetch real progression data from API
+  const { data: progressionData, isLoading: isLoadingProgression } = useQuery<ProgressionData>({
+    queryKey: ['/api/team/progression'],
+    enabled: isAuthenticated,
+  });
 
-  const progressionData = {
-    currentLevel: "Gold Partner",
-    currentXP: 3250,
-    xpToNextLevel: 1750,
-    totalXP: 3250,
-    teamSize: 12,
-    totalInvites: 25,
-    successfulInvites: 12,
-    currentStreak: 7,
-    longestStreak: 14,
-    revenue: 4350,
-    achievements: [
-      {
-        id: "first-invite",
-        name: "First Steps",
-        description: "Sent your first team invitation",
-        icon: "users",
-        unlockedAt: new Date('2024-01-15')
-      },
-      {
-        id: "week-streak",
-        name: "Week Warrior",
-        description: "7 day invitation streak",
-        icon: "flame",
-        unlockedAt: new Date('2024-01-22')
-      },
-      {
-        id: "team-builder",
-        name: "Team Builder",
-        description: "Build a team of 10+ members",
-        icon: "users",
-        unlockedAt: new Date('2024-01-28')
-      },
-      {
-        id: "revenue-milestone",
-        name: "Revenue Generator",
-        description: "Generate £5000+ in team revenue",
-        icon: "trending",
-        progress: 4350,
-        total: 5000
-      },
-      {
-        id: "platinum-path",
-        name: "Platinum Potential",
-        description: "Get 50% to Platinum level",
-        icon: "star",
-        progress: 3250,
-        total: 5000
-      }
-    ],
-    nextMilestone: {
-      name: "Platinum Partner",
-      description: "Reach Platinum level for premium benefits",
-      progress: 3250,
-      total: 5000,
-      reward: "10% Bonus Rate"
-    }
-  };
-
-  const mockReferralLinks = [
-    {
-      id: "1",
-      name: "LinkedIn Campaign",
-      url: "https://example.com/signup?ref=user123-linkedin",
-      shortCode: "user123-linkedin",
-      clicks: 47,
-      conversions: 8,
-      created: new Date('2024-01-15'),
-      isActive: true,
-      trackingEnabled: true,
-      campaignName: "Q1-2024-LinkedIn"
-    },
-    {
-      id: "2",
-      name: "Email Newsletter",
-      url: "https://example.com/signup?ref=user123-email",
-      shortCode: "user123-email",
-      clicks: 23,
-      conversions: 5,
-      created: new Date('2024-01-20'),
-      expires: new Date('2024-04-20'),
-      isActive: true,
-      trackingEnabled: true
-    }
-  ];
-
-  const { data: referralStats, isLoading: isLoadingStats, refetch: refetchStats } = useQuery({
+  const { data: referralStats, isLoading: isLoadingStats, refetch: refetchStats } = useQuery<InviteMetrics>({
     queryKey: ['/api/team/referral-stats'],
     enabled: isAuthenticated,
   });
 
-  const { data: teamReferrals, isLoading: isLoadingReferrals, refetch: refetchReferrals } = useQuery({
+  const { data: teamReferrals, isLoading: isLoadingReferrals, refetch: refetchReferrals } = useQuery<any[]>({
     queryKey: ['/api/team/referrals'],
     enabled: isAuthenticated,
   });
 
-  const inviteMetrics = referralStats || {
+  const inviteMetrics: InviteMetrics = referralStats || {
     teamMembers: 0,
     registered: 0,
     active: 0
@@ -219,8 +157,8 @@ export default function TeamManagement() {
       return {
         id: Date.now().toString(),
         name: data.name,
-        url: `https://example.com/signup?ref=${user?.id || 'demo123'}-${Date.now()}`,
-        shortCode: `${user?.id || 'demo123'}-${Date.now()}`,
+        url: `https://example.com/signup?ref=${typedUser?.id || 'demo123'}-${Date.now()}`,
+        shortCode: `${typedUser?.id || 'demo123'}-${Date.now()}`,
         clicks: 0,
         conversions: 0,
         created: new Date(),
@@ -238,7 +176,7 @@ export default function TeamManagement() {
       });
     },
     onError: (error: unknown) => {
-      if (isUnauthorizedError(error)) {
+      if (isUnauthorizedError(error as Error)) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -270,7 +208,7 @@ export default function TeamManagement() {
       });
     },
     onError: (error: unknown) => {
-      if (isUnauthorizedError(error)) {
+      if (isUnauthorizedError(error as Error)) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -290,18 +228,17 @@ export default function TeamManagement() {
   });
 
   // Typed handler functions for component interactions
-  const handleCreateReferralLink = async (data: CreateLinkData): Promise<ReferralLinkData> => {
-    return createLinkMutation.mutateAsync(data);
+  const handleCreateReferralLink = async (data: CreateLinkData): Promise<void> => {
+    await createLinkMutation.mutateAsync(data);
   };
 
-  const handleUpdateReferralLink = async (id: string, data: UpdateLinkData): Promise<UpdateLinkData> => {
+  const handleUpdateReferralLink = async (id: string, data: UpdateLinkData): Promise<void> => {
     // Mock update API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
     toast({
       title: "Link Updated",
       description: "Referral link updated successfully",
     });
-    return data;
   };
 
   const handleDeleteReferralLink = async (id: string): Promise<void> => {
@@ -313,8 +250,8 @@ export default function TeamManagement() {
     });
   };
 
-  const handleShare = async (platform: string, message: string, customData?: any): Promise<ShareData> => {
-    return shareTrackingMutation.mutateAsync({ platform, message, customData });
+  const handleShare = async (platform: string, message: string, customData?: any): Promise<void> => {
+    await shareTrackingMutation.mutateAsync({ platform, message, customData });
   };
 
   const handleOpenAnalytics = () => {
@@ -433,8 +370,8 @@ export default function TeamManagement() {
 
                   <TabsContent value="referral-links" className="space-y-6">
                     <ReferralLinkManager 
-                      userReferralCode={user?.id || 'demo123'}
-                      links={mockReferralLinks}
+                      userReferralCode={typedUser?.referralCode || ''}
+                      links={[]}
                       onCreateLink={handleCreateReferralLink}
                       onUpdateLink={handleUpdateReferralLink}
                       onDeleteLink={handleDeleteReferralLink}
@@ -508,7 +445,7 @@ export default function TeamManagement() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-center space-y-3">
-                          <div className="text-2xl font-bold text-yellow-700">{userStats.level}</div>
+                          <div className="text-2xl font-bold text-yellow-700">{progressionData?.partnerLevel || 'Bronze Partner'}</div>
                           <div className="text-sm text-gray-600">1,750 XP to Platinum</div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div className="bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full" style={{ width: '65%' }}></div>
@@ -619,8 +556,8 @@ export default function TeamManagement() {
                   <div className="px-4 py-3">
                     <div className="flex justify-between items-center">
                       <div>
-                        <div className="text-lg font-bold text-gray-900">{userStats.level}</div>
-                        <div className="text-sm text-gray-600">£{userStats.earnings} earned</div>
+                        <div className="text-lg font-bold text-gray-900">{progressionData?.partnerLevel || 'Bronze Partner'}</div>
+                        <div className="text-sm text-gray-600">£{progressionData?.totalRevenue || 0} earned</div>
                       </div>
                       <Button 
                         size="sm"
@@ -643,8 +580,12 @@ export default function TeamManagement() {
         <MobileShareSheet 
           isOpen={showMobileShareSheet}
           onOpenChange={setShowMobileShareSheet}
-          referralUrl={`${window.location.origin}/signup?ref=${user?.id || 'demo123'}`}
-          userStats={userStats}
+          referralUrl={`${window.location.origin}/signup?ref=${typedUser?.id || 'demo123'}`}
+          userStats={{
+            level: progressionData?.partnerLevel || 'Bronze Partner',
+            earnings: progressionData?.totalRevenue || 0,
+            teamSize: progressionData?.teamSize || 0
+          }}
           onShare={handleShare}
         />
 
@@ -659,7 +600,7 @@ export default function TeamManagement() {
         <InviteTeamMember
           isOpen={showInviteDialog}
           onOpenChange={setShowInviteDialog}
-          userReferralCode={user?.id || 'demo123'}
+          userReferralCode={typedUser?.id || 'demo123'}
           onInviteSuccess={handleInviteSuccess}
         />
 

@@ -557,6 +557,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Team progression data (revenue, level, team size)
+  app.get('/api/team/progression', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const data = await storage.getProgressionData(userId);
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching progression data:", error);
+      res.status(500).json({ message: "Failed to fetch progression data" });
+    }
+  });
+
   // Bill upload
   app.post('/api/referrals/:id/upload-bill', upload.array('bills', 5), async (req: any, res) => {
     try {

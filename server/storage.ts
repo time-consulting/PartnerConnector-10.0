@@ -209,6 +209,15 @@ export interface IStorage {
     referralCode: string | null;
     hasSubmittedDeals: number;
   }>>;
+  getProgressionData(userId: string): Promise<{
+    partnerLevel: string;
+    teamSize: number;
+    totalRevenue: number;
+    directRevenue: number;
+    overrideRevenue: number;
+    totalInvites: number;
+    successfulInvites: number;
+  }>;
 
   // Test data seeding
   seedTestReferrals(): Promise<void>;
@@ -1116,6 +1125,62 @@ export class DatabaseStorage implements IStorage {
         hasSubmittedDeals: member.referralCount
       };
     });
+  }
+
+  async getProgressionData(userId: string): Promise<{
+    partnerLevel: string;
+    teamSize: number;
+    totalRevenue: number;
+    directRevenue: number;
+    overrideRevenue: number;
+    totalInvites: number;
+    successfulInvites: number;
+  }> {
+    // Get user's partner level
+    const user = await this.getUser(userId);
+    const partnerLevel = user?.partnerLevel || 1;
+    
+    // Map numeric level to string
+    const levelMap: Record<number, string> = {
+      1: 'Bronze Partner',
+      2: 'Silver Partner',
+      3: 'Gold Partner',
+      4: 'Platinum Partner'
+    };
+    
+    // Get team stats
+    const teamStats = await this.getTeamReferralStats(userId);
+    
+    // Get revenue from commission approvals
+    const commissions = await db
+      .select({
+        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${commissionApprovals.paymentStatus} = 'completed' THEN ${commissionApprovals.commissionAmount} ELSE 0 END), 0)`,
+        directRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${commissionApprovals.paymentStatus} = 'completed' THEN ${commissionApprovals.commissionAmount} ELSE 0 END), 0)`,
+      })
+      .from(commissionApprovals)
+      .where(eq(commissionApprovals.userId, userId));
+    
+    const revenue = commissions[0] || { totalRevenue: 0, directRevenue: 0 };
+    
+    // Get override revenue (from team members' sales)
+    const overrideCommissions = await db
+      .select({
+        overrideRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${commissionPayments.status} = 'paid' AND ${commissionPayments.level} > 1 THEN ${commissionPayments.amount} ELSE 0 END), 0)`
+      })
+      .from(commissionPayments)
+      .where(eq(commissionPayments.recipientId, userId));
+    
+    const override = overrideCommissions[0] || { overrideRevenue: 0 };
+    
+    return {
+      partnerLevel: levelMap[partnerLevel] || 'Bronze Partner',
+      teamSize: teamStats.active,
+      totalRevenue: Number(revenue.totalRevenue) + Number(override.overrideRevenue),
+      directRevenue: Number(revenue.directRevenue),
+      overrideRevenue: Number(override.overrideRevenue),
+      totalInvites: teamStats.sent,
+      successfulInvites: teamStats.registered
+    };
   }
 
   // Test data seeding function for demonstrating referral system functionality
