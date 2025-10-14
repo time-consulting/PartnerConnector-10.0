@@ -201,11 +201,11 @@ export default function Dashboard() {
   };
 
   const calculateProgressToNextBonus = () => {
-    const activeReferrals = (stats as any)?.activeReferrals || 0;
-    const bonusThreshold = 10; // Next bonus at 10 referrals
-    const remaining = Math.max(0, bonusThreshold - activeReferrals);
-    const progress = Math.min(100, (activeReferrals / bonusThreshold) * 100);
-    return { remaining, progress };
+    const dealsSubmitted = (stats as any)?.dealsSubmitted || 0;
+    const bonusThreshold = 10; // Customizable bonus milestone
+    const remaining = Math.max(0, bonusThreshold - dealsSubmitted);
+    const progress = Math.min(100, (dealsSubmitted / bonusThreshold) * 100);
+    return { remaining, progress, current: dealsSubmitted };
   };
 
   const progressData = calculateProgressToNextBonus();
@@ -243,16 +243,16 @@ export default function Dashboard() {
                     <div>
                       <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Deals Submitted</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">
-                        {statsLoading ? "..." : (stats as any)?.activeReferrals?.toString() || "0"}
+                        {statsLoading ? "..." : (stats as any)?.dealsSubmitted?.toString() || "0"}
                       </p>
                     </div>
                     <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                       <HandshakeIcon className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
-                  <p className="text-sm text-green-600 mt-3 flex items-center">
+                  <p className="text-sm text-blue-600 mt-3 flex items-center">
                     <TrendingUpIcon className="w-4 h-4 mr-1" />
-                    +12% this week
+                    Lifetime total
                   </p>
                 </CardContent>
               </Card>
@@ -263,7 +263,7 @@ export default function Dashboard() {
                     <div>
                       <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Commission Pending</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">
-                        £{statsLoading ? "..." : (stats as any)?.pendingCommissions?.toLocaleString() || "2,340"}
+                        £{statsLoading ? "..." : (stats as any)?.commissionPending?.toLocaleString() || "0"}
                       </p>
                     </div>
                     <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -271,7 +271,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <p className="text-sm text-orange-600 mt-3">
-                    Processing next week
+                    Awaiting approval
                   </p>
                 </CardContent>
               </Card>
@@ -282,7 +282,7 @@ export default function Dashboard() {
                     <div>
                       <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Referrals</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">
-                        {statsLoading ? "..." : (stats as any)?.totalReferrals?.toString() || (stats as any)?.activeReferrals?.toString() || "0"}
+                        {statsLoading ? "..." : (stats as any)?.totalReferrals?.toString() || "0"}
                       </p>
                     </div>
                     <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -291,18 +291,18 @@ export default function Dashboard() {
                   </div>
                   <p className="text-sm text-purple-600 mt-3 flex items-center">
                     <TrendingUpIcon className="w-4 h-4 mr-1" />
-                    {((stats as any)?.successRate || 0)}% success rate
+                    Team members
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-monthly-earnings">
+              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-total-value-earned">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">This Month</p>
+                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Value Earned</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">
-                        £{statsLoading ? "..." : (stats as any)?.monthlyEarnings?.toLocaleString() || (stats as any)?.totalCommissions?.toLocaleString() || "0"}
+                        £{statsLoading ? "..." : (stats as any)?.totalValueEarned?.toLocaleString() || "0"}
                       </p>
                     </div>
                     <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -310,22 +310,22 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <p className="text-sm text-green-600 mt-3">
-                    +23% vs last month
+                    All-time earnings
                   </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Gamification Progress Bar */}
+            {/* Performance Bonus Progress */}
             <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl" data-testid="card-bonus-progress">
               <CardContent className="p-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">
-                      {progressData.remaining === 0 ? '🎉 Bonus Tier Unlocked!' : `You're ${progressData.remaining} referrals away from your next bonus tier`}
+                      {progressData.remaining === 0 ? '🎉 Bonus Milestone Achieved!' : `You're ${progressData.remaining} deals away from your next bonus`}
                     </h3>
                     <p className="text-gray-600 mt-1">
-                      {progressData.remaining === 0 ? 'Congratulations on reaching the milestone!' : 'Keep going to unlock higher commission rates!'}
+                      {progressData.remaining === 0 ? 'Congratulations on reaching this milestone!' : 'Keep submitting deals to unlock your next performance bonus!'}
                     </p>
                   </div>
                   <div className="text-right">
@@ -343,8 +343,8 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="flex justify-between mt-3 text-sm text-gray-500">
-                  <span>Current: {(stats as any)?.activeReferrals || 0}</span>
-                  <span>Next Bonus: 10 referrals</span>
+                  <span>Current Progress: {progressData.current} deals</span>
+                  <span>Next Bonus: 10 deals</span>
                 </div>
               </CardContent>
             </Card>
