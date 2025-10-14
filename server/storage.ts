@@ -77,10 +77,10 @@ export interface IStorage {
   
   // Dashboard stats
   getUserStats(userId: string): Promise<{
-    totalCommissions: number;
-    activeReferrals: number;
-    successRate: number;
-    monthlyEarnings: number;
+    dealsSubmitted: number;
+    commissionPending: number;
+    totalReferrals: number;
+    totalValueEarned: number;
   }>;
   
   // Bill upload operations
@@ -818,40 +818,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserStats(userId: string): Promise<{
-    totalCommissions: number;
-    activeReferrals: number;
-    successRate: number;
-    monthlyEarnings: number;
+    dealsSubmitted: number;
+    commissionPending: number;
+    totalReferrals: number;
+    totalValueEarned: number;
   }> {
+    // Get all referrals submitted by this user
     const userReferrals = await db
       .select()
       .from(referrals)
       .where(eq(referrals.referrerId, userId));
 
-    const totalCommissions = userReferrals
-      .filter(r => r.actualCommission)
-      .reduce((sum, r) => sum + parseFloat(r.actualCommission || "0"), 0);
+    const dealsSubmitted = userReferrals.length;
 
-    const activeReferrals = userReferrals.filter(r => 
-      r.status === "pending" || r.status === "approved"
-    ).length;
+    // Get pending commissions from commissionPayments table
+    const pendingCommissions = await db
+      .select()
+      .from(commissionPayments)
+      .where(
+        and(
+          eq(commissionPayments.recipientId, userId),
+          eq(commissionPayments.status, 'pending')
+        )
+      );
 
-    const completedReferrals = userReferrals.filter(r => r.status === "completed").length;
-    const successRate = userReferrals.length > 0 
-      ? Math.round((completedReferrals / userReferrals.length) * 100)
-      : 0;
+    const commissionPending = pendingCommissions.reduce(
+      (sum, payment) => sum + parseFloat(payment.amount || "0"), 
+      0
+    );
 
-    const thisMonth = new Date();
-    thisMonth.setDate(1);
-    const monthlyEarnings = userReferrals
-      .filter(r => r.actualCommission && new Date(r.updatedAt!) >= thisMonth)
-      .reduce((sum, r) => sum + parseFloat(r.actualCommission || "0"), 0);
+    // Get total referrals (people who signed up using this user's referral code)
+    const referredUsers = await db
+      .select()
+      .from(partnerHierarchy)
+      .where(eq(partnerHierarchy.parentId, userId));
+
+    const totalReferrals = referredUsers.length;
+
+    // Get total value earned from paid commissions
+    const paidCommissions = await db
+      .select()
+      .from(commissionPayments)
+      .where(
+        and(
+          eq(commissionPayments.recipientId, userId),
+          eq(commissionPayments.status, 'paid')
+        )
+      );
+
+    const totalValueEarned = paidCommissions.reduce(
+      (sum, payment) => sum + parseFloat(payment.amount || "0"), 
+      0
+    );
 
     return {
-      totalCommissions,
-      activeReferrals,
-      successRate,
-      monthlyEarnings,
+      dealsSubmitted,
+      commissionPending,
+      totalReferrals,
+      totalValueEarned,
     };
   }
 
