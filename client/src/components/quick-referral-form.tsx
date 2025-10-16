@@ -13,11 +13,18 @@ import { Zap } from "lucide-react";
 const quickFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
   contactName: z.string().min(1, "Contact name is required"),
-  contactInfo: z.string().min(1, "Phone or email is required"),
+  contactPhone: z.string().optional(),
+  contactEmail: z.string().email("Invalid email format").optional(),
   productInterest: z.enum(["dojo-card-payments", "business-funding", "both"], {
     required_error: "Please select a product",
   }),
-});
+}).refine(
+  (data) => data.contactPhone || data.contactEmail,
+  {
+    message: "Please provide either a phone number or email",
+    path: ["contactPhone"],
+  }
+);
 
 type QuickFormData = z.infer<typeof quickFormSchema>;
 
@@ -32,7 +39,8 @@ export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickRefer
     defaultValues: {
       businessName: "",
       contactName: "",
-      contactInfo: "",
+      contactPhone: "",
+      contactEmail: "",
       productInterest: undefined,
     },
   });
@@ -91,22 +99,45 @@ export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickRefer
 
             <FormField
               control={form.control}
-              name="contactInfo"
+              name="contactPhone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone or Email *</FormLabel>
+                  <FormLabel>Phone Number</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g., +44 20 1234 5678 or email@example.com"
+                      placeholder="e.g., +44 20 1234 5678"
                       className="h-11"
-                      data-testid="input-quick-contact-info"
+                      data-testid="input-quick-contact-phone"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="contactEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="e.g., contact@business.com"
+                      className="h-11"
+                      data-testid="input-quick-contact-email"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <p className="text-sm text-muted-foreground -mt-4">
+              * Provide at least one contact method (phone or email)
+            </p>
 
             <FormField
               control={form.control}
