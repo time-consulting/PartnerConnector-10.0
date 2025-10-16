@@ -24,6 +24,11 @@ interface BusinessNameAutocompleteProps {
   "data-testid"?: string;
 }
 
+interface BusinessSearchResult {
+  businessName: string;
+  contactName?: string;
+}
+
 export default function BusinessNameAutocomplete({ 
   value, 
   onChange, 
@@ -32,7 +37,7 @@ export default function BusinessNameAutocomplete({
   "data-testid": testId = "autocomplete-business-name"
 }: BusinessNameAutocompleteProps) {
   const [open, setOpen] = useState(false);
-  const [businesses, setBusinesses] = useState<string[]>([]);
+  const [businesses, setBusinesses] = useState<BusinessSearchResult[]>([]);
   const [searchQuery, setSearchQuery] = useState(value);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,7 +53,7 @@ export default function BusinessNameAutocomplete({
       try {
         const response = await fetch(`/api/businesses/search?q=${encodeURIComponent(searchQuery)}`);
         if (response.ok) {
-          const data = await response.json();
+          const data: BusinessSearchResult[] = await response.json();
           setBusinesses(data);
         }
       } catch (error) {
@@ -102,13 +107,14 @@ export default function BusinessNameAutocomplete({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <Command shouldFilter={false}>
+      <PopoverContent className="w-full p-0 bg-white" align="start">
+        <Command shouldFilter={false} className="bg-white">
           <CommandInput 
             placeholder={placeholder}
             value={searchQuery}
             onValueChange={setSearchQuery}
             onKeyDown={handleKeyDown}
+            className="bg-white border-b"
             data-testid="input-business-search"
           />
           <CommandList>
@@ -138,21 +144,26 @@ export default function BusinessNameAutocomplete({
                   </div>
                 </CommandEmpty>
                 {businesses.length > 0 && (
-                  <CommandGroup heading="Existing Businesses">
+                  <CommandGroup heading="Your Existing Leads">
                     {businesses.map((business) => (
                       <CommandItem
-                        key={business}
-                        value={business}
-                        onSelect={() => handleSelect(business)}
-                        data-testid={`item-business-${business}`}
+                        key={business.businessName}
+                        value={business.businessName}
+                        onSelect={() => handleSelect(business.businessName)}
+                        data-testid={`item-business-${business.businessName}`}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            value === business ? "opacity-100" : "opacity-0"
+                            value === business.businessName ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        {business}
+                        <div className="flex flex-col">
+                          <span className="font-medium">{business.businessName}</span>
+                          {business.contactName && (
+                            <span className="text-xs text-muted-foreground">Contact: {business.contactName}</span>
+                          )}
+                        </div>
                       </CommandItem>
                     ))}
                   </CommandGroup>

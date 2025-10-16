@@ -74,7 +74,7 @@ export interface IStorage {
   createReferral(referral: InsertReferral): Promise<Referral>;
   getReferralsByUserId(userId: string): Promise<Referral[]>;
   updateReferralStatus(id: string, status: string): Promise<void>;
-  searchBusinessNames(userId: string, query: string): Promise<string[]>;
+  searchBusinessNames(userId: string, query: string): Promise<Array<{ businessName: string; contactName?: string }>>;
   
   // Dashboard stats
   getUserStats(userId: string): Promise<{
@@ -789,8 +789,24 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(referrals.submittedAt));
   }
 
-  async searchBusinessNames(userId: string, query: string): Promise<string[]> {
-    const results = await db
+  async searchBusinessNames(userId: string, query: string): Promise<Array<{ businessName: string; contactName?: string }>> {
+    // Search both opportunities and referrals for business names
+    const opportunityResults = await db
+      .select({ 
+        businessName: opportunities.businessName,
+        contactName: opportunities.contactName 
+      })
+      .from(opportunities)
+      .where(
+        and(
+          eq(opportunities.userId, userId),
+          sql`LOWER(${opportunities.businessName}) LIKE LOWER(${'%' + query + '%'})`
+        )
+      )
+      .limit(10);
+
+    // Also search referrals
+    const referralResults = await db
       .select({ businessName: referrals.businessName })
       .from(referrals)
       .where(
@@ -799,10 +815,28 @@ export class DatabaseStorage implements IStorage {
           sql`LOWER(${referrals.businessName}) LIKE LOWER(${'%' + query + '%'})`
         )
       )
-      .groupBy(referrals.businessName)
       .limit(10);
 
-    return results.map(r => r.businessName);
+    // Combine and deduplicate results
+    const combined = new Map<string, { businessName: string; contactName?: string }>();
+    
+    // Add opportunities first (they have contact names)
+    opportunityResults.forEach(r => {
+      combined.set(r.businessName.toLowerCase(), {
+        businessName: r.businessName,
+        contactName: r.contactName || undefined
+      });
+    });
+    
+    // Add referrals if not already present
+    referralResults.forEach(r => {
+      const key = r.businessName.toLowerCase();
+      if (!combined.has(key)) {
+        combined.set(key, { businessName: r.businessName });
+      }
+    });
+
+    return Array.from(combined.values()).slice(0, 10);
   }
 
   async updateReferralStatus(id: string, status: string): Promise<void> {
