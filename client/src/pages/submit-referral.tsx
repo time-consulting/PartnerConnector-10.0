@@ -100,18 +100,20 @@ export default function SubmitReferral() {
       products.push("business-funding");
     }
 
-    // Determine if contactInfo is email or phone
-    const isEmail = data.contactInfo.includes("@");
+    // Build contact info for notes
+    const contactMethods = [];
+    if (data.contactPhone) contactMethods.push(`Phone: ${data.contactPhone}`);
+    if (data.contactEmail) contactMethods.push(`Email: ${data.contactEmail}`);
     
     const referralData = {
       businessName: data.businessName,
-      businessEmail: isEmail ? data.contactInfo : "pending@example.com",
-      businessPhone: !isEmail ? data.contactInfo : "",
+      businessEmail: data.contactEmail || "pending@example.com",
+      businessPhone: data.contactPhone || "",
       businessTypeId: "other", // Default to other for quick submissions
       selectedProducts: products,
       cardMachineQuantity: 1,
       gdprConsent: true, // Implied consent for quick submissions
-      notes: `Quick referral - Contact: ${data.contactName}. ${isEmail ? 'Email' : 'Phone'}: ${data.contactInfo}`,
+      notes: `Quick referral - Contact: ${data.contactName}. ${contactMethods.join(', ')}`,
     };
 
     submitReferralMutation.mutate(referralData);
