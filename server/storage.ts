@@ -789,12 +789,19 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(referrals.submittedAt));
   }
 
-  async searchBusinessNames(userId: string, query: string): Promise<Array<{ businessName: string; contactName?: string }>> {
+  async searchBusinessNames(userId: string, query: string): Promise<Array<{ 
+    businessName: string; 
+    contactName?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+  }>> {
     // Search both opportunities and referrals for business names
     const opportunityResults = await db
       .select({ 
         businessName: opportunities.businessName,
-        contactName: opportunities.contactName 
+        contactName: opportunities.contactName,
+        contactEmail: opportunities.contactEmail,
+        contactPhone: opportunities.contactPhone
       })
       .from(opportunities)
       .where(
@@ -807,7 +814,11 @@ export class DatabaseStorage implements IStorage {
 
     // Also search referrals
     const referralResults = await db
-      .select({ businessName: referrals.businessName })
+      .select({ 
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
+        businessPhone: referrals.businessPhone
+      })
       .from(referrals)
       .where(
         and(
@@ -818,13 +829,20 @@ export class DatabaseStorage implements IStorage {
       .limit(10);
 
     // Combine and deduplicate results
-    const combined = new Map<string, { businessName: string; contactName?: string }>();
+    const combined = new Map<string, { 
+      businessName: string; 
+      contactName?: string;
+      contactEmail?: string;
+      contactPhone?: string;
+    }>();
     
-    // Add opportunities first (they have contact names)
+    // Add opportunities first (they have more detailed contact info)
     opportunityResults.forEach(r => {
       combined.set(r.businessName.toLowerCase(), {
         businessName: r.businessName,
-        contactName: r.contactName || undefined
+        contactName: r.contactName || undefined,
+        contactEmail: r.contactEmail || undefined,
+        contactPhone: r.contactPhone || undefined
       });
     });
     
@@ -832,7 +850,11 @@ export class DatabaseStorage implements IStorage {
     referralResults.forEach(r => {
       const key = r.businessName.toLowerCase();
       if (!combined.has(key)) {
-        combined.set(key, { businessName: r.businessName });
+        combined.set(key, { 
+          businessName: r.businessName,
+          contactEmail: r.businessEmail || undefined,
+          contactPhone: r.businessPhone || undefined
+        });
       }
     });
 

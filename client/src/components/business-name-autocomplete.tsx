@@ -20,6 +20,7 @@ interface BusinessNameAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   onSelect?: (businessName: string) => void;
+  onBusinessSelect?: (business: BusinessSearchResult | null) => void;
   placeholder?: string;
   "data-testid"?: string;
 }
@@ -27,12 +28,15 @@ interface BusinessNameAutocompleteProps {
 interface BusinessSearchResult {
   businessName: string;
   contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 export default function BusinessNameAutocomplete({ 
   value, 
   onChange, 
   onSelect,
+  onBusinessSelect,
   placeholder = "Type business name...",
   "data-testid": testId = "autocomplete-business-name"
 }: BusinessNameAutocompleteProps) {
@@ -67,11 +71,14 @@ export default function BusinessNameAutocomplete({
     return () => clearTimeout(debounce);
   }, [searchQuery]);
 
-  const handleSelect = (selectedValue: string) => {
-    onChange(selectedValue);
-    setSearchQuery(selectedValue);
+  const handleSelect = (business: BusinessSearchResult) => {
+    onChange(business.businessName);
+    setSearchQuery(business.businessName);
     if (onSelect) {
-      onSelect(selectedValue);
+      onSelect(business.businessName);
+    }
+    if (onBusinessSelect) {
+      onBusinessSelect(business);
     }
     setOpen(false);
   };
@@ -80,6 +87,9 @@ export default function BusinessNameAutocomplete({
     onChange(searchQuery);
     if (onSelect) {
       onSelect(searchQuery);
+    }
+    if (onBusinessSelect) {
+      onBusinessSelect(null); // null indicates a new business
     }
     setOpen(false);
   };
@@ -149,7 +159,7 @@ export default function BusinessNameAutocomplete({
                       <CommandItem
                         key={business.businessName}
                         value={business.businessName}
-                        onSelect={() => handleSelect(business.businessName)}
+                        onSelect={() => handleSelect(business)}
                         data-testid={`item-business-${business.businessName}`}
                       >
                         <Check
