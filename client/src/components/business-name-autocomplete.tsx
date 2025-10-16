@@ -23,7 +23,7 @@ interface BusinessNameAutocompleteProps {
   placeholder?: string;
 }
 
-export function BusinessNameAutocomplete({ 
+export default function BusinessNameAutocomplete({ 
   value, 
   onChange, 
   onSelect,

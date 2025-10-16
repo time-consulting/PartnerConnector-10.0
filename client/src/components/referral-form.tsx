@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import ProductSelection from "@/components/product-selection";
 import { FieldHelpTooltip } from "@/components/contextual-help-tooltip";
+import BusinessNameAutocomplete from "@/components/business-name-autocomplete";
 
 const formSchema = insertReferralSchema
   .omit({
@@ -25,7 +26,20 @@ const formSchema = insertReferralSchema
     selectedProducts: z.array(z.string()).min(1, {
       message: "Please select at least one service",
     }),
-  });
+  })
+  .refine(
+    (data) => {
+      // If business funding is selected, fundingAmount is required
+      if (data.selectedProducts?.includes("business-funding")) {
+        return data.fundingAmount && data.fundingAmount.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Funding amount is required when business funding is selected",
+      path: ["fundingAmount"],
+    }
+  );
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -50,6 +64,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
       currentProcessor: "",
       monthlyVolume: "",
       currentRate: "",
+      fundingAmount: "",
       cardMachineQuantity: 1,
       selectedProducts: [],
       notes: "",
@@ -80,25 +95,27 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="businessName" className="flex items-center gap-2">
-                Business Name *
-                <FieldHelpTooltip 
-                  content="The registered business name that will be used for the funding application. This should match official business documents."
-                />
-              </Label>
-              <Input
-                id="businessName"
-                {...form.register("businessName")}
-                placeholder="Enter business name"
-                data-testid="input-business-name"
-              />
-              {form.formState.errors.businessName && (
-                <p className="text-destructive text-sm mt-1">
-                  {form.formState.errors.businessName.message}
-                </p>
+            <FormField
+              control={form.control}
+              name="businessName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    Business Name *
+                    <FieldHelpTooltip 
+                      content="Start typing to search your existing pipeline or enter a new business name."
+                    />
+                  </FormLabel>
+                  <FormControl>
+                    <BusinessNameAutocomplete
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
+            />
             
             <div>
               <Label htmlFor="businessEmail" className="flex items-center gap-2">
@@ -234,6 +251,30 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
               )}
             </div>
           </div>
+
+          {/* Conditional Funding Amount - shows only when business funding is selected */}
+          {selectedProducts.includes("business-funding") && (
+            <div>
+              <Label htmlFor="fundingAmount" className="flex items-center gap-2">
+                Required Funding Amount (£) *
+                <FieldHelpTooltip 
+                  content="Specify the amount of funding the business requires. This helps us match them with the most suitable funding options."
+                />
+              </Label>
+              <Input
+                id="fundingAmount"
+                type="number"
+                {...form.register("fundingAmount")}
+                placeholder="e.g., 25000"
+                data-testid="input-funding-amount"
+              />
+              {form.formState.errors.fundingAmount && (
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.fundingAmount.message}
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <Label htmlFor="notes">Additional Notes</Label>
