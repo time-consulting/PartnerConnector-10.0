@@ -377,33 +377,28 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
     }
   };
 
-  // Simulate business lookup (replace with actual API call)
+  // Search user's existing businesses from portal
   const handleBusinessLookup = async (businessName: string) => {
-    if (!businessName || businessName.length < 3) {
+    if (!businessName || businessName.length < 2) {
       setBusinessLookupResults([]);
       return;
     }
 
     setIsLookingUp(true);
-    // Simulate API delay
-    setTimeout(() => {
-      const mockResults = [
-        { 
-          name: businessName + " Ltd",
-          address: "123 Business St, London, SW1A 1AA",
-          website: "www." + businessName.toLowerCase().replace(/\s/g, "") + ".co.uk",
-          type: "Limited Company"
-        },
-        {
-          name: businessName + " Trading",
-          address: "456 Trade Ave, Manchester, M1 1AA", 
-          website: "www." + businessName.toLowerCase().replace(/\s/g, "") + "trading.com",
-          type: "Sole Trader"
-        }
-      ];
-      setBusinessLookupResults(mockResults);
+    try {
+      const response = await fetch(`/api/businesses/search?q=${encodeURIComponent(businessName)}`);
+      if (response.ok) {
+        const results = await response.json();
+        setBusinessLookupResults(results);
+      } else {
+        setBusinessLookupResults([]);
+      }
+    } catch (error) {
+      console.error('Error searching businesses:', error);
+      setBusinessLookupResults([]);
+    } finally {
       setIsLookingUp(false);
-    }, 800);
+    }
   };
 
   // Handle email duplicate check (simulate)
@@ -479,14 +474,25 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
                         key={index}
                         className="p-3 hover:bg-teal-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                         onClick={() => {
-                          form.setValue('businessName', result.name);
-                          form.setValue('businessAddress', result.address);
+                          form.setValue('businessName', result.businessName);
+                          if (result.contactEmail) {
+                            form.setValue('businessEmail', result.contactEmail);
+                          }
+                          if (result.contactPhone) {
+                            form.setValue('businessPhone', result.contactPhone);
+                          }
                           setBusinessLookupResults([]);
                         }}
                       >
-                        <div className="font-medium text-gray-900">{result.name}</div>
-                        <div className="text-sm text-gray-600">{result.address}</div>
-                        <div className="text-xs text-teal-600 mt-1">{result.type}</div>
+                        <div className="font-medium text-gray-900">{result.businessName}</div>
+                        {result.contactName && (
+                          <div className="text-sm text-gray-600">{result.contactName}</div>
+                        )}
+                        {(result.contactEmail || result.contactPhone) && (
+                          <div className="text-xs text-teal-600 mt-1">
+                            {result.contactEmail || result.contactPhone}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
