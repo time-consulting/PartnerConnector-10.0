@@ -7,9 +7,11 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import ReferralStepper from "@/components/referral-stepper";
+import QuickReferralForm from "@/components/quick-referral-form";
 import EarningsPreviewSidebar from "@/components/earnings-preview-sidebar";
 import BillUpload from "@/components/bill-upload";
-import { CheckCircleIcon, Sparkles } from "lucide-react";
+import { CheckCircleIcon, Sparkles, Zap, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SubmitReferral() {
   const { toast } = useToast();
@@ -86,6 +88,33 @@ export default function SubmitReferral() {
 
   const handleReferralSubmit = (data: any) => {
     submitReferralMutation.mutate(data);
+  };
+
+  const handleQuickReferralSubmit = (data: any) => {
+    // Convert quick form data to full referral format
+    const products = [];
+    if (data.productInterest === "dojo-card-payments") products.push("dojo-card-payments");
+    if (data.productInterest === "business-funding") products.push("business-funding");
+    if (data.productInterest === "both") {
+      products.push("dojo-card-payments");
+      products.push("business-funding");
+    }
+
+    // Determine if contactInfo is email or phone
+    const isEmail = data.contactInfo.includes("@");
+    
+    const referralData = {
+      businessName: data.businessName,
+      businessEmail: isEmail ? data.contactInfo : "pending@example.com",
+      businessPhone: !isEmail ? data.contactInfo : "",
+      businessTypeId: "other", // Default to other for quick submissions
+      selectedProducts: products,
+      cardMachineQuantity: 1,
+      gdprConsent: true, // Implied consent for quick submissions
+      notes: `Quick referral - Contact: ${data.contactName}. ${isEmail ? 'Email' : 'Phone'}: ${data.contactInfo}`,
+    };
+
+    submitReferralMutation.mutate(referralData);
   };
 
   const handleBillUploadComplete = () => {
@@ -206,12 +235,34 @@ export default function SubmitReferral() {
               
               {/* Main Stepper Content - 8 columns on XL screens */}
               <div className="xl:col-span-8">
-                <ReferralStepper 
-                  businessTypes={businessTypes}
-                  onSubmit={handleReferralSubmit}
-                  onDraftSave={handleDraftSave}
-                  isSubmitting={submitReferralMutation.isPending}
-                />
+                <Tabs defaultValue="quick" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="quick" className="flex items-center gap-2" data-testid="tab-quick-mode">
+                      <Zap className="h-4 w-4" />
+                      Quick Mode
+                    </TabsTrigger>
+                    <TabsTrigger value="full" className="flex items-center gap-2" data-testid="tab-full-mode">
+                      <FileText className="h-4 w-4" />
+                      Full Details
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="quick">
+                    <QuickReferralForm 
+                      onSubmit={handleQuickReferralSubmit}
+                      isSubmitting={submitReferralMutation.isPending}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="full">
+                    <ReferralStepper 
+                      businessTypes={businessTypes || []}
+                      onSubmit={handleReferralSubmit}
+                      onDraftSave={handleDraftSave}
+                      isSubmitting={submitReferralMutation.isPending}
+                    />
+                  </TabsContent>
+                </Tabs>
               </div>
 
               {/* Earnings Preview Sidebar - 4 columns on XL screens, bottom sheet on mobile */}

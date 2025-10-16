@@ -21,13 +21,15 @@ interface BusinessNameAutocompleteProps {
   onChange: (value: string) => void;
   onSelect?: (businessName: string) => void;
   placeholder?: string;
+  "data-testid"?: string;
 }
 
 export default function BusinessNameAutocomplete({ 
   value, 
   onChange, 
   onSelect,
-  placeholder = "Type business name..." 
+  placeholder = "Type business name...",
+  "data-testid": testId = "autocomplete-business-name"
 }: BusinessNameAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [businesses, setBusinesses] = useState<string[]>([]);
@@ -92,7 +94,7 @@ export default function BusinessNameAutocomplete({
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
-          data-testid="button-business-name-autocomplete"
+          data-testid={testId}
         >
           <span className={cn("truncate", !value && "text-muted-foreground")}>
             {value || placeholder}
