@@ -93,7 +93,7 @@ export default function BusinessNameAutocomplete({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between h-11"
           data-testid={testId}
         >
           <span className={cn("truncate", !value && "text-muted-foreground")}>

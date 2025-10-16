@@ -80,6 +80,7 @@ export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickRefer
                     <Input
                       {...field}
                       placeholder="e.g., John Smith"
+                      className="h-11"
                       data-testid="input-quick-contact-name"
                     />
                   </FormControl>
@@ -98,6 +99,7 @@ export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickRefer
                     <Input
                       {...field}
                       placeholder="e.g., +44 20 1234 5678 or email@example.com"
+                      className="h-11"
                       data-testid="input-quick-contact-info"
                     />
                   </FormControl>
@@ -114,7 +116,7 @@ export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickRefer
                   <FormLabel>Product Interest *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger data-testid="select-quick-product">
+                      <SelectTrigger className="h-11" data-testid="select-quick-product">
                         <SelectValue placeholder="Select product" />
                       </SelectTrigger>
                     </FormControl>

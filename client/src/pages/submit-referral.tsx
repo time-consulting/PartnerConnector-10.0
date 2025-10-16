@@ -236,12 +236,12 @@ export default function SubmitReferral() {
               {/* Main Stepper Content - 8 columns on XL screens */}
               <div className="xl:col-span-8">
                 <Tabs defaultValue="quick" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="quick" className="flex items-center gap-2" data-testid="tab-quick-mode">
+                  <TabsList className="grid w-full grid-cols-2 mb-6 h-11">
+                    <TabsTrigger value="quick" className="flex items-center gap-2 h-11" data-testid="tab-quick-mode">
                       <Zap className="h-4 w-4" />
                       Quick Mode
                     </TabsTrigger>
-                    <TabsTrigger value="full" className="flex items-center gap-2" data-testid="tab-full-mode">
+                    <TabsTrigger value="full" className="flex items-center gap-2 h-11" data-testid="tab-full-mode">
                       <FileText className="h-4 w-4" />
                       Full Details
                     </TabsTrigger>
