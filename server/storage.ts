@@ -799,7 +799,7 @@ export class DatabaseStorage implements IStorage {
       .from(opportunities)
       .where(
         and(
-          eq(opportunities.userId, userId),
+          eq(opportunities.partnerId, userId),
           sql`LOWER(${opportunities.businessName}) LIKE LOWER(${'%' + query + '%'})`
         )
       )
