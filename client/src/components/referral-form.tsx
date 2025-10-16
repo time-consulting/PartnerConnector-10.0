@@ -129,6 +129,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                 type="email"
                 {...form.register("businessEmail")}
                 placeholder="business@example.com"
+                className="h-11"
                 data-testid="input-business-email"
               />
               {form.formState.errors.businessEmail && (
@@ -146,6 +147,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                 id="businessPhone"
                 {...form.register("businessPhone")}
                 placeholder="+44 20 1234 5678"
+                className="h-11"
                 data-testid="input-business-phone"
               />
             </div>
@@ -159,7 +161,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                   form.setValue("businessTypeId", value);
                 }}
               >
-                <SelectTrigger data-testid="select-business-type">
+                <SelectTrigger className="h-11" data-testid="select-business-type">
                   <SelectValue placeholder="Select business type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -204,6 +206,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                 id="currentProcessor"
                 {...form.register("currentProcessor")}
                 placeholder="e.g., Worldpay, Square, etc."
+                className="h-11"
                 data-testid="input-current-processor"
               />
             </div>
@@ -216,6 +219,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                 step="0.01"
                 {...form.register("currentRate")}
                 placeholder="e.g., 2.5"
+                className="h-11"
                 data-testid="input-current-rate"
               />
             </div>
@@ -229,6 +233,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                 type="number"
                 {...form.register("monthlyVolume")}
                 placeholder="e.g., 50000"
+                className="h-11"
                 data-testid="input-monthly-volume"
               />
             </div>
@@ -242,6 +247,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                 max="20"
                 {...form.register("cardMachineQuantity", { valueAsNumber: true })}
                 placeholder="e.g., 2"
+                className="h-11"
                 data-testid="input-card-machine-quantity"
               />
               {form.formState.errors.cardMachineQuantity && (
@@ -266,6 +272,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                 type="number"
                 {...form.register("fundingAmount")}
                 placeholder="e.g., 25000"
+                className="h-11"
                 data-testid="input-funding-amount"
               />
               {form.formState.errors.fundingAmount && (
@@ -373,7 +380,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
 
       <Button 
         type="submit" 
-        className="w-full" 
+        className="w-full h-11" 
         size="lg"
         disabled={isSubmitting}
         data-testid="button-submit-referral-form"

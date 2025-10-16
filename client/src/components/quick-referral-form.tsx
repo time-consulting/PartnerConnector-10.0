@@ -140,7 +140,7 @@ export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickRefer
             <div className="pt-4 space-y-3">
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full h-11" 
                 size="lg"
                 disabled={isSubmitting}
                 data-testid="button-submit-quick-referral"

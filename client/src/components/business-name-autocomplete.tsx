@@ -128,7 +128,7 @@ export default function BusinessNameAutocomplete({
                         onClick={handleAddNew}
                         variant="outline"
                         size="sm"
-                        className="w-full"
+                        className="w-full h-11"
                         data-testid="button-add-new-business"
                       >
                         <Plus className="mr-2 h-4 w-4" />
