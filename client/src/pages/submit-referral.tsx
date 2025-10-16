@@ -7,11 +7,9 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import ReferralStepper from "@/components/referral-stepper";
-import QuickReferralForm from "@/components/quick-referral-form";
 import EarningsPreviewSidebar from "@/components/earnings-preview-sidebar";
 import BillUpload from "@/components/bill-upload";
-import { CheckCircleIcon, Sparkles, Zap, FileText } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircleIcon, Sparkles } from "lucide-react";
 
 export default function SubmitReferral() {
   const { toast } = useToast();
@@ -88,35 +86,6 @@ export default function SubmitReferral() {
 
   const handleReferralSubmit = (data: any) => {
     submitReferralMutation.mutate(data);
-  };
-
-  const handleQuickReferralSubmit = (data: any) => {
-    // Convert quick form data to full referral format
-    const products = [];
-    if (data.productInterest === "dojo-card-payments") products.push("dojo-card-payments");
-    if (data.productInterest === "business-funding") products.push("business-funding");
-    if (data.productInterest === "both") {
-      products.push("dojo-card-payments");
-      products.push("business-funding");
-    }
-
-    // Build contact info for notes
-    const contactMethods = [];
-    if (data.contactPhone) contactMethods.push(`Phone: ${data.contactPhone}`);
-    if (data.contactEmail) contactMethods.push(`Email: ${data.contactEmail}`);
-    
-    const referralData = {
-      businessName: data.businessName,
-      businessEmail: data.contactEmail || "pending@example.com",
-      businessPhone: data.contactPhone || "",
-      businessTypeId: "other", // Default to other for quick submissions
-      selectedProducts: products,
-      cardMachineQuantity: 1,
-      gdprConsent: true, // Implied consent for quick submissions
-      notes: `Quick referral - Contact: ${data.contactName}. ${contactMethods.join(', ')}`,
-    };
-
-    submitReferralMutation.mutate(referralData);
   };
 
   const handleBillUploadComplete = () => {
@@ -237,34 +206,12 @@ export default function SubmitReferral() {
               
               {/* Main Stepper Content - 8 columns on XL screens */}
               <div className="xl:col-span-8">
-                <Tabs defaultValue="quick" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6 h-11">
-                    <TabsTrigger value="quick" className="flex items-center gap-2 h-11" data-testid="tab-quick-mode">
-                      <Zap className="h-4 w-4" />
-                      Quick Mode
-                    </TabsTrigger>
-                    <TabsTrigger value="full" className="flex items-center gap-2 h-11" data-testid="tab-full-mode">
-                      <FileText className="h-4 w-4" />
-                      Full Details
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="quick">
-                    <QuickReferralForm 
-                      onSubmit={handleQuickReferralSubmit}
-                      isSubmitting={submitReferralMutation.isPending}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="full">
-                    <ReferralStepper 
-                      businessTypes={businessTypes || []}
-                      onSubmit={handleReferralSubmit}
-                      onDraftSave={handleDraftSave}
-                      isSubmitting={submitReferralMutation.isPending}
-                    />
-                  </TabsContent>
-                </Tabs>
+                <ReferralStepper 
+                  businessTypes={businessTypes || []}
+                  onSubmit={handleReferralSubmit}
+                  onDraftSave={handleDraftSave}
+                  isSubmitting={submitReferralMutation.isPending}
+                />
               </div>
 
               {/* Earnings Preview Sidebar - 4 columns on XL screens, bottom sheet on mobile */}
