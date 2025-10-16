@@ -532,6 +532,14 @@ function BusinessStep({ form, businessTypes }: BusinessStepProps) {
     parseInt(form.watch('monthlyVolume')) || 50000
   ]);
 
+  // Sync initial value to form on mount
+  useEffect(() => {
+    const currentValue = form.getValues('monthlyVolume');
+    if (!currentValue) {
+      form.setValue('monthlyVolume', monthlyVolume[0].toString());
+    }
+  }, []);
+
   // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-GB', {
