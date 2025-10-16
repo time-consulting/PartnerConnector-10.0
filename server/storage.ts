@@ -74,7 +74,12 @@ export interface IStorage {
   createReferral(referral: InsertReferral): Promise<Referral>;
   getReferralsByUserId(userId: string): Promise<Referral[]>;
   updateReferralStatus(id: string, status: string): Promise<void>;
-  searchBusinessNames(userId: string, query: string): Promise<Array<{ businessName: string; contactName?: string }>>;
+  searchBusinessNames(userId: string, query: string): Promise<Array<{ 
+    businessName: string; 
+    contactName?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+  }>>;
   
   // Dashboard stats
   getUserStats(userId: string): Promise<{
