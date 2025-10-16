@@ -72,6 +72,18 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
     },
   });
 
+  const handleBusinessSelect = (business: { businessName: string; contactName?: string; contactEmail?: string; contactPhone?: string } | null) => {
+    if (business) {
+      // Auto-populate fields from existing business data
+      if (business.contactEmail) {
+        form.setValue("businessEmail", business.contactEmail);
+      }
+      if (business.contactPhone) {
+        form.setValue("businessPhone", business.contactPhone);
+      }
+    }
+  };
+
   const handleSubmit = (data: FormData) => {
     // Ensure selected products and business type are included
     const formDataWithProducts = {
@@ -110,6 +122,7 @@ export default function ReferralForm({ businessTypes, onSubmit, isSubmitting }: 
                     <BusinessNameAutocomplete
                       value={field.value}
                       onChange={field.onChange}
+                      onBusinessSelect={handleBusinessSelect}
                     />
                   </FormControl>
                   <FormMessage />
