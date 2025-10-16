@@ -74,6 +74,7 @@ export interface IStorage {
   createReferral(referral: InsertReferral): Promise<Referral>;
   getReferralsByUserId(userId: string): Promise<Referral[]>;
   updateReferralStatus(id: string, status: string): Promise<void>;
+  searchBusinessNames(userId: string, query: string): Promise<string[]>;
   
   // Dashboard stats
   getUserStats(userId: string): Promise<{
@@ -786,6 +787,22 @@ export class DatabaseStorage implements IStorage {
       .from(referrals)
       .where(eq(referrals.referrerId, userId))
       .orderBy(desc(referrals.submittedAt));
+  }
+
+  async searchBusinessNames(userId: string, query: string): Promise<string[]> {
+    const results = await db
+      .select({ businessName: referrals.businessName })
+      .from(referrals)
+      .where(
+        and(
+          eq(referrals.referrerId, userId),
+          sql`LOWER(${referrals.businessName}) LIKE LOWER(${'%' + query + '%'})`
+        )
+      )
+      .groupBy(referrals.businessName)
+      .limit(10);
+
+    return results.map(r => r.businessName);
   }
 
   async updateReferralStatus(id: string, status: string): Promise<void> {

@@ -113,6 +113,7 @@ export const referrals = pgTable("referrals", {
   currentProcessor: varchar("current_processor"),
   monthlyVolume: varchar("monthly_volume"),
   currentRate: varchar("current_rate"),
+  fundingAmount: varchar("funding_amount"), // Required funding amount for business funding
   // Product selection and card machine requirements
   selectedProducts: text("selected_products").array(), // Array of product IDs
   cardMachineQuantity: integer("card_machine_quantity").default(1),

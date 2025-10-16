@@ -521,6 +521,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search business names from pipeline
+  app.get('/api/businesses/search', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const query = (req.query.q as string || '').trim();
+
+      if (query.length < 2) {
+        return res.json([]);
+      }
+
+      const businesses = await storage.searchBusinessNames(userId, query);
+      res.json(businesses);
+    } catch (error) {
+      console.error("Error searching businesses:", error);
+      res.status(500).json({ message: "Failed to search businesses" });
+    }
+  });
+
   // Dashboard stats
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {
