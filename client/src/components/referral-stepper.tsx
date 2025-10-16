@@ -21,6 +21,7 @@ const stepperFormSchema = insertReferralSchema
     referrerId: true, // This will be set automatically on the backend from authenticated user
   })
   .extend({
+    contactName: z.string().min(1, "Contact name is required"),
     gdprConsent: z.boolean().refine(val => val === true, {
       message: "GDPR consent is required",
     }),
@@ -42,21 +43,21 @@ interface ReferralStepperProps {
 const steps = [
   { 
     id: 1, 
-    title: "Client", 
-    description: "Business details", 
+    title: "Contact", 
+    description: "Basic info", 
     icon: "👤"
   },
   { 
     id: 2, 
-    title: "Services", 
-    description: "Select products", 
-    icon: "🛡️"
+    title: "Business", 
+    description: "Details", 
+    icon: "🏢"
   },
   { 
     id: 3, 
-    title: "Files & Consent", 
-    description: "Upload & submit", 
-    icon: "📄"
+    title: "Review", 
+    description: "Submit", 
+    icon: "✓"
   },
 ];
 
@@ -68,6 +69,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
     resolver: zodResolver(stepperFormSchema),
     defaultValues: {
       businessName: "",
+      contactName: "",
       businessEmail: "",
       businessPhone: "",
       businessAddress: "",
@@ -102,12 +104,15 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
 
     switch (currentStep) {
       case 1:
-        isValid = !!(values.businessName && values.businessEmail);
+        // Step 1: Contact info - business name, contact name, email, phone (at least one), product interest
+        isValid = !!(values.businessName && values.contactName && values.businessEmail && values.selectedProducts.length > 0);
         break;
       case 2:
-        isValid = values.selectedProducts.length > 0;
+        // Step 2: Business details - business type and monthly volume
+        isValid = !!(values.businessTypeId && values.monthlyVolume);
         break;
       case 3:
+        // Step 3: Review and consent
         isValid = values.gdprConsent;
         break;
       default:
@@ -259,19 +264,18 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-4 sm:p-8">
           {currentStep === 1 && (
-            <ClientStep 
-              form={form} 
-              businessTypes={businessTypes}
-              onDraftSave={onDraftSave}
-            />
-          )}
-          {currentStep === 2 && (
-            <ServicesStep 
+            <ContactStep 
               form={form}
             />
           )}
+          {currentStep === 2 && (
+            <BusinessStep 
+              form={form}
+              businessTypes={businessTypes}
+            />
+          )}
           {currentStep === 3 && (
-            <FilesConsentStep 
+            <ReviewConsentStep 
               form={form}
               isSubmitting={isSubmitting}
             />
@@ -352,42 +356,46 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting,
   );
 }
 
-// Step 1: Client Information Component
-interface ClientStepProps {
+// Step 1: Contact Capture (Simple & Clean)
+interface ContactStepProps {
   form: any
-  businessTypes: any[]
-  onDraftSave?: (data: any) => void
 }
 
-function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
-  const [monthlyVolume, setMonthlyVolume] = useState([50000]);
-  const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
+function ContactStep({ form }: ContactStepProps) {
+  const [selectedProducts, setSelectedProducts] = useState<string[]>(form.watch('selectedProducts') || []);
 
-  // Handle manual draft save
-  const handleSaveDraft = () => {
-    if (onDraftSave) {
-      const data = form.getValues();
-      onDraftSave(data);
-      setLastSaveTime(new Date());
+  const productOptions = [
+    {
+      id: "dojo-card-payments",
+      name: "Dojo Card Payments",
+      description: "Modern payment processing solutions",
+      icon: "💳",
+      color: "teal"
+    },
+    {
+      id: "business-funding",
+      name: "Business Funding",
+      description: "Fast business loans & financing",
+      icon: "💰",
+      color: "green"
     }
-  };
+  ];
 
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
+  const toggleProduct = (productId: string) => {
+    const updated = selectedProducts.includes(productId)
+      ? selectedProducts.filter(id => id !== productId)
+      : [...selectedProducts, productId];
+    
+    setSelectedProducts(updated);
+    form.setValue('selectedProducts', updated);
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-center">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Client Information</h3>
-        <p className="text-gray-600">Enter your client's details below</p>
+      <div className="text-center mb-6">
+        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Contact Information</h3>
+        <p className="text-gray-600">Let's start with the basics</p>
       </div>
 
       {/* Business Name */}
@@ -398,7 +406,7 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
         <Input
           id="businessName"
           {...form.register("businessName")}
-          placeholder="Enter business name"
+          placeholder="e.g., ABC Coffee Shop"
           className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
           data-testid="input-business-name"
         />
@@ -410,11 +418,31 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
         )}
       </div>
 
-      {/* Contact Details */}
+      {/* Contact Name */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
+        <Label htmlFor="contactName" className="text-lg font-semibold text-gray-900 mb-3 block">
+          Contact Name *
+        </Label>
+        <Input
+          id="contactName"
+          {...form.register("contactName")}
+          placeholder="e.g., John Smith"
+          className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+          data-testid="input-contact-name"
+        />
+        {form.formState.errors.contactName && (
+          <p className="text-red-500 text-sm flex items-center gap-1 mt-2">
+            <AlertCircle className="w-4 h-4" />
+            {form.formState.errors.contactName.message}
+          </p>
+        )}
+      </div>
+
+      {/* Contact Details Card */}
       <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm space-y-5">
         <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <User className="w-5 h-5 text-teal-600" />
-          Contact Details
+          <Mail className="w-5 h-5 text-teal-600" />
+          Contact Methods
         </h4>
         
         {/* Email */}
@@ -452,6 +480,74 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
             data-testid="input-business-phone"
           />
         </div>
+      </div>
+
+      {/* Product Interest */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
+        <Label className="text-lg font-semibold text-gray-900 mb-4 block">
+          Product Interest *
+        </Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {productOptions.map((product) => (
+            <div
+              key={product.id}
+              onClick={() => toggleProduct(product.id)}
+              className={`relative cursor-pointer rounded-2xl border-2 p-5 transition-all ${
+                selectedProducts.includes(product.id)
+                  ? 'border-teal-500 bg-teal-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+              data-testid={`product-option-${product.id}`}
+            >
+              {selectedProducts.includes(product.id) && (
+                <div className="absolute top-3 right-3">
+                  <CheckCircle className="w-6 h-6 text-teal-600" />
+                </div>
+              )}
+              <div className="text-3xl mb-2">{product.icon}</div>
+              <h5 className="font-semibold text-gray-900 mb-1">{product.name}</h5>
+              <p className="text-sm text-gray-600">{product.description}</p>
+            </div>
+          ))}
+        </div>
+        {form.formState.errors.selectedProducts && (
+          <p className="text-red-500 text-sm flex items-center gap-1 mt-3">
+            <AlertCircle className="w-4 h-4" />
+            {form.formState.errors.selectedProducts.message}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Step 2: Business Details Component
+interface BusinessStepProps {
+  form: any
+  businessTypes: any[]
+}
+
+function BusinessStep({ form, businessTypes }: BusinessStepProps) {
+  const [monthlyVolume, setMonthlyVolume] = useState([
+    parseInt(form.watch('monthlyVolume')) || 50000
+  ]);
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Business Details</h3>
+        <p className="text-gray-600">Add more information about the business</p>
       </div>
 
       {/* Business Type */}
@@ -530,7 +626,8 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
 
       {/* Business Address */}
       <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
-        <Label htmlFor="businessAddress" className="text-lg font-semibold text-gray-900 mb-3 block">
+        <Label htmlFor="businessAddress" className="text-lg font-semibold text-gray-900 mb-3 block flex items-center gap-2">
+          <Building className="w-5 h-5 text-teal-600" />
           Business Address
         </Label>
         <Textarea
@@ -543,439 +640,106 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
         />
       </div>
 
-      {/* Draft Save */}
-      <div className="bg-teal-50 rounded-xl p-4 border border-teal-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Save className="w-5 h-5 text-teal-600" />
-            <span className="text-sm font-medium text-gray-700">
-              {lastSaveTime 
-                ? `Saved ${lastSaveTime.toLocaleTimeString()}`
-                : "Auto-save enabled"
-              }
+      {/* Optional: Notes */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
+        <Label htmlFor="notes" className="text-lg font-semibold text-gray-900 mb-3 block">
+          Additional Notes <span className="text-sm font-normal text-gray-500">(Optional)</span>
+        </Label>
+        <Textarea
+          id="notes"
+          {...form.register("notes")}
+          placeholder="Any additional information about the client or opportunity..."
+          rows={3}
+          className="text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+          data-testid="textarea-notes"
+        />
+      </div>
+    </div>
+  );
+}
+
+// Step 3: Review & Consent Component
+function ReviewConsentStep({ form, isSubmitting }: { form: any; isSubmitting: boolean }) {
+  const values = form.watch();
+  
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Review & Submit</h3>
+        <p className="text-gray-600">Check your details and submit your referral</p>
+      </div>
+
+      {/* Summary Card */}
+      <div className="bg-gradient-to-br from-teal-50 to-green-50 rounded-2xl p-6 border-2 border-teal-100 shadow-sm">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-teal-600" />
+          Referral Summary
+        </h4>
+        
+        <div className="space-y-3">
+          <div className="flex justify-between py-2 border-b border-teal-100">
+            <span className="text-gray-600">Business Name:</span>
+            <span className="font-semibold text-gray-900">{values.businessName || '-'}</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-teal-100">
+            <span className="text-gray-600">Contact Name:</span>
+            <span className="font-semibold text-gray-900">{values.contactName || '-'}</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-teal-100">
+            <span className="text-gray-600">Email:</span>
+            <span className="font-semibold text-gray-900">{values.businessEmail || '-'}</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-teal-100">
+            <span className="text-gray-600">Products:</span>
+            <span className="font-semibold text-gray-900">
+              {values.selectedProducts?.length > 0 ? values.selectedProducts.join(', ') : '-'}
             </span>
           </div>
-          <Button
-            type="button"
-            onClick={handleSaveDraft}
-            className="bg-teal-600 hover:bg-teal-700 h-11 px-6 rounded-xl"
-            data-testid="button-save-draft"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Save Draft
-          </Button>
+          <div className="flex justify-between py-2">
+            <span className="text-gray-600">Monthly Volume:</span>
+            <span className="font-semibold text-teal-600">£{parseInt(values.monthlyVolume || 0).toLocaleString()}</span>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Step 2: Services Selection Component
-function ServicesStep({ form }: { form: any }) {
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
-
-  // Sync local state with form values on mount
-  useEffect(() => {
-    const formProducts = form.getValues('selectedProducts') || [];
-    setSelectedServices(formProducts);
-  }, [form]);
-
-  const services = [
-    {
-      id: "card-payments",
-      title: "Card Payments",
-      description: "Payment processing solutions",
-      commission: "£150-£5,000",
-      icon: "💳"
-    },
-    {
-      id: "business-funding",
-      title: "Business Funding", 
-      description: "Merchant cash advance",
-      commission: "£1,000-£25,000",
-      icon: "💰"
-    }
-  ];
-
-  const termPreferences = [
-    { id: "3-6-months", label: "3-6 months" },
-    { id: "6-12-months", label: "6-12 months" },
-    { id: "12-24-months", label: "12-24 months" },
-    { id: "24-plus-months", label: "24+ months" }
-  ];
-
-  const urgencyLevels = [
-    { id: "asap", label: "ASAP", color: "red" },
-    { id: "within-week", label: "Within a week", color: "orange" },
-    { id: "within-month", label: "Within a month", color: "yellow" },
-    { id: "flexible", label: "Flexible", color: "green" }
-  ];
-
-  const fundingPurposes = [
-    "Stock purchase",
-    "Equipment upgrade", 
-    "Marketing campaign",
-    "Seasonal cashflow",
-    "Expansion",
-    "Debt consolidation",
-    "Other"
-  ];
-
-  const handleServiceToggle = (serviceId: string) => {
-    const newSelected = selectedServices.includes(serviceId)
-      ? selectedServices.filter(id => id !== serviceId)
-      : [...selectedServices, serviceId];
-    
-    setSelectedServices(newSelected);
-    form.setValue('selectedProducts', newSelected);
-  };
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Select Services</h3>
-        <p className="text-gray-600 text-sm sm:text-base">Choose the services your client needs</p>
-        <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-teal-700 bg-teal-50 rounded-xl px-4 py-3 w-fit mx-auto border border-teal-100">
-          <DollarSign className="w-4 h-4" />
-          <span>Commission earnings: £150 - £25,000</span>
-        </div>
-      </div>
-
-      {/* Service Selection - Mobile-First Stack */}
-      <div className="space-y-4">
-        {services.map((service) => {
-          const isSelected = selectedServices.includes(service.id);
-          
-          return (
-            <div 
-              key={service.id}
-              className={`bg-white border-2 rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:shadow-md ${
-                isSelected 
-                  ? 'border-teal-500 bg-teal-50 shadow-lg' 
-                  : 'border-gray-200 hover:border-teal-300'
-              }`}
-              onClick={() => handleServiceToggle(service.id)}
-              data-testid={`toggle-service-${service.id}`}
-            >
-              <div className="flex items-center space-x-4">
-                <div className={`text-2xl ${isSelected ? 'scale-110' : ''} transition-transform`}>
-                  {service.icon}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{service.title}</h4>
-                      <p className="text-gray-600 text-sm">{service.description}</p>
-                      <p className="text-teal-600 text-sm font-medium">{service.commission}</p>
-                    </div>
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      isSelected 
-                        ? 'bg-teal-500 border-teal-500' 
-                        : 'border-gray-300'
-                    }`}>
-                      {isSelected && <div className="w-3 h-3 bg-white rounded-full" />}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// Step 3: Files & Consent Component
-function FilesConsentStep({ form, isSubmitting }: { form: any; isSubmitting: boolean }) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadSuccess, setUploadSuccess] = useState<string[]>([]);
-  const [referralCode, setReferralCode] = useState(`REF${Date.now().toString().slice(-6)}`);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    handleFileUpload(files);
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    handleFileUpload(files);
-  };
-
-  const handleFileUpload = async (files: File[]) => {
-    const validFiles = files.filter(file => {
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-      
-      if (file.size > maxSize) {
-        alert(`File ${file.name} is too large. Maximum size is 10MB.`);
-        return false;
-      }
-      
-      if (!validTypes.includes(file.type)) {
-        alert(`File ${file.name} is not a supported format. Please upload PDF, JPG, PNG, CSV, or Excel files.`);
-        return false;
-      }
-      
-      return true;
-    });
-
-    if (validFiles.length === 0) return;
-
-    setIsUploading(true);
-    
-    // Simulate file upload and processing
-    setTimeout(() => {
-      setUploadedFiles(prev => [...prev, ...validFiles]);
-      setUploadSuccess(prev => [...prev, ...validFiles.map(f => f.name)]);
-      setIsUploading(false);
-    }, 2000);
-  };
-
-  const removeFile = (fileToRemove: File) => {
-    setUploadedFiles(files => files.filter(f => f !== fileToRemove));
-    setUploadSuccess(success => success.filter(name => name !== fileToRemove.name));
-  };
-
-  const getFileIcon = (file: File) => {
-    if (file.type.includes('pdf')) return '📄';
-    if (file.type.includes('image')) return '🖼️';
-    if (file.type.includes('spreadsheet') || file.name.includes('.xlsx')) return '📊';
-    if (file.type.includes('csv')) return '📈';
-    return '📎';
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  return (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Files & Consent</h3>
-        <p className="text-gray-600">Upload supporting documents and complete the referral</p>
-      </div>
-
-      {/* File Upload Area */}
-      <Card>
-        <CardContent className="p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            Supporting Documents
-            <span className="text-sm font-normal text-gray-500 ml-2">(Optional but recommended)</span>
-          </h4>
-          
-          <div
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-              isDragOver 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            {isUploading ? (
-              <div className="space-y-3">
-                <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-                <p className="text-gray-600">Processing files...</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto" />
-                <div>
-                  <p className="text-lg font-medium text-gray-900 mb-2">
-                    Drop your files here, or 
-                    <label className="text-blue-600 hover:text-blue-700 cursor-pointer underline ml-1">
-                      browse
-                      <input
-                        type="file"
-                        multiple
-                        onChange={handleFileSelect}
-                        className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png,.csv,.xlsx"
-                        data-testid="input-file-upload"
-                      />
-                    </label>
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    PDF, JPG, PNG, CSV, or Excel files up to 10MB each
-                  </p>
-                </div>
-                
-                <div className="text-xs text-gray-400 bg-gray-50 rounded-lg p-3">
-                  💡 <strong>Tip:</strong> Uploading current payment processing bills increases your win rate by 22%
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Uploaded Files */}
-          {uploadedFiles.length > 0 && (
-            <div className="mt-6 space-y-3">
-              <h5 className="font-medium text-gray-900">Uploaded Files ({uploadedFiles.length})</h5>
-              {uploadedFiles.map((file, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{getFileIcon(file)}</span>
-                    <div>
-                      <p className="font-medium text-gray-900">{file.name}</p>
-                      <div className="flex items-center space-x-3 text-sm text-gray-600">
-                        <span>{formatFileSize(file.size)}</span>
-                        {uploadSuccess.includes(file.name) && (
-                          <div className="flex items-center text-green-600">
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            <span>Processed successfully</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => removeFile(file)}
-                    className="text-red-500 hover:text-red-700 p-1"
-                    data-testid={`button-remove-file-${index}`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Optional Notes */}
-      <Card>
-        <CardContent className="p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Additional Notes
-            <span className="text-sm font-normal text-gray-500 ml-2">(Optional)</span>
-          </h4>
-          
-          <Textarea
-            {...form.register("notes")}
-            placeholder="Any additional information about this client that might help with the application... (e.g., specific requirements, timeline concerns, previous discussions)"
-            rows={4}
-            className="w-full"
-            data-testid="textarea-notes"
-          />
-          
-          <div className="mt-3 text-xs text-gray-500 bg-blue-50 rounded-lg p-3">
-            💡 <strong>Pro tip:</strong> Adding context about client needs and timeline helps our underwriters 
-            process applications 40% faster
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Referral Code */}
-      <Card>
-        <CardContent className="p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">Referral Code</h4>
-          <div className="flex items-center space-x-3">
-            <Input
-              value={referralCode}
-              readOnly
-              className="bg-gray-50 cursor-not-allowed flex-1"
-              data-testid="input-referral-code"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigator.clipboard?.writeText(referralCode)}
-              data-testid="button-copy-referral-code"
-            >
-              Copy
-            </Button>
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            This unique code will be used to track your referral through the process
-          </p>
-        </CardContent>
-      </Card>
 
       {/* GDPR Consent */}
-      <Card className="border-2 border-blue-100">
-        <CardContent className="p-6">
-          <FormField
-            control={form.control}
-            name="gdprConsent"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    className="mt-1"
-                    data-testid="checkbox-gdpr-consent"
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none flex-1">
-                  <FormLabel className="text-base font-medium cursor-pointer">
-                    I have client permission to share their details for quotes *
-                  </FormLabel>
-                  <p className="text-sm text-gray-600 mt-2">
-                    By checking this box, you confirm that you have the client's explicit consent 
-                    to share their business information with our funding partners for the purpose 
-                    of obtaining competitive quotes. This ensures compliance with GDPR and data protection regulations.
-                  </p>
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-sm">
+        <FormField
+          control={form.control}
+          name="gdprConsent"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  className="mt-1 h-6 w-6"
+                  data-testid="checkbox-gdpr-consent"
+                />
+              </FormControl>
+              <div className="space-y-2 leading-none flex-1">
+                <FormLabel className="text-base font-semibold text-gray-900 cursor-pointer">
+                  I have client permission to share their details *
+                </FormLabel>
+                <p className="text-sm text-gray-600">
+                  By checking this box, you confirm that you have the client's explicit consent 
+                  to share their business information for the purpose of obtaining competitive quotes.
+                </p>
+                <FormMessage />
+              </div>
+            </FormItem>
+          )}
+        />
+      </div>
 
-      {/* Final Submit Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
-        <div className="text-center space-y-4">
-          <div className="text-4xl">🎯</div>
-          <div>
-            <h4 className="text-lg font-bold text-gray-900">Ready to Submit!</h4>
-            <p className="text-gray-600">
-              Your referral will be processed within 24 hours. We'll keep you updated on progress.
-            </p>
-          </div>
-          
-          <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-            <div className="flex items-center space-x-1">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span>GDPR Compliant</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span>Secure Processing</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span>24h Response</span>
-            </div>
-          </div>
-        </div>
+      {/* Ready to Submit */}
+      <div className="bg-gradient-to-r from-teal-500 to-green-600 rounded-2xl p-6 text-white text-center">
+        <div className="text-4xl mb-3">🎯</div>
+        <h4 className="text-xl font-bold mb-2">Ready to Submit!</h4>
+        <p className="text-teal-50">
+          Your referral will be processed within 24 hours. We'll keep you updated on progress.
+        </p>
       </div>
     </div>
   );
