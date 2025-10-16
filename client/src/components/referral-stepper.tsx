@@ -13,7 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { CheckCircle, ChevronLeft, ChevronRight, Search, AlertCircle, DollarSign, Building, Mail, Phone, Globe, Save, X, Upload, FileText, Shield } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, Search, AlertCircle, DollarSign, Building, Mail, Phone, Globe, Save, X, Upload, FileText, Shield, User } from "lucide-react";
 
 // Form schema for the complete stepper
 const stepperFormSchema = insertReferralSchema
@@ -360,13 +360,8 @@ interface ClientStepProps {
 }
 
 function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
-  const [businessLookupResults, setBusinessLookupResults] = useState<any[]>([]);
-  const [isLookingUp, setIsLookingUp] = useState(false);
   const [monthlyVolume, setMonthlyVolume] = useState([50000]);
-  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
-
-  const watchedData = form.watch();
 
   // Handle manual draft save
   const handleSaveDraft = () => {
@@ -375,47 +370,6 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
       onDraftSave(data);
       setLastSaveTime(new Date());
     }
-  };
-
-  // Search user's existing businesses from portal
-  const handleBusinessLookup = async (businessName: string) => {
-    if (!businessName || businessName.length < 2) {
-      setBusinessLookupResults([]);
-      return;
-    }
-
-    setIsLookingUp(true);
-    try {
-      const response = await fetch(`/api/businesses/search?q=${encodeURIComponent(businessName)}`);
-      if (response.ok) {
-        const results = await response.json();
-        setBusinessLookupResults(results);
-      } else {
-        setBusinessLookupResults([]);
-      }
-    } catch (error) {
-      console.error('Error searching businesses:', error);
-      setBusinessLookupResults([]);
-    } finally {
-      setIsLookingUp(false);
-    }
-  };
-
-  // Handle email duplicate check (simulate)
-  const handleEmailCheck = async (email: string) => {
-    if (!email || !email.includes('@')) return;
-    
-    // Simulate duplicate check
-    setTimeout(() => {
-      const commonDomains = ['gmail.com', 'outlook.com', 'yahoo.com'];
-      const domain = email.split('@')[1];
-      if (commonDomains.includes(domain)) {
-        setShowDuplicateWarning(false);
-      } else {
-        // Simulate 10% chance of duplicate
-        setShowDuplicateWarning(Math.random() < 0.1);
-      }
-    }, 500);
   };
 
   // Format currency
@@ -428,263 +382,189 @@ function ClientStep({ form, businessTypes, onDraftSave }: ClientStepProps) {
     }).format(value);
   };
 
-  const selectedBusinessType = businessTypes?.find(type => type.id === form.watch('businessTypeId'));
-
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Client Information</h3>
-        <p className="text-gray-600 text-sm sm:text-base">Tell us about your potential client</p>
-        <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-teal-700 bg-teal-50 rounded-xl px-4 py-3 w-fit mx-auto border border-teal-100">
-          <AlertCircle className="w-4 h-4" />
-          <span>We'll auto-check duplicates to keep your pipeline clean</span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Client Information</h3>
+        <p className="text-gray-600">Enter your client's details below</p>
+      </div>
+
+      {/* Business Name */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
+        <Label htmlFor="businessName" className="text-lg font-semibold text-gray-900 mb-3 block">
+          Business Name *
+        </Label>
+        <Input
+          id="businessName"
+          {...form.register("businessName")}
+          placeholder="Enter business name"
+          className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+          data-testid="input-business-name"
+        />
+        {form.formState.errors.businessName && (
+          <p className="text-red-500 text-sm flex items-center gap-1 mt-2">
+            <AlertCircle className="w-4 h-4" />
+            {form.formState.errors.businessName.message}
+          </p>
+        )}
+      </div>
+
+      {/* Contact Details */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm space-y-5">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <User className="w-5 h-5 text-teal-600" />
+          Contact Details
+        </h4>
+        
+        {/* Email */}
+        <div>
+          <Label htmlFor="businessEmail" className="text-base font-medium text-gray-700 mb-2 block">
+            Email Address *
+          </Label>
+          <Input
+            id="businessEmail"
+            type="email"
+            {...form.register("businessEmail")}
+            placeholder="contact@business.com"
+            className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+            data-testid="input-business-email"
+          />
+          {form.formState.errors.businessEmail && (
+            <p className="text-red-500 text-sm flex items-center gap-1 mt-2">
+              <AlertCircle className="w-4 h-4" />
+              {form.formState.errors.businessEmail.message}
+            </p>
+          )}
+        </div>
+
+        {/* Phone */}
+        <div>
+          <Label htmlFor="businessPhone" className="text-base font-medium text-gray-700 mb-2 block">
+            Phone Number
+          </Label>
+          <Input
+            id="businessPhone"
+            type="tel"
+            {...form.register("businessPhone")}
+            placeholder="+44 20 1234 5678"
+            className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+            data-testid="input-business-phone"
+          />
         </div>
       </div>
 
-      <div className="flex flex-col space-y-4 sm:space-y-6">
-        {/* Business Details Box */}
-        <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-100">
-          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Building className="w-5 h-5 text-teal-600" />
-            Business Details
-          </h4>
-          <div className="space-y-4">
-            {/* Business Name with Auto-lookup */}
-            <div className="space-y-2">
-              <Label htmlFor="businessName" className="text-sm font-medium text-gray-700">
-                Business Name *
-              </Label>
-              <div className="relative">
-                <Input
-                  id="businessName"
-                  {...form.register("businessName", {
-                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleBusinessLookup(e.target.value)
-                  })}
-                  placeholder="Start typing business name..."
-                  className="pr-10 h-12 rounded-xl border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                  data-testid="input-business-name"
-                />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                
-                {/* Lookup Results */}
-                {businessLookupResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-48 overflow-y-auto">
-                    {businessLookupResults.map((result, index) => (
-                      <div 
-                        key={index}
-                        className="p-3 hover:bg-teal-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
-                        onClick={() => {
-                          form.setValue('businessName', result.businessName);
-                          if (result.contactEmail) {
-                            form.setValue('businessEmail', result.contactEmail);
-                          }
-                          if (result.contactPhone) {
-                            form.setValue('businessPhone', result.contactPhone);
-                          }
-                          setBusinessLookupResults([]);
-                        }}
-                      >
-                        <div className="font-medium text-gray-900">{result.businessName}</div>
-                        {result.contactName && (
-                          <div className="text-sm text-gray-600">{result.contactName}</div>
-                        )}
-                        {(result.contactEmail || result.contactPhone) && (
-                          <div className="text-xs text-teal-600 mt-1">
-                            {result.contactEmail || result.contactPhone}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {form.formState.errors.businessName && (
-                <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {form.formState.errors.businessName.message}
-                </p>
-              )}
-            </div>
-
-            {/* Contact Email with Duplicate Check */}
-            <div className="space-y-2">
-              <Label htmlFor="businessEmail" className="text-sm font-medium text-gray-700">
-                Contact Email *
-              </Label>
-              <Input
-                id="businessEmail"
-                type="email"
-                {...form.register("businessEmail", {
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleEmailCheck(e.target.value)
-                })}
-                placeholder="contact@business.com"
-                className={`h-12 rounded-xl border-gray-200 focus:border-teal-500 focus:ring-teal-500 ${showDuplicateWarning ? "border-orange-300 focus:ring-orange-500" : ""}`}
-                data-testid="input-business-email"
-              />
-            {showDuplicateWarning && (
-              <div className="text-orange-600 text-sm flex items-center gap-2 bg-orange-50 p-3 rounded-lg">
-                <AlertCircle className="w-4 h-4" />
-                <span>Similar email found in system. Please verify this is a new lead.</span>
-              </div>
-            )}
-            {form.formState.errors.businessEmail && (
-              <p className="text-red-600 text-sm flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" />
-                {form.formState.errors.businessEmail.message}
-              </p>
-            )}
-          </div>
-
-          {/* Contact Phone */}
-          <div className="space-y-3">
-            <Label htmlFor="businessPhone" className="text-base font-semibold flex items-center gap-2">
-              <Phone className="w-4 h-4 text-blue-600" />
-              Contact Phone
-            </Label>
-            <Input
-              id="businessPhone"
-              {...form.register("businessPhone")}
-              placeholder="+44 20 1234 5678"
-              data-testid="input-business-phone"
-            />
-          </div>
-
-          {/* Website (Optional) */}
-          <div className="space-y-3">
-            <Label htmlFor="website" className="text-base font-semibold flex items-center gap-2">
-              <Globe className="w-4 h-4 text-blue-600" />
-              Website <span className="text-sm font-normal text-gray-500">(Optional)</span>
-            </Label>
-            <Input
-              id="website"
-              placeholder="https://www.business.com"
-              data-testid="input-website"
-            />
-          </div>
-        </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Business Type */}
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Business Type *</Label>
-            <Select 
-              value={form.watch('businessTypeId')} 
-              onValueChange={(value) => form.setValue('businessTypeId', value)}
-            >
-              <SelectTrigger data-testid="select-business-type" className="h-12">
-                <SelectValue placeholder="Select business type" />
-              </SelectTrigger>
-              <SelectContent>
-                {(businessTypes || []).map((type) => (
-                  <SelectItem key={type.id} value={type.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{type.name}</span>
-                      <span className="text-sm text-gray-500">{type.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {form.formState.errors.businessTypeId && (
-              <p className="text-red-600 text-sm flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" />
-                {form.formState.errors.businessTypeId.message}
-              </p>
-            )}
-          </div>
-
-          {/* Monthly Card Volume Slider */}
-          <div className="space-y-4">
-            <Label className="text-base font-semibold flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-blue-600" />
-              Monthly Card Volume
-            </Label>
-            <div className="space-y-4">
-              <div className="px-4 py-3 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-600">Amount</span>
-                  <span className="text-lg font-bold text-blue-600">{formatCurrency(monthlyVolume[0])}</span>
-                </div>
-                <Slider
-                  value={monthlyVolume}
-                  onValueChange={(value) => {
-                    setMonthlyVolume(value);
-                    form.setValue('monthlyVolume', value[0].toString());
-                  }}
-                  max={500000}
-                  min={1000}
-                  step={1000}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
-                  <span>£1K</span>
-                  <span>£500K</span>
-                </div>
-              </div>
-              <Input
-                type="number"
-                value={monthlyVolume[0]}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value) || 0;
-                  setMonthlyVolume([value]);
-                  form.setValue('monthlyVolume', value.toString());
-                }}
-                placeholder="Enter amount manually"
-                className="text-center"
-                data-testid="input-monthly-volume"
-              />
-            </div>
-          </div>
-
-          {/* Funding Amount (Optional) */}
-          <div className="space-y-3">
-            <Label className="text-base font-semibold flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-blue-600" />
-              Funding Amount Required <span className="text-sm font-normal text-gray-500">(Optional)</span>
-            </Label>
-            <Input
-              type="number"
-              placeholder="Enter funding amount"
-              data-testid="input-funding-amount"
-            />
-          </div>
-
-          {/* Business Address */}
-          <div className="space-y-3">
-            <Label htmlFor="businessAddress" className="text-base font-semibold">Business Address</Label>
-            <Textarea
-              id="businessAddress"
-              {...form.register("businessAddress")}
-              placeholder="Full business address"
-              rows={3}
-              data-testid="textarea-business-address"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Draft Save Section */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-        <div className="flex items-center space-x-2">
-          <Save className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-600">
-            {lastSaveTime 
-              ? `Last saved ${lastSaveTime.toLocaleTimeString()}`
-              : "Auto-saving every 5 seconds"
-            }
-          </span>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleSaveDraft}
-          data-testid="button-save-draft"
+      {/* Business Type */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
+        <Label className="text-lg font-semibold text-gray-900 mb-3 block">
+          Business Type *
+        </Label>
+        <Select 
+          value={form.watch('businessTypeId')} 
+          onValueChange={(value) => form.setValue('businessTypeId', value)}
         >
-          Save Draft
-        </Button>
+          <SelectTrigger data-testid="select-business-type" className="h-14 text-base rounded-xl border-gray-300">
+            <SelectValue placeholder="Select business type" />
+          </SelectTrigger>
+          <SelectContent>
+            {(businessTypes || []).map((type) => (
+              <SelectItem key={type.id} value={type.id}>
+                <div className="flex flex-col py-1">
+                  <span className="font-medium text-base">{type.name}</span>
+                  <span className="text-sm text-gray-500">{type.description}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {form.formState.errors.businessTypeId && (
+          <p className="text-red-500 text-sm flex items-center gap-1 mt-2">
+            <AlertCircle className="w-4 h-4" />
+            {form.formState.errors.businessTypeId.message}
+          </p>
+        )}
+      </div>
+
+      {/* Monthly Card Volume */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm space-y-4">
+        <Label className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-teal-600" />
+          Monthly Card Volume
+        </Label>
+        
+        <div className="bg-teal-50 rounded-xl p-4">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-sm font-medium text-gray-700">Amount</span>
+            <span className="text-2xl font-bold text-teal-600">{formatCurrency(monthlyVolume[0])}</span>
+          </div>
+          <Slider
+            value={monthlyVolume}
+            onValueChange={(value) => {
+              setMonthlyVolume(value);
+              form.setValue('monthlyVolume', value[0].toString());
+            }}
+            max={500000}
+            min={1000}
+            step={1000}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-gray-600 mt-2">
+            <span>£1K</span>
+            <span>£500K</span>
+          </div>
+        </div>
+        
+        <Input
+          type="number"
+          value={monthlyVolume[0]}
+          onChange={(e) => {
+            const value = parseInt(e.target.value) || 0;
+            setMonthlyVolume([value]);
+            form.setValue('monthlyVolume', value.toString());
+          }}
+          placeholder="Or enter amount manually"
+          className="h-14 text-base text-center rounded-xl border-gray-300"
+          data-testid="input-monthly-volume"
+        />
+      </div>
+
+      {/* Business Address */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
+        <Label htmlFor="businessAddress" className="text-lg font-semibold text-gray-900 mb-3 block">
+          Business Address
+        </Label>
+        <Textarea
+          id="businessAddress"
+          {...form.register("businessAddress")}
+          placeholder="Enter full business address"
+          rows={4}
+          className="text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+          data-testid="textarea-business-address"
+        />
+      </div>
+
+      {/* Draft Save */}
+      <div className="bg-teal-50 rounded-xl p-4 border border-teal-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Save className="w-5 h-5 text-teal-600" />
+            <span className="text-sm font-medium text-gray-700">
+              {lastSaveTime 
+                ? `Saved ${lastSaveTime.toLocaleTimeString()}`
+                : "Auto-save enabled"
+              }
+            </span>
+          </div>
+          <Button
+            type="button"
+            onClick={handleSaveDraft}
+            className="bg-teal-600 hover:bg-teal-700 h-11 px-6 rounded-xl"
+            data-testid="button-save-draft"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Draft
+          </Button>
+        </div>
       </div>
     </div>
   );
