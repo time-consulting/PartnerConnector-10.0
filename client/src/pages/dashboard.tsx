@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useOfflineSync } from "@/lib/offline-sync";
+import SyncStatus from "@/components/sync-status";
+import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import StatsCard from "@/components/stats-card";
@@ -51,6 +54,9 @@ import {
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { isOnline, pendingCount } = useOfflineSync();
+  const isMobile = useIsMobile();
+  const [, setLocation] = useLocation();
   const [selectedReferral, setSelectedReferral] = useState<any>(null);
   const [showProgressTracker, setShowProgressTracker] = useState(false);
   const [showQuoteSystem, setShowQuoteSystem] = useState(false);
@@ -214,9 +220,20 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <SideNavigation />
       <div className="lg:ml-16">
-        {/* Simple top bar with only notification bell */}
-        <div className="flex justify-end p-4">
-          <NotificationCenter onQuoteClick={handleQuoteClick} />
+        {/* Simple top bar with notification bell and sync status */}
+        <div className="flex justify-between items-center p-4">
+          {/* Offline status indicator */}
+          {!isOnline && (
+            <div className="flex items-center space-x-2 px-3 py-2 bg-yellow-100 rounded-lg">
+              <span className="text-sm font-medium text-yellow-800">
+                Offline Mode - {pendingCount} item{pendingCount !== 1 ? 's' : ''} pending sync
+              </span>
+            </div>
+          )}
+          <div className="flex items-center space-x-3 ml-auto">
+            <SyncStatus compact />
+            <NotificationCenter onQuoteClick={handleQuoteClick} />
+          </div>
         </div>
       
         {/* === HERO OVERVIEW SECTION (TOP) === */}
@@ -723,6 +740,21 @@ export default function Dashboard() {
             onSkip={handleTourSkip}
             startStep="welcome"
           />
+        )}
+
+        {/* Mobile FAB for Quick Add Referral */}
+        {isMobile && (
+          <button
+            onClick={() => setLocation("/quick-add-referral")}
+            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700 text-white rounded-full shadow-xl hover:shadow-2xl transform hover:scale-110 transition-all duration-200 flex items-center justify-center group"
+            aria-label="Quick Add Referral"
+            data-testid="button-fab-quick-add"
+          >
+            <PlusIcon className="w-8 h-8" />
+            <div className="absolute bottom-16 right-0 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              Quick Add Lead
+            </div>
+          </button>
         )}
       </div>
     </div>

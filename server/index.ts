@@ -3,6 +3,7 @@ import compression from "compression";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initSentry, getSentryHandlers } from "./sentry";
+import { wsManager } from "./websocket";
 
 // Initialize Sentry before everything else
 initSentry();
@@ -141,6 +142,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
+  // Initialize WebSocket server with the HTTP server
+  wsManager.initialize(server);
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
@@ -152,5 +156,6 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    log(`WebSocket server listening on ws://0.0.0.0:${port}/ws`);
   });
 })();

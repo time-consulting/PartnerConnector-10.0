@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertReferralSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema } from "@shared/schema";
+import { insertReferralSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
 import multer from "multer";
@@ -10,6 +10,8 @@ import { requestIdMiddleware, loggingMiddleware, errorHandlingMiddleware } from 
 import { requireAdmin, auditAdminAction } from "./middleware/adminAuth";
 import { healthzHandler, readyzHandler, metricsHandler } from "./health";
 import { logAudit } from "./logger";
+import { wsManager } from "./websocket";
+import { pushNotificationService } from "./push-notifications";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -176,19 +178,27 @@ async function submitWaitlistToGHL(waitlistEntry: any) {
   }
 }
 
-// Helper function to create notifications
+// Helper function to create notifications and emit WebSocket events
 async function createNotificationForUser(userId: string, notification: any) {
   try {
-    await storage.createNotification({
+    // Store notification in database (only once!)
+    const storedNotification = await storage.createNotification({
       userId,
       type: notification.type,
       title: notification.title,
       message: notification.message,
       referralId: notification.referralId || null,
       leadId: notification.leadId || null,
+      contactId: notification.contactId || null,
+      opportunityId: notification.opportunityId || null,
       businessName: notification.businessName || null,
       metadata: notification.metadata || null
     });
+
+    // Broadcast the existing notification via WebSocket (without creating a duplicate)
+    await wsManager.broadcastExistingNotification(userId, storedNotification);
+
+    return storedNotification;
   } catch (error) {
     console.error('Error creating notification:', error);
   }
@@ -521,6 +531,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User endpoint to update their own referrals
+  app.patch('/api/referrals/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      const updateData = req.body;
+      
+      // Get current referral and verify ownership
+      const referrals = await storage.getReferralsByUserId(userId);
+      const currentReferral = referrals.find(r => r.id === id);
+      
+      if (!currentReferral) {
+        return res.status(404).json({ message: "Referral not found or you don't have permission to update it" });
+      }
+
+      // Check if status is changing
+      const oldStatus = currentReferral.status;
+      const newStatus = updateData.status || oldStatus;
+      const statusChanged = oldStatus !== newStatus;
+
+      // Update the referral
+      const updatedReferral = await storage.updateReferral(id, {
+        ...updateData,
+        updatedAt: new Date()
+      });
+
+      // Send notifications if status changed
+      if (statusChanged) {
+        // Notify the referral owner
+        await createNotificationForUser(userId, {
+          type: 'referral_status_changed',
+          title: 'Referral Status Updated',
+          message: `Your referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
+          referralId: id,
+          businessName: currentReferral.businessName,
+          metadata: {
+            oldStatus,
+            newStatus,
+            updatedBy: req.user.claims.email || 'You',
+            commission: (newStatus === 'approved' || newStatus === 'paid') ? currentReferral.estimatedCommission : null
+          }
+        });
+
+        // Notify team leader if exists
+        const user = await storage.getUser(userId);
+        if (user?.parentPartnerId) {
+          await createNotificationForUser(user.parentPartnerId, {
+            type: 'team_referral_status_changed',
+            title: 'Team Member Referral Update',
+            message: `${user.firstName || user.email}'s referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
+            referralId: id,
+            businessName: currentReferral.businessName,
+            metadata: {
+              oldStatus,
+              newStatus,
+              teamMemberName: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email,
+              teamMemberId: userId,
+              commission: (newStatus === 'approved' || newStatus === 'paid') ? currentReferral.estimatedCommission : null
+            }
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        referral: updatedReferral,
+        statusChanged
+      });
+    } catch (error) {
+      console.error("Error updating referral:", error);
+      res.status(500).json({ message: "Failed to update referral" });
+    }
+  });
+
   // Search business names from pipeline
   app.get('/api/businesses/search', isAuthenticated, async (req: any, res) => {
     try {
@@ -548,6 +632,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Notification endpoints
+  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notifications = await storage.getNotificationsByUserId(userId);
+      
+      // Count unread notifications
+      const unreadCount = notifications.filter((n: any) => !n.read).length;
+      
+      res.json({
+        notifications,
+        unreadCount,
+        total: notifications.length
+      });
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      
+      // Mark notification as read (with userId for security)
+      await storage.markNotificationAsRead(id, userId);
+      
+      // Notify WebSocket clients
+      wsManager.sendNotificationToUser(userId, {
+        type: "notificationRead",
+        title: "",
+        message: "",
+        metadata: { notificationId: id }
+      });
+      
+      res.json({ success: true, message: "Notification marked as read" });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.patch('/api/notifications/read-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Mark all notifications as read
+      await storage.markAllNotificationsAsRead(userId);
+      
+      // Notify WebSocket clients
+      wsManager.sendNotificationToUser(userId, {
+        type: "allNotificationsRead",
+        title: "",
+        message: "",
+        metadata: {}
+      });
+      
+      res.json({ success: true, message: "All notifications marked as read" });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
     }
   });
 
@@ -889,6 +1038,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ PUSH NOTIFICATION ENDPOINTS ============
+  
+  // Get public VAPID key for client
+  app.get('/api/push/vapid-key', async (req: any, res) => {
+    try {
+      const publicKey = pushNotificationService.getPublicVapidKey();
+      res.json({ publicKey });
+    } catch (error) {
+      console.error("Error getting VAPID key:", error);
+      res.status(500).json({ message: "Failed to get VAPID key" });
+    }
+  });
+
+  // Subscribe to push notifications
+  app.post('/api/push/subscribe', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { subscription, userAgent } = req.body;
+
+      if (!subscription || !subscription.endpoint || !subscription.keys) {
+        return res.status(400).json({ message: "Invalid subscription data" });
+      }
+
+      const saved = await pushNotificationService.savePushSubscription(
+        userId,
+        subscription,
+        userAgent || req.headers['user-agent']
+      );
+
+      if (saved) {
+        res.json({ 
+          success: true, 
+          message: "Push notifications enabled successfully",
+          subscriptionId: saved.id
+        });
+      } else {
+        res.status(400).json({ message: "Failed to save push subscription" });
+      }
+    } catch (error) {
+      console.error("Error subscribing to push notifications:", error);
+      res.status(500).json({ message: "Failed to subscribe to push notifications" });
+    }
+  });
+
+  // Unsubscribe from push notifications
+  app.delete('/api/push/unsubscribe', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { endpoint } = req.body;
+
+      if (!endpoint) {
+        return res.status(400).json({ message: "Endpoint required for unsubscription" });
+      }
+
+      const removed = await pushNotificationService.removePushSubscription(userId, endpoint);
+
+      if (removed) {
+        res.json({ 
+          success: true, 
+          message: "Push notifications disabled successfully" 
+        });
+      } else {
+        res.status(404).json({ message: "Subscription not found" });
+      }
+    } catch (error) {
+      console.error("Error unsubscribing from push notifications:", error);
+      res.status(500).json({ message: "Failed to unsubscribe from push notifications" });
+    }
+  });
+
+  // Test push notification (for debugging)
+  app.post('/api/push/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const result = await pushNotificationService.sendTestNotification(userId);
+
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: `Test notification sent to ${result.sentCount} device(s)`,
+          details: result
+        });
+      } else {
+        res.json({ 
+          success: false, 
+          message: "Failed to send test notification",
+          errors: result.errors
+        });
+      }
+    } catch (error) {
+      console.error("Error sending test notification:", error);
+      res.status(500).json({ message: "Failed to send test notification" });
+    }
+  });
+
+  // Get user's push subscription status
+  app.get('/api/push/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const subscriptions = await storage.getUserPushSubscriptions(userId);
+      
+      res.json({
+        isSubscribed: subscriptions.length > 0,
+        subscriptionCount: subscriptions.length,
+        subscriptions: subscriptions.map(sub => ({
+          id: sub.id,
+          endpoint: sub.endpoint.substring(0, 50) + '...',
+          userAgent: sub.userAgent,
+          createdAt: sub.createdAt,
+          isActive: sub.isActive
+        }))
+      });
+    } catch (error) {
+      console.error("Error getting push subscription status:", error);
+      res.status(500).json({ message: "Failed to get subscription status" });
+    }
+  });
+
   // MLM hierarchy routes
   app.get('/api/admin/mlm-hierarchy/:userId?', isAuthenticated, requireAdmin, auditAdminAction('view_mlm_hierarchy', 'admin'), async (req: any, res) => {
     try {
@@ -1089,6 +1356,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Referral not found" });
       }
 
+      // Check if status is changing
+      const oldStatus = currentReferral.status;
+      const newStatus = updateData.status || oldStatus;
+      const statusChanged = oldStatus !== newStatus;
+
       // Add admin audit info
       const auditInfo = {
         updatedBy: req.user.claims.email,
@@ -1110,10 +1382,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       });
 
+      // Send notifications if status changed
+      if (statusChanged) {
+        // Notify the referral owner
+        await createNotificationForUser(currentReferral.referrerId, {
+          type: 'referral_status_changed',
+          title: 'Referral Status Updated',
+          message: `Your referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
+          referralId: referralId,
+          businessName: currentReferral.businessName,
+          metadata: {
+            oldStatus,
+            newStatus,
+            updatedBy: `Admin: ${req.user.claims.email}`,
+            commission: (newStatus === 'approved' || newStatus === 'paid') ? 
+              (updateData.actualCommission || updateData.estimatedCommission || currentReferral.estimatedCommission) : null
+          }
+        });
+
+        // Notify team leader if exists
+        const referralOwner = await storage.getUser(currentReferral.referrerId);
+        if (referralOwner?.parentPartnerId) {
+          await createNotificationForUser(referralOwner.parentPartnerId, {
+            type: 'team_referral_status_changed',
+            title: 'Team Member Referral Update',
+            message: `${referralOwner.firstName || referralOwner.email}'s referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
+            referralId: referralId,
+            businessName: currentReferral.businessName,
+            metadata: {
+              oldStatus,
+              newStatus,
+              teamMemberName: referralOwner.firstName ? `${referralOwner.firstName} ${referralOwner.lastName || ''}`.trim() : referralOwner.email,
+              teamMemberId: currentReferral.referrerId,
+              updatedBy: `Admin: ${req.user.claims.email}`,
+              commission: (newStatus === 'approved' || newStatus === 'paid') ? 
+                (updateData.actualCommission || updateData.estimatedCommission || currentReferral.estimatedCommission) : null
+            }
+          });
+        }
+      }
+
       res.json({
         success: true,
         referral,
-        auditInfo
+        auditInfo,
+        statusChanged
       });
     } catch (error) {
       console.error("Error updating referral:", error);
@@ -1149,6 +1462,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Referral not found" });
       }
 
+      // Check if status is changing
+      const oldStatus = currentReferral.status;
+      const newStatus = status || oldStatus;
+      const statusChanged = oldStatus !== newStatus;
+
       // Create audit trail
       const auditNote = `\n[${new Date().toLocaleString()}] Stage override by admin ${req.user.claims.email}: ${currentReferral.dealStage} → ${dealStage}. Reason: ${overrideReason || 'No reason provided'}`;
       const updatedAdminNotes = (adminNotes || currentReferral.adminNotes || '') + auditNote;
@@ -1163,7 +1481,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedReferral = await storage.updateReferral(referralId, updateData);
 
-      // Create notification for the referrer if stage changed significantly
+      // Send status change notifications if status changed
+      if (statusChanged) {
+        // Notify the referral owner
+        await createNotificationForUser(currentReferral.referrerId, {
+          type: 'referral_status_changed',
+          title: 'Referral Status Updated',
+          message: `Your referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
+          referralId: referralId,
+          businessName: currentReferral.businessName,
+          metadata: {
+            oldStatus,
+            newStatus,
+            dealStage,
+            updatedBy: `Admin: ${req.user.claims.email}`,
+            commission: (newStatus === 'approved' || newStatus === 'paid') ? currentReferral.estimatedCommission : null
+          }
+        });
+
+        // Notify team leader if exists
+        const referralOwner = await storage.getUser(currentReferral.referrerId);
+        if (referralOwner?.parentPartnerId) {
+          await createNotificationForUser(referralOwner.parentPartnerId, {
+            type: 'team_referral_status_changed',
+            title: 'Team Member Referral Update',
+            message: `${referralOwner.firstName || referralOwner.email}'s referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
+            referralId: referralId,
+            businessName: currentReferral.businessName,
+            metadata: {
+              oldStatus,
+              newStatus,
+              dealStage,
+              teamMemberName: referralOwner.firstName ? `${referralOwner.firstName} ${referralOwner.lastName || ''}`.trim() : referralOwner.email,
+              teamMemberId: currentReferral.referrerId,
+              updatedBy: `Admin: ${req.user.claims.email}`,
+              commission: (newStatus === 'approved' || newStatus === 'paid') ? currentReferral.estimatedCommission : null
+            }
+          });
+        }
+      }
+
+      // Create notification for stage change (if stage changed)
       if (dealStage !== currentReferral.dealStage) {
         const stageNotifications: { [key: string]: { title: string; message: string } } = {
           'quote_sent': {
@@ -1185,14 +1543,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         const notificationData = stageNotifications[dealStage];
-        if (notificationData) {
+        if (notificationData && !statusChanged) { // Only send stage notification if status didn't change (to avoid duplicate notifications)
           await createNotificationForUser(currentReferral.referrerId, {
             type: 'status_update',
             title: notificationData.title,
             message: notificationData.message,
             referralId: referralId,
-            businessName: currentReferral.businessName
+            businessName: currentReferral.businessName,
+            metadata: {
+              dealStage,
+              previousStage: currentReferral.dealStage,
+              updatedBy: `Admin: ${req.user.claims.email}`
+            }
           });
+
+          // Also notify team leader about stage change
+          const referralOwner = await storage.getUser(currentReferral.referrerId);
+          if (referralOwner?.parentPartnerId) {
+            await createNotificationForUser(referralOwner.parentPartnerId, {
+              type: 'team_referral_status_changed',
+              title: 'Team Member Deal Progress',
+              message: `${referralOwner.firstName || referralOwner.email}'s deal ${currentReferral.businessName}: ${notificationData.title}`,
+              referralId: referralId,
+              businessName: currentReferral.businessName,
+              metadata: {
+                dealStage,
+                previousStage: currentReferral.dealStage,
+                teamMemberName: referralOwner.firstName ? `${referralOwner.firstName} ${referralOwner.lastName || ''}`.trim() : referralOwner.email,
+                teamMemberId: currentReferral.referrerId,
+                updatedBy: `Admin: ${req.user.claims.email}`
+              }
+            });
+          }
         }
       }
 
@@ -1201,7 +1583,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Stage override applied successfully",
         referral: updatedReferral,
         previousStage: currentReferral.dealStage,
-        newStage: dealStage
+        newStage: dealStage,
+        statusChanged
       });
     } catch (error) {
       console.error("Error overriding referral stage:", error);
@@ -1269,6 +1652,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           paymentMethod: paymentMethod || 'Bank Transfer'
         }
       });
+
+      // Send push notification for commission approval
+      await pushNotificationService.sendCommissionApprovalNotification(
+        referral.referrerId,
+        {
+          referralId: referralId,
+          businessName: referral.businessName,
+          amount: parseFloat(actualCommission),
+          level: referral.referralLevel || 1,
+          percentage: parseFloat(referral.commissionPercentage || '60')
+        }
+      );
 
       res.json({ 
         success: true, 

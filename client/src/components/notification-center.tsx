@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -11,19 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Quote, CreditCard, CheckCircle2, AlertCircle } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/offline-api"; // Use offline-aware API
 import { queryClient } from "@/lib/queryClient";
-
-interface Notification {
-  id: string;
-  type: "quote_ready" | "quote_approved" | "commission_paid" | "status_update";
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
-  referralId?: string;
-  businessName?: string;
-}
+import { useWebSocket } from "@/hooks/useWebSocket";
+import type { Notification } from "@shared/schema";
 
 interface NotificationCenterProps {
   onQuoteClick?: (referralId: string) => void;
@@ -32,9 +23,23 @@ interface NotificationCenterProps {
 export default function NotificationCenter({ onQuoteClick }: NotificationCenterProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: notifications = [], refetch: refetchNotifications } = useQuery<Notification[]>({
+  const { data, refetch: refetchNotifications } = useQuery<{ notifications: Notification[]; unreadCount: number }>({
     queryKey: ["/api/notifications"],
     retry: false
+  });
+
+  // Safely extract notifications array and unreadCount from the API response
+  // Ensure notifications is always an array even if data structure is unexpected
+  const notifications = Array.isArray(data?.notifications) ? data.notifications : [];
+  const unreadCount = typeof data?.unreadCount === 'number' ? data.unreadCount : 0;
+
+  // Connect to WebSocket for real-time notifications
+  const { isConnected, connectionState } = useWebSocket({
+    onNotification: (notification) => {
+      // Refetch notifications when a new one arrives
+      refetchNotifications();
+    },
+    showToastNotifications: true
   });
 
   const markAsReadMutation = useMutation({
@@ -69,8 +74,6 @@ export default function NotificationCenter({ onQuoteClick }: NotificationCenterP
     }
   });
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "quote_ready":
@@ -101,7 +104,7 @@ export default function NotificationCenter({ onQuoteClick }: NotificationCenterP
     }
   };
 
-  const formatTimestamp = (timestamp: Date | string | undefined) => {
+  const formatTimestamp = (timestamp: Date | string | null | undefined) => {
     if (!timestamp) {
       return "just now";
     }
@@ -198,7 +201,7 @@ export default function NotificationCenter({ onQuoteClick }: NotificationCenterP
                         {notification.title}
                       </p>
                       <span className="text-xs text-muted-foreground ml-2">
-                        {formatTimestamp(notification.timestamp)}
+                        {formatTimestamp(notification.createdAt)}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">

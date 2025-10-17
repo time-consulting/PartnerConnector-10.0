@@ -22,6 +22,7 @@ import {
   adminAuditLogs,
   waitlist,
   partnerHierarchy,
+  pushSubscriptions,
   type User,
   type UpsertUser,
   type Audit,
@@ -54,6 +55,8 @@ import {
   type AdminAuditLog,
   type Waitlist,
   type InsertWaitlist,
+  type PushSubscription,
+  type InsertPushSubscription,
 } from "@shared/schema";
 import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
@@ -160,8 +163,15 @@ export interface IStorage {
   // Notification operations
   getNotificationsByUserId(userId: string): Promise<any[]>;
   createNotification(notification: any): Promise<any>;
-  markNotificationAsRead(notificationId: string): Promise<void>;
+  markNotificationAsRead(notificationId: string, userId: string): Promise<void>;
   markAllNotificationsAsRead(userId: string): Promise<void>;
+  
+  // Push subscription operations
+  createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription>;
+  getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined>;
+  getUserPushSubscriptions(userId: string): Promise<PushSubscription[]>;
+  updatePushSubscription(id: string, updates: Partial<InsertPushSubscription>): Promise<PushSubscription>;
+  deletePushSubscription(id: string): Promise<void>;
   
   // Rates management operations
   getRates(): Promise<Rate[]>;
@@ -1089,11 +1099,14 @@ export class DatabaseStorage implements IStorage {
     return notification;
   }
   
-  async markNotificationAsRead(notificationId: string): Promise<void> {
+  async markNotificationAsRead(notificationId: string, userId: string): Promise<void> {
     await db
       .update(notifications)
       .set({ read: true })
-      .where(eq(notifications.id, notificationId));
+      .where(and(
+        eq(notifications.id, notificationId),
+        eq(notifications.userId, userId)
+      ));
   }
   
   async markAllNotificationsAsRead(userId: string): Promise<void> {
@@ -1816,6 +1829,52 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Waitlist entry not found');
     }
     return entry;
+  }
+
+  // Push subscription operations
+  async createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription> {
+    const [created] = await db
+      .insert(pushSubscriptions)
+      .values(subscription)
+      .returning();
+    return created;
+  }
+
+  async getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined> {
+    const [subscription] = await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.endpoint, endpoint));
+    return subscription;
+  }
+
+  async getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
+    return await db
+      .select()
+      .from(pushSubscriptions)
+      .where(and(
+        eq(pushSubscriptions.userId, userId),
+        eq(pushSubscriptions.isActive, true)
+      ))
+      .orderBy(desc(pushSubscriptions.createdAt));
+  }
+
+  async updatePushSubscription(id: string, updates: Partial<InsertPushSubscription>): Promise<PushSubscription> {
+    const [updated] = await db
+      .update(pushSubscriptions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(pushSubscriptions.id, id))
+      .returning();
+    if (!updated) {
+      throw new Error('Push subscription not found');
+    }
+    return updated;
+  }
+
+  async deletePushSubscription(id: string): Promise<void> {
+    await db
+      .delete(pushSubscriptions)
+      .where(eq(pushSubscriptions.id, id));
   }
 }
 

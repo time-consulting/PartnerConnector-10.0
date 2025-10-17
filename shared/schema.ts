@@ -600,6 +600,23 @@ export const notifications = pgTable("notifications", {
   index("notifications_user_read_idx").on(table.userId, table.read),
 ]);
 
+// Push subscriptions for Web Push notifications
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(), // Push subscription endpoint URL
+  p256dh: text("p256dh").notNull(), // Public key for encryption
+  auth: text("auth").notNull(), // Auth secret
+  userAgent: text("user_agent"), // Browser/device info for debugging
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("push_subscriptions_user_id_idx").on(table.userId),
+  index("push_subscriptions_endpoint_idx").on(table.endpoint),
+  index("push_subscriptions_is_active_idx").on(table.isActive),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   referrals: many(referrals),
@@ -1128,3 +1145,12 @@ export type Waitlist = typeof waitlist.$inferSelect;
 export const insertAdminAuditLog = createInsertSchema(adminAuditLogs);
 export type InsertAdminAuditLog = z.infer<typeof insertAdminAuditLog>;
 export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
+
+// Push subscription schemas
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;

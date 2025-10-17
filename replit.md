@@ -4,6 +4,17 @@ PartnerConnector is a professional referral platform designed for accountants, b
 
 # Recent Changes
 
+**Mobile Engagement Features Implementation (October 2025)**
+- **Real-time Notifications**: WebSocket infrastructure for instant referral status updates
+- **Quick Add Mobile Form**: 30-second lead capture form exclusive to mobile devices with 3-step flow
+- **Push Notifications**: Web Push API for commission approval alerts with browser notifications
+- **PWA Support**: Progressive Web App with offline mode, installability, and Service Worker caching
+- **Offline Sync**: IndexedDB storage with automatic sync when connection restored
+- **Mobile FAB**: Floating action button on dashboard for quick lead capture on mobile
+- **Voice Input**: Speech-to-text support in quick add form for hands-free note taking
+- Fixed duplicate notification bug by separating storage and broadcast logic
+- Moved VAPID keys to environment variables for security
+
 **Enhanced Authentication Options with Custom Login Page (October 2025)**
 - Created custom login page showing all available authentication methods (Google, Email, GitHub, Apple)
 - **Multiple Login Methods**: Replit Auth supports Google, Email/password, GitHub, Apple, and X (Twitter) login

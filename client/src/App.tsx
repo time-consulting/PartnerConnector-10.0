@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 // import { Toaster } from "@/components/ui/toaster"; // Temporarily disabled due to React hook violation
 // import { TooltipProvider } from "@/components/ui/tooltip"; // Temporarily disabled due to React hook violation
 import { useAuth } from "@/hooks/useAuth";
+import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
 // Lazy load all pages for optimal bundle splitting
 const Landing = lazy(() => import("@/pages/landing"));
@@ -31,6 +32,8 @@ const FeedbackPage = lazy(() => import("@/pages/account/feedback"));
 const WaitlistPage = lazy(() => import("@/pages/waitlist"));
 const SignupPage = lazy(() => import("@/pages/signup"));
 const LoginPage = lazy(() => import("@/pages/login"));
+const QuickAddReferral = lazy(() => import("@/pages/quick-add-referral"));
+const OfflinePage = lazy(() => import("@/pages/offline"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component with app branding
@@ -96,6 +99,7 @@ function Router() {
       <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/waitlist" component={WaitlistPage} />
+      <Route path="/offline" component={OfflinePage} />
       <Route path="/partner-onboarding" component={PartnerOnboarding} />
       <Route path="/commission-structure" component={CommissionStructure} />
       <Route path="/lead-tracking" component={LeadTracking} />
@@ -114,6 +118,7 @@ function Router() {
       <Route path="/opportunities" component={() => <PrivateRoute><Opportunities /></PrivateRoute>} />
       <Route path="/contacts" component={() => <PrivateRoute><Contacts /></PrivateRoute>} />
       <Route path="/submit-referral" component={() => <PrivateRoute><SubmitReferral /></PrivateRoute>} />
+      <Route path="/quick-add-referral" component={() => <PrivateRoute><QuickAddReferral /></PrivateRoute>} />
       <Route path="/training" component={() => <PrivateRoute><Training /></PrivateRoute>} />
       <Route path="/upload-bills" component={() => <PrivateRoute><UploadBills /></PrivateRoute>} />
       <Route path="/track-referrals" component={() => <PrivateRoute><TrackReferrals /></PrivateRoute>} />
@@ -136,6 +141,7 @@ function App() {
       {/* <TooltipProvider> - Temporarily disabled due to React hook violation */}
         <Suspense fallback={<LoadingFallback />}>
           <Router />
+          <PWAInstallPrompt />
         </Suspense>
         {/* <Toaster /> - Temporarily disabled due to React hook violation */}
       {/* </TooltipProvider> */}
