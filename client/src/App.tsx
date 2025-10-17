@@ -30,6 +30,7 @@ const BankingPage = lazy(() => import("@/pages/account/banking"));
 const FeedbackPage = lazy(() => import("@/pages/account/feedback"));
 const WaitlistPage = lazy(() => import("@/pages/waitlist"));
 const SignupPage = lazy(() => import("@/pages/signup"));
+const LoginPage = lazy(() => import("@/pages/login"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component with app branding
@@ -65,7 +66,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      window.location.href = '/api/login';
+      window.location.href = '/login';
     }
   }, [isAuthenticated, isLoading]);
 
@@ -93,6 +94,7 @@ function Router() {
     <Switch>
       {/* Public routes available to everyone */}
       <Route path="/signup" component={SignupPage} />
+      <Route path="/login" component={LoginPage} />
       <Route path="/waitlist" component={WaitlistPage} />
       <Route path="/partner-onboarding" component={PartnerOnboarding} />
       <Route path="/commission-structure" component={CommissionStructure} />

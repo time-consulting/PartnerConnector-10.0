@@ -277,7 +277,7 @@ export default function About() {
           <Button 
             size="lg"
             className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
-            onClick={() => window.location.href = "/api/login"}
+            onClick={() => window.location.href = "/login"}
           >
             Become a Partner
             <ArrowRightIcon className="ml-2 w-5 h-5" />

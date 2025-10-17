@@ -38,7 +38,7 @@ export default function LeadTracking() {
             <Button 
               size="lg"
               className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
             >
               View Your Pipeline
               <ArrowRightIcon className="ml-2 w-5 h-5" />
@@ -302,7 +302,7 @@ export default function LeadTracking() {
               <Button 
                 size="lg"
                 className="mt-8 bg-purple-600 hover:bg-purple-700 text-white"
-                onClick={() => window.location.href = "/api/login"}
+                onClick={() => window.location.href = "/login"}
               >
                 Access Dashboard
                 <ArrowRightIcon className="ml-2 w-5 h-5" />

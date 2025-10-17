@@ -31,9 +31,9 @@ export default function SignupPage() {
   const handleGetStarted = () => {
     if (referralCode) {
       sessionStorage.setItem('referralCode', referralCode);
-      window.location.href = `/api/login?ref=${encodeURIComponent(referralCode)}`;
+      window.location.href = `/login?ref=${encodeURIComponent(referralCode)}`;
     } else {
-      window.location.href = '/api/login';
+      window.location.href = '/login';
     }
   };
 

@@ -422,14 +422,14 @@ export default function Navigation() {
               <>
                 <Button 
                   variant="ghost"
-                  onClick={() => window.location.href = "/api/login"}
+                  onClick={() => window.location.href = "/login"}
                   data-testid="button-login"
                   className="text-gray-700 hover:text-blue-600"
                 >
                   Login
                 </Button>
                 <Button 
-                  onClick={() => window.location.href = "/api/login"}
+                  onClick={() => window.location.href = "/login"}
                   data-testid="button-get-started"
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
@@ -695,7 +695,7 @@ export default function Navigation() {
                     <Button 
                       variant="ghost"
                       onClick={() => {
-                        window.location.href = "/api/login";
+                        window.location.href = "/login";
                         handleMobileMenuClose();
                       }}
                       data-testid="mobile-button-login"
@@ -705,7 +705,7 @@ export default function Navigation() {
                     </Button>
                     <Button 
                       onClick={() => {
-                        window.location.href = "/api/login";
+                        window.location.href = "/login";
                         handleMobileMenuClose();
                       }}
                       data-testid="mobile-button-get-started"

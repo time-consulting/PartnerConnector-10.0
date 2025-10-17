@@ -4,6 +4,15 @@ PartnerConnector is a professional referral platform designed for accountants, b
 
 # Recent Changes
 
+**Enhanced Authentication Options with Custom Login Page (October 2025)**
+- Created custom login page showing all available authentication methods (Google, Email, GitHub, Apple)
+- **Multiple Login Methods**: Replit Auth supports Google, Email/password, GitHub, Apple, and X (Twitter) login
+- **Visual Login Page**: New `/login` route with clear buttons for each authentication method
+- **Consistent Flow**: All authentication redirects now route through `/login` page instead of direct API calls
+- **Professional UI**: Login page includes benefits sidebar, social proof, and security notices
+- Fixed PrivateRoute and all authentication redirects (17 files updated) to use `/login` instead of `/api/login`
+- Testing confirmed successful authentication flow with all login methods working correctly
+
 **Contact Form Dialog Full-Width Enhancement (October 2025)**
 - Redesigned contact form dialog for desktop-first, near full-screen experience
 - **Desktop**: Dialog now uses 98% of viewport width (`sm:w-[98vw]`) with no maximum width constraint (`max-w-none`)

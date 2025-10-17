@@ -35,7 +35,7 @@ export default function CommissionStructure() {
             <Button 
               size="lg"
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-4"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
             >
               View Your Commission Potential
               <ArrowRightIcon className="ml-2 w-5 h-5" />
