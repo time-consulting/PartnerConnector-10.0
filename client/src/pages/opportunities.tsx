@@ -805,7 +805,7 @@ export default function OpportunitiesPage() {
                     Add Opportunity
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl">
+                <DialogContent className="!w-[98vw] !max-w-[98vw] !h-[95vh] !max-h-[95vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Create New Opportunity</DialogTitle>
                   </DialogHeader>
@@ -994,7 +994,7 @@ export default function OpportunitiesPage() {
           open={!!selectedOpportunity} 
           onOpenChange={(open) => !open && setSelectedOpportunity(null)}
         >
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="!w-[98vw] !max-w-[98vw] !h-[95vh] !max-h-[95vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 Edit Opportunity: {selectedOpportunity?.businessName}

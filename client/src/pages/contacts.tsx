@@ -865,7 +865,7 @@ export default function ContactsPage() {
                   Add Contact
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:w-[98vw] max-w-none max-h-[98vh] overflow-y-auto p-8 transition-all duration-300 ease-in-out">
+              <DialogContent className="!w-[98vw] !max-w-[98vw] !h-[95vh] !max-h-[95vh] overflow-y-auto !p-8">
                 <DialogHeader className="sr-only">
                   <DialogTitle>Create New Contact</DialogTitle>
                 </DialogHeader>
@@ -1056,7 +1056,7 @@ export default function ContactsPage() {
           open={!!selectedContact} 
           onOpenChange={(open) => !open && setSelectedContact(null)}
         >
-          <DialogContent className="w-[95vw] sm:w-[98vw] max-w-none max-h-[98vh] overflow-y-auto p-8 transition-all duration-300 ease-in-out">
+          <DialogContent className="!w-[98vw] !max-w-[98vw] !h-[95vh] !max-h-[95vh] overflow-y-auto !p-8">
             <DialogHeader className="sr-only">
               <DialogTitle>
                 Edit Contact: {selectedContact?.firstName} {selectedContact?.lastName}
