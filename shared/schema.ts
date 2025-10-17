@@ -61,6 +61,8 @@ export const users: any = pgTable("users", {
   canManageTeam: boolean("can_manage_team").default(false),
   // Admin access
   isAdmin: boolean("is_admin").default(false),
+  // Stripe integration
+  stripeAccountId: varchar("stripe_account_id"),
   // Onboarding tracking
   tourStarted: timestamp("tour_started"),
   tourCompleted: timestamp("tour_completed"),

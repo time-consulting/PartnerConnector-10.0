@@ -1055,12 +1055,73 @@ export class DatabaseStorage implements IStorage {
     };
   }
   
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(desc(users.createdAt));
+  async getAllUsers(filters?: { limit?: number; offset?: number; search?: string }): Promise<User[]> {
+    let query = db.select().from(users);
+    
+    if (filters?.search) {
+      query = query.where(sql`
+        ${users.firstName} ILIKE ${'%' + filters.search + '%'} OR
+        ${users.lastName} ILIKE ${'%' + filters.search + '%'} OR
+        ${users.email} ILIKE ${'%' + filters.search + '%'} OR
+        ${users.partnerId} ILIKE ${'%' + filters.search + '%'}
+      `);
+    }
+    
+    query = query.orderBy(desc(users.createdAt));
+    
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+    
+    if (filters?.offset) {
+      query = query.offset(filters.offset);
+    }
+    
+    return await query;
   }
   
-  async getAllReferrals(): Promise<Referral[]> {
-    return await db.select().from(referrals).orderBy(desc(referrals.submittedAt));
+  async getAllReferrals(filters?: { 
+    limit?: number; 
+    offset?: number; 
+    status?: string;
+    userId?: string;
+    businessType?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+  }): Promise<Referral[]> {
+    let query = db.select().from(referrals);
+    
+    if (filters?.status) {
+      query = query.where(eq(referrals.status, filters.status));
+    }
+    
+    if (filters?.userId) {
+      query = query.where(eq(referrals.referrerId, filters.userId));
+    }
+    
+    if (filters?.businessType) {
+      query = query.where(eq(referrals.businessType, filters.businessType));
+    }
+    
+    if (filters?.dateFrom) {
+      query = query.where(sql`${referrals.submittedAt} >= ${filters.dateFrom}`);
+    }
+    
+    if (filters?.dateTo) {
+      query = query.where(sql`${referrals.submittedAt} <= ${filters.dateTo}`);
+    }
+    
+    query = query.orderBy(desc(referrals.submittedAt));
+    
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+    
+    if (filters?.offset) {
+      query = query.offset(filters.offset);
+    }
+    
+    return await query;
   }
   
   async updateUser(userId: string, data: Partial<User>): Promise<User> {
@@ -1079,6 +1140,486 @@ export class DatabaseStorage implements IStorage {
       .where(eq(referrals.id, referralId))
       .returning();
     return referral;
+  }
+
+  async getAnalyticsOverview(): Promise<{
+    totalRevenue: number;
+    activePartners: number;
+    avgDealSize: number;
+    conversionRate: number;
+    monthlyGrowth: number;
+    topProducts: Array<{ name: string; count: number }>;
+  }> {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+    // Total revenue from completed deals
+    const [revenueData] = await db
+      .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
+      .from(referrals)
+      .where(eq(referrals.status, 'won'));
+
+    // Active partners (submitted referrals in last 30 days)
+    const [activeData] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT referrer_id)` })
+      .from(referrals)
+      .where(sql`${referrals.submittedAt} >= ${thirtyDaysAgo}`);
+
+    // Average deal size
+    const [avgDealData] = await db
+      .select({ avg: sql<number>`COALESCE(AVG(CAST(actual_commission AS DECIMAL)), 0)` })
+      .from(referrals)
+      .where(sql`actual_commission IS NOT NULL`);
+
+    // Conversion rate
+    const [totalDeals] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(referrals);
+    const [wonDeals] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(referrals)
+      .where(eq(referrals.status, 'won'));
+
+    const conversionRate = totalDeals[0]?.count > 0 
+      ? (wonDeals[0]?.count / totalDeals[0]?.count) * 100 
+      : 0;
+
+    // Monthly growth comparison
+    const [currentMonthRevenue] = await db
+      .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
+      .from(referrals)
+      .where(and(
+        sql`${referrals.submittedAt} >= ${thirtyDaysAgo}`,
+        eq(referrals.status, 'won')
+      ));
+
+    const [previousMonthRevenue] = await db
+      .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
+      .from(referrals)
+      .where(and(
+        sql`${referrals.submittedAt} >= ${sixtyDaysAgo}`,
+        sql`${referrals.submittedAt} < ${thirtyDaysAgo}`,
+        eq(referrals.status, 'won')
+      ));
+
+    const monthlyGrowth = previousMonthRevenue[0]?.total > 0
+      ? ((currentMonthRevenue[0]?.total - previousMonthRevenue[0]?.total) / previousMonthRevenue[0]?.total) * 100
+      : 0;
+
+    // Top products by count
+    const topProducts = await db
+      .select({
+        name: referrals.businessType,
+        count: sql<number>`count(*)`
+      })
+      .from(referrals)
+      .groupBy(referrals.businessType)
+      .orderBy(sql`count(*) DESC`)
+      .limit(5);
+
+    return {
+      totalRevenue: revenueData?.total || 0,
+      activePartners: activeData?.count || 0,
+      avgDealSize: avgDealData?.avg || 0,
+      conversionRate: Number(conversionRate.toFixed(2)),
+      monthlyGrowth: Number(monthlyGrowth.toFixed(2)),
+      topProducts: topProducts || []
+    };
+  }
+
+  async getRevenueMetrics(): Promise<{
+    currentMonth: number;
+    previousMonth: number;
+    yearToDate: number;
+    projectedAnnual: number;
+    byProduct: Array<{ product: string; revenue: number }>;
+    byPartner: Array<{ partnerId: string; partnerName: string; revenue: number }>;
+  }> {
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+
+    // Current month revenue
+    const [currentMonthData] = await db
+      .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
+      .from(referrals)
+      .where(and(
+        sql`${referrals.submittedAt} >= ${currentMonthStart}`,
+        eq(referrals.status, 'won')
+      ));
+
+    // Previous month revenue
+    const [previousMonthData] = await db
+      .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
+      .from(referrals)
+      .where(and(
+        sql`${referrals.submittedAt} >= ${previousMonthStart}`,
+        sql`${referrals.submittedAt} < ${currentMonthStart}`,
+        eq(referrals.status, 'won')
+      ));
+
+    // Year to date revenue
+    const [yearToDateData] = await db
+      .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
+      .from(referrals)
+      .where(and(
+        sql`${referrals.submittedAt} >= ${yearStart}`,
+        eq(referrals.status, 'won')
+      ));
+
+    // Projected annual (based on YTD average)
+    const monthsElapsed = now.getMonth() + (now.getDate() / 30);
+    const projectedAnnual = monthsElapsed > 0 ? (yearToDateData?.total || 0) / monthsElapsed * 12 : 0;
+
+    // Revenue by product
+    const byProduct = await db
+      .select({
+        product: referrals.businessType,
+        revenue: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)`
+      })
+      .from(referrals)
+      .where(eq(referrals.status, 'won'))
+      .groupBy(referrals.businessType)
+      .orderBy(sql`SUM(CAST(actual_commission AS DECIMAL)) DESC`)
+      .limit(10);
+
+    // Revenue by partner
+    const byPartner = await db
+      .select({
+        partnerId: users.partnerId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        revenue: sql<number>`COALESCE(SUM(CAST(${referrals.actualCommission} AS DECIMAL)), 0)`
+      })
+      .from(referrals)
+      .leftJoin(users, eq(referrals.referrerId, users.id))
+      .where(eq(referrals.status, 'won'))
+      .groupBy(users.partnerId, users.firstName, users.lastName)
+      .orderBy(sql`SUM(CAST(${referrals.actualCommission} AS DECIMAL)) DESC`)
+      .limit(10);
+
+    return {
+      currentMonth: currentMonthData?.total || 0,
+      previousMonth: previousMonthData?.total || 0,
+      yearToDate: yearToDateData?.total || 0,
+      projectedAnnual: Number(projectedAnnual.toFixed(2)),
+      byProduct: byProduct || [],
+      byPartner: byPartner.map(p => ({
+        partnerId: p.partnerId || '',
+        partnerName: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
+        revenue: p.revenue
+      }))
+    };
+  }
+
+  async getUserGrowthMetrics(): Promise<{
+    totalUsers: number;
+    newThisMonth: number;
+    newLastMonth: number;
+    activeUsers: number;
+    growthRate: number;
+    usersByMonth: Array<{ month: string; count: number }>;
+  }> {
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Total users
+    const [totalData] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users);
+
+    // New users this month
+    const [newThisMonthData] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(sql`${users.createdAt} >= ${currentMonthStart}`);
+
+    // New users last month
+    const [newLastMonthData] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(and(
+        sql`${users.createdAt} >= ${previousMonthStart}`,
+        sql`${users.createdAt} < ${currentMonthStart}`
+      ));
+
+    // Active users (submitted referrals in last 30 days)
+    const [activeData] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${referrals.referrerId})` })
+      .from(referrals)
+      .where(sql`${referrals.submittedAt} >= ${thirtyDaysAgo}`);
+
+    // Growth rate
+    const growthRate = newLastMonthData?.count > 0
+      ? ((newThisMonthData?.count - newLastMonthData?.count) / newLastMonthData?.count) * 100
+      : 0;
+
+    // Users by month (last 6 months)
+    const usersByMonth: Array<{ month: string; count: number }> = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      
+      const [monthData] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(and(
+          sql`${users.createdAt} >= ${monthStart}`,
+          sql`${users.createdAt} < ${monthEnd}`
+        ));
+
+      usersByMonth.push({
+        month: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        count: monthData?.count || 0
+      });
+    }
+
+    return {
+      totalUsers: totalData?.count || 0,
+      newThisMonth: newThisMonthData?.count || 0,
+      newLastMonth: newLastMonthData?.count || 0,
+      activeUsers: activeData?.count || 0,
+      growthRate: Number(growthRate.toFixed(2)),
+      usersByMonth
+    };
+  }
+
+  async getTopPerformers(): Promise<Array<{
+    userId: string;
+    name: string;
+    partnerId: string;
+    totalReferrals: number;
+    wonDeals: number;
+    totalRevenue: number;
+    conversionRate: number;
+    rank: number;
+  }>> {
+    const performers = await db
+      .select({
+        userId: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        partnerId: users.partnerId,
+        totalReferrals: sql<number>`COUNT(${referrals.id})`,
+        wonDeals: sql<number>`COUNT(CASE WHEN ${referrals.status} = 'won' THEN 1 END)`,
+        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${referrals.status} = 'won' THEN CAST(${referrals.actualCommission} AS DECIMAL) END), 0)`
+      })
+      .from(users)
+      .leftJoin(referrals, eq(referrals.referrerId, users.id))
+      .groupBy(users.id, users.firstName, users.lastName, users.partnerId)
+      .having(sql`COUNT(${referrals.id}) > 0`)
+      .orderBy(sql`SUM(CASE WHEN ${referrals.status} = 'won' THEN CAST(${referrals.actualCommission} AS DECIMAL) END) DESC NULLS LAST`)
+      .limit(20);
+
+    return performers.map((p, index) => ({
+      userId: p.userId,
+      name: `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown',
+      partnerId: p.partnerId || '',
+      totalReferrals: p.totalReferrals,
+      wonDeals: p.wonDeals,
+      totalRevenue: p.totalRevenue,
+      conversionRate: p.totalReferrals > 0 ? Number(((p.wonDeals / p.totalReferrals) * 100).toFixed(2)) : 0,
+      rank: index + 1
+    }));
+  }
+
+  async updateReferralStage(referralId: string, stage: string): Promise<Referral> {
+    const [referral] = await db
+      .update(referrals)
+      .set({ status: stage, updatedAt: new Date() })
+      .where(eq(referrals.id, referralId))
+      .returning();
+    return referral;
+  }
+
+  async exportUsersCSV(): Promise<string> {
+    const allUsers = await this.getAllUsers();
+    
+    const headers = ['ID', 'Email', 'Name', 'Partner ID', 'Company', 'Created At', 'Is Admin'];
+    const rows = allUsers.map(user => [
+      user.id,
+      user.email || '',
+      `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      user.partnerId || '',
+      user.company || '',
+      user.createdAt?.toISOString() || '',
+      user.isAdmin ? 'Yes' : 'No'
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    return csv;
+  }
+
+  async exportReferralsCSV(): Promise<string> {
+    const allReferrals = await this.getAllReferrals();
+    
+    const headers = ['ID', 'Business Name', 'Business Type', 'Status', 'Monthly Volume', 'Submitted At', 'Commission'];
+    const rows = allReferrals.map(ref => [
+      ref.id,
+      ref.businessName,
+      ref.businessType || '',
+      ref.status,
+      ref.monthlyVolume || '',
+      ref.submittedAt?.toISOString() || '',
+      ref.actualCommission || '0'
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    return csv;
+  }
+
+  async exportPaymentsCSV(): Promise<string> {
+    const payments = await db
+      .select({
+        id: commissionPayments.id,
+        referralId: commissionPayments.referralId,
+        recipientId: commissionPayments.recipientId,
+        amount: commissionPayments.amount,
+        status: commissionPayments.status,
+        processedAt: commissionPayments.processedAt,
+        paymentReference: commissionPayments.paymentReference
+      })
+      .from(commissionPayments)
+      .orderBy(desc(commissionPayments.processedAt));
+
+    const headers = ['ID', 'Referral ID', 'Recipient ID', 'Amount', 'Status', 'Processed At', 'Payment Reference'];
+    const rows = payments.map(payment => [
+      payment.id,
+      payment.referralId || '',
+      payment.recipientId || '',
+      payment.amount || '0',
+      payment.status,
+      payment.processedAt?.toISOString() || '',
+      payment.paymentReference || ''
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    return csv;
+  }
+
+  async getPendingPayments(): Promise<Array<{
+    id: string;
+    referralId: string;
+    businessName: string;
+    partnerId: string;
+    partnerName: string;
+    amount: string;
+    status: string;
+    submittedAt: Date;
+  }>> {
+    const pendingPayments = await db
+      .select({
+        referralId: referrals.id,
+        businessName: referrals.businessName,
+        actualCommission: referrals.actualCommission,
+        status: referrals.status,
+        submittedAt: referrals.submittedAt,
+        partnerId: users.partnerId,
+        firstName: users.firstName,
+        lastName: users.lastName
+      })
+      .from(referrals)
+      .leftJoin(users, eq(referrals.referrerId, users.id))
+      .where(and(
+        eq(referrals.status, 'won'),
+        sql`${referrals.actualCommission} IS NOT NULL`,
+        sql`${referrals.actualCommission}::decimal > 0`,
+        sql`NOT EXISTS (
+          SELECT 1 FROM ${commissionPayments}
+          WHERE ${commissionPayments.referralId} = ${referrals.id}
+          AND ${commissionPayments.status} = 'paid'
+        )`
+      ));
+
+    return pendingPayments.map(payment => ({
+      id: payment.referralId,
+      referralId: payment.referralId,
+      businessName: payment.businessName,
+      partnerId: payment.partnerId || '',
+      partnerName: `${payment.firstName || ''} ${payment.lastName || ''}`.trim(),
+      amount: payment.actualCommission || '0',
+      status: 'pending',
+      submittedAt: payment.submittedAt
+    }));
+  }
+
+  async getPaymentHistory(): Promise<Array<{
+    id: string;
+    referralId: string;
+    businessName: string;
+    partnerId: string;
+    partnerName: string;
+    amount: string;
+    status: string;
+    processedAt: Date | null;
+    paymentReference: string | null;
+  }>> {
+    const history = await db
+      .select({
+        id: commissionPayments.id,
+        referralId: commissionPayments.referralId,
+        amount: commissionPayments.amount,
+        status: commissionPayments.status,
+        processedAt: commissionPayments.processedAt,
+        paymentReference: commissionPayments.paymentReference,
+        businessName: referrals.businessName,
+        partnerId: users.partnerId,
+        firstName: users.firstName,
+        lastName: users.lastName
+      })
+      .from(commissionPayments)
+      .leftJoin(referrals, eq(commissionPayments.referralId, referrals.id))
+      .leftJoin(users, eq(commissionPayments.recipientId, users.id))
+      .orderBy(desc(commissionPayments.processedAt));
+
+    return history.map(payment => ({
+      id: payment.id,
+      referralId: payment.referralId || '',
+      businessName: payment.businessName || '',
+      partnerId: payment.partnerId || '',
+      partnerName: `${payment.firstName || ''} ${payment.lastName || ''}`.trim(),
+      amount: payment.amount || '0',
+      status: payment.status,
+      processedAt: payment.processedAt,
+      paymentReference: payment.paymentReference
+    }));
+  }
+
+  async processStripePayment(referralId: string, recipientId: string, amount: number, stripeTransferId: string): Promise<void> {
+    // Create commission payment record
+    await db.insert(commissionPayments).values({
+      referralId,
+      recipientId,
+      amount: amount.toString(),
+      status: 'paid',
+      processedAt: new Date(),
+      paymentReference: stripeTransferId,
+      paymentMethod: 'stripe',
+      level: 1,
+      percentage: '100'
+    });
+
+    // Update referral status
+    await db
+      .update(referrals)
+      .set({ 
+        paymentStatus: 'paid',
+        updatedAt: new Date()
+      })
+      .where(eq(referrals.id, referralId));
   }
   
   // Notification operations

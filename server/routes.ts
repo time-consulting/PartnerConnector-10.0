@@ -12,6 +12,7 @@ import { healthzHandler, readyzHandler, metricsHandler } from "./health";
 import { logAudit } from "./logger";
 import { wsManager } from "./websocket";
 import { pushNotificationService } from "./push-notifications";
+import Stripe from 'stripe';
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -2718,6 +2719,325 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error converting contact to opportunity:", error);
       res.status(500).json({ message: "Failed to convert contact to opportunity" });
+    }
+  });
+
+  // ================== NEW ADMIN ANALYTICS & EXPORT ROUTES ==================
+  
+  // Initialize Stripe
+  const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-11-20.acacia'
+  }) : null;
+
+  // Admin Analytics: Overview
+  app.get('/api/admin/analytics/overview', isAuthenticated, requireAdmin, auditAdminAction('view_analytics', 'admin'), async (req: any, res) => {
+    try {
+      const analyticsData = await storage.getAnalyticsOverview();
+      res.json(analyticsData);
+    } catch (error) {
+      console.error("Error fetching analytics overview:", error);
+      res.status(500).json({ message: "Failed to fetch analytics overview" });
+    }
+  });
+
+  // Admin Analytics: Revenue Metrics
+  app.get('/api/admin/analytics/revenue', isAuthenticated, requireAdmin, auditAdminAction('view_revenue', 'admin'), async (req: any, res) => {
+    try {
+      const revenueData = await storage.getRevenueMetrics();
+      res.json(revenueData);
+    } catch (error) {
+      console.error("Error fetching revenue metrics:", error);
+      res.status(500).json({ message: "Failed to fetch revenue metrics" });
+    }
+  });
+
+  // Admin Analytics: User Growth
+  app.get('/api/admin/analytics/users', isAuthenticated, requireAdmin, auditAdminAction('view_user_growth', 'admin'), async (req: any, res) => {
+    try {
+      const userGrowthData = await storage.getUserGrowthMetrics();
+      res.json(userGrowthData);
+    } catch (error) {
+      console.error("Error fetching user growth metrics:", error);
+      res.status(500).json({ message: "Failed to fetch user growth metrics" });
+    }
+  });
+
+  // Admin Analytics: Top Performers (Leaderboard)
+  app.get('/api/admin/analytics/top-performers', isAuthenticated, requireAdmin, auditAdminAction('view_top_performers', 'admin'), async (req: any, res) => {
+    try {
+      const topPerformers = await storage.getTopPerformers();
+      res.json(topPerformers);
+    } catch (error) {
+      console.error("Error fetching top performers:", error);
+      res.status(500).json({ message: "Failed to fetch top performers" });
+    }
+  });
+
+  // Admin: Update Referral Stage
+  app.post('/api/admin/referrals/:referralId/update-stage', isAuthenticated, requireAdmin, auditAdminAction('update_referral_stage', 'referral'), async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { stage, notes } = req.body;
+
+      if (!stage) {
+        return res.status(400).json({ message: "Stage is required" });
+      }
+
+      const updatedReferral = await storage.updateReferralStage(referralId, stage);
+
+      // Add admin audit log
+      await storage.createAdminAuditLog({
+        actorId: req.user.claims.sub,
+        action: 'update_referral_stage',
+        entityType: 'referral',
+        entityId: referralId,
+        details: { 
+          oldStage: updatedReferral.status,
+          newStage: stage,
+          notes: notes || null 
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.json(updatedReferral);
+    } catch (error) {
+      console.error("Error updating referral stage:", error);
+      res.status(500).json({ message: "Failed to update referral stage" });
+    }
+  });
+
+  // Admin: Export Users CSV
+  app.get('/api/admin/export/users', isAuthenticated, requireAdmin, auditAdminAction('export_users', 'admin'), async (req: any, res) => {
+    try {
+      const csvData = await storage.exportUsersCSV();
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="users_export.csv"');
+      res.send(csvData);
+    } catch (error) {
+      console.error("Error exporting users:", error);
+      res.status(500).json({ message: "Failed to export users" });
+    }
+  });
+
+  // Admin: Export Referrals CSV
+  app.get('/api/admin/export/referrals', isAuthenticated, requireAdmin, auditAdminAction('export_referrals', 'admin'), async (req: any, res) => {
+    try {
+      const csvData = await storage.exportReferralsCSV();
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="referrals_export.csv"');
+      res.send(csvData);
+    } catch (error) {
+      console.error("Error exporting referrals:", error);
+      res.status(500).json({ message: "Failed to export referrals" });
+    }
+  });
+
+  // Admin: Export Payments CSV
+  app.get('/api/admin/export/payments', isAuthenticated, requireAdmin, auditAdminAction('export_payments', 'admin'), async (req: any, res) => {
+    try {
+      const csvData = await storage.exportPaymentsCSV();
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="payments_export.csv"');
+      res.send(csvData);
+    } catch (error) {
+      console.error("Error exporting payments:", error);
+      res.status(500).json({ message: "Failed to export payments" });
+    }
+  });
+
+  // ================== STRIPE PAYMENT PROCESSING ROUTES ==================
+
+  // Admin: Get Pending Payments
+  app.get('/api/admin/payments/pending', isAuthenticated, requireAdmin, auditAdminAction('view_pending_payments', 'payment'), async (req: any, res) => {
+    try {
+      const pendingPayments = await storage.getPendingPayments();
+      res.json(pendingPayments);
+    } catch (error) {
+      console.error("Error fetching pending payments:", error);
+      res.status(500).json({ message: "Failed to fetch pending payments" });
+    }
+  });
+
+  // Admin: Get Payment History
+  app.get('/api/admin/payments/history', isAuthenticated, requireAdmin, auditAdminAction('view_payment_history', 'payment'), async (req: any, res) => {
+    try {
+      const paymentHistory = await storage.getPaymentHistory();
+      res.json(paymentHistory);
+    } catch (error) {
+      console.error("Error fetching payment history:", error);
+      res.status(500).json({ message: "Failed to fetch payment history" });
+    }
+  });
+
+  // Admin: Process Stripe Payout
+  app.post('/api/admin/payments/process-stripe', isAuthenticated, requireAdmin, auditAdminAction('process_stripe_payment', 'payment'), async (req: any, res) => {
+    try {
+      const { referralId, recipientId, amount, recipientEmail, recipientName } = req.body;
+
+      if (!referralId || !recipientId || !amount) {
+        return res.status(400).json({ 
+          message: "Missing required fields: referralId, recipientId, and amount are required" 
+        });
+      }
+
+      if (!stripe) {
+        return res.status(500).json({ 
+          message: "Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable." 
+        });
+      }
+
+      // Convert amount to smallest currency unit (pence for GBP)
+      const amountInPence = Math.round(parseFloat(amount) * 100);
+
+      // Create or retrieve Stripe Connect account for recipient
+      let stripeAccountId: string;
+      
+      try {
+        // Check if user already has a Stripe Connect account
+        const user = await storage.getUser(recipientId);
+        
+        if (user?.stripeAccountId) {
+          stripeAccountId = user.stripeAccountId;
+        } else {
+          // Create a new Stripe Connect account for the recipient
+          const account = await stripe.accounts.create({
+            type: 'express',
+            country: 'GB',
+            email: recipientEmail || user?.email,
+            capabilities: {
+              transfers: { requested: true }
+            },
+            business_type: 'individual',
+            metadata: {
+              userId: recipientId,
+              partnerId: user?.partnerId || ''
+            }
+          });
+          
+          stripeAccountId = account.id;
+          
+          // Save the Stripe account ID to the user record
+          await storage.updateUser(recipientId, { stripeAccountId });
+        }
+
+        // Create a transfer to the Connect account
+        const transfer = await stripe.transfers.create({
+          amount: amountInPence,
+          currency: 'gbp',
+          destination: stripeAccountId,
+          description: `Commission payout for referral ${referralId}`,
+          metadata: {
+            referralId,
+            recipientId,
+            recipientName: recipientName || 'Partner',
+            processedBy: req.user.claims.email
+          }
+        });
+
+        // Record the payment in the database
+        await storage.processStripePayment(referralId, recipientId, parseFloat(amount), transfer.id);
+
+        // Create admin audit log
+        await storage.createAdminAuditLog({
+          actorId: req.user.claims.sub,
+          action: 'process_stripe_payment',
+          entityType: 'payment',
+          entityId: referralId,
+          details: {
+            recipientId,
+            amount: parseFloat(amount),
+            stripeTransferId: transfer.id,
+            stripeAccountId,
+            currency: 'GBP'
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent') || null
+        });
+
+        res.json({
+          success: true,
+          message: "Payment processed successfully",
+          stripeTransferId: transfer.id,
+          amount: amount,
+          recipient: recipientName || recipientEmail
+        });
+
+      } catch (stripeError: any) {
+        console.error("Stripe error:", stripeError);
+        
+        // Handle specific Stripe errors
+        if (stripeError.type === 'StripeInvalidRequestError') {
+          return res.status(400).json({ 
+            message: "Invalid payment request",
+            error: stripeError.message 
+          });
+        }
+        
+        throw stripeError;
+      }
+
+    } catch (error) {
+      console.error("Error processing Stripe payment:", error);
+      res.status(500).json({ 
+        message: "Failed to process payment",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Admin: Process Manual Payment (non-Stripe)
+  app.post('/api/admin/payments/process-manual', isAuthenticated, requireAdmin, auditAdminAction('process_manual_payment', 'payment'), async (req: any, res) => {
+    try {
+      const { referralId, recipientId, amount, paymentMethod, paymentReference, notes } = req.body;
+
+      if (!referralId || !recipientId || !amount) {
+        return res.status(400).json({ 
+          message: "Missing required fields: referralId, recipientId, and amount are required" 
+        });
+      }
+
+      // Record the manual payment
+      await storage.processStripePayment(
+        referralId, 
+        recipientId, 
+        parseFloat(amount), 
+        paymentReference || `MANUAL_${Date.now()}`
+      );
+
+      // Create admin audit log
+      await storage.createAdminAuditLog({
+        actorId: req.user.claims.sub,
+        action: 'process_manual_payment',
+        entityType: 'payment',
+        entityId: referralId,
+        details: {
+          recipientId,
+          amount: parseFloat(amount),
+          paymentMethod: paymentMethod || 'Bank Transfer',
+          paymentReference,
+          notes
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.json({
+        success: true,
+        message: "Manual payment recorded successfully",
+        amount: amount,
+        paymentReference: paymentReference || `MANUAL_${Date.now()}`
+      });
+
+    } catch (error) {
+      console.error("Error processing manual payment:", error);
+      res.status(500).json({ 
+        message: "Failed to process manual payment",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
