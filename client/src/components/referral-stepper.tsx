@@ -409,6 +409,7 @@ function ContactStep({ form }: ContactStepProps) {
           placeholder="e.g., ABC Coffee Shop"
           className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
           data-testid="input-business-name"
+          autoComplete="off"
         />
         {form.formState.errors.businessName && (
           <p className="text-red-500 text-sm flex items-center gap-1 mt-2">
@@ -429,6 +430,7 @@ function ContactStep({ form }: ContactStepProps) {
           placeholder="e.g., John Smith"
           className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
           data-testid="input-contact-name"
+          autoComplete="off"
         />
         {form.formState.errors.contactName && (
           <p className="text-red-500 text-sm flex items-center gap-1 mt-2">
@@ -457,6 +459,7 @@ function ContactStep({ form }: ContactStepProps) {
             placeholder="contact@business.com"
             className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
             data-testid="input-business-email"
+            autoComplete="off"
           />
           {form.formState.errors.businessEmail && (
             <p className="text-red-500 text-sm flex items-center gap-1 mt-2">
@@ -478,6 +481,7 @@ function ContactStep({ form }: ContactStepProps) {
             placeholder="+44 20 1234 5678"
             className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
             data-testid="input-business-phone"
+            autoComplete="off"
           />
         </div>
       </div>
@@ -645,6 +649,7 @@ function BusinessStep({ form, businessTypes }: BusinessStepProps) {
           rows={4}
           className="text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
           data-testid="textarea-business-address"
+          autoComplete="off"
         />
       </div>
 
@@ -660,6 +665,7 @@ function BusinessStep({ form, businessTypes }: BusinessStepProps) {
           rows={3}
           className="text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
           data-testid="textarea-notes"
+          autoComplete="off"
         />
       </div>
     </div>
