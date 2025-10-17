@@ -7,7 +7,6 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import ReferralStepper from "@/components/referral-stepper";
-import EarningsPreviewSidebar from "@/components/earnings-preview-sidebar";
 import BillUpload from "@/components/bill-upload";
 import { CheckCircleIcon, Sparkles } from "lucide-react";
 
@@ -17,7 +16,6 @@ export default function SubmitReferral() {
   const [submittedReferralId, setSubmittedReferralId] = useState<string | null>(null);
   const [showBillUpload, setShowBillUpload] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [formData, setFormData] = useState<any>({});
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -34,7 +32,7 @@ export default function SubmitReferral() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: businessTypes } = useQuery({
+  const { data: businessTypes = [] } = useQuery<any[]>({
     queryKey: ["/api/business-types"],
     enabled: isAuthenticated,
   });
@@ -78,12 +76,6 @@ export default function SubmitReferral() {
     },
   });
 
-  const handleDraftSave = (data: any) => {
-    setFormData(data);
-    // Could also save to localStorage or API here
-    console.log("Draft saved:", data);
-  };
-
   const handleReferralSubmit = (data: any) => {
     submitReferralMutation.mutate(data);
   };
@@ -93,14 +85,6 @@ export default function SubmitReferral() {
     toast({
       title: "🎉 Process Complete!",
       description: "Your referral and bills have been submitted. We'll be in touch with a competitive quote soon.",
-    });
-  };
-
-  const handleSkipBillUpload = () => {
-    setShowBillUpload(false);
-    toast({
-      title: "Referral Submitted",
-      description: "Your referral has been submitted successfully. You can upload bills later from the dashboard.",
     });
   };
 
@@ -168,7 +152,6 @@ export default function SubmitReferral() {
               <BillUpload
                 referralId={submittedReferralId}
                 onComplete={handleBillUploadComplete}
-                onSkip={handleSkipBillUpload}
                 isOptional={true}
               />
             </div>
@@ -200,57 +183,13 @@ export default function SubmitReferral() {
             </div>
           </div>
 
-          {/* Main Content Layout - Stepper + Sidebar */}
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-              
-              {/* Main Stepper Content - 8 columns on XL screens */}
-              <div className="xl:col-span-8">
-                <ReferralStepper 
-                  businessTypes={businessTypes || []}
-                  onSubmit={handleReferralSubmit}
-                  onDraftSave={handleDraftSave}
-                  isSubmitting={submitReferralMutation.isPending}
-                />
-              </div>
-
-              {/* Earnings Preview Sidebar - 4 columns on XL screens, bottom sheet on mobile */}
-              <div className="xl:col-span-4">
-                {/* Desktop Sidebar */}
-                <div className="hidden xl:block">
-                  <div className="sticky top-8">
-                    <EarningsPreviewSidebar 
-                      selectedProducts={formData?.selectedProducts || []}
-                      monthlyVolume={formData?.monthlyVolume || 0}
-                      fundingAmount={formData?.fundingAmount || 0}
-                    />
-                  </div>
-                </div>
-
-                {/* Mobile Bottom Sheet */}
-                <div className="xl:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl">
-                  <div className="px-4 py-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">Earnings Preview</h3>
-                      <button 
-                        className="text-gray-500 hover:text-gray-700"
-                        data-testid="button-toggle-sidebar"
-                      >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="text-2xl font-bold text-green-600">
-                      £{((formData?.selectedProducts || []).includes('card-payments') ? 500 : 0) + 
-                         ((formData?.selectedProducts || []).includes('business-funding') ? 1000 : 0)}
-                    </div>
-                    <div className="text-sm text-gray-600">Estimated Commission</div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
+          {/* Main Content - Full Width Centered Layout */}
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <ReferralStepper 
+              businessTypes={businessTypes}
+              onSubmit={handleReferralSubmit}
+              isSubmitting={submitReferralMutation.isPending}
+            />
           </div>
         </div>
 

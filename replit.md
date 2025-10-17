@@ -4,12 +4,16 @@ PartnerConnector is a professional referral platform designed for accountants, b
 
 # Recent Changes
 
-**Referral Form Simplification (October 2025)**
-- Completely removed business name autocomplete/search functionality from all referral submission forms
-- Deleted business-name-autocomplete.tsx component and old referral-form.tsx
-- Unified referral submission experience uses ReferralStepper component with simple text inputs
-- Business name field is now a standard input without search or autocomplete features
-- All referral submission now flows through the streamlined 3-step ReferralStepper (Contact → Business → Review)
+**Referral Form Complete Redesign (October 2025)**
+- **Full-width layout**: Removed earnings preview sidebar entirely for cleaner, focused submission experience
+- **3-stage mobile-first flow**: Client Info → Services → Upload & Submit
+  - Stage 1: Business name, contact details, email, phone, address (all plain text inputs)
+  - Stage 2: Product selection with visual cards, business type dropdown, monthly volume slider
+  - Stage 3: Review summary, GDPR consent, submission with file upload
+- **No search/autocomplete**: All inputs are simple text fields with autoComplete="off"
+- **Mobile-optimized**: Large h-14 inputs, rounded-2xl cards, teal/green Dojo brand colors
+- **Centered layout**: max-w-4xl container for optimal reading width on all devices
+- Form takes full page width for better UX and reduced cognitive load
 
 **Team Management Real Data Integration (October 2025)**
 - Replaced all mock data with real user data from database
