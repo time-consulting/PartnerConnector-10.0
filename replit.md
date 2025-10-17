@@ -4,6 +4,16 @@ PartnerConnector is a professional referral platform designed for accountants, b
 
 # Recent Changes
 
+**Contact Form Dialog Full-Width Enhancement (October 2025)**
+- Redesigned contact form dialog for desktop-first, near full-screen experience
+- **Desktop**: Dialog now uses 98% of viewport width (`sm:w-[98vw]`) with no maximum width constraint (`max-w-none`)
+- **Mobile**: Maintains 95% viewport width for touch-friendly spacing
+- **Enhanced spacing**: Increased internal padding to `p-8` for better content breathing room
+- **Smooth animations**: Added `transition-all duration-300 ease-in-out` for polished open/close transitions
+- **Vertical space**: Increased height to 98vh (`max-h-[98vh]`) for better form visibility
+- Fixed critical upsertUser bug where user IDs were being overwritten during updates, preventing foreign key relationship breakage
+- All changes architect-reviewed and approved with no regressions detected
+
 **Referral Form Complete Redesign (October 2025)**
 - **Full-width layout**: Removed earnings preview sidebar entirely for cleaner, focused submission experience
 - **3-stage mobile-first flow**: Client Info → Services → Upload & Submit
