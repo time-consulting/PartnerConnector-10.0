@@ -15,8 +15,16 @@ export default function PWAInstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component only runs on client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
+    // Only run on client side
+    if (!mounted || typeof window === 'undefined') return;
     // Check if app is already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
@@ -65,7 +73,7 @@ export default function PWAInstallPrompt() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [mounted]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
@@ -95,6 +103,9 @@ export default function PWAInstallPrompt() {
     setShowIOSInstructions(false);
   };
 
+  // Don't render until mounted (client-side only)
+  if (!mounted) return null;
+  
   // Don't show anything if installed or recently dismissed
   if (isInstalled || dismissedAt) return null;
 
