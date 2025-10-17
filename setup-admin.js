@@ -5,7 +5,7 @@ import https from 'https';
 
 const data = JSON.stringify({
   secretKey: 'your-secret-key-2024',
-  email: 'd.skeats@gmail.com'
+  email: 'd.skeats@googlemail.com'
 });
 
 const options = {
@@ -39,6 +39,6 @@ req.on('error', (error) => {
   console.error('❌ Error:', error);
 });
 
-console.log('🔑 Granting admin access to d.skeats@gmail.com...');
+console.log('🔑 Granting admin access to d.skeats@googlemail.com...');
 req.write(data);
 req.end();
