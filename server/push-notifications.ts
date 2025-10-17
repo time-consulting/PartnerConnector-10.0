@@ -10,10 +10,14 @@ const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@partnerconnector.app";
 
+// Track if push notifications are enabled
+let pushNotificationsEnabled = false;
+
 // Check if VAPID keys are configured
 if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-  const errorMessage = "VAPID keys are not configured. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables.";
-  logger.error(errorMessage);
+  const errorMessage = "VAPID keys are not configured. Push notifications will be disabled.";
+  logger.warn(errorMessage);
+  logger.info("To enable push notifications, set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables.");
   logger.info("You can generate new VAPID keys by running: node -e \"const webpush = require('web-push'); const keys = webpush.generateVAPIDKeys(); console.log('VAPID_PUBLIC_KEY=' + keys.publicKey); console.log('VAPID_PRIVATE_KEY=' + keys.privateKey);\"");
   
   // In development, generate temporary keys with a warning
@@ -30,9 +34,11 @@ if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
       tempKeys.publicKey,
       tempKeys.privateKey
     );
+    pushNotificationsEnabled = true;
   } else {
-    // In production, throw an error if VAPID keys are not configured
-    throw new Error(errorMessage);
+    // In production, just log a warning and disable push notifications
+    logger.warn("⚠️  PRODUCTION MODE: Push notifications are disabled due to missing VAPID keys.");
+    logger.warn("Your app will function normally but without push notification capabilities.");
   }
 } else {
   // Configure web-push with VAPID keys from environment
@@ -41,6 +47,8 @@ if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     VAPID_PUBLIC_KEY,
     VAPID_PRIVATE_KEY
   );
+  pushNotificationsEnabled = true;
+  logger.info("✅ Push notifications are enabled with configured VAPID keys.");
 }
 
 // Development mode VAPID key generation (run once to generate keys)
@@ -57,6 +65,11 @@ export function generateVapidKeys() {
 
 // Get public VAPID key for client
 export function getPublicVapidKey(): string {
+  // If push notifications are disabled, return empty string
+  if (!pushNotificationsEnabled) {
+    return "";
+  }
+  
   // In development mode with temporary keys, we need to get the key from webpush config
   if (!VAPID_PUBLIC_KEY && process.env.NODE_ENV === 'development') {
     // Return a placeholder or the key that was set during initialization
@@ -148,6 +161,12 @@ export async function sendPushNotificationToUser(
     sentCount: 0,
     errors: [] as any[]
   };
+
+  // If push notifications are disabled, return early
+  if (!pushNotificationsEnabled) {
+    logger.info("Push notifications are disabled. Skipping notification send.");
+    return results;
+  }
 
   try {
     // Get all active subscriptions for user
