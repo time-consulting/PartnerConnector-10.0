@@ -21,7 +21,7 @@ import { Link } from "wouter";
 export default function Login() {
   const handleLogin = () => {
     // Redirect to Replit Auth which supports all these methods
-    window.location.href = '/login';
+    window.location.href = '/api/login';
   };
 
   return (
@@ -40,11 +40,9 @@ export default function Login() {
                 <span className="text-xl font-bold text-gray-900">PartnerConnector</span>
               </div>
             </Link>
-            <Link href="/">
-              <Button variant="ghost" data-testid="button-back-home">
-                Back to Home
-              </Button>
-            </Link>
+            <Button variant="ghost" onClick={() => window.location.href = '/'} data-testid="button-back-home">
+              Back to Home
+            </Button>
           </div>
         </div>
       </header>
@@ -155,9 +153,9 @@ export default function Login() {
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}
                 <Link href="/signup">
-                  <a className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer" data-testid="link-signup">
+                  <span className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer" data-testid="link-signup">
                     Sign up for free
-                  </a>
+                  </span>
                 </Link>
               </p>
             </div>
