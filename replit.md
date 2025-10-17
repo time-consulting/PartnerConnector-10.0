@@ -4,6 +4,13 @@ PartnerConnector is a professional referral platform designed for accountants, b
 
 # Recent Changes
 
+**Referral Form Simplification (October 2025)**
+- Completely removed business name autocomplete/search functionality from all referral submission forms
+- Deleted business-name-autocomplete.tsx component and old referral-form.tsx
+- Unified referral submission experience uses ReferralStepper component with simple text inputs
+- Business name field is now a standard input without search or autocomplete features
+- All referral submission now flows through the streamlined 3-step ReferralStepper (Contact → Business → Review)
+
 **Team Management Real Data Integration (October 2025)**
 - Replaced all mock data with real user data from database
 - Created `/api/team/progression` endpoint aggregating: partner level, team size, total revenue (direct + override), invite statistics
