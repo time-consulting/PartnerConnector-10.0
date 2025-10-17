@@ -236,20 +236,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser, referralCode?: string): Promise<User> {
-    const existingUser = await this.getUser(userData.id);
+    // Check for existing user by ID first
+    let existingUser = await this.getUser(userData.id);
+    
+    // If no user by ID, check by email (to handle email unique constraint)
+    if (!existingUser && userData.email) {
+      const [userByEmail] = await db.select().from(users).where(eq(users.email, userData.email));
+      existingUser = userByEmail;
+    }
+    
     const isNewUser = !existingUser;
 
-    const result = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
+    let result;
+    if (existingUser) {
+      // Update existing user - preserve the original ID to maintain foreign key relationships
+      const { id, ...updateData } = userData;
+      result = await db
+        .update(users)
+        .set({
+          ...updateData,
           updatedAt: new Date(),
-        },
-      })
-      .returning();
+        })
+        .where(eq(users.id, existingUser.id))
+        .returning();
+    } else {
+      // Insert new user
+      result = await db
+        .insert(users)
+        .values(userData)
+        .returning();
+    }
     
     const user = (result as User[])[0];
 
