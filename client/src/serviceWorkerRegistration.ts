@@ -90,11 +90,12 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
         response.status === 404 ||
         (contentType != null && contentType.indexOf('javascript') === -1)
       ) {
-        // No service worker found. Probably a different app. Reload the page.
+        // No service worker found in development - this is expected, don't reload
+        console.log('Service worker not found. This is normal in development mode.');
         navigator.serviceWorker.ready.then((registration) => {
-          registration.unregister().then(() => {
-            window.location.reload();
-          });
+          registration.unregister();
+        }).catch(() => {
+          // Silently fail if no service worker to unregister
         });
       } else {
         // Service worker found. Proceed as normal.

@@ -11,7 +11,9 @@ createRoot(document.getElementById("root")!).render(
 );
 
 // Register service worker for PWA support
-// Only register in production to avoid caching issues during development
+// DISABLED: Service worker causing infinite reload loop in development
+// TODO: Re-enable with proper production-only logic
+/*
 if (process.env.NODE_ENV === 'production') {
   serviceWorkerRegistration.register({
     onUpdate: (registration) => {
@@ -32,3 +34,4 @@ if (process.env.NODE_ENV === 'production') {
   // Unregister service worker in development to avoid caching issues
   serviceWorkerRegistration.unregister();
 }
+*/
