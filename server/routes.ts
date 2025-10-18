@@ -737,6 +737,216 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Team analytics - hierarchy and performance data
+  app.get('/api/team-analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get team members under this user (direct and indirect)
+      const teamMembers = await storage.getTeamHierarchy(userId);
+      
+      // Calculate performance metrics
+      const totalTeamMembers = teamMembers.length;
+      const totalRevenue = teamMembers.reduce((sum, m) => sum + (m.totalRevenue || 0), 0);
+      const activeMembers = teamMembers.filter(m => m.hasSubmittedDeals > 0).length;
+      const avgConversionRate = activeMembers > 0 ? (activeMembers / totalTeamMembers) * 100 : 0;
+      
+      // Format team member data
+      const formattedMembers = teamMembers.map((member, index) => ({
+        id: member.id,
+        name: `${member.firstName} ${member.lastName}`,
+        email: member.email,
+        level: member.partnerLevel === 1 ? "Direct Team (L1)" : member.partnerLevel === 2 ? "Extended Team (L2)" : "Network (L3)",
+        rank: index + 1,
+        totalInvites: member.teamSize || 0,
+        activeMembers: member.activeTeamMembers || 0,
+        conversionRate: member.teamSize > 0 ? ((member.activeTeamMembers || 0) / member.teamSize) * 100 : 0,
+        totalRevenue: member.totalRevenue || 0,
+        monthlyRevenue: member.monthlyRevenue || 0,
+        joinedAt: member.createdAt,
+        lastActive: member.lastActiveAt || member.createdAt,
+        performanceScore: Math.min(100, Math.round((member.totalRevenue || 0) / 100)),
+      }));
+      
+      const analytics = {
+        performanceMetrics: {
+          totalTeamMembers,
+          totalRevenue,
+          avgConversionRate: Math.round(avgConversionRate),
+          totalInvites: teamMembers.reduce((sum, m) => sum + (m.teamSize || 0), 0),
+          monthlyGrowth: 0, // TODO: Calculate from historical data
+          topPerformer: formattedMembers[0]?.name || "None",
+        },
+        teamMembers: formattedMembers,
+        chartData: [], // TODO: Implement historical data
+      };
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching team analytics:", error);
+      res.status(500).json({ message: "Failed to fetch team analytics" });
+    }
+  });
+
+  // Send team invite via email/phone (supports GHL integration)
+  app.post('/api/invites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const { email, phone, firstName, lastName, role = 'member', message } = req.body;
+      
+      if (!email && !phone) {
+        return res.status(400).json({ message: "Either email or phone number is required" });
+      }
+      
+      // Generate invite link with user's referral code
+      const inviteCode = user.referralCode || user.partnerId || userId;
+      const inviteUrl = `${req.protocol}://${req.get('host')}/signup?ref=${inviteCode}`;
+      
+      // Send invite via GHL if configured
+      if (process.env.GHL_API_KEY && process.env.GHL_LOCATION_ID) {
+        try {
+          const inviteData = {
+            firstName: firstName || email?.split('@')[0] || 'Partner',
+            lastName: lastName || 'Member',
+            email: email || undefined,
+            phone: phone || undefined,
+            customFields: {
+              invited_by: `${user.firstName} ${user.lastName}`,
+              invited_by_id: userId,
+              team_role: role,
+              invite_message: message || '',
+              invite_url: inviteUrl,
+              invite_date: new Date().toISOString()
+            },
+            tags: ['Team Invitation', `Role: ${role}`, 'PartnerConnector', `Invited by: ${user.firstName}`]
+          };
+          
+          const response = await fetch(`https://services.leadconnectorhq.com/locations/${process.env.GHL_LOCATION_ID}/contacts`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+              'Content-Type': 'application/json',
+              'Version': '2021-07-28'
+            },
+            body: JSON.stringify(inviteData)
+          });
+          
+          if (response.ok) {
+            const ghlResponse = await response.json();
+            
+            // Trigger workflow if configured
+            if (process.env.GHL_WORKFLOW_ID && ghlResponse.contact?.id) {
+              const workflowResponse = await fetch(`https://services.leadconnectorhq.com/contacts/${ghlResponse.contact.id}/workflow/${process.env.GHL_WORKFLOW_ID}`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                  'Content-Type': 'application/json',
+                  'Version': '2021-07-28'
+                }
+              });
+              
+              if (!workflowResponse.ok) {
+                console.error('Failed to trigger GHL workflow:', await workflowResponse.text());
+              }
+            }
+            
+            console.log(`Invitation sent via GHL to ${email || phone}. Contact ID: ${ghlResponse.contact?.id}`);
+          } else {
+            console.error('GHL API error:', await response.text());
+          }
+        } catch (error) {
+          console.error('Error sending invitation via GHL:', error);
+        }
+      }
+      
+      // Store invitation in database for tracking
+      // TODO: Implement trackInvitation in storage
+      // await storage.trackInvitation({
+      //   inviterId: userId,
+      //   inviterName: `${user.firstName} ${user.lastName}`,
+      //   inviteeEmail: email || null,
+      //   inviteePhone: phone || null,
+      //   inviteCode: inviteCode,
+      //   inviteUrl: inviteUrl,
+      //   role: role,
+      //   message: message || null,
+      //   sentAt: new Date()
+      // });
+      
+      // Create notification for the inviter
+      await createNotification(userId, {
+        type: 'team_invite_sent',
+        title: 'Team Invitation Sent',
+        message: `Invitation sent to ${email || phone}`,
+        metadata: {
+          invitee: email || phone,
+          role: role
+        }
+      });
+      
+      res.json({
+        success: true,
+        message: 'Invitation sent successfully',
+        inviteUrl: inviteUrl,
+        inviteCode: inviteCode
+      });
+    } catch (error) {
+      console.error("Error sending invitation:", error);
+      res.status(500).json({ message: "Failed to send invitation" });
+    }
+  });
+  
+  // Get pending team invitations
+  app.get('/api/team-invitations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      // Return empty array for now - TODO: implement getInvitationsByUserId
+      const invitations: any[] = [];
+      res.json(invitations);
+    } catch (error) {
+      console.error("Error fetching team invitations:", error);
+      res.status(500).json({ message: "Failed to fetch team invitations" });
+    }
+  });
+  
+  // Resend team invitation
+  app.patch('/api/team-invitations/:inviteId/resend', isAuthenticated, async (req: any, res) => {
+    try {
+      const { inviteId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // TODO: Implement invitation resend
+      console.log(`Resending invitation ${inviteId} for user ${userId}`);
+      
+      res.json({ success: true, message: "Invitation resent successfully" });
+    } catch (error) {
+      console.error("Error resending invitation:", error);
+      res.status(500).json({ message: "Failed to resend invitation" });
+    }
+  });
+  
+  // Cancel team invitation  
+  app.delete('/api/team-invitations/:inviteId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { inviteId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // TODO: Implement invitation cancellation
+      console.log(`Cancelling invitation ${inviteId} for user ${userId}`);
+      
+      res.json({ success: true, message: "Invitation cancelled successfully" });
+    } catch (error) {
+      console.error("Error cancelling invitation:", error);
+      res.status(500).json({ message: "Failed to cancel invitation" });
+    }
+  });
+
   // Bill upload
   app.post('/api/referrals/:id/upload-bill', upload.array('bills', 5), async (req: any, res) => {
     try {

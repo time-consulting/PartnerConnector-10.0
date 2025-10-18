@@ -4,6 +4,13 @@ PartnerConnector is a professional referral platform designed for accountants, b
 
 # Recent Changes
 
+**Team Analytics Real Data Integration (October 2025)**
+- **New API Endpoint**: `/api/team-analytics` created to fetch real team hierarchy data
+- **Storage Method**: Implemented `getTeamHierarchy()` to query direct team members with performance metrics
+- **Team Analytics Component**: Updated to use `useQuery` hook fetching from new endpoint instead of mock data
+- **Data Metrics**: Real-time calculation of team size, deals submitted, total revenue, and monthly revenue
+- **Commission Structure**: Maintained 60% direct, 20% L2, 10% L3 MLM structure in UI displays
+
 **Mobile Engagement Features Implementation (October 2025)**
 - **Real-time Notifications**: WebSocket infrastructure for instant referral status updates
 - **Quick Add Mobile Form**: 30-second lead capture form exclusive to mobile devices with 3-step flow

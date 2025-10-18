@@ -531,20 +531,20 @@ export default function TeamManagement() {
                     {/* Commission Structure Card */}
                     <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0">
                       <CardHeader>
-                        <CardTitle className="text-sm font-medium text-green-800">Commission Rates</CardTitle>
+                        <CardTitle className="text-sm font-medium text-green-800">Commission Structure</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2">
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-green-700">Direct Referrals</span>
-                          <Badge className="bg-green-200 text-green-800">7.5%</Badge>
+                          <span className="text-green-700">Direct Referrals (L1)</span>
+                          <Badge className="bg-green-200 text-green-800">60%</Badge>
                         </div>
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-green-700">Level 2 Team</span>
-                          <Badge className="bg-green-200 text-green-800">2%</Badge>
+                          <span className="text-green-700">Team Override (L2)</span>
+                          <Badge className="bg-green-200 text-green-800">20%</Badge>
                         </div>
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-green-700">Performance Bonus</span>
-                          <Badge className="bg-green-200 text-green-800">+10%</Badge>
+                          <span className="text-green-700">Extended Network (L3)</span>
+                          <Badge className="bg-green-200 text-green-800">10%</Badge>
                         </div>
                       </CardContent>
                     </Card>

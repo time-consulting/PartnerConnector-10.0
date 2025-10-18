@@ -54,7 +54,8 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 
 // Form validation schema
 const inviteFormSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Please enter a valid email address").optional(),
+  phone: z.string().optional(),
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   role: z.enum(["member", "manager", "admin"], {
@@ -69,6 +70,9 @@ const inviteFormSchema = z.object({
   sendWelcomeEmail: z.boolean().default(true),
   setCustomInviteLink: z.boolean().default(false),
   customInviteCode: z.string().optional(),
+}).refine((data) => data.email || data.phone, {
+  message: "Either email or phone number is required",
+  path: ["email"],
 });
 
 type InviteFormData = z.infer<typeof inviteFormSchema>;
@@ -137,6 +141,7 @@ export default function InviteTeamMember({
     resolver: zodResolver(inviteFormSchema),
     defaultValues: {
       email: "",
+      phone: "",
       firstName: "",
       lastName: "",
       role: "member",
@@ -154,23 +159,28 @@ export default function InviteTeamMember({
 
   const sendInviteMutation = useMutation({
     mutationFn: async (data: InviteFormData) => {
-      // Mock API call - would be real in production
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await apiRequest('/api/invites', 'POST', {
+        email: data.email,
+        phone: data.phone,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        message: data.message,
+      });
       
-      const invitation = {
+      return {
+        ...response,
         id: Date.now().toString(),
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
         status: "pending",
-        inviteCode: data.customInviteCode || `${userReferralCode}-${Date.now()}`,
+        inviteCode: response.inviteCode || userReferralCode,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         sentAt: new Date(),
-        inviteUrl: `${window.location.origin}/invite?code=${data.customInviteCode || `${userReferralCode}-${Date.now()}`}`,
+        inviteUrl: response.inviteUrl || `${window.location.origin}/signup?ref=${response.inviteCode || userReferralCode}`,
       };
-      
-      return invitation;
     },
     onSuccess: (invitation) => {
       setInvitationData(invitation);
@@ -282,24 +292,47 @@ export default function InviteTeamMember({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="john.doe@company.com"
-                            type="email"
-                            {...field}
-                            data-testid="input-invite-email"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="john.doe@company.com"
+                              type="email"
+                              {...field}
+                              data-testid="input-invite-email"
+                            />
+                          </FormControl>
+                          <FormDescription>Send invite via email</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="+44 7123 456789"
+                              type="tel"
+                              {...field}
+                              data-testid="input-invite-phone"
+                            />
+                          </FormControl>
+                          <FormDescription>Send invite via SMS</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField

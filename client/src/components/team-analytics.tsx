@@ -1,4 +1,5 @@
 import { useState, Suspense, lazy } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -91,17 +92,22 @@ export default function TeamAnalytics({ isOpen, onClose, onRefresh }: TeamAnalyt
   const [timeRange, setTimeRange] = useState("6months");
   const [sortBy, setSortBy] = useState("revenue");
 
-  // Mock data - would come from API in production
-  const performanceMetrics: PerformanceMetrics = {
-    totalTeamMembers: 12,
-    totalRevenue: 28500,
-    avgConversionRate: 68,
-    totalInvites: 89,
-    monthlyGrowth: 15.2,
-    topPerformer: "Sarah Johnson",
+  // Fetch real data from API
+  const { data: analyticsData, isLoading, refetch } = useQuery({
+    queryKey: ['/api/team-analytics'],
+    enabled: isOpen,
+  });
+
+  const performanceMetrics: PerformanceMetrics = analyticsData?.performanceMetrics || {
+    totalTeamMembers: 0,
+    totalRevenue: 0,
+    avgConversionRate: 0,
+    totalInvites: 0,
+    monthlyGrowth: 0,
+    topPerformer: "None",
   };
 
-  const teamMembers: TeamMember[] = [
+  const teamMembers: TeamMember[] = analyticsData?.teamMembers || [
     {
       id: "1",
       name: "Sarah Johnson",

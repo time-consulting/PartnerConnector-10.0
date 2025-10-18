@@ -60,7 +60,7 @@ import {
 } from "@shared/schema";
 import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, gte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - mandatory for Replit Auth
@@ -1797,6 +1797,74 @@ export class DatabaseStorage implements IStorage {
         hasSubmittedDeals: member.referralCount
       };
     });
+  }
+
+  async getTeamHierarchy(userId: string): Promise<any[]> {
+    // Get all team members referred by this user (direct and indirect, up to 3 levels)
+    try {
+      // Get direct team members (Level 1)
+      const directTeam = await db
+        .select()
+        .from(users)
+        .where(eq(users.referredBy, userId));
+
+      // Process team member data with additional metrics
+      const teamWithMetrics = await Promise.all(directTeam.map(async (member) => {
+        // Get team size for this member
+        const [teamSizeResult] = await db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(users)
+          .where(eq(users.referredBy, member.id));
+        
+        // Get deals submitted by this member
+        const [dealsResult] = await db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(referrals)
+          .where(eq(referrals.userId, member.id));
+
+        // Get total revenue for this member
+        const [revenueResult] = await db
+          .select({ 
+            total: sql<number>`COALESCE(SUM(${commissionPayments.amount}), 0)` 
+          })
+          .from(commissionPayments)
+          .where(eq(commissionPayments.recipientId, member.id));
+
+        // Get monthly revenue for this member
+        const [monthlyResult] = await db
+          .select({ 
+            total: sql<number>`COALESCE(SUM(${commissionPayments.amount}), 0)` 
+          })
+          .from(commissionPayments)
+          .where(
+            and(
+              eq(commissionPayments.recipientId, member.id),
+              gte(commissionPayments.createdAt, sql`CURRENT_DATE - INTERVAL '30 days'`)
+            )
+          );
+
+        return {
+          id: member.id,
+          email: member.email,
+          firstName: member.firstName,
+          lastName: member.lastName,
+          createdAt: member.createdAt,
+          referredBy: member.referredBy,
+          partnerLevel: 1, // Direct referrals are L1
+          teamSize: (teamSizeResult as any)?.count || 0,
+          activeTeamMembers: 0, // TODO: Calculate active members
+          hasSubmittedDeals: (dealsResult as any)?.count || 0,
+          totalRevenue: Number((revenueResult as any)?.total || 0),
+          monthlyRevenue: Number((monthlyResult as any)?.total || 0),
+          lastActiveAt: null // TODO: Calculate last activity
+        };
+      }));
+
+      return teamWithMetrics;
+    } catch (error) {
+      console.error("Error fetching team hierarchy:", error);
+      return [];
+    }
   }
 
   async getProgressionData(userId: string): Promise<{
