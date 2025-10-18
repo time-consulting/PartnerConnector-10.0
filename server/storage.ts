@@ -1100,7 +1100,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (filters?.businessType) {
-      query = query.where(eq(referrals.businessType, filters.businessType));
+      query = query.where(eq(referrals.businessTypeId, filters.businessType));
     }
     
     if (filters?.dateFrom) {
@@ -1210,11 +1210,11 @@ export class DatabaseStorage implements IStorage {
     // Top products by count
     const topProducts = await db
       .select({
-        name: referrals.businessType,
+        name: referrals.businessTypeId,
         count: sql<number>`count(*)`
       })
       .from(referrals)
-      .groupBy(referrals.businessType)
+      .groupBy(referrals.businessTypeId)
       .orderBy(sql`count(*) DESC`)
       .limit(5);
 
@@ -1276,12 +1276,12 @@ export class DatabaseStorage implements IStorage {
     // Revenue by product
     const byProduct = await db
       .select({
-        product: referrals.businessType,
+        product: referrals.businessTypeId,
         revenue: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)`
       })
       .from(referrals)
       .where(eq(referrals.status, 'won'))
-      .groupBy(referrals.businessType)
+      .groupBy(referrals.businessTypeId)
       .orderBy(sql`SUM(CAST(actual_commission AS DECIMAL)) DESC`)
       .limit(10);
 
@@ -1464,7 +1464,7 @@ export class DatabaseStorage implements IStorage {
     const rows = allReferrals.map(ref => [
       ref.id,
       ref.businessName,
-      ref.businessType || '',
+      ref.businessTypeId || '',
       ref.status,
       ref.monthlyVolume || '',
       ref.submittedAt?.toISOString() || '',
@@ -1486,11 +1486,11 @@ export class DatabaseStorage implements IStorage {
         recipientId: commissionPayments.recipientId,
         amount: commissionPayments.amount,
         status: commissionPayments.status,
-        processedAt: commissionPayments.processedAt,
-        paymentReference: commissionPayments.paymentReference
+        processedAt: commissionPayments.paymentDate,
+        paymentReference: commissionPayments.transferReference
       })
       .from(commissionPayments)
-      .orderBy(desc(commissionPayments.processedAt));
+      .orderBy(desc(commissionPayments.paymentDate));
 
     const headers = ['ID', 'Referral ID', 'Recipient ID', 'Amount', 'Status', 'Processed At', 'Payment Reference'];
     const rows = payments.map(payment => [
@@ -1573,8 +1573,8 @@ export class DatabaseStorage implements IStorage {
         referralId: commissionPayments.referralId,
         amount: commissionPayments.amount,
         status: commissionPayments.status,
-        processedAt: commissionPayments.processedAt,
-        paymentReference: commissionPayments.paymentReference,
+        processedAt: commissionPayments.paymentDate,
+        paymentReference: commissionPayments.transferReference,
         businessName: referrals.businessName,
         partnerId: users.partnerId,
         firstName: users.firstName,
@@ -1583,7 +1583,7 @@ export class DatabaseStorage implements IStorage {
       .from(commissionPayments)
       .leftJoin(referrals, eq(commissionPayments.referralId, referrals.id))
       .leftJoin(users, eq(commissionPayments.recipientId, users.id))
-      .orderBy(desc(commissionPayments.processedAt));
+      .orderBy(desc(commissionPayments.paymentDate));
 
     return history.map(payment => ({
       id: payment.id,

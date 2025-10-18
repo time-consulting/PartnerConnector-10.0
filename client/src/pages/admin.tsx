@@ -714,6 +714,263 @@ export default function AdminDashboard() {
               <MlmVisualization userId={(user as any)?.id} showFullTree={true} />
             </TabsContent>
 
+            <TabsContent value="analytics">
+              <div className="space-y-6">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-blue-600">Total Users</p>
+                          <p className="text-3xl font-bold text-blue-900">{adminStats?.totalUsers || 0}</p>
+                          <p className="text-xs text-blue-600 mt-1">Active partners</p>
+                        </div>
+                        <Users className="w-10 h-10 text-blue-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-green-600">Total Referrals</p>
+                          <p className="text-3xl font-bold text-green-900">{adminStats?.totalReferrals || 0}</p>
+                          <p className="text-xs text-green-600 mt-1">All time deals</p>
+                        </div>
+                        <FileBarChart className="w-10 h-10 text-green-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-purple-600">Total Commissions</p>
+                          <p className="text-3xl font-bold text-purple-900">£{adminStats?.totalCommissions?.toFixed(2) || '0.00'}</p>
+                          <p className="text-xs text-purple-600 mt-1">Lifetime earnings</p>
+                        </div>
+                        <DollarSign className="w-10 h-10 text-purple-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-orange-600">Conversion Rate</p>
+                          <p className="text-3xl font-bold text-orange-900">{adminStats?.conversionRate || 0}%</p>
+                          <p className="text-xs text-orange-600 mt-1">Quote to deal</p>
+                        </div>
+                        <TrendingUp className="w-10 h-10 text-orange-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Commission Structure Display */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <Target className="w-6 h-6 text-blue-600" />
+                      MLM Commission Structure
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <h3 className="font-bold text-green-900 mb-2">Direct Sales (L1)</h3>
+                        <p className="text-3xl font-bold text-green-700">60%</p>
+                        <p className="text-sm text-green-600 mt-1">Commission on direct referrals</p>
+                      </div>
+                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h3 className="font-bold text-blue-900 mb-2">Level 2 Team</h3>
+                        <p className="text-3xl font-bold text-blue-700">20%</p>
+                        <p className="text-sm text-blue-600 mt-1">Override on team sales</p>
+                      </div>
+                      <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                        <h3 className="font-bold text-purple-900 mb-2">Extended Network (L3)</h3>
+                        <p className="text-3xl font-bold text-purple-700">10%</p>
+                        <p className="text-sm text-purple-600 mt-1">Network override commission</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Activity */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <Activity className="w-6 h-6 text-blue-600" />
+                      Recent Activity
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {adminStats?.recentActivity?.length > 0 ? (
+                      <div className="space-y-3">
+                        {adminStats.recentActivity.map((activity: any, index: number) => (
+                          <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{activity.description}</p>
+                              <p className="text-xs text-gray-500">{activity.timestamp}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">No recent activity</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <div className="space-y-6">
+                {/* Export Data Section */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <Database className="w-6 h-6 text-blue-600" />
+                      Data Export
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col items-center justify-center gap-2"
+                        onClick={async () => {
+                          const response = await fetch('/api/admin/export/users');
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
+                          a.click();
+                        }}
+                        data-testid="button-export-users"
+                      >
+                        <Users className="w-6 h-6" />
+                        <span>Export Users CSV</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col items-center justify-center gap-2"
+                        onClick={async () => {
+                          const response = await fetch('/api/admin/export/referrals');
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `referrals-export-${new Date().toISOString().split('T')[0]}.csv`;
+                          a.click();
+                        }}
+                        data-testid="button-export-referrals"
+                      >
+                        <FileText className="w-6 h-6" />
+                        <span>Export Referrals CSV</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col items-center justify-center gap-2"
+                        onClick={async () => {
+                          const response = await fetch('/api/admin/export/payments');
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `payments-export-${new Date().toISOString().split('T')[0]}.csv`;
+                          a.click();
+                        }}
+                        data-testid="button-export-payments"
+                      >
+                        <DollarSign className="w-6 h-6" />
+                        <span>Export Payments CSV</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* System Settings */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <Settings className="w-6 h-6 text-blue-600" />
+                      System Settings
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <h3 className="font-medium">Seed Test Data</h3>
+                        <p className="text-sm text-gray-600">Generate sample referrals for testing</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSeedingTestData(true);
+                          seedTestDataMutation.mutate();
+                        }}
+                        disabled={seedingTestData}
+                        data-testid="button-seed-data"
+                      >
+                        {seedingTestData ? 'Seeding...' : 'Seed Data'}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <h3 className="font-medium">Stripe Integration</h3>
+                        <p className="text-sm text-gray-600">Payment processing for commissions</p>
+                      </div>
+                      <Badge className="bg-green-100 text-green-800">Connected</Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <h3 className="font-medium">Go High Level Integration</h3>
+                        <p className="text-sm text-gray-600">CRM synchronization</p>
+                      </div>
+                      <Badge className="bg-yellow-100 text-yellow-800">Pending Setup</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Admin Actions */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <Shield className="w-6 h-6 text-blue-600" />
+                      Admin Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={() => {
+                        queryClient.invalidateQueries();
+                        setRefreshing(true);
+                        setTimeout(() => setRefreshing(false), 1000);
+                      }}
+                      disabled={refreshing}
+                      data-testid="button-refresh-all"
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                      {refreshing ? 'Refreshing...' : 'Refresh All Data'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
           </Tabs>
         </div>
 
