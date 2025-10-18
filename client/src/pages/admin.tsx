@@ -749,7 +749,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-purple-600">Total Commissions</p>
-                          <p className="text-3xl font-bold text-purple-900">£{adminStats?.totalCommissions?.toFixed(2) || '0.00'}</p>
+                          <p className="text-3xl font-bold text-purple-900">£{adminStats?.totalCommissions ? parseFloat(adminStats.totalCommissions).toFixed(2) : '0.00'}</p>
                           <p className="text-xs text-purple-600 mt-1">Lifetime earnings</p>
                         </div>
                         <DollarSign className="w-10 h-10 text-purple-500" />
