@@ -15,6 +15,8 @@ interface User {
   partnerId?: string;
   teamRole?: string;
   isAdmin?: boolean;
+  hasCompletedOnboarding?: boolean;
+  referralCode?: string;
 }
 
 export function useAuth() {
