@@ -4,6 +4,23 @@ PartnerConnector is a professional referral platform designed for accountants, b
 
 # Recent Changes
 
+**Onboarding and Team Tracking System (October 2025)**
+- **Mandatory Onboarding Flow**: New users must complete a 3-step onboarding form before accessing the platform
+  - Step 1: Personal information (first name, last name, phone)
+  - Step 2: Professional details (profession, company)
+  - Step 3: Client base size selection
+- **Database Schema Update**: Added `hasCompletedOnboarding` field to users table to track onboarding status
+- **Authentication Flow**: PrivateRoute component now checks onboarding status and redirects incomplete users to `/onboarding`
+- **Team Tracking via Referral Codes**: Fully functional invite/referral system linking users in database
+  - Each user gets a unique `referralCode` (set to their `partnerId` value)
+  - When a new user signs up via referral link, their `parentPartnerId` is set to the referring user's ID
+  - `setupReferralHierarchy()` method creates entries in `partnerHierarchy` table tracking 3 levels (L1=60%, L2=20%, L3=10%)
+  - Team Management page displays real team members queried by `parentPartnerId` relationship
+- **API Endpoints**: `/api/auth/complete-onboarding` handles onboarding submission and profile completion
+- **Referral Code Generation**: Automatically generates partner ID and sets it as referral code during onboarding
+- **Team Linkage**: Team members are automatically linked in database when they sign up using a referral code
+- **Real Team Data**: `/api/team/referrals` endpoint returns all users where `parentPartnerId` matches current user's ID
+
 **Admin Portal Complete Implementation (October 2025)**
 - **Comprehensive Admin Dashboard**: Full-featured admin portal with tabs for submissions, users, MLM network, analytics, and settings
 - **Deal Management**: Complete deal tracking with editable commissions, stage management, and quote sending
