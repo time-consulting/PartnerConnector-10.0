@@ -280,13 +280,30 @@ export class DatabaseStorage implements IStorage {
     const user = (result as User[])[0];
 
     if (isNewUser && referralCode) {
+      console.log('[REFERRAL] New user detected. Setting up referral hierarchy...');
+      console.log('[REFERRAL] User ID:', user.id, 'Email:', user.email);
+      console.log('[REFERRAL] Referral code:', referralCode);
+      
       try {
         const referrer = await this.getUserByReferralCode(referralCode);
+        console.log('[REFERRAL] Referrer found:', referrer ? `${referrer.email} (${referrer.id})` : 'NOT FOUND');
+        
         if (referrer && referrer.id !== user.id) {
+          console.log('[REFERRAL] Linking user to referrer...');
           await this.setupReferralHierarchy(user.id, referrer.id);
+        } else if (!referrer) {
+          console.error('[REFERRAL] ERROR: Referral code not found in database:', referralCode);
+        } else if (referrer.id === user.id) {
+          console.log('[REFERRAL] Self-referral detected, skipping');
         }
       } catch (error) {
-        console.error('Error setting up referral hierarchy:', error);
+        console.error('[REFERRAL] Error setting up referral hierarchy:', error);
+      }
+    } else {
+      if (!isNewUser) {
+        console.log('[REFERRAL] Existing user login - no referral setup needed');
+      } else if (!referralCode) {
+        console.log('[REFERRAL] New user but no referral code provided');
       }
     }
 

@@ -94,9 +94,16 @@ export async function setupAuth(app: Express) {
       updateUserSession(user, tokens);
       
       const referralCode = req?.session?.referralCode;
+      const userEmail = tokens.claims()["email"];
+      
+      console.log('[AUTH] Verify callback - User:', userEmail);
+      console.log('[AUTH] Verify callback - Referral code from session:', referralCode);
+      console.log('[AUTH] Verify callback - Session ID:', req?.sessionID);
+      
       await upsertUser(tokens.claims(), referralCode);
       
       if (referralCode && req?.session) {
+        console.log('[AUTH] Clearing referral code from session after use');
         delete req.session.referralCode;
       }
       
@@ -152,7 +159,10 @@ export async function setupAuth(app: Express) {
     const referralCode = req.query.ref as string | undefined;
     if (referralCode) {
       req.session.referralCode = referralCode;
-      console.log('Referral code captured in session:', referralCode);
+      console.log('[AUTH] Referral code captured in session:', referralCode);
+      console.log('[AUTH] Session ID:', req.sessionID);
+    } else {
+      console.log('[AUTH] No referral code in query parameters');
     }
     
     passport.authenticate(strategyForHost(req.hostname), {
