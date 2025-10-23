@@ -144,7 +144,16 @@ export default function Login() {
 
                   {/* Password */}
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Password</Label>
+                      <a 
+                        href="mailto:support@partnerconnector.co.uk?subject=Password Reset Request"
+                        className="text-sm text-blue-600 hover:text-blue-500 underline"
+                        data-testid="link-forgot-password"
+                      >
+                        Forgot password?
+                      </a>
+                    </div>
                     <div className="relative">
                       <Input
                         id="password"
@@ -188,6 +197,23 @@ export default function Login() {
 
                 <Separator className="my-6" />
 
+                {/* Create New Account */}
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-3">Don't have an account?</p>
+                  <Button 
+                    variant="outline"
+                    className="w-full h-12 border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+                    asChild
+                    data-testid="button-create-account"
+                  >
+                    <Link href="/signup">
+                      Create New Account
+                    </Link>
+                  </Button>
+                </div>
+
+                <Separator className="my-6" />
+
                 {/* Security Notice */}
                 <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                   <div className="flex items-start gap-2">
@@ -200,20 +226,6 @@ export default function Login() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Don't Have Account */}
-            <div className="text-center mt-6">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link 
-                  href="/signup"
-                  className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer underline" 
-                  data-testid="link-signup"
-                >
-                  Sign up here
-                </Link>
-              </p>
-            </div>
 
             {/* Support */}
             <div className="text-center mt-4">
