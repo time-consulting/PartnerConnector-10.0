@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +16,25 @@ import {
 import { Link } from "wouter";
 
 export default function Login() {
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+      setReferralCode(refCode);
+      console.log('[LOGIN] Referral code detected:', refCode);
+    }
+  }, []);
+
   const handleEmailSignup = () => {
-    // Redirect to Replit Auth - Email option will be prominently displayed
-    window.location.href = '/api/login';
+    // Preserve referral code when redirecting to Replit Auth
+    if (referralCode) {
+      console.log('[LOGIN] Redirecting with referral code:', referralCode);
+      window.location.href = `/api/login?ref=${encodeURIComponent(referralCode)}`;
+    } else {
+      window.location.href = '/api/login';
+    }
   };
 
   return (
