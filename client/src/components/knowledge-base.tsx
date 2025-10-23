@@ -374,54 +374,45 @@ export default function KnowledgeBase() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <MessageCircleIcon className="w-5 h-5 text-blue-600" />
-                    Live Chat Support
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Get instant help from our support team during business hours
-                  </p>
-                  <Button className="w-full" data-testid="button-start-chat">
-                    Start Live Chat
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MailIcon className="w-5 h-5 text-green-600" />
+                    <MailIcon className="w-5 h-5 text-blue-600" />
                     Email Support
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Send us a detailed message and we'll respond within 24 hours
+                    For questions about your partnership, commissions, or technical issues, contact us at:
                   </p>
-                  <Button variant="outline" className="w-full" data-testid="button-email-support">
-                    Send Email
-                  </Button>
+                  <a
+                    href="mailto:support@partnerconnector.co.uk"
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-lg"
+                    data-testid="link-email-support"
+                  >
+                    support@partnerconnector.co.uk
+                  </a>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    Monday - Friday, 9:00 AM - 5:00 PM GMT<br />
+                    We typically respond within 24 hours during business days
+                  </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-purple-200 dark:border-purple-800">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <PhoneIcon className="w-5 h-5 text-orange-600" />
-                    Phone Support
+                    <MessageCircleIcon className="w-5 h-5 text-purple-600" />
+                    AI Partner Assistant
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Speak directly with a support representative
+                    Get instant answers to common partner questions with our AI-powered chatbot
                   </p>
-                  <div className="space-y-2">
-                    <p className="font-medium">UK: 0800 123 4567</p>
-                    <p className="text-sm text-muted-foreground">
-                      Monday - Friday, 9AM - 6PM GMT
-                    </p>
-                  </div>
+                  <Button 
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                    data-testid="button-chatbot-kb"
+                  >
+                    Launch Partner Chatbot (Coming Soon)
+                  </Button>
                 </CardContent>
               </Card>
             </div>

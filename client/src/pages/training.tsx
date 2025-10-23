@@ -15,10 +15,9 @@ import {
   BarChartIcon,
   LightbulbIcon
 } from "lucide-react";
-import TrainingModules from "@/components/training-modules";
 import KnowledgeBase from "@/components/knowledge-base";
-import DownloadableResources from "@/components/downloadable-resources";
 import DojoSalesTraining from "@/components/dojo-sales-training";
+import PlatformUsageTraining from "@/components/platform-usage-training";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Training() {
@@ -119,7 +118,6 @@ export default function Training() {
                   { id: 'dashboard', label: 'Overview', icon: <BarChartIcon className="w-4 h-4" /> },
                   { id: 'product-training', label: 'Product Training', icon: <CreditCardIcon className="w-4 h-4" /> },
                   { id: 'platform-training', label: 'Platform Training', icon: <UsersIcon className="w-4 h-4" /> },
-                  { id: 'usage-training', label: 'Usage Training', icon: <BookOpenIcon className="w-4 h-4" /> },
                   { id: 'support', label: 'Support Hub', icon: <HelpCircleIcon className="w-4 h-4" /> }
                 ].map((section) => (
                   <Button
@@ -215,61 +213,27 @@ export default function Training() {
 
             {/* Platform Training */}
             {activeSection === 'platform-training' && (
-              <Card className="bg-white dark:bg-slate-800 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UsersIcon className="w-6 h-6 text-blue-600" />
-                    Platform Training
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <TrainingModules onModuleComplete={handleModuleComplete} />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Usage Training */}
-            {activeSection === 'usage-training' && (
-              <Card className="bg-white dark:bg-slate-800 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpenIcon className="w-6 h-6 text-purple-600" />
-                    Usage Training
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <TrainingModules onModuleComplete={handleModuleComplete} />
-                </CardContent>
-              </Card>
+              <div>
+                <PlatformUsageTraining />
+              </div>
             )}
 
             {/* Support Hub */}
             {activeSection === 'support' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="bg-white dark:bg-slate-800 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <LightbulbIcon className="w-6 h-6 text-yellow-600" />
-                      Knowledge Base
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <KnowledgeBase />
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white dark:bg-slate-800 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BookOpenIcon className="w-6 h-6 text-green-600" />
-                      Resources
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <DownloadableResources />
-                  </CardContent>
-                </Card>
-              </div>
+              <Card className="bg-white dark:bg-slate-800 shadow-lg max-w-5xl mx-auto">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                    <HelpCircleIcon className="w-7 h-7 text-blue-600" />
+                    Support Hub
+                  </CardTitle>
+                  <p className="text-gray-600 dark:text-gray-400 mt-2">
+                    Get help with your partnership questions and technical issues
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <KnowledgeBase />
+                </CardContent>
+              </Card>
             )}
 
             {/* Quick Start Guide */}
