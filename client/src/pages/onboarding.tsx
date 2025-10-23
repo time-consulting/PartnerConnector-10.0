@@ -31,9 +31,9 @@ const onboardingSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
   lastName: z.string().min(2, "Last name is required"),
   profession: z.string().min(2, "Profession is required"),
-  company: z.string().optional(),
+  company: z.string().min(2, "Company name is required"),
   clientBaseSize: z.string().min(1, "Please select your client base size"),
-  phone: z.string().optional(),
+  phone: z.string().min(10, "Valid phone number is required"),
 });
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
@@ -213,7 +213,7 @@ export default function OnboardingPage() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
+                          <FormLabel>Phone Number *</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -223,7 +223,7 @@ export default function OnboardingPage() {
                               className="h-12"
                             />
                           </FormControl>
-                          <FormDescription>Optional - for account recovery</FormDescription>
+                          <FormDescription>For account recovery and team communication</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -259,7 +259,7 @@ export default function OnboardingPage() {
                       name="company"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Company Name</FormLabel>
+                          <FormLabel>Company Name *</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -268,7 +268,7 @@ export default function OnboardingPage() {
                               className="h-12"
                             />
                           </FormControl>
-                          <FormDescription>Optional - if you work for a company</FormDescription>
+                          <FormDescription>Your business or practice name</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

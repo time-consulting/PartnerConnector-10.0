@@ -376,8 +376,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { firstName, lastName, profession, company, clientBaseSize, phone } = req.body;
       
-      if (!firstName || !lastName || !profession || !clientBaseSize) {
-        return res.status(400).json({ message: "Required fields missing" });
+      if (!firstName || !lastName || !profession || !company || !clientBaseSize || !phone) {
+        return res.status(400).json({ message: "All fields are required to complete onboarding" });
       }
       
       // Update user profile with onboarding data
@@ -386,9 +386,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName,
         lastName,
         profession,
-        company: company || null,
+        company,
         clientBaseSize,
-        phone: phone || null,
+        phone,
         hasCompletedOnboarding: true,
       });
       
