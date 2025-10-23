@@ -1,7 +1,7 @@
 import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, requireAuth } from "./auth";
 import { insertReferralSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
@@ -221,7 +221,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seed business types on startup
   await storage.seedBusinessTypes();
 
-  // Login and logout are now handled by setupAuth in replitAuth.ts
+  // Custom auth routes
+  const { z } = await import('zod');
+  
+  // Register endpoint
+  app.post('/api/auth/register', async (req: any, res) => {
+    try {
+      const schema = z.object({
+        email: z.string().email(),
+        password: z.string().min(8, 'Password must be at least 8 characters'),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+        referralCode: z.string().optional(),
+      });
+
+      const data = schema.parse(req.body);
+      const { email, password, firstName, lastName, referralCode } = data;
+
+      console.log('[AUTH] Registration attempt:', email);
+      
+      // Create user with credentials
+      const user = await storage.createUserWithCredentials(
+        email,
+        password,
+        { firstName, lastName },
+        referralCode || req.session.referralCode
+      );
+
+      // Set session
+      req.session.userId = user.id;
+      
+      // Clear referral code from session
+      delete req.session.referralCode;
+
+      console.log('[AUTH] Registration successful:', user.id, user.email);
+
+      res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          hasCompletedOnboarding: user.hasCompletedOnboarding,
+        }
+      });
+    } catch (error: any) {
+      console.error('[AUTH] Registration error:', error);
+      if (error.message === 'Email already registered') {
+        res.status(400).json({ message: 'Email already registered' });
+      } else if (error.issues) {
+        res.status(400).json({ message: fromZodError(error).message });
+      } else {
+        res.status(500).json({ message: 'Registration failed' });
+      }
+    }
+  });
+
+  // Login endpoint
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      const schema = z.object({
+        email: z.string().email(),
+        password: z.string(),
+      });
+
+      const data = schema.parse(req.body);
+      const { email, password } = data;
+
+      console.log('[AUTH] Login attempt:', email);
+
+      const user = await storage.verifyLogin(email, password);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+
+      console.log('[AUTH] Login successful:', user.id, user.email);
+
+      res.json({ 
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          hasCompletedOnboarding: user.hasCompletedOnboarding,
+        }
+      });
+    } catch (error: any) {
+      console.error('[AUTH] Login error:', error);
+      if (error.issues) {
+        res.status(400).json({ message: fromZodError(error).message });
+      } else {
+        res.status(500).json({ message: 'Login failed' });
+      }
+    }
+  });
+
+  // Logout endpoint
+  app.get('/api/auth/logout', (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        console.error('[AUTH] Logout error:', err);
+        return res.status(500).json({ message: 'Logout failed' });
+      }
+      res.json({ success: true });
+    });
+  });
 
   // GHL Webhook for team member invites
   app.post('/api/webhooks/ghl/team-invite', async (req: any, res) => {
@@ -317,9 +426,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth routes with proper Replit authentication
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Check if user is authenticated via session
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const userId = req.session.userId;
       let user = await storage.getUser(userId);
       
       if (!user) {
@@ -353,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/auth/user', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const updateData = req.body;
@@ -371,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Complete onboarding
-  app.post('/api/auth/complete-onboarding', isAuthenticated, async (req: any, res) => {
+  app.post('/api/auth/complete-onboarding', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { firstName, lastName, profession, company, clientBaseSize, phone } = req.body;
@@ -412,7 +526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate partner ID for user
-  app.post('/api/auth/generate-partner-id', isAuthenticated, async (req: any, res) => {
+  app.post('/api/auth/generate-partner-id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -521,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Referrals
-  app.post('/api/referrals', isAuthenticated, async (req: any, res) => {
+  app.post('/api/referrals', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const referralData = {
@@ -562,7 +676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/referrals', isAuthenticated, async (req: any, res) => {
+  app.get('/api/referrals', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const referrals = await storage.getReferralsByUserId(userId);
@@ -574,7 +688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User endpoint to update their own referrals
-  app.patch('/api/referrals/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/referrals/:id', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.claims.sub;
@@ -648,7 +762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Search business names from pipeline
-  app.get('/api/businesses/search', isAuthenticated, async (req: any, res) => {
+  app.get('/api/businesses/search', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const query = (req.query.q as string || '').trim();
@@ -666,7 +780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard stats
-  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const stats = await storage.getUserStats(userId);
@@ -678,7 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notification endpoints
-  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+  app.get('/api/notifications', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const notifications = await storage.getNotificationsByUserId(userId);
@@ -697,7 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/notifications/:id/read', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { id } = req.params;
@@ -720,7 +834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/notifications/read-all', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/notifications/read-all', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -743,7 +857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Team referral statistics
-  app.get('/api/team/referral-stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/team/referral-stats', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const stats = await storage.getTeamReferralStats(userId);
@@ -755,7 +869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Team referrals list
-  app.get('/api/team/referrals', isAuthenticated, async (req: any, res) => {
+  app.get('/api/team/referrals', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const referrals = await storage.getTeamReferrals(userId);
@@ -767,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Team progression data (revenue, level, team size)
-  app.get('/api/team/progression', isAuthenticated, async (req: any, res) => {
+  app.get('/api/team/progression', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const data = await storage.getProgressionData(userId);
@@ -779,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Team analytics - hierarchy and performance data
-  app.get('/api/team-analytics', isAuthenticated, async (req: any, res) => {
+  app.get('/api/team-analytics', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -830,7 +944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send team invite via email/phone (supports GHL integration)
-  app.post('/api/invites', isAuthenticated, async (req: any, res) => {
+  app.post('/api/invites', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -944,7 +1058,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get pending team invitations
-  app.get('/api/team-invitations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/team-invitations', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       // Return empty array for now - TODO: implement getInvitationsByUserId
@@ -957,7 +1071,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Resend team invitation
-  app.patch('/api/team-invitations/:inviteId/resend', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/team-invitations/:inviteId/resend', requireAuth, async (req: any, res) => {
     try {
       const { inviteId } = req.params;
       const userId = req.user.claims.sub;
@@ -973,7 +1087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Cancel team invitation  
-  app.delete('/api/team-invitations/:inviteId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/team-invitations/:inviteId', requireAuth, async (req: any, res) => {
     try {
       const { inviteId } = req.params;
       const userId = req.user.claims.sub;
@@ -1109,7 +1223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Password reset functionality
-  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/users/:userId/reset-password', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const user = await storage.getUser(userId);
@@ -1148,7 +1262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ RATES MANAGEMENT ENDPOINTS ============
   
   // Get all rates
-  app.get('/api/admin/rates', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/rates', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const rates = await storage.getRates();
       res.json(rates);
@@ -1159,7 +1273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new rate
-  app.post('/api/admin/rates', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/rates', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const rate = await storage.createRate(req.body);
       res.json(rate);
@@ -1170,7 +1284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update rate
-  app.patch('/api/admin/rates/:rateId', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.patch('/api/admin/rates/:rateId', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { rateId } = req.params;
       const rate = await storage.updateRate(rateId, req.body);
@@ -1182,7 +1296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete rate
-  app.delete('/api/admin/rates/:rateId', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.delete('/api/admin/rates/:rateId', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { rateId } = req.params;
       await storage.deleteRate(rateId);
@@ -1196,7 +1310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ COMMISSION APPROVAL ENDPOINTS ============
   
   // Create commission approval when admin enters actual commission
-  app.post('/api/admin/referrals/:referralId/create-commission-approval', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/create-commission-approval', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { actualCommission, adminNotes, ratesData } = req.body;
@@ -1246,7 +1360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's commission approvals
-  app.get('/api/commission-approvals', isAuthenticated, async (req: any, res) => {
+  app.get('/api/commission-approvals', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const approvals = await storage.getUserCommissionApprovals(userId);
@@ -1258,7 +1372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all commission approvals (admin view)
-  app.get('/api/admin/commission-approvals', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/commission-approvals', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const approvals = await storage.getAllCommissionApprovals();
       res.json(approvals);
@@ -1269,7 +1383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Process commission payment (admin)
-  app.post('/api/admin/commission-approvals/:approvalId/process-payment', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/commission-approvals/:approvalId/process-payment', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { approvalId } = req.params;
       const { paymentReference } = req.body;
@@ -1304,7 +1418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Subscribe to push notifications
-  app.post('/api/push/subscribe', isAuthenticated, async (req: any, res) => {
+  app.post('/api/push/subscribe', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { subscription, userAgent } = req.body;
@@ -1335,7 +1449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Unsubscribe from push notifications
-  app.delete('/api/push/unsubscribe', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/push/unsubscribe', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { endpoint } = req.body;
@@ -1361,7 +1475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test push notification (for debugging)
-  app.post('/api/push/test', isAuthenticated, async (req: any, res) => {
+  app.post('/api/push/test', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const result = await pushNotificationService.sendTestNotification(userId);
@@ -1386,7 +1500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's push subscription status
-  app.get('/api/push/status', isAuthenticated, async (req: any, res) => {
+  app.get('/api/push/status', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const subscriptions = await storage.getUserPushSubscriptions(userId);
@@ -1409,7 +1523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // MLM hierarchy routes
-  app.get('/api/admin/mlm-hierarchy/:userId?', isAuthenticated, requireAdmin, auditAdminAction('view_mlm_hierarchy', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/mlm-hierarchy/:userId?', requireAuth, requireAdmin, auditAdminAction('view_mlm_hierarchy', 'admin'), async (req: any, res) => {
     try {
       const { userId } = req.params;
       const rootUserId = userId || req.user.claims.sub;
@@ -1465,7 +1579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/user-details/:userId', isAuthenticated, requireAdmin, auditAdminAction('view_user_details', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/user-details/:userId', requireAuth, requireAdmin, auditAdminAction('view_user_details', 'admin'), async (req: any, res) => {
     try {
       const { userId } = req.params;
       const user = await storage.getUser(userId);
@@ -1490,7 +1604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  app.get('/api/admin/stats', isAuthenticated, requireAdmin, auditAdminAction('view_stats', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/stats', requireAuth, requireAdmin, auditAdminAction('view_stats', 'admin'), async (req: any, res) => {
     try {
       const stats = await storage.getAdminStats();
       res.json(stats);
@@ -1500,7 +1614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/users', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -1511,7 +1625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced admin referrals list with search and filtering
-  app.get('/api/admin/referrals', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/referrals', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { 
         search, 
@@ -1581,7 +1695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/users/:userId', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.patch('/api/admin/users/:userId', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const updateData = req.body;
@@ -1595,7 +1709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced admin referral update with audit trail
-  app.patch('/api/admin/referrals/:referralId', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.patch('/api/admin/referrals/:referralId', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const updateData = req.body;
@@ -1687,7 +1801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Seed test data for demonstrating referral system functionality
-  app.post('/api/admin/seed-test-data', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/seed-test-data', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       await storage.seedTestReferrals();
       res.json({ 
@@ -1701,7 +1815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced stage override functionality for admin
-  app.patch('/api/admin/referrals/:referralId/override-stage', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.patch('/api/admin/referrals/:referralId/override-stage', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { dealStage, status, adminNotes, overrideReason } = req.body;
@@ -1845,7 +1959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Confirm payment section for commission amounts
-  app.post('/api/admin/referrals/:referralId/confirm-payment', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/confirm-payment', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { actualCommission, paymentReference, paymentMethod, paymentNotes } = req.body;
@@ -1936,7 +2050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin referrer reassignment
-  app.post('/api/admin/referrals/:referralId/reassign', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/reassign', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { newReferrerId, reason } = req.body;
@@ -1976,7 +2090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced admin quote management
-  app.post('/api/admin/referrals/:referralId/send-quote', isAuthenticated, requireAdmin, auditAdminAction('send_quote', 'referral'), async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/send-quote', requireAuth, requireAdmin, auditAdminAction('send_quote', 'referral'), async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const quoteData = req.body;
@@ -2021,7 +2135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin document management
-  app.post('/api/admin/referrals/:referralId/docs-out-confirmation', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/docs-out-confirmation', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { documentsSent, recipientEmail } = req.body;
@@ -2044,7 +2158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin document requirements management
-  app.post('/api/admin/referrals/:referralId/document-requirements', isAuthenticated, requireAdmin, auditAdminAction('update_document_requirements', 'referral'), async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/document-requirements', requireAuth, requireAdmin, auditAdminAction('update_document_requirements', 'referral'), async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { requiredDocuments, notes } = req.body;
@@ -2069,7 +2183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin deal stage management
-  app.patch('/api/admin/referrals/:referralId/stage', isAuthenticated, requireAdmin, auditAdminAction('update_stage', 'referral'), async (req: any, res) => {
+  app.patch('/api/admin/referrals/:referralId/stage', requireAuth, requireAdmin, auditAdminAction('update_stage', 'referral'), async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { stage, notes } = req.body;
@@ -2113,7 +2227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/users/:userId/reset-password', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const user = await storage.getUser(userId);
@@ -2142,7 +2256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ USER COMMISSION APPROVAL ENDPOINTS ============
   
   // Get user's pending commission approvals
-  app.get('/api/commission-approvals', isAuthenticated, async (req: any, res) => {
+  app.get('/api/commission-approvals', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const approvals = await storage.getCommissionApprovalsByUserId(userId);
@@ -2154,7 +2268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User approves commission
-  app.patch('/api/commission-approvals/:approvalId/approve', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/commission-approvals/:approvalId/approve', requireAuth, async (req: any, res) => {
     try {
       const { approvalId } = req.params;
       const userId = req.user.claims.sub;
@@ -2186,7 +2300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User rejects commission  
-  app.patch('/api/commission-approvals/:approvalId/reject', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/commission-approvals/:approvalId/reject', requireAuth, async (req: any, res) => {
     try {
       const { approvalId } = req.params;
       const userId = req.user.claims.sub;
@@ -2217,7 +2331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+  app.get('/api/notifications', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const notifications = await storage.getNotificationsByUserId(userId);
@@ -2228,7 +2342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.patch('/api/notifications/:notificationId/read', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/notifications/:notificationId/read', requireAuth, async (req: any, res) => {
     try {
       const { notificationId } = req.params;
       await storage.markNotificationAsRead(notificationId);
@@ -2239,7 +2353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.patch('/api/notifications/read-all', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/notifications/read-all', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       await storage.markAllNotificationsAsRead(userId);
@@ -2251,7 +2365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Leads routes
-  app.get('/api/leads', isAuthenticated, async (req: any, res) => {
+  app.get('/api/leads', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const leads = await storage.getLeadsByUserId(userId);
@@ -2262,7 +2376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads', isAuthenticated, async (req: any, res) => {
+  app.post('/api/leads', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const leadData = {
@@ -2278,7 +2392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads/bulk', isAuthenticated, async (req: any, res) => {
+  app.post('/api/leads/bulk', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { leads: leadsData } = req.body;
@@ -2309,7 +2423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/leads/:leadId', isAuthenticated, async (req: any, res) => {
+  app.put('/api/leads/:leadId', requireAuth, async (req: any, res) => {
     try {
       const { leadId } = req.params;
       const updates = req.body;
@@ -2322,7 +2436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/leads/:leadId/interactions', isAuthenticated, async (req: any, res) => {
+  app.get('/api/leads/:leadId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { leadId } = req.params;
       const interactions = await storage.getLeadInteractions(leadId);
@@ -2333,7 +2447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads/:leadId/interactions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/leads/:leadId/interactions', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { leadId } = req.params;
@@ -2350,7 +2464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads/:leadId/send-info', isAuthenticated, async (req: any, res) => {
+  app.post('/api/leads/:leadId/send-info', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { leadId } = req.params;
@@ -2402,7 +2516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin diagnostics routes
-  app.get('/api/admin/request-logs', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/request-logs', requireAuth, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 100;
       const logs = await storage.getRequestLogs(limit);
@@ -2413,7 +2527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/error-logs', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/error-logs', requireAuth, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
       const logs = await storage.getErrorLogs(limit);
@@ -2424,7 +2538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/webhook-logs', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/webhook-logs', requireAuth, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 100;
       const logs = await storage.getWebhookLogs(limit);
@@ -2435,7 +2549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/audit-logs', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/audit-logs', requireAuth, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 100;
       const logs = await storage.getAudits(limit);
@@ -2447,7 +2561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Account management routes
-  app.patch('/api/account/profile', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/account/profile', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { firstName, lastName, phone, address, city, postcode, country } = req.body;
@@ -2482,7 +2596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/account/banking', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/account/banking', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const bankingData = req.body;
@@ -2509,7 +2623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/account/feedback', isAuthenticated, async (req: any, res) => {
+  app.post('/api/account/feedback', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { type, subject, message, priority, rating } = req.body;
@@ -2544,7 +2658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics tracking endpoint
-  app.post('/api/analytics/track', isAuthenticated, async (req: any, res) => {
+  app.post('/api/analytics/track', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { event, data } = req.body;
@@ -2591,7 +2705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ CONTACTS ENDPOINTS ============
   
   // Get user's contacts
-  app.get('/api/contacts', isAuthenticated, async (req: any, res) => {
+  app.get('/api/contacts', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const contacts = await storage.getContactsByUserId(userId);
@@ -2603,7 +2717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create contact
-  app.post('/api/contacts', isAuthenticated, async (req: any, res) => {
+  app.post('/api/contacts', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -2631,7 +2745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get contact by ID
-  app.get('/api/contacts/:contactId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/contacts/:contactId', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
       const userId = req.user.claims.sub;
@@ -2652,7 +2766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update contact
-  app.put('/api/contacts/:contactId', isAuthenticated, async (req: any, res) => {
+  app.put('/api/contacts/:contactId', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
       const userId = req.user.claims.sub;
@@ -2679,7 +2793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete contact
-  app.delete('/api/contacts/:contactId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/contacts/:contactId', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
       const userId = req.user.claims.sub;
@@ -2695,7 +2809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get contact interactions
-  app.get('/api/contacts/:contactId/interactions', isAuthenticated, async (req: any, res) => {
+  app.get('/api/contacts/:contactId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
       const userId = req.user.claims.sub;
@@ -2711,7 +2825,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add contact interaction
-  app.post('/api/contacts/:contactId/interactions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/contacts/:contactId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
       const userId = req.user.claims.sub;
@@ -2729,7 +2843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ OPPORTUNITIES ENDPOINTS ============
   
   // Get user's opportunities
-  app.get('/api/opportunities', isAuthenticated, async (req: any, res) => {
+  app.get('/api/opportunities', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const opportunities = await storage.getOpportunitiesByUserId(userId);
@@ -2741,7 +2855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create opportunity
-  app.post('/api/opportunities', isAuthenticated, async (req: any, res) => {
+  app.post('/api/opportunities', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -2788,7 +2902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get opportunity by ID
-  app.get('/api/opportunities/:opportunityId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/opportunities/:opportunityId', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
       const userId = req.user.claims.sub;
@@ -2809,7 +2923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update opportunity
-  app.put('/api/opportunities/:opportunityId', isAuthenticated, async (req: any, res) => {
+  app.put('/api/opportunities/:opportunityId', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
       const userId = req.user.claims.sub;
@@ -2891,7 +3005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete opportunity
-  app.delete('/api/opportunities/:opportunityId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/opportunities/:opportunityId', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
       const userId = req.user.claims.sub;
@@ -2907,7 +3021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get opportunity interactions
-  app.get('/api/opportunities/:opportunityId/interactions', isAuthenticated, async (req: any, res) => {
+  app.get('/api/opportunities/:opportunityId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
       const userId = req.user.claims.sub;
@@ -2923,7 +3037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add opportunity interaction
-  app.post('/api/opportunities/:opportunityId/interactions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/opportunities/:opportunityId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
       const userId = req.user.claims.sub;
@@ -2939,7 +3053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Convert contact to opportunity
-  app.post('/api/contacts/:contactId/convert-to-opportunity', isAuthenticated, async (req: any, res) => {
+  app.post('/api/contacts/:contactId/convert-to-opportunity', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { contactId } = req.params;
@@ -2981,7 +3095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }) : null;
 
   // Admin Analytics: Overview
-  app.get('/api/admin/analytics/overview', isAuthenticated, requireAdmin, auditAdminAction('view_analytics', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/analytics/overview', requireAuth, requireAdmin, auditAdminAction('view_analytics', 'admin'), async (req: any, res) => {
     try {
       const analyticsData = await storage.getAnalyticsOverview();
       res.json(analyticsData);
@@ -2992,7 +3106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Analytics: Revenue Metrics
-  app.get('/api/admin/analytics/revenue', isAuthenticated, requireAdmin, auditAdminAction('view_revenue', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/analytics/revenue', requireAuth, requireAdmin, auditAdminAction('view_revenue', 'admin'), async (req: any, res) => {
     try {
       const revenueData = await storage.getRevenueMetrics();
       res.json(revenueData);
@@ -3003,7 +3117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Analytics: User Growth
-  app.get('/api/admin/analytics/users', isAuthenticated, requireAdmin, auditAdminAction('view_user_growth', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/analytics/users', requireAuth, requireAdmin, auditAdminAction('view_user_growth', 'admin'), async (req: any, res) => {
     try {
       const userGrowthData = await storage.getUserGrowthMetrics();
       res.json(userGrowthData);
@@ -3014,7 +3128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Analytics: Top Performers (Leaderboard)
-  app.get('/api/admin/analytics/top-performers', isAuthenticated, requireAdmin, auditAdminAction('view_top_performers', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/analytics/top-performers', requireAuth, requireAdmin, auditAdminAction('view_top_performers', 'admin'), async (req: any, res) => {
     try {
       const topPerformers = await storage.getTopPerformers();
       res.json(topPerformers);
@@ -3025,7 +3139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update Referral Stage
-  app.post('/api/admin/referrals/:referralId/update-stage', isAuthenticated, requireAdmin, auditAdminAction('update_referral_stage', 'referral'), async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/update-stage', requireAuth, requireAdmin, auditAdminAction('update_referral_stage', 'referral'), async (req: any, res) => {
     try {
       const { referralId } = req.params;
       const { stage, notes } = req.body;
@@ -3059,7 +3173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Export Users CSV
-  app.get('/api/admin/export/users', isAuthenticated, requireAdmin, auditAdminAction('export_users', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/export/users', requireAuth, requireAdmin, auditAdminAction('export_users', 'admin'), async (req: any, res) => {
     try {
       const csvData = await storage.exportUsersCSV();
       
@@ -3073,7 +3187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Export Referrals CSV
-  app.get('/api/admin/export/referrals', isAuthenticated, requireAdmin, auditAdminAction('export_referrals', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/export/referrals', requireAuth, requireAdmin, auditAdminAction('export_referrals', 'admin'), async (req: any, res) => {
     try {
       const csvData = await storage.exportReferralsCSV();
       
@@ -3087,7 +3201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Export Payments CSV
-  app.get('/api/admin/export/payments', isAuthenticated, requireAdmin, auditAdminAction('export_payments', 'admin'), async (req: any, res) => {
+  app.get('/api/admin/export/payments', requireAuth, requireAdmin, auditAdminAction('export_payments', 'admin'), async (req: any, res) => {
     try {
       const csvData = await storage.exportPaymentsCSV();
       
@@ -3147,7 +3261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ================== STRIPE PAYMENT PROCESSING ROUTES ==================
 
   // Admin: Get Pending Payments
-  app.get('/api/admin/payments/pending', isAuthenticated, requireAdmin, auditAdminAction('view_pending_payments', 'payment'), async (req: any, res) => {
+  app.get('/api/admin/payments/pending', requireAuth, requireAdmin, auditAdminAction('view_pending_payments', 'payment'), async (req: any, res) => {
     try {
       const pendingPayments = await storage.getPendingPayments();
       res.json(pendingPayments);
@@ -3158,7 +3272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get Payment History
-  app.get('/api/admin/payments/history', isAuthenticated, requireAdmin, auditAdminAction('view_payment_history', 'payment'), async (req: any, res) => {
+  app.get('/api/admin/payments/history', requireAuth, requireAdmin, auditAdminAction('view_payment_history', 'payment'), async (req: any, res) => {
     try {
       const paymentHistory = await storage.getPaymentHistory();
       res.json(paymentHistory);
@@ -3169,7 +3283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Process Stripe Payout
-  app.post('/api/admin/payments/process-stripe', isAuthenticated, requireAdmin, auditAdminAction('process_stripe_payment', 'payment'), async (req: any, res) => {
+  app.post('/api/admin/payments/process-stripe', requireAuth, requireAdmin, auditAdminAction('process_stripe_payment', 'payment'), async (req: any, res) => {
     try {
       const { referralId, recipientId, amount, recipientEmail, recipientName } = req.body;
 
@@ -3285,7 +3399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Process Manual Payment (non-Stripe)
-  app.post('/api/admin/payments/process-manual', isAuthenticated, requireAdmin, auditAdminAction('process_manual_payment', 'payment'), async (req: any, res) => {
+  app.post('/api/admin/payments/process-manual', requireAuth, requireAdmin, auditAdminAction('process_manual_payment', 'payment'), async (req: any, res) => {
     try {
       const { referralId, recipientId, amount, paymentMethod, paymentReference, notes } = req.body;
 
