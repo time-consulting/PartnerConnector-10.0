@@ -1,39 +1,79 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Mail,
   Shield,
   CheckCircle,
   Users,
   TrendingUp,
   DollarSign,
   Star,
-  ArrowRight
+  Eye,
+  EyeOff,
+  Loader2
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const refCode = params.get('ref');
-    if (refCode) {
-      setReferralCode(refCode);
-      console.log('[LOGIN] Referral code detected:', refCode);
-    }
-  }, []);
+  const form = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const handleEmailSignup = () => {
-    // Preserve referral code when redirecting to Replit Auth
-    if (referralCode) {
-      console.log('[LOGIN] Redirecting with referral code:', referralCode);
-      window.location.href = `/api/login?ref=${encodeURIComponent(referralCode)}`;
-    } else {
-      window.location.href = '/api/login';
+  const onSubmit = async (data: LoginForm) => {
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (response.success) {
+        toast({
+          title: "Welcome back!",
+          description: "Logging you in...",
+        });
+
+        // Check if user has completed onboarding
+        if (response.user.hasCompletedOnboarding) {
+          setLocation('/dashboard');
+        } else {
+          setLocation('/onboarding');
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid email or password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -53,78 +93,100 @@ export default function Login() {
                 <span className="text-xl font-bold text-gray-900">PartnerConnector</span>
               </div>
             </Link>
-            <Button variant="ghost" onClick={() => window.location.href = '/'} data-testid="button-back-home">
-              Back to Home
+            <Button variant="ghost" asChild data-testid="button-back-home">
+              <Link href="/">Back to Home</Link>
             </Button>
           </div>
         </div>
       </header>
 
       <div className="min-h-screen flex">
-        {/* Left Side - Login Options */}
+        {/* Left Side - Login Form */}
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
           <div className="max-w-md w-full">
             <div className="text-center mb-8">
               <Badge className="mb-4 bg-green-100 text-green-700" data-testid="badge-secure">
                 <Shield className="w-3 h-3 mr-1" />
-                Secure Sign Up
+                Secure Login
               </Badge>
               <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                Create Your Account
+                Welcome Back
               </h1>
               <p className="text-gray-600">
-                Quick and easy sign-up using your email
+                Sign in to access your partner dashboard
               </p>
             </div>
 
             <Card className="border-0 shadow-xl">
               <CardHeader>
-                <CardTitle>Get Started in 30 Seconds</CardTitle>
+                <CardTitle>Sign In</CardTitle>
                 <CardDescription>
-                  Sign up with your email to start earning commissions
+                  Enter your credentials to continue
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Main Email Signup Button */}
-                <Button 
-                  onClick={handleEmailSignup}
-                  className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                  data-testid="button-email-signup"
-                >
-                  <Mail className="w-5 h-5 mr-2" />
-                  Continue with Email
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-
-                <Separator />
-
-                {/* What Happens Next */}
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-gray-700">
-                      <p className="font-medium text-gray-900 mb-2">What happens next?</p>
-                      <ol className="space-y-2 text-xs">
-                        <li className="flex items-start gap-2">
-                          <span className="font-semibold text-blue-600 min-w-[1.5rem]">1.</span>
-                          <span>Enter your email address</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="font-semibold text-blue-600 min-w-[1.5rem]">2.</span>
-                          <span>Create a secure password</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="font-semibold text-blue-600 min-w-[1.5rem]">3.</span>
-                          <span>Complete quick onboarding (6 simple questions)</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="font-semibold text-blue-600 min-w-[1.5rem]">4.</span>
-                          <span>Start referring clients and earning!</span>
-                        </li>
-                      </ol>
-                    </div>
+              <CardContent>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      disabled={isLoading}
+                      data-testid="input-email"
+                      {...form.register("email")}
+                    />
+                    {form.formState.errors.email && (
+                      <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
+                    )}
                   </div>
-                </div>
+
+                  {/* Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        disabled={isLoading}
+                        data-testid="input-password"
+                        {...form.register("password")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        data-testid="button-toggle-password"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {form.formState.errors.password && (
+                      <p className="text-sm text-red-600">{form.formState.errors.password.message}</p>
+                    )}
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button 
+                    type="submit"
+                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                    disabled={isLoading}
+                    data-testid="button-submit-login"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                </form>
+
+                <Separator className="my-6" />
 
                 {/* Security Notice */}
                 <div className="bg-green-50 rounded-lg p-4 border border-green-200">
@@ -132,31 +194,38 @@ export default function Login() {
                     <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />
                     <div className="text-xs text-gray-700">
                       <p className="font-medium text-gray-900 mb-1">100% Secure & Private</p>
-                      <p>Your data is protected with enterprise-grade encryption. We never share your information with third parties.</p>
+                      <p>Your data is protected with enterprise-grade encryption.</p>
                     </div>
                   </div>
-                </div>
-
-                {/* Alternative Methods Notice */}
-                <div className="text-center pt-2">
-                  <p className="text-xs text-gray-500">
-                    Multiple sign-in options available including Google, GitHub, and Apple
-                  </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Already Have Account */}
+            {/* Don't Have Account */}
             <div className="text-center mt-6">
               <p className="text-sm text-gray-600">
-                Already have an account?{' '}
-                <button 
-                  onClick={handleEmailSignup}
+                Don't have an account?{' '}
+                <Link 
+                  href="/signup"
                   className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer underline" 
-                  data-testid="link-signin"
+                  data-testid="link-signup"
                 >
-                  Sign in here
-                </button>
+                  Sign up here
+                </Link>
+              </p>
+            </div>
+
+            {/* Support */}
+            <div className="text-center mt-4">
+              <p className="text-xs text-gray-500">
+                Need help?{' '}
+                <a 
+                  href="mailto:support@partnerconnector.co.uk"
+                  className="text-blue-600 hover:text-blue-500 underline"
+                  data-testid="link-support"
+                >
+                  Contact Support
+                </a>
               </p>
             </div>
           </div>
@@ -166,10 +235,10 @@ export default function Login() {
         <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-600 to-purple-600 items-center justify-center px-8">
           <div className="max-w-md text-white">
             <h2 className="text-3xl font-bold mb-6">
-              Start Earning Today
+              Your Partner Dashboard Awaits
             </h2>
             <p className="text-blue-100 mb-8">
-              Join thousands of professionals earning substantial commissions through strategic partnerships.
+              Access your earnings, track referrals, and manage your growing partner network.
             </p>
 
             <div className="space-y-4">
