@@ -39,11 +39,24 @@ export async function setupAuth(app: Express) {
 }
 
 // Middleware to require authentication
-export const requireAuth: RequestHandler = (req, res, next) => {
+export const requireAuth: RequestHandler = async (req: any, res, next) => {
   if (!req.session.userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  next();
+  
+  // Fetch user from storage and attach to request
+  try {
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('[requireAuth] Error fetching user:', error);
+    return res.status(500).json({ message: "Authentication error" });
+  }
 };
 
 // Helper to get current user ID from session

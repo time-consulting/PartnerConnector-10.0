@@ -469,7 +469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile
   app.patch('/api/auth/user', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const updateData = req.body;
       
       const updatedUser = await storage.upsertUser({
@@ -487,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Complete onboarding
   app.post('/api/auth/complete-onboarding', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { firstName, lastName, profession, company, clientBaseSize, phone } = req.body;
       
       if (!firstName || !lastName || !profession || !company || !clientBaseSize || !phone) {
@@ -528,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate partner ID for user
   app.post('/api/auth/generate-partner-id', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -637,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Referrals
   app.post('/api/referrals', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const referralData = {
         ...req.body,
         referrerId: userId,
@@ -678,7 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/referrals', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const referrals = await storage.getReferralsByUserId(userId);
       res.json(referrals);
     } catch (error) {
@@ -691,7 +691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/referrals/:id', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const updateData = req.body;
       
       // Get current referral and verify ownership
@@ -725,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metadata: {
             oldStatus,
             newStatus,
-            updatedBy: req.user.claims.email || 'You',
+            updatedBy: req.user.email || 'You',
             commission: (newStatus === 'approved' || newStatus === 'paid') ? currentReferral.estimatedCommission : null
           }
         });
@@ -764,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Search business names from pipeline
   app.get('/api/businesses/search', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const query = (req.query.q as string || '').trim();
 
       if (query.length < 2) {
@@ -782,7 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard stats
   app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getUserStats(userId);
       res.json(stats);
     } catch (error) {
@@ -794,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notification endpoints
   app.get('/api/notifications', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const notifications = await storage.getNotificationsByUserId(userId);
       
       // Count unread notifications
@@ -813,7 +813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/notifications/:id/read', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { id } = req.params;
       
       // Mark notification as read (with userId for security)
@@ -836,7 +836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/notifications/read-all', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Mark all notifications as read
       await storage.markAllNotificationsAsRead(userId);
@@ -859,7 +859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Team referral statistics
   app.get('/api/team/referral-stats', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getTeamReferralStats(userId);
       res.json(stats);
     } catch (error) {
@@ -871,7 +871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Team referrals list
   app.get('/api/team/referrals', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const referrals = await storage.getTeamReferrals(userId);
       res.json(referrals);
     } catch (error) {
@@ -883,7 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Team progression data (revenue, level, team size)
   app.get('/api/team/progression', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const data = await storage.getProgressionData(userId);
       res.json(data);
     } catch (error) {
@@ -895,7 +895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Team analytics - hierarchy and performance data
   app.get('/api/team-analytics', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Get team members under this user (direct and indirect)
       const teamMembers = await storage.getTeamHierarchy(userId);
@@ -946,7 +946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send team invite via email/phone (supports GHL integration)
   app.post('/api/invites', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -1060,7 +1060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get pending team invitations
   app.get('/api/team-invitations', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       // Return empty array for now - TODO: implement getInvitationsByUserId
       const invitations: any[] = [];
       res.json(invitations);
@@ -1074,7 +1074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/team-invitations/:inviteId/resend', requireAuth, async (req: any, res) => {
     try {
       const { inviteId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // TODO: Implement invitation resend
       console.log(`Resending invitation ${inviteId} for user ${userId}`);
@@ -1090,7 +1090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/team-invitations/:inviteId', requireAuth, async (req: any, res) => {
     try {
       const { inviteId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // TODO: Implement invitation cancellation
       console.log(`Cancelling invitation ${inviteId} for user ${userId}`);
@@ -1208,7 +1208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin middleware to check admin access
   const isAdmin: RequestHandler = async (req: any, res, next) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user?.isAdmin) {
@@ -1362,7 +1362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's commission approvals
   app.get('/api/commission-approvals', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const approvals = await storage.getUserCommissionApprovals(userId);
       res.json(approvals);
     } catch (error) {
@@ -1420,7 +1420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Subscribe to push notifications
   app.post('/api/push/subscribe', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { subscription, userAgent } = req.body;
 
       if (!subscription || !subscription.endpoint || !subscription.keys) {
@@ -1451,7 +1451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Unsubscribe from push notifications
   app.delete('/api/push/unsubscribe', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { endpoint } = req.body;
 
       if (!endpoint) {
@@ -1477,7 +1477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Test push notification (for debugging)
   app.post('/api/push/test', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const result = await pushNotificationService.sendTestNotification(userId);
 
       if (result.success) {
@@ -1502,7 +1502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's push subscription status
   app.get('/api/push/status', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const subscriptions = await storage.getUserPushSubscriptions(userId);
       
       res.json({
@@ -1526,7 +1526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/mlm-hierarchy/:userId?', requireAuth, requireAdmin, auditAdminAction('view_mlm_hierarchy', 'admin'), async (req: any, res) => {
     try {
       const { userId } = req.params;
-      const rootUserId = userId || req.user.claims.sub;
+      const rootUserId = userId || req.user.id;
       
       const allUsers = await storage.getAllUsers();
       
@@ -1729,7 +1729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Add admin audit info
       const auditInfo = {
-        updatedBy: req.user.claims.email,
+        updatedBy: req.user.email,
         updatedAt: new Date(),
         previousValues: {
           status: currentReferral.status,
@@ -1739,7 +1739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Append audit info to admin notes
-      const adminAuditNote = `\n[${new Date().toLocaleString()}] Updated by admin ${req.user.claims.email}`;
+      const adminAuditNote = `\n[${new Date().toLocaleString()}] Updated by admin ${req.user.email}`;
       const updatedAdminNotes = (currentReferral.adminNotes || '') + adminAuditNote;
 
       const referral = await storage.updateReferral(referralId, {
@@ -1760,7 +1760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metadata: {
             oldStatus,
             newStatus,
-            updatedBy: `Admin: ${req.user.claims.email}`,
+            updatedBy: `Admin: ${req.user.email}`,
             commission: (newStatus === 'approved' || newStatus === 'paid') ? 
               (updateData.actualCommission || updateData.estimatedCommission || currentReferral.estimatedCommission) : null
           }
@@ -1780,7 +1780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               newStatus,
               teamMemberName: referralOwner.firstName ? `${referralOwner.firstName} ${referralOwner.lastName || ''}`.trim() : referralOwner.email,
               teamMemberId: currentReferral.referrerId,
-              updatedBy: `Admin: ${req.user.claims.email}`,
+              updatedBy: `Admin: ${req.user.email}`,
               commission: (newStatus === 'approved' || newStatus === 'paid') ? 
                 (updateData.actualCommission || updateData.estimatedCommission || currentReferral.estimatedCommission) : null
             }
@@ -1834,7 +1834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const statusChanged = oldStatus !== newStatus;
 
       // Create audit trail
-      const auditNote = `\n[${new Date().toLocaleString()}] Stage override by admin ${req.user.claims.email}: ${currentReferral.dealStage} → ${dealStage}. Reason: ${overrideReason || 'No reason provided'}`;
+      const auditNote = `\n[${new Date().toLocaleString()}] Stage override by admin ${req.user.email}: ${currentReferral.dealStage} → ${dealStage}. Reason: ${overrideReason || 'No reason provided'}`;
       const updatedAdminNotes = (adminNotes || currentReferral.adminNotes || '') + auditNote;
 
       // Update the referral stage and status
@@ -1860,7 +1860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             oldStatus,
             newStatus,
             dealStage,
-            updatedBy: `Admin: ${req.user.claims.email}`,
+            updatedBy: `Admin: ${req.user.email}`,
             commission: (newStatus === 'approved' || newStatus === 'paid') ? currentReferral.estimatedCommission : null
           }
         });
@@ -1880,7 +1880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               dealStage,
               teamMemberName: referralOwner.firstName ? `${referralOwner.firstName} ${referralOwner.lastName || ''}`.trim() : referralOwner.email,
               teamMemberId: currentReferral.referrerId,
-              updatedBy: `Admin: ${req.user.claims.email}`,
+              updatedBy: `Admin: ${req.user.email}`,
               commission: (newStatus === 'approved' || newStatus === 'paid') ? currentReferral.estimatedCommission : null
             }
           });
@@ -1919,7 +1919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             metadata: {
               dealStage,
               previousStage: currentReferral.dealStage,
-              updatedBy: `Admin: ${req.user.claims.email}`
+              updatedBy: `Admin: ${req.user.email}`
             }
           });
 
@@ -1937,7 +1937,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 previousStage: currentReferral.dealStage,
                 teamMemberName: referralOwner.firstName ? `${referralOwner.firstName} ${referralOwner.lastName || ''}`.trim() : referralOwner.email,
                 teamMemberId: currentReferral.referrerId,
-                updatedBy: `Admin: ${req.user.claims.email}`
+                updatedBy: `Admin: ${req.user.email}`
               }
             });
           }
@@ -1973,7 +1973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update referral with payment confirmation
-      const paymentConfirmationNote = `\n[${new Date().toLocaleString()}] Payment confirmed by admin ${req.user.claims.email}: £${actualCommission} via ${paymentMethod || 'Bank Transfer'}. Reference: ${paymentReference}. Notes: ${paymentNotes || 'No additional notes'}`;
+      const paymentConfirmationNote = `\n[${new Date().toLocaleString()}] Payment confirmed by admin ${req.user.email}: £${actualCommission} via ${paymentMethod || 'Bank Transfer'}. Reference: ${paymentReference}. Notes: ${paymentNotes || 'No additional notes'}`;
       
       const updateData = {
         actualCommission: actualCommission.toString(),
@@ -2068,7 +2068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Referral not found" });
       }
 
-      const auditNote = `\n[${new Date().toLocaleString()}] Referral reassigned from ${referral.referrerId} to ${newReferrerId} by admin ${req.user.claims.email}. Reason: ${reason}`;
+      const auditNote = `\n[${new Date().toLocaleString()}] Referral reassigned from ${referral.referrerId} to ${newReferrerId} by admin ${req.user.email}. Reason: ${reason}`;
       
       await storage.updateReferral(referralId, {
         referrerId: newReferrerId,
@@ -2114,7 +2114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log admin action
       console.log('Quote sent by admin for referral:', referralId, {
-        admin: req.user.claims.email,
+        admin: req.user.email,
         quoteAmount: quoteData.totalAmount,
         rates: quoteData.rates
       });
@@ -2258,7 +2258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's pending commission approvals
   app.get('/api/commission-approvals', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const approvals = await storage.getCommissionApprovalsByUserId(userId);
       res.json(approvals);
     } catch (error) {
@@ -2271,7 +2271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/commission-approvals/:approvalId/approve', requireAuth, async (req: any, res) => {
     try {
       const { approvalId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Verify approval belongs to user
       const approvals = await storage.getCommissionApprovalsByUserId(userId);
@@ -2303,7 +2303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/commission-approvals/:approvalId/reject', requireAuth, async (req: any, res) => {
     try {
       const { approvalId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Verify approval belongs to user
       const approvals = await storage.getCommissionApprovalsByUserId(userId);
@@ -2333,7 +2333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/notifications', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const notifications = await storage.getNotificationsByUserId(userId);
       res.json(notifications);
     } catch (error) {
@@ -2355,7 +2355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.patch('/api/notifications/read-all', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       await storage.markAllNotificationsAsRead(userId);
       res.json({ success: true, message: "All notifications marked as read" });
     } catch (error) {
@@ -2367,7 +2367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Leads routes
   app.get('/api/leads', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const leads = await storage.getLeadsByUserId(userId);
       res.json(leads);
     } catch (error) {
@@ -2378,7 +2378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/leads', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const leadData = {
         ...req.body,
         partnerId: userId,
@@ -2394,7 +2394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/leads/bulk', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { leads: leadsData } = req.body;
       
       const leadsWithPartnerId = leadsData.map((lead: any) => ({
@@ -2449,7 +2449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/leads/:leadId/interactions', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { leadId } = req.params;
       const interactionData = {
         ...req.body,
@@ -2466,7 +2466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/leads/:leadId/send-info', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { leadId } = req.params;
       const { productType, title, content } = req.body;
       
@@ -2563,7 +2563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Account management routes
   app.patch('/api/account/profile', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { firstName, lastName, phone, address, city, postcode, country } = req.body;
       
       // Update user profile
@@ -2598,7 +2598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/account/banking', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const bankingData = req.body;
       
       // Update banking details
@@ -2625,7 +2625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/account/feedback', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { type, subject, message, priority, rating } = req.body;
       
       // Store feedback
@@ -2660,7 +2660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analytics tracking endpoint
   app.post('/api/analytics/track', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { event, data } = req.body;
       
       // Log analytics event for audit trail
@@ -2707,7 +2707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's contacts
   app.get('/api/contacts', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contacts = await storage.getContactsByUserId(userId);
       res.json(contacts);
     } catch (error) {
@@ -2719,7 +2719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create contact
   app.post('/api/contacts', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Validate request body with Zod schema
       const validationResult = insertContactSchema.omit({ partnerId: true }).safeParse(req.body);
@@ -2748,7 +2748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/contacts/:contactId', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contact = await storage.getContactById(contactId, userId);
       
       if (!contact) {
@@ -2769,7 +2769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/contacts/:contactId', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Validate request body with Zod schema (partial for updates)
       const validationResult = insertContactSchema.omit({ partnerId: true }).partial().safeParse(req.body);
@@ -2796,7 +2796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/contacts/:contactId', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       await storage.deleteContact(contactId, userId);
       res.json({ success: true, message: "Contact deleted successfully" });
     } catch (error) {
@@ -2812,7 +2812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/contacts/:contactId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const interactions = await storage.getContactInteractions(contactId, userId);
       res.json(interactions);
     } catch (error) {
@@ -2828,7 +2828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/contacts/:contactId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { contactId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const interaction = await storage.addContactInteraction(contactId, userId, req.body);
       res.json(interaction);
     } catch (error) {
@@ -2845,7 +2845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's opportunities
   app.get('/api/opportunities', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const opportunities = await storage.getOpportunitiesByUserId(userId);
       res.json(opportunities);
     } catch (error) {
@@ -2857,7 +2857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create opportunity
   app.post('/api/opportunities', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       
       // Convert date strings to Date objects for timestamp fields
@@ -2905,7 +2905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/opportunities/:opportunityId', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const opportunity = await storage.getOpportunityById(opportunityId, userId);
       
       if (!opportunity) {
@@ -2926,7 +2926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/opportunities/:opportunityId', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Convert date strings to Date objects for timestamp fields
       const requestData = { ...req.body };
@@ -3008,7 +3008,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/opportunities/:opportunityId', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       await storage.deleteOpportunity(opportunityId, userId);
       res.json({ success: true, message: "Opportunity deleted successfully" });
     } catch (error) {
@@ -3024,7 +3024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/opportunities/:opportunityId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const interactions = await storage.getOpportunityInteractions(opportunityId, userId);
       res.json(interactions);
     } catch (error) {
@@ -3040,7 +3040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/opportunities/:opportunityId/interactions', requireAuth, async (req: any, res) => {
     try {
       const { opportunityId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const interaction = await storage.addOpportunityInteraction(opportunityId, userId, req.body);
       res.json(interaction);
     } catch (error) {
@@ -3055,7 +3055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Convert contact to opportunity
   app.post('/api/contacts/:contactId/convert-to-opportunity', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { contactId } = req.params;
       const { opportunityData } = req.body;
       
@@ -3152,7 +3152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Add admin audit log
       await storage.createAdminAuditLog({
-        actorId: req.user.claims.sub,
+        actorId: req.user.id,
         action: 'update_referral_stage',
         entityType: 'referral',
         entityId: referralId,
@@ -3343,7 +3343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             referralId,
             recipientId,
             recipientName: recipientName || 'Partner',
-            processedBy: req.user.claims.email
+            processedBy: req.user.email
           }
         });
 
@@ -3352,7 +3352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Create admin audit log
         await storage.createAdminAuditLog({
-          actorId: req.user.claims.sub,
+          actorId: req.user.id,
           action: 'process_stripe_payment',
           entityType: 'payment',
           entityId: referralId,
@@ -3419,7 +3419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create admin audit log
       await storage.createAdminAuditLog({
-        actorId: req.user.claims.sub,
+        actorId: req.user.id,
         action: 'process_manual_payment',
         entityType: 'payment',
         entityId: referralId,
