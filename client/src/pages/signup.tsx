@@ -43,6 +43,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -64,6 +65,7 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupForm) => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
       const payload: any = {
         email: data.email,
@@ -76,13 +78,10 @@ export default function SignupPage() {
         console.log('[SIGNUP] Including referral code:', referralCode);
       }
 
-      const response = await apiRequest('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const response = await apiRequest('POST', '/api/auth/register', payload);
+      const result = await response.json();
 
-      if (response.success) {
+      if (result.success) {
         toast({
           title: "Account created!",
           description: "Welcome to PartnerConnector. Let's complete your profile.",
@@ -92,9 +91,11 @@ export default function SignupPage() {
         setLocation('/onboarding');
       }
     } catch (error: any) {
+      const message = error.message || "Unable to create account";
+      setErrorMessage(message);
       toast({
         title: "Registration failed",
-        description: error.message || "Unable to create account",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -168,6 +169,29 @@ export default function SignupPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  {/* Error Alert */}
+                  {errorMessage && (
+                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4" data-testid="alert-error">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-white text-xs font-bold">!</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-red-900 mb-1">Registration Failed</p>
+                          <p className="text-sm text-red-700" data-testid="text-error-message">{errorMessage}</p>
+                          {errorMessage.includes("Email already registered") && (
+                            <p className="text-sm text-red-600 mt-2">
+                              Already have an account?{' '}
+                              <Link href="/login" className="font-semibold underline hover:text-red-800" data-testid="link-login-from-error">
+                                Sign in here
+                              </Link>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Email */}
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -178,6 +202,10 @@ export default function SignupPage() {
                       disabled={isLoading}
                       data-testid="input-email"
                       {...form.register("email")}
+                      onChange={(e) => {
+                        form.register("email").onChange(e);
+                        setErrorMessage(null);
+                      }}
                     />
                     {form.formState.errors.email && (
                       <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
