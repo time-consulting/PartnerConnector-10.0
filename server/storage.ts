@@ -277,7 +277,18 @@ export class DatabaseStorage implements IStorage {
         .returning();
     }
     
-    const user = (result as User[])[0];
+    let user = (result as User[])[0];
+
+    // Safety check: Ensure all new users have partnerId and referralCode
+    if (isNewUser && (!user.partnerId || !user.referralCode)) {
+      console.log('[SAFETY] New user missing partnerId or referralCode, generating...');
+      await this.generatePartnerId(user.id);
+      const updatedUser = await this.getUser(user.id);
+      if (updatedUser) {
+        user = updatedUser;
+        console.log('[SAFETY] Generated partnerId:', user.partnerId);
+      }
+    }
 
     if (isNewUser && referralCode) {
       console.log('[REFERRAL] New user detected. Setting up referral hierarchy...');
@@ -1025,10 +1036,14 @@ export class DatabaseStorage implements IStorage {
     const timestamp = Date.now().toString().slice(-6); // Last 6 digits
     const partnerId = `PC-${firstInitial}${lastInitial}-${timestamp}`;
     
-    // Update user with partner ID
+    // Update user with partner ID and use it as referral code
     await db
       .update(users)
-      .set({ partnerId, updatedAt: new Date() })
+      .set({ 
+        partnerId, 
+        referralCode: partnerId, // Use partnerId as referralCode
+        updatedAt: new Date() 
+      })
       .where(eq(users.id, userId));
     
     return partnerId;
