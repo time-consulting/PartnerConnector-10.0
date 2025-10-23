@@ -4,23 +4,19 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Mail,
-  Chrome,
-  Github,
-  Smartphone,
-  LogIn,
-  ArrowRight,
   Shield,
   CheckCircle,
   Users,
   TrendingUp,
   DollarSign,
-  Star
+  Star,
+  ArrowRight
 } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Login() {
-  const handleLogin = () => {
-    // Redirect to Replit Auth which supports all authentication methods
+  const handleEmailSignup = () => {
+    // Redirect to Replit Auth - Email option will be prominently displayed
     window.location.href = '/api/login';
   };
 
@@ -54,93 +50,96 @@ export default function Login() {
             <div className="text-center mb-8">
               <Badge className="mb-4 bg-green-100 text-green-700" data-testid="badge-secure">
                 <Shield className="w-3 h-3 mr-1" />
-                Secure Authentication
+                Secure Sign Up
               </Badge>
               <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                Welcome to PartnerConnector
+                Create Your Account
               </h1>
               <p className="text-gray-600">
-                Sign in or create your account to get started
+                Quick and easy sign-up using your email
               </p>
             </div>
 
             <Card className="border-0 shadow-xl">
               <CardHeader>
-                <CardTitle>Get Started</CardTitle>
+                <CardTitle>Get Started in 30 Seconds</CardTitle>
                 <CardDescription>
-                  Choose from multiple sign-in options on the next page
+                  Sign up with your email to start earning commissions
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Main Sign In Button */}
+              <CardContent className="space-y-6">
+                {/* Main Email Signup Button */}
                 <Button 
-                  onClick={handleLogin}
+                  onClick={handleEmailSignup}
                   className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                  data-testid="button-signin"
+                  data-testid="button-email-signup"
                 >
-                  <LogIn className="w-5 h-5 mr-2" />
-                  Sign In or Sign Up
+                  <Mail className="w-5 h-5 mr-2" />
+                  Continue with Email
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
 
                 <Separator />
 
-                {/* Available Sign-In Methods */}
-                <div>
-                  <p className="text-sm text-gray-600 mb-3 text-center">
-                    Available authentication methods:
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <Chrome className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm font-medium text-gray-700">Google</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <Mail className="w-4 h-4 text-purple-500" />
-                      <span className="text-sm font-medium text-gray-700">Email</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <Github className="w-4 h-4 text-gray-700" />
-                      <span className="text-sm font-medium text-gray-700">GitHub</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <Smartphone className="w-4 h-4 text-gray-700" />
-                      <span className="text-sm font-medium text-gray-700">Apple</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Security Notice */}
+                {/* What Happens Next */}
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-gray-600">
-                      <p className="font-medium text-gray-900 mb-1">What happens next?</p>
-                      <ol className="space-y-1 text-xs list-decimal list-inside">
-                        <li>Choose your preferred sign-in method</li>
-                        <li>Create an account or sign in (if you have one)</li>
-                        <li>Complete a quick onboarding questionnaire</li>
-                        <li>Start referring clients and earning commissions!</li>
+                    <div className="text-sm text-gray-700">
+                      <p className="font-medium text-gray-900 mb-2">What happens next?</p>
+                      <ol className="space-y-2 text-xs">
+                        <li className="flex items-start gap-2">
+                          <span className="font-semibold text-blue-600 min-w-[1.5rem]">1.</span>
+                          <span>Enter your email address</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="font-semibold text-blue-600 min-w-[1.5rem]">2.</span>
+                          <span>Create a secure password</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="font-semibold text-blue-600 min-w-[1.5rem]">3.</span>
+                          <span>Complete quick onboarding (6 simple questions)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="font-semibold text-blue-600 min-w-[1.5rem]">4.</span>
+                          <span>Start referring clients and earning!</span>
+                        </li>
                       </ol>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-green-600" />
-                    <p className="text-xs text-gray-700">
-                      <span className="font-medium">100% Secure:</span> Enterprise-grade encryption protects your data
-                    </p>
+                {/* Security Notice */}
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <div className="flex items-start gap-2">
+                    <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />
+                    <div className="text-xs text-gray-700">
+                      <p className="font-medium text-gray-900 mb-1">100% Secure & Private</p>
+                      <p>Your data is protected with enterprise-grade encryption. We never share your information with third parties.</p>
+                    </div>
                   </div>
+                </div>
+
+                {/* Alternative Methods Notice */}
+                <div className="text-center pt-2">
+                  <p className="text-xs text-gray-500">
+                    Multiple sign-in options available including Google, GitHub, and Apple
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Help Text */}
+            {/* Already Have Account */}
             <div className="text-center mt-6">
-              <p className="text-xs text-gray-500">
-                New users will be guided through a simple onboarding process after signing in
+              <p className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <button 
+                  onClick={handleEmailSignup}
+                  className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer underline" 
+                  data-testid="link-signin"
+                >
+                  Sign in here
+                </button>
               </p>
             </div>
           </div>
