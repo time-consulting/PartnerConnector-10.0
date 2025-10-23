@@ -64,6 +64,7 @@ export const users: any = pgTable("users", {
   // Stripe integration
   stripeAccountId: varchar("stripe_account_id"),
   // Onboarding tracking
+  hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
   tourStarted: timestamp("tour_started"),
   tourCompleted: timestamp("tour_completed"),
   tourSkipped: timestamp("tour_skipped"),

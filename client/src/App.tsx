@@ -32,6 +32,7 @@ const FeedbackPage = lazy(() => import("@/pages/account/feedback"));
 const WaitlistPage = lazy(() => import("@/pages/waitlist"));
 const SignupPage = lazy(() => import("@/pages/signup"));
 const LoginPage = lazy(() => import("@/pages/login"));
+const OnboardingPage = lazy(() => import("@/pages/onboarding"));
 const QuickAddReferral = lazy(() => import("@/pages/quick-add-referral"));
 const OfflinePage = lazy(() => import("@/pages/offline"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -63,15 +64,18 @@ function LoadingFallback() {
   );
 }
 
-// Private route wrapper that redirects to login if not authenticated
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+// Private route wrapper that redirects to login if not authenticated or to onboarding if not completed
+function PrivateRoute({ children, bypassOnboarding = false }: { children: React.ReactNode; bypassOnboarding?: boolean }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const [location] = useLocation();
   
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       window.location.href = '/login';
+    } else if (!isLoading && isAuthenticated && !bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
+      window.location.href = '/onboarding';
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, user, location, bypassOnboarding]);
 
   if (isLoading) {
     return (
@@ -89,6 +93,15 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // If user hasn't completed onboarding and we're not on the onboarding page, redirect
+  if (!bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Redirecting to onboarding...</div>
+      </div>
+    );
+  }
+
   return <>{children}</>;
 }
 
@@ -98,6 +111,7 @@ function Router() {
       {/* Public routes available to everyone */}
       <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/onboarding" component={() => <PrivateRoute bypassOnboarding={true}><OnboardingPage /></PrivateRoute>} />
       <Route path="/waitlist" component={WaitlistPage} />
       <Route path="/offline" component={OfflinePage} />
       <Route path="/partner-onboarding" component={PartnerOnboarding} />

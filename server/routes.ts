@@ -370,6 +370,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Complete onboarding
+  app.post('/api/auth/complete-onboarding', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { firstName, lastName, profession, company, clientBaseSize, phone } = req.body;
+      
+      if (!firstName || !lastName || !profession || !clientBaseSize) {
+        return res.status(400).json({ message: "Required fields missing" });
+      }
+      
+      // Update user profile with onboarding data
+      let user = await storage.upsertUser({
+        id: userId,
+        firstName,
+        lastName,
+        profession,
+        company: company || null,
+        clientBaseSize,
+        phone: phone || null,
+        hasCompletedOnboarding: true,
+      });
+      
+      // Generate partner ID if it doesn't exist
+      if (!user.partnerId) {
+        await storage.generatePartnerId(userId);
+        user = await storage.getUser(userId);
+      }
+      
+      // Set referralCode to partnerId if not already set
+      if (user && user.partnerId && !user.referralCode) {
+        await storage.updateUser(userId, { referralCode: user.partnerId });
+        user = await storage.getUser(userId);
+      }
+      
+      res.json({ success: true, user });
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      res.status(500).json({ message: "Failed to complete onboarding" });
+    }
+  });
+
   // Generate partner ID for user
   app.post('/api/auth/generate-partner-id', isAuthenticated, async (req: any, res) => {
     try {
