@@ -20,7 +20,7 @@ import { Link } from "wouter";
 
 export default function Login() {
   const handleLogin = () => {
-    // Redirect to Replit Auth which supports all these methods
+    // Redirect to Replit Auth which supports all authentication methods
     window.location.href = '/api/login';
   };
 
@@ -57,106 +57,90 @@ export default function Login() {
                 Secure Authentication
               </Badge>
               <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                Welcome Back
+                Welcome to PartnerConnector
               </h1>
               <p className="text-gray-600">
-                Choose your preferred method to sign in
+                Sign in or create your account to get started
               </p>
             </div>
 
             <Card className="border-0 shadow-xl">
               <CardHeader>
-                <CardTitle>Sign In Options</CardTitle>
+                <CardTitle>Get Started</CardTitle>
                 <CardDescription>
-                  Access your partnership dashboard with any of these methods
+                  Choose from multiple sign-in options on the next page
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Primary Login Button */}
-                <div className="space-y-3">
-                  {/* Google Sign In */}
-                  <Button 
-                    onClick={handleLogin}
-                    className="w-full h-12 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200 hover:border-gray-300 transition-all duration-200"
-                    data-testid="button-google-signin"
-                  >
-                    <Chrome className="w-5 h-5 mr-3 text-blue-500" />
-                    Continue with Google
-                  </Button>
+                {/* Main Sign In Button */}
+                <Button 
+                  onClick={handleLogin}
+                  className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  data-testid="button-signin"
+                >
+                  <LogIn className="w-5 h-5 mr-2" />
+                  Sign In or Sign Up
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
 
-                  {/* Email Sign In */}
-                  <Button 
-                    onClick={handleLogin}
-                    className="w-full h-12 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200 hover:border-gray-300 transition-all duration-200"
-                    data-testid="button-email-signin"
-                  >
-                    <Mail className="w-5 h-5 mr-3 text-purple-500" />
-                    Continue with Email
-                  </Button>
+                <Separator />
 
-                  <div className="relative">
-                    <Separator />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500">
-                      OR
-                    </span>
-                  </div>
-
-                  {/* Other Options */}
+                {/* Available Sign-In Methods */}
+                <div>
+                  <p className="text-sm text-gray-600 mb-3 text-center">
+                    Available authentication methods:
+                  </p>
                   <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      onClick={handleLogin}
-                      variant="outline"
-                      className="h-10"
-                      data-testid="button-github-signin"
-                    >
-                      <Github className="w-4 h-4 mr-2" />
-                      GitHub
-                    </Button>
-                    <Button 
-                      onClick={handleLogin}
-                      variant="outline"
-                      className="h-10"
-                      data-testid="button-apple-signin"
-                    >
-                      <Smartphone className="w-4 h-4 mr-2" />
-                      Apple
-                    </Button>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <Chrome className="w-4 h-4 text-blue-500" />
+                      <span className="text-sm font-medium text-gray-700">Google</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <Mail className="w-4 h-4 text-purple-500" />
+                      <span className="text-sm font-medium text-gray-700">Email</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <Github className="w-4 h-4 text-gray-700" />
+                      <span className="text-sm font-medium text-gray-700">GitHub</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <Smartphone className="w-4 h-4 text-gray-700" />
+                      <span className="text-sm font-medium text-gray-700">Apple</span>
+                    </div>
                   </div>
-
-                  {/* Main Sign In Button */}
-                  <Button 
-                    onClick={handleLogin}
-                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                    data-testid="button-all-signin"
-                  >
-                    <LogIn className="w-5 h-5 mr-2" />
-                    View All Sign In Options
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
                 </div>
 
                 {/* Security Notice */}
-                <div className="bg-blue-50 rounded-lg p-3">
+                <div className="bg-blue-50 rounded-lg p-4">
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5" />
-                    <div className="text-xs text-gray-600">
-                      <p className="font-medium text-gray-900 mb-1">Secure & Private</p>
-                      <p>Your login credentials are protected with enterprise-grade security. We never store passwords directly.</p>
+                    <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-gray-600">
+                      <p className="font-medium text-gray-900 mb-1">What happens next?</p>
+                      <ol className="space-y-1 text-xs list-decimal list-inside">
+                        <li>Choose your preferred sign-in method</li>
+                        <li>Create an account or sign in (if you have one)</li>
+                        <li>Complete a quick onboarding questionnaire</li>
+                        <li>Start referring clients and earning commissions!</li>
+                      </ol>
                     </div>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-green-600" />
+                    <p className="text-xs text-gray-700">
+                      <span className="font-medium">100% Secure:</span> Enterprise-grade encryption protects your data
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Sign Up Link */}
+            {/* Help Text */}
             <div className="text-center mt-6">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link href="/signup">
-                  <span className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer" data-testid="link-signup">
-                    Sign up for free
-                  </span>
-                </Link>
+              <p className="text-xs text-gray-500">
+                New users will be guided through a simple onboarding process after signing in
               </p>
             </div>
           </div>
