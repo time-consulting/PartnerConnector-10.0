@@ -63,9 +63,12 @@ import { db } from "./db";
 import { eq, desc, and, sql, gte } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations - mandatory for Replit Auth
+  // User operations - Auth
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser, referralCode?: string): Promise<User>;
+  createUserWithCredentials(email: string, password: string, userData: Partial<UpsertUser>, referralCode?: string): Promise<User>;
+  verifyLogin(email: string, password: string): Promise<User | null>;
   getUserByReferralCode(referralCode: string): Promise<User | undefined>;
   setupReferralHierarchy(newUserId: string, referrerUserId: string): Promise<void>;
   
@@ -243,6 +246,81 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id));
     return result[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUserWithCredentials(
+    email: string, 
+    password: string, 
+    userData: Partial<UpsertUser>,
+    referralCode?: string
+  ): Promise<User> {
+    const bcrypt = await import('bcrypt');
+    
+    // Check if email already exists
+    const existing = await this.getUserByEmail(email);
+    if (existing) {
+      throw new Error('Email already registered');
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 12);
+    
+    // Create user
+    const [user] = await db.insert(users).values({
+      email,
+      passwordHash,
+      emailVerified: false, // Will verify later via Go High Level
+      ...userData,
+    }).returning();
+
+    console.log('[AUTH] New user created:', user.id, user.email);
+
+    // Generate partner ID and referral code
+    if (!user.partnerId || !user.referralCode) {
+      await this.generatePartnerId(user.id);
+    }
+
+    // Setup referral hierarchy if referral code provided
+    if (referralCode) {
+      console.log('[AUTH] Setting up referral hierarchy for:', user.email);
+      try {
+        const referrer = await this.getUserByReferralCode(referralCode);
+        if (referrer && referrer.id !== user.id) {
+          await this.setupReferralHierarchy(user.id, referrer.id);
+          console.log('[AUTH] Referral hierarchy created successfully');
+        }
+      } catch (error) {
+        console.error('[AUTH] Error setting up referral hierarchy:', error);
+      }
+    }
+
+    return await this.getUser(user.id) as User;
+  }
+
+  async verifyLogin(email: string, password: string): Promise<User | null> {
+    const bcrypt = await import('bcrypt');
+    
+    const user = await this.getUserByEmail(email);
+    if (!user || !user.passwordHash) {
+      return null;
+    }
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      return null;
+    }
+
+    // Update last login
+    await db.update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, user.id));
+
+    return user;
   }
 
   async upsertUser(userData: UpsertUser, referralCode?: string): Promise<User> {
