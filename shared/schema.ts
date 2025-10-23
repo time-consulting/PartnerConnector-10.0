@@ -73,6 +73,11 @@ export const users: any = pgTable("users", {
   onboardingXp: integer("onboarding_xp").default(0),
   country: varchar("country").default("gb"),
   phone: varchar("phone"),
+  // Custom auth fields
+  passwordHash: varchar("password_hash"), // bcrypt hash - nullable for legacy OAuth users
+  emailVerified: boolean("email_verified").default(false),
+  verificationToken: varchar("verification_token"),
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
