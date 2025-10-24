@@ -18,6 +18,7 @@ import { z } from "zod";
 import SideNavigation from "@/components/side-navigation";
 import Navigation from "@/components/navigation";
 import MlmVisualization from "@/components/mlm-visualization";
+import QuoteBuilder from "@/components/quote-builder";
 import {
   Search,
   Filter,
@@ -469,6 +470,82 @@ export default function AdminDashboard() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Quote Requests - Referrals Needing Quotes */}
+                {referralsData?.referrals && referralsData.referrals.filter((r: any) => !r.quoteGenerated && r.status !== 'rejected').length > 0 && (
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-l-orange-500">
+                    <CardHeader className="bg-gradient-to-r from-orange-100/50 to-amber-100/50">
+                      <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <AlertCircle className="w-6 h-6 text-orange-600" />
+                        Quote Requests ({referralsData.referrals.filter((r: any) => !r.quoteGenerated && r.status !== 'rejected').length} awaiting quotes)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="space-y-1">
+                        {referralsData.referrals
+                          .filter((r: any) => !r.quoteGenerated && r.status !== 'rejected')
+                          .slice(0, 5)
+                          .map((referral: any, index: number, arr: any[]) => (
+                            <div
+                              key={referral.id}
+                              className={`p-6 hover:bg-white/80 transition-all duration-200 ${
+                                index !== arr.length - 1 ? 'border-b border-orange-200' : ''
+                              }`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
+                                    <Badge className="bg-orange-100 text-orange-800 border-0 font-medium px-3 py-1">
+                                      NEEDS QUOTE
+                                    </Badge>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <Mail className="w-4 h-4" />
+                                      <span className="text-sm">{referral.businessEmail}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <Phone className="w-4 h-4" />
+                                      <span className="text-sm">{referral.businessPhone || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <Calendar className="w-4 h-4" />
+                                      <span className="text-sm">
+                                        Submitted {new Date(referral.submittedAt).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {referral.notes && (
+                                    <div className="mt-3 p-3 bg-white/60 border-l-4 border-blue-400 rounded">
+                                      <p className="text-sm text-gray-700"><strong>Partner Notes:</strong> {referral.notes}</p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="ml-6">
+                                  <Button
+                                    size="lg"
+                                    onClick={() => {
+                                      setSelectedReferral(referral);
+                                      setShowQuoteModal(true);
+                                    }}
+                                    className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg"
+                                    data-testid={`button-create-quote-${referral.id}`}
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Create Quote
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Referrals List */}
                 <Card className="border-0 shadow-lg">
@@ -974,100 +1051,18 @@ export default function AdminDashboard() {
           </Tabs>
         </div>
 
-        {/* Quote Modal */}
-        <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
-          <DialogContent className="sm:max-w-[600px]" data-testid="modal-send-quote">
-            <DialogHeader>
-              <DialogTitle>Send Quote - {selectedReferral?.businessName}</DialogTitle>
-            </DialogHeader>
-            <Form {...quoteForm}>
-              <form onSubmit={quoteForm.handleSubmit((data) => {
-                sendQuoteMutation.mutate({
-                  referralId: selectedReferral.id,
-                  quoteData: data
-                });
-              })} className="space-y-4">
-                <FormField
-                  control={quoteForm.control}
-                  name="totalAmount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Total Quote Amount (£)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="e.g., 1500" data-testid="input-quote-amount" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={quoteForm.control}
-                  name="cardRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Card Processing Rate (%)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="1.5" data-testid="input-card-rate" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={quoteForm.control}
-                  name="businessFundingRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Business Funding Rate (%) - Optional</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="5.9" data-testid="input-funding-rate" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={quoteForm.control}
-                  name="adminNotes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Admin Notes</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Internal notes about this quote..."
-                          data-testid="textarea-admin-notes"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-end gap-3">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setShowQuoteModal(false)}
-                    data-testid="button-cancel-quote"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={sendQuoteMutation.isPending}
-                    data-testid="button-send-quote"
-                  >
-                    {sendQuoteMutation.isPending ? 'Sending...' : 'Send Quote'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        {/* Comprehensive Quote Builder */}
+        {selectedReferral && (
+          <QuoteBuilder
+            open={showQuoteModal}
+            onOpenChange={setShowQuoteModal}
+            referral={selectedReferral}
+            onSuccess={() => {
+              setShowQuoteModal(false);
+              queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+            }}
+          />
+        )}
 
         {/* Document Requirements Modal */}
         <Dialog open={showDocumentsModal} onOpenChange={setShowDocumentsModal}>
