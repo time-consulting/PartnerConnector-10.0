@@ -172,6 +172,12 @@ export default function AdminDashboard() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+  // Fetch pending signups
+  const { data: signups, isLoading: signupsLoading } = useQuery<any[]>({
+    queryKey: ['/api/admin/signups'],
+    enabled: !!(user as any)?.isAdmin,
+  });
+
   // Quote form
   const quoteForm = useForm<z.infer<typeof quoteFormSchema>>({
     resolver: zodResolver(quoteFormSchema),
@@ -409,10 +415,14 @@ export default function AdminDashboard() {
           </section>
 
           <Tabs defaultValue="submissions" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-8">
+            <TabsList className="grid w-full grid-cols-6 mb-8">
               <TabsTrigger value="submissions" data-testid="tab-submissions">
                 <FileText className="w-4 h-4 mr-2" />
                 Submissions Portal
+              </TabsTrigger>
+              <TabsTrigger value="signups" data-testid="tab-signups">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Signups
               </TabsTrigger>
               <TabsTrigger value="users" data-testid="tab-users">
                 <Users className="w-4 h-4 mr-2" />
@@ -733,6 +743,94 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </div>
+            </TabsContent>
+
+            <TabsContent value="signups">
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                    Pending Signups - Action Required
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {signupsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Loading signups...</p>
+                    </div>
+                  ) : !signups || signups.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <CheckCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <p>No pending signups</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {signups.map((signup: any) => (
+                        <Card key={signup.quoteId} className="border-2">
+                          <CardContent className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {/* Business Information */}
+                              <div>
+                                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                  <Building className="w-5 h-5" />
+                                  Business Information
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Business Name:</strong> {signup.businessName}</p>
+                                  <p><strong>Trading Name:</strong> {signup.tradingName}</p>
+                                  <p><strong>Email:</strong> {signup.businessEmail}</p>
+                                  <p><strong>Structure:</strong> {signup.businessStructure}</p>
+                                  {signup.limitedCompanyName && (
+                                    <p><strong>Company Name:</strong> {signup.limitedCompanyName}</p>
+                                  )}
+                                  {signup.businessDescription && (
+                                    <p><strong>Description:</strong> {signup.businessDescription}</p>
+                                  )}
+                                  <p><strong>Address:</strong> {signup.tradingAddress}</p>
+                                </div>
+                              </div>
+
+                              {/* Director/Owner Information */}
+                              <div>
+                                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                  <User className="w-5 h-5" />
+                                  Director/Owner Details
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Name:</strong> {signup.ownerFirstName} {signup.ownerLastName}</p>
+                                  <p><strong>Email:</strong> {signup.ownerEmail}</p>
+                                  <p><strong>Phone:</strong> {signup.ownerPhone}</p>
+                                  {signup.ownerHomeAddress && (
+                                    <p><strong>Home Address:</strong> {signup.ownerHomeAddress}</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Banking & Partner Information */}
+                              <div>
+                                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                  <DollarSign className="w-5 h-5" />
+                                  Banking & Partner Info
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Sort Code:</strong> {signup.bankSortCode}</p>
+                                  <p><strong>Account Number:</strong> {signup.bankAccountNumber}</p>
+                                  <div className="mt-4 pt-4 border-t">
+                                    <p><strong>Submitted By:</strong> {signup.partnerName}</p>
+                                    <p><strong>Partner Email:</strong> {signup.partnerEmail}</p>
+                                    <p><strong>Submitted:</strong> {new Date(signup.createdAt).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="users">
