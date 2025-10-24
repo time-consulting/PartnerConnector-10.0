@@ -15,15 +15,17 @@ import {
   Building,
   Calendar,
   PoundSterling,
-  ArrowLeft
+  ArrowLeft,
+  FileText
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import ProgressTracker from "@/components/progress-tracker";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function TrackReferrals() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedReferral, setSelectedReferral] = useState<any>(null);
@@ -306,6 +308,21 @@ export default function TrackReferrals() {
                       </div>
                       
                       <div className="flex items-center gap-3">
+                        {['quote_sent', 'quote_approved'].includes(referral.status) && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocation('/quotes');
+                            }}
+                            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                            data-testid={`button-view-quote-${referral.id}`}
+                          >
+                            <FileText className="w-4 h-4" />
+                            View Quote
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -314,6 +331,7 @@ export default function TrackReferrals() {
                             handleViewProgress(referral);
                           }}
                           className="flex items-center gap-2 bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-gray-700 hover:text-blue-700"
+                          data-testid={`button-view-details-${referral.id}`}
                         >
                           <Eye className="w-4 h-4" />
                           View Details
