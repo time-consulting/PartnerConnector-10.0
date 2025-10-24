@@ -630,6 +630,19 @@ export default function AdminDashboard() {
                                     </span>
                                   </div>
                                 </div>
+                                
+                                {/* Partner Attribution */}
+                                {referral.referrerId && users && (
+                                  <div className="mb-3 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                                    <p className="text-sm text-gray-700">
+                                      <strong>Submitted by Partner:</strong>{' '}
+                                      {(() => {
+                                        const partner = users.find((u: any) => u.id === referral.referrerId);
+                                        return partner ? `${partner.firstName} ${partner.lastName} (${partner.email})` : 'Partner Info Unavailable';
+                                      })()}
+                                    </p>
+                                  </div>
+                                )}
 
                                 {referral.estimatedCommission && (
                                   <div className="flex items-center gap-2 bg-green-100 text-green-700 rounded-lg px-3 py-1 font-medium inline-flex">
