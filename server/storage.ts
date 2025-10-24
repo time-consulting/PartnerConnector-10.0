@@ -243,6 +243,7 @@ export interface IStorage {
 
   // Quotes operations
   getQuotesByUserId(userId: string): Promise<any[]>;
+  getAllQuotesForAdmin(): Promise<any[]>;
   getQuoteById(quoteId: string): Promise<any | undefined>;
   updateQuoteJourneyStatus(quoteId: string, status: string): Promise<void>;
   addQuoteQuestion(quoteId: string, question: string): Promise<void>;
@@ -250,6 +251,21 @@ export interface IStorage {
   approveQuoteByPartner(quoteId: string): Promise<void>;
   sendQuoteToClient(quoteId: string): Promise<void>;
   saveQuoteSignupInfo(quoteId: string, referralId: string, signupData: any): Promise<void>;
+  getPendingSignups(): Promise<any[]>;
+  getSignupDetails(quoteId: string): Promise<any>;
+  updateQuoteCommission(quoteId: string, estimatedCommission: number): Promise<void>;
+  updateQuoteBusinessType(quoteId: string, businessType: string, billUploadRequired: boolean): Promise<void>;
+  recordCommissionPayment(quoteId: string, stripePaymentId: string): Promise<void>;
+  
+  // Quote Q&A operations
+  addQuoteQAMessage(quoteId: string, authorType: string, authorId: string | null, message: string): Promise<any>;
+  getQuoteQA(quoteId: string): Promise<any[]>;
+  
+  // Quote bill upload operations
+  createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string): Promise<any>;
+  getQuoteBillUploads(quoteId: string): Promise<any[]>;
+  approveQuoteBill(billId: string, adminNotes?: string): Promise<void>;
+  rejectQuoteBill(billId: string, adminNotes: string): Promise<void>;
 
   // Test data seeding
   seedTestReferrals(): Promise<void>;
@@ -2177,6 +2193,236 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(quotes.id, quoteId));
+  }
+
+  async getAllQuotesForAdmin(): Promise<any[]> {
+    const { quoteQA } = await import("@shared/schema");
+    const result = await db
+      .select({
+        id: quotes.id,
+        referralId: quotes.referralId,
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
+        customerJourneyStatus: quotes.customerJourneyStatus,
+        status: quotes.status,
+        createdAt: quotes.createdAt,
+        updatedAt: quotes.updatedAt,
+        createdBy: quotes.createdBy,
+        partnerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        partnerEmail: users.email,
+        estimatedCommission: quotes.estimatedCommission,
+        businessType: quotes.businessType,
+        billUploadRequired: quotes.billUploadRequired,
+        billUploaded: quotes.billUploaded,
+        commissionPaid: quotes.commissionPaid,
+      })
+      .from(quotes)
+      .leftJoin(referrals, eq(quotes.referralId, referrals.id))
+      .leftJoin(users, eq(quotes.createdBy, users.id))
+      .orderBy(desc(quotes.createdAt));
+
+    return result;
+  }
+
+  async getPendingSignups(): Promise<any[]> {
+    const result = await db
+      .select({
+        quoteId: quotes.id,
+        referralId: quotes.referralId,
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
+        customerJourneyStatus: quotes.customerJourneyStatus,
+        createdAt: quotes.createdAt,
+        partnerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        partnerEmail: users.email,
+        ownerId: businessOwners.id,
+        ownerFirstName: businessOwners.firstName,
+        ownerLastName: businessOwners.lastName,
+        ownerEmail: businessOwners.email,
+        ownerPhone: businessOwners.phone,
+        ownerHomeAddress: businessOwners.homeAddress,
+        detailsId: businessDetails.id,
+        tradingName: businessDetails.tradingName,
+        tradingAddress: businessDetails.tradingAddress,
+        businessDescription: businessDetails.businessDescription,
+        businessStructure: businessDetails.businessStructure,
+        limitedCompanyName: businessDetails.limitedCompanyName,
+        bankSortCode: businessDetails.bankSortCode,
+        bankAccountNumber: businessDetails.bankAccountNumber,
+      })
+      .from(quotes)
+      .leftJoin(referrals, eq(quotes.referralId, referrals.id))
+      .leftJoin(users, eq(quotes.createdBy, users.id))
+      .leftJoin(businessOwners, eq(businessOwners.referralId, quotes.referralId))
+      .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
+      .where(and(
+        sql`${businessOwners.id} IS NOT NULL`,
+        sql`${quotes.customerJourneyStatus} = 'agreement_sent'`
+      ))
+      .orderBy(desc(quotes.createdAt));
+
+    return result;
+  }
+
+  async getSignupDetails(quoteId: string): Promise<any> {
+    const [result] = await db
+      .select({
+        quoteId: quotes.id,
+        referralId: quotes.referralId,
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
+        customerJourneyStatus: quotes.customerJourneyStatus,
+        createdAt: quotes.createdAt,
+        partnerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        partnerEmail: users.email,
+        ownerFirstName: businessOwners.firstName,
+        ownerLastName: businessOwners.lastName,
+        ownerEmail: businessOwners.email,
+        ownerPhone: businessOwners.phone,
+        ownerHomeAddress: businessOwners.homeAddress,
+        tradingName: businessDetails.tradingName,
+        tradingAddress: businessDetails.tradingAddress,
+        businessDescription: businessDetails.businessDescription,
+        businessStructure: businessDetails.businessStructure,
+        limitedCompanyName: businessDetails.limitedCompanyName,
+        bankSortCode: businessDetails.bankSortCode,
+        bankAccountNumber: businessDetails.bankAccountNumber,
+      })
+      .from(quotes)
+      .leftJoin(referrals, eq(quotes.referralId, referrals.id))
+      .leftJoin(users, eq(quotes.createdBy, users.id))
+      .leftJoin(businessOwners, eq(businessOwners.referralId, quotes.referralId))
+      .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
+      .where(eq(quotes.id, quoteId));
+
+    return result;
+  }
+
+  async updateQuoteCommission(quoteId: string, estimatedCommission: number): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ 
+        estimatedCommission: estimatedCommission.toString(),
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+  }
+
+  async updateQuoteBusinessType(quoteId: string, businessType: string, billUploadRequired: boolean): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ 
+        businessType,
+        billUploadRequired,
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+  }
+
+  async recordCommissionPayment(quoteId: string, stripePaymentId: string): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ 
+        commissionPaid: true,
+        commissionPaidDate: new Date(),
+        stripePaymentId,
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+  }
+
+  async addQuoteQAMessage(quoteId: string, authorType: string, authorId: string | null, message: string): Promise<any> {
+    const { quoteQA } = await import("@shared/schema");
+    const [qaMessage] = await db
+      .insert(quoteQA)
+      .values({
+        quoteId,
+        authorType,
+        authorId,
+        message
+      })
+      .returning();
+    return qaMessage;
+  }
+
+  async getQuoteQA(quoteId: string): Promise<any[]> {
+    const { quoteQA } = await import("@shared/schema");
+    const result = await db
+      .select({
+        id: quoteQA.id,
+        quoteId: quoteQA.quoteId,
+        authorType: quoteQA.authorType,
+        authorId: quoteQA.authorId,
+        authorName: sql<string>`COALESCE(${users.firstName} || ' ' || ${users.lastName}, 'Customer')`,
+        message: quoteQA.message,
+        createdAt: quoteQA.createdAt,
+      })
+      .from(quoteQA)
+      .leftJoin(users, eq(quoteQA.authorId, users.id))
+      .where(eq(quoteQA.quoteId, quoteId))
+      .orderBy(quoteQA.createdAt);
+
+    return result;
+  }
+
+  async createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string): Promise<any> {
+    const { quoteBillUploads } = await import("@shared/schema");
+    const [upload] = await db
+      .insert(quoteBillUploads)
+      .values({
+        quoteId,
+        referralId,
+        fileName,
+        fileSize,
+        fileType,
+        uploadedBy,
+        status: 'pending'
+      })
+      .returning();
+
+    // Mark the quote as having bill uploaded
+    await db
+      .update(quotes)
+      .set({ 
+        billUploaded: true,
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+
+    return upload;
+  }
+
+  async getQuoteBillUploads(quoteId: string): Promise<any[]> {
+    const { quoteBillUploads } = await import("@shared/schema");
+    const result = await db
+      .select()
+      .from(quoteBillUploads)
+      .where(eq(quoteBillUploads.quoteId, quoteId))
+      .orderBy(desc(quoteBillUploads.createdAt));
+
+    return result;
+  }
+
+  async approveQuoteBill(billId: string, adminNotes?: string): Promise<void> {
+    const { quoteBillUploads } = await import("@shared/schema");
+    await db
+      .update(quoteBillUploads)
+      .set({ 
+        status: 'approved',
+        adminNotes
+      })
+      .where(eq(quoteBillUploads.id, billId));
+  }
+
+  async rejectQuoteBill(billId: string, adminNotes: string): Promise<void> {
+    const { quoteBillUploads } = await import("@shared/schema");
+    await db
+      .update(quoteBillUploads)
+      .set({ 
+        status: 'rejected',
+        adminNotes
+      })
+      .where(eq(quoteBillUploads.id, billId));
   }
 
   // Test data seeding function for demonstrating referral system functionality
