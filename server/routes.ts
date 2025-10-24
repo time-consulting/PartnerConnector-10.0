@@ -2221,6 +2221,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create comprehensive quote with full details
+  app.post('/api/admin/quotes/create', requireAuth, requireAdmin, auditAdminAction('create_quote', 'quote'), async (req: any, res) => {
+    try {
+      const {
+        referralId,
+        creditCardRate,
+        debitCardRate,
+        corporateCardRate,
+        visaBusinessDebitRate,
+        otherBusinessDebitRate,
+        amexRate,
+        secureTransactionFee,
+        estimatedMonthlySaving,
+        buyoutAmount,
+        devicePaymentType,
+        devices,
+        hardwareCare,
+        settlementType,
+        dojoPlan,
+      } = req.body;
+
+      // Verify referral exists
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
+      
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Calculate device costs
+      const totalDevices = devices.reduce((sum: number, d: any) => sum + d.quantity, 0);
+      const deviceCost = devices.reduce((sum: number, d: any) => sum + d.price, 0);
+      const hardwareCareCost = hardwareCare ? totalDevices * 5 : 0;
+      const settlementCost = settlementType === '7_day' ? 10 : 0;
+      const dojoPlanCost = dojoPlan ? 11.99 : 0;
+
+      const monthlyDeviceCost = devicePaymentType === 'pay_monthly' ? deviceCost : 0;
+      const oneTimeDeviceCost = devicePaymentType === 'pay_once' ? deviceCost : 0;
+      const totalMonthlyCost = monthlyDeviceCost + hardwareCareCost + settlementCost + dojoPlanCost;
+
+      // Create the quote
+      const quote = await storage.createQuote({
+        referralId,
+        creditCardRate,
+        debitCardRate,
+        corporateCardRate,
+        visaBusinessDebitRate,
+        otherBusinessDebitRate,
+        amexRate,
+        secureTransactionFee,
+        estimatedMonthlySaving,
+        buyoutAmount,
+        devicePaymentType,
+        devices,
+        hardwareCare,
+        settlementType,
+        dojoPlan,
+        monthlyDeviceCost,
+        oneTimeDeviceCost,
+        totalAmount: totalMonthlyCost,
+        status: 'sent',
+        customerJourneyStatus: 'review_quote',
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        sentAt: new Date(),
+        createdBy: req.user.id,
+      });
+
+      // Update referral status
+      await storage.updateReferral(referralId, {
+        status: 'quote_sent',
+        quoteGenerated: true,
+        updatedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        quoteId: quote.id,
+        message: "Quote created and sent successfully"
+      });
+    } catch (error) {
+      console.error("Error creating quote:", error);
+      res.status(500).json({ message: "Failed to create quote" });
+    }
+  });
+
   // Admin document management
   app.post('/api/admin/referrals/:referralId/docs-out-confirmation', requireAuth, requireAdmin, async (req: any, res) => {
     try {

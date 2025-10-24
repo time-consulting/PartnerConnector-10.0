@@ -2044,6 +2044,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Quotes operations
+  async createQuote(quoteData: any): Promise<any> {
+    const [quote] = await db
+      .insert(quotes)
+      .values(quoteData)
+      .returning();
+    return quote;
+  }
+
   async getQuotesByUserId(userId: string): Promise<any[]> {
     const result = await db
       .select({

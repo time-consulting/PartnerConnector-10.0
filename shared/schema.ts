@@ -566,8 +566,39 @@ export const quotes = pgTable("quotes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
   version: integer("version").notNull().default(1), // For quote versioning
-  ratesData: jsonb("rates_data").notNull(), // Detailed rate breakdown
+  
+  // Transaction Rates
+  creditCardRate: decimal("credit_card_rate", { precision: 5, scale: 2 }), // e.g., 1.49%
+  debitCardRate: decimal("debit_card_rate", { precision: 5, scale: 2 }),
+  corporateCardRate: decimal("corporate_card_rate", { precision: 5, scale: 2 }),
+  visaBusinessDebitRate: decimal("visa_business_debit_rate", { precision: 5, scale: 2 }).default('1.99'),
+  otherBusinessDebitRate: decimal("other_business_debit_rate", { precision: 5, scale: 2 }).default('1.99'),
+  amexRate: decimal("amex_rate", { precision: 5, scale: 2 }).default('1.90'),
+  
+  // Transaction Fees
+  secureTransactionFee: decimal("secure_transaction_fee", { precision: 5, scale: 2 }), // in pence, e.g., 5.00p
+  
+  // Buyout & Savings
+  buyoutAmount: decimal("buyout_amount", { precision: 10, scale: 2 }), // £3000 or £500
+  estimatedMonthlySaving: decimal("estimated_monthly_saving", { precision: 10, scale: 2 }),
+  
+  // Card Machines/Devices
+  devicePaymentType: varchar("device_payment_type"), // 'pay_once' or 'pay_monthly'
+  devices: jsonb("devices").default('[]'), // Array of {type: 'dojo_go'|'dojo_pocket', quantity: number, price: number}
+  
+  // Optional Extras
+  hardwareCare: boolean("hardware_care").default(false), // £5 per device
+  settlementType: varchar("settlement_type").default('5_day'), // '5_day' or '7_day' (7 day = £10pm)
+  dojoPlan: boolean("dojo_plan").default(false), // £11.99pm with 3 months free trial
+  
+  // Calculated totals
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
+  monthlyDeviceCost: decimal("monthly_device_cost", { precision: 10, scale: 2 }),
+  oneTimeDeviceCost: decimal("one_time_device_cost", { precision: 10, scale: 2 }),
+  
+  // Legacy field for backwards compatibility
+  ratesData: jsonb("rates_data"), // Detailed rate breakdown - keeping for old quotes
+  
   validUntil: timestamp("valid_until"),
   sentAt: timestamp("sent_at"),
   viewedAt: timestamp("viewed_at"),
