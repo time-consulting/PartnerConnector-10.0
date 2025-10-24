@@ -587,6 +587,28 @@ export default function Quotes() {
                     </Badge>
                   </div>
 
+                  {/* Bill Upload Requirement Indicator */}
+                  {selectedQuote.businessType === 'switcher' && (
+                    <div className={`rounded-2xl p-6 border-2 ${selectedQuote.billUploaded ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+                      <div className="flex items-center gap-4">
+                        <div className={`rounded-full p-3 ${selectedQuote.billUploaded ? 'bg-green-600' : 'bg-amber-600'}`}>
+                          <FileText className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {selectedQuote.billUploaded ? 'Bill Upload Complete' : 'Bill Upload Required'}
+                          </h3>
+                          <p className="text-gray-600">
+                            {selectedQuote.billUploaded 
+                              ? 'The current processor bill has been uploaded and submitted.' 
+                              : 'As a switcher business, a copy of the current processor bill is required to proceed.'}
+                          </p>
+                        </div>
+                        {selectedQuote.billUploaded && <CheckCircle2 className="h-6 w-6 text-green-600" />}
+                      </div>
+                    </div>
+                  )}
+
                   {selectedQuote.adminNotes && (
                     <div className="bg-yellow-50 rounded-2xl p-6 border-2 border-yellow-200">
                       <h4 className="font-semibold text-gray-900 mb-2">Notes from Dojo</h4>
