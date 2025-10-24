@@ -8,11 +8,107 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User } from "lucide-react";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import { useToast } from "@/hooks/use-toast";
 import AdditionalDetailsForm from "@/components/additional-details-form";
+
+// Q&A Section Component
+function QuoteQASection({ quoteId }: { quoteId: string }) {
+  const [newMessage, setNewMessage] = useState("");
+  const { toast } = useToast();
+
+  const { data: qaMessages = [], isLoading } = useQuery({
+    queryKey: ['/api/quotes', quoteId, 'qa'],
+    queryFn: () => fetch(`/api/quotes/${quoteId}/qa`).then(r => r.json()),
+  });
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async (message: string) => {
+      return apiRequest('POST', `/api/quotes/${quoteId}/qa`, { message });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes', quoteId, 'qa'] });
+      setNewMessage("");
+      toast({
+        title: "Message sent",
+        description: "Your message has been added to the conversation",
+      });
+    },
+  });
+
+  const handleSendMessage = () => {
+    if (newMessage.trim()) {
+      sendMessageMutation.mutate(newMessage);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
+        <p className="text-gray-500">Loading conversation...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
+      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <MessageSquare className="h-5 w-5" />
+        Questions & Answers
+      </h3>
+      
+      {qaMessages.length > 0 ? (
+        <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+          {qaMessages.map((msg: any) => (
+            <div
+              key={msg.id}
+              className={`p-3 rounded-lg ${
+                msg.authorType === 'admin' 
+                  ? 'bg-blue-50 border border-blue-200' 
+                  : 'bg-gray-50 border border-gray-200'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <User className="h-4 w-4 mt-0.5 text-gray-600" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-600 mb-1">
+                    {msg.authorType === 'admin' ? 'Dojo Admin' : msg.authorName}
+                  </p>
+                  <p className="text-sm text-gray-900">{msg.message}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(msg.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500 text-sm mb-4">No messages yet. Ask a question to start the conversation.</p>
+      )}
+
+      <div className="flex gap-2">
+        <Input
+          placeholder="Ask a question about this quote..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+          data-testid="input-qa-message"
+        />
+        <Button
+          onClick={handleSendMessage}
+          disabled={!newMessage.trim() || sendMessageMutation.isPending}
+          data-testid="button-send-qa"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // Status mapping with colors
 const STATUS_CONFIG = {
@@ -497,6 +593,9 @@ export default function Quotes() {
                       <p className="text-gray-700" data-testid="text-admin-notes">{selectedQuote.adminNotes}</p>
                     </div>
                   )}
+
+                  {/* Q&A Thread Section */}
+                  <QuoteQASection quoteId={selectedQuote.id} />
 
                   {/* Action buttons */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
