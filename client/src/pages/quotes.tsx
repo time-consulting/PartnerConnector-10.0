@@ -296,33 +296,218 @@ export default function Quotes() {
                 </DialogHeader>
 
                 <div className="p-6 space-y-6">
-                  {/* Quote details */}
-                  <div className="bg-gray-50 rounded-2xl p-6 border-2">
-                    <h3 className="text-lg font-semibold mb-4">Quote Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Amount</p>
-                        <p className="text-2xl font-bold text-gray-900" data-testid="text-modal-amount">
-                          £{selectedQuote.totalAmount ? parseFloat(selectedQuote.totalAmount).toLocaleString() : '0'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Status</p>
-                        <Badge
-                          className={`${STATUS_CONFIG[selectedQuote.customerJourneyStatus as keyof typeof STATUS_CONFIG]?.color} border rounded-full px-3 py-1 text-xs font-medium mt-2`}
-                          data-testid="badge-modal-status"
-                        >
-                          {STATUS_CONFIG[selectedQuote.customerJourneyStatus as keyof typeof STATUS_CONFIG]?.label}
-                        </Badge>
+                  {/* Hero Savings Section */}
+                  {selectedQuote.estimatedMonthlySaving && (
+                    <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-8 text-white shadow-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-emerald-100 text-sm font-medium mb-2">Estimated Annual Savings</p>
+                          <p className="text-5xl font-bold mb-3">
+                            £{(parseFloat(selectedQuote.estimatedMonthlySaving) * 12).toLocaleString()}
+                          </p>
+                          <p className="text-emerald-100 text-lg">
+                            Save £{parseFloat(selectedQuote.estimatedMonthlySaving).toFixed(2)} per month with Dojo
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-6 py-4">
+                            <p className="text-emerald-100 text-sm mb-1">12-Month Rate Guarantee</p>
+                            <CheckCircle2 className="h-12 w-12 mx-auto" />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    {selectedQuote.adminNotes && (
-                      <div className="mt-4">
-                        <p className="text-sm text-gray-600 mb-1">Notes from Dojo</p>
-                        <p className="text-gray-900" data-testid="text-admin-notes">{selectedQuote.adminNotes}</p>
+                  )}
+
+                  {/* Contract Buyout */}
+                  {selectedQuote.buyoutAmount && (
+                    <div className="bg-blue-50 rounded-2xl p-6 border-2 border-blue-200">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-blue-600 rounded-full p-3">
+                          <FileText className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">Contract Buyout Included</h3>
+                          <p className="text-gray-600">We'll cover up to £{parseFloat(selectedQuote.buyoutAmount).toFixed(2)} to switch to Dojo</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Card Processing Rates */}
+                  <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
+                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                      <div className="bg-indigo-600 rounded-lg p-2">
+                        <TrendingUp className="h-5 w-5 text-white" />
+                      </div>
+                      Card Processing Rates
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <p className="text-sm text-gray-600 mb-1">UK Debit Cards</p>
+                        <p className="text-2xl font-bold text-indigo-600">{selectedQuote.debitCardRate}%</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <p className="text-sm text-gray-600 mb-1">Credit Cards</p>
+                        <p className="text-2xl font-bold text-indigo-600">{selectedQuote.creditCardRate}%</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <p className="text-sm text-gray-600 mb-1">Corporate Cards</p>
+                        <p className="text-2xl font-bold text-indigo-600">{selectedQuote.corporateCardRate}%</p>
+                      </div>
+                      {selectedQuote.visaBusinessDebitRate && (
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <p className="text-sm text-gray-600 mb-1">Visa Business Debit</p>
+                          <p className="text-2xl font-bold text-indigo-600">{selectedQuote.visaBusinessDebitRate}%</p>
+                        </div>
+                      )}
+                      {selectedQuote.otherBusinessDebitRate && (
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <p className="text-sm text-gray-600 mb-1">Other Business Debit</p>
+                          <p className="text-2xl font-bold text-indigo-600">{selectedQuote.otherBusinessDebitRate}%</p>
+                        </div>
+                      )}
+                      {selectedQuote.amexRate && (
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <p className="text-sm text-gray-600 mb-1">American Express</p>
+                          <p className="text-2xl font-bold text-indigo-600">{selectedQuote.amexRate}%</p>
+                        </div>
+                      )}
+                    </div>
+                    {selectedQuote.secureTransactionFee && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex justify-between items-center">
+                          <p className="text-gray-700 font-medium">Secure Transaction Fee (Authorisation)</p>
+                          <p className="text-lg font-semibold text-gray-900">{selectedQuote.secureTransactionFee}p per transaction</p>
+                        </div>
                       </div>
                     )}
                   </div>
+
+                  {/* Card Machines & Equipment */}
+                  {selectedQuote.devices && selectedQuote.devices.length > 0 && (
+                    <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
+                      <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                        <div className="bg-purple-600 rounded-lg p-2">
+                          <FileText className="h-5 w-5 text-white" />
+                        </div>
+                        Card Machines & Equipment
+                      </h3>
+                      <div className="space-y-4">
+                        {selectedQuote.devices.map((device: any, index: number) => (
+                          <div key={index} className="flex justify-between items-center bg-purple-50 rounded-xl p-4">
+                            <div>
+                              <p className="font-semibold text-gray-900">{device.name}</p>
+                              <p className="text-sm text-gray-600">Quantity: {device.quantity}</p>
+                            </div>
+                            <div className="text-right">
+                              {selectedQuote.devicePaymentType === 'pay_once' ? (
+                                <p className="text-lg font-bold text-purple-600">£{device.price.toFixed(2)} one-time</p>
+                              ) : (
+                                <p className="text-lg font-bold text-purple-600">£{device.monthlyPrice.toFixed(2)}/month</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Optional Services */}
+                  {(selectedQuote.hardwareCare || selectedQuote.settlementType || selectedQuote.dojoPlan) && (
+                    <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
+                      <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                        <div className="bg-amber-600 rounded-lg p-2">
+                          <CheckCircle2 className="h-5 w-5 text-white" />
+                        </div>
+                        Optional Services
+                      </h3>
+                      <div className="space-y-3">
+                        {selectedQuote.hardwareCare && (
+                          <div className="flex justify-between items-center bg-amber-50 rounded-xl p-4">
+                            <p className="font-medium text-gray-900">Hardware Care</p>
+                            <p className="text-lg font-semibold text-amber-600">£5.00/device/month</p>
+                          </div>
+                        )}
+                        {selectedQuote.settlementType === '7_day' && (
+                          <div className="flex justify-between items-center bg-amber-50 rounded-xl p-4">
+                            <p className="font-medium text-gray-900">7-Day Settlement</p>
+                            <p className="text-lg font-semibold text-amber-600">£10.00/month</p>
+                          </div>
+                        )}
+                        {selectedQuote.dojoPlan && (
+                          <div className="flex justify-between items-center bg-amber-50 rounded-xl p-4">
+                            <p className="font-medium text-gray-900">Dojo Plan</p>
+                            <p className="text-lg font-semibold text-amber-600">£11.99/month</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Monthly Summary */}
+                  <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white">
+                    <h3 className="text-xl font-bold mb-4">Monthly Summary</h3>
+                    <div className="space-y-2">
+                      {selectedQuote.monthlyDeviceCost > 0 && (
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-700">
+                          <p className="text-gray-300">Device Rental</p>
+                          <p className="text-lg font-semibold">£{parseFloat(selectedQuote.monthlyDeviceCost).toFixed(2)}</p>
+                        </div>
+                      )}
+                      {selectedQuote.hardwareCare && selectedQuote.devices && (
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-700">
+                          <p className="text-gray-300">Hardware Care</p>
+                          <p className="text-lg font-semibold">£{(selectedQuote.devices.reduce((sum: number, d: any) => sum + d.quantity, 0) * 5).toFixed(2)}</p>
+                        </div>
+                      )}
+                      {selectedQuote.settlementType === '7_day' && (
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-700">
+                          <p className="text-gray-300">Settlement Fee</p>
+                          <p className="text-lg font-semibold">£10.00</p>
+                        </div>
+                      )}
+                      {selectedQuote.dojoPlan && (
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-700">
+                          <p className="text-gray-300">Dojo Plan</p>
+                          <p className="text-lg font-semibold">£11.99</p>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center pt-4">
+                        <p className="text-xl font-bold">Total Monthly Cost</p>
+                        <p className="text-3xl font-bold text-emerald-400">
+                          £{selectedQuote.totalAmount ? parseFloat(selectedQuote.totalAmount).toFixed(2) : '0.00'}
+                        </p>
+                      </div>
+                    </div>
+                    {selectedQuote.oneTimeDeviceCost > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-700">
+                        <div className="flex justify-between items-center">
+                          <p className="text-gray-300">One-Time Equipment Cost</p>
+                          <p className="text-xl font-bold">£{parseFloat(selectedQuote.oneTimeDeviceCost).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-4">
+                    <p className="text-sm font-medium text-gray-600">Current Status</p>
+                    <Badge
+                      className={`${STATUS_CONFIG[selectedQuote.customerJourneyStatus as keyof typeof STATUS_CONFIG]?.color} border rounded-full px-4 py-2 text-sm font-medium`}
+                      data-testid="badge-modal-status"
+                    >
+                      {STATUS_CONFIG[selectedQuote.customerJourneyStatus as keyof typeof STATUS_CONFIG]?.label}
+                    </Badge>
+                  </div>
+
+                  {selectedQuote.adminNotes && (
+                    <div className="bg-yellow-50 rounded-2xl p-6 border-2 border-yellow-200">
+                      <h4 className="font-semibold text-gray-900 mb-2">Notes from Dojo</h4>
+                      <p className="text-gray-700" data-testid="text-admin-notes">{selectedQuote.adminNotes}</p>
+                    </div>
+                  )}
+                </div>
 
                   {/* Action buttons */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -364,18 +549,6 @@ export default function Quotes() {
                       Send to Client
                     </Button>
                   </div>
-
-                  {/* Rate breakdown */}
-                  {selectedQuote.ratesData && (
-                    <div className="bg-blue-50 rounded-2xl p-6 border-2 border-blue-100">
-                      <h3 className="text-lg font-semibold mb-3">Rate Breakdown</h3>
-                      <div className="space-y-2">
-                        <pre className="text-sm text-gray-700 whitespace-pre-wrap" data-testid="text-rates-data">
-                          {JSON.stringify(selectedQuote.ratesData, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </>
             )}
