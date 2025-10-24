@@ -273,6 +273,7 @@ export const businessDetails = pgTable("business_details", {
   referralId: varchar("referral_id").notNull(),
   tradingName: varchar("trading_name").notNull(),
   tradingAddress: text("trading_address").notNull(),
+  businessDescription: text("business_description"),
   businessStructure: varchar("business_structure").notNull(), // limited_company, sole_trader, partnership
   limitedCompanyName: varchar("limited_company_name"),
   companyNumber: varchar("company_number"),

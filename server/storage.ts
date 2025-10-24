@@ -24,6 +24,8 @@ import {
   partnerHierarchy,
   pushSubscriptions,
   quotes,
+  businessOwners,
+  businessDetails,
   type User,
   type UpsertUser,
   type Audit,
@@ -247,6 +249,7 @@ export interface IStorage {
   addQuoteRateRequest(quoteId: string, request: string): Promise<void>;
   approveQuoteByPartner(quoteId: string): Promise<void>;
   sendQuoteToClient(quoteId: string): Promise<void>;
+  saveQuoteSignupInfo(quoteId: string, referralId: string, signupData: any): Promise<void>;
 
   // Test data seeding
   seedTestReferrals(): Promise<void>;
@@ -2138,6 +2141,39 @@ export class DatabaseStorage implements IStorage {
       .set({ 
         customerJourneyStatus: 'sent_to_client',
         sentAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+  }
+
+  async saveQuoteSignupInfo(quoteId: string, referralId: string, signupData: any): Promise<void> {
+    // Save director/owner information
+    await db.insert(businessOwners).values({
+      referralId: referralId,
+      firstName: signupData.firstName,
+      lastName: signupData.lastName,
+      homeAddress: signupData.homeAddress,
+      email: signupData.email,
+      phone: signupData.phone,
+    });
+
+    // Save business details
+    await db.insert(businessDetails).values({
+      referralId: referralId,
+      tradingName: signupData.tradingName,
+      tradingAddress: signupData.tradingAddress,
+      businessDescription: signupData.businessDescription,
+      businessStructure: signupData.legalEntity,
+      limitedCompanyName: signupData.limitedCompanyName || null,
+      bankSortCode: signupData.sortCode,
+      bankAccountNumber: signupData.bankAccountNumber,
+    });
+
+    // Update the quote to mark signup as completed
+    await db
+      .update(quotes)
+      .set({ 
+        customerJourneyStatus: 'agreement_sent',
         updatedAt: new Date()
       })
       .where(eq(quotes.id, quoteId));

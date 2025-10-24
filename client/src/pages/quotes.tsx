@@ -12,6 +12,7 @@ import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X } from 
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import { useToast } from "@/hooks/use-toast";
+import AdditionalDetailsForm from "@/components/additional-details-form";
 
 // Status mapping with colors
 const STATUS_CONFIG = {
@@ -53,6 +54,7 @@ export default function Quotes() {
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [showRateRequestModal, setShowRateRequestModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [rateRequestText, setRateRequestText] = useState("");
 
@@ -110,11 +112,12 @@ export default function Quotes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
-      setSelectedQuote(null);
       toast({
         title: "Quote approved",
-        description: "Quote approved! You can now complete the signup form",
+        description: "Please complete the signup form",
       });
+      // Open the signup form modal
+      setShowSignupModal(true);
     },
   });
 
@@ -634,6 +637,26 @@ export default function Quotes() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Signup Form Modal */}
+        {selectedQuote && (
+          <AdditionalDetailsForm
+            isOpen={showSignupModal}
+            onClose={() => {
+              setShowSignupModal(false);
+              setSelectedQuote(null);
+            }}
+            onComplete={() => {
+              queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+            }}
+            quoteId={selectedQuote.id}
+            referral={{
+              id: selectedQuote.referralId,
+              businessName: selectedQuote.businessName || "your business",
+              businessEmail: selectedQuote.businessEmail,
+            }}
+          />
+        )}
         </div>
       </div>
     </div>

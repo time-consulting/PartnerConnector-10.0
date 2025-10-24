@@ -774,6 +774,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/quotes/:id/signup', requireAuth, async (req: any, res) => {
+    try {
+      const quoteId = req.params.id;
+      const signupData = req.body;
+      
+      // Get the quote to find the referral ID
+      const quote = await storage.getQuoteById(quoteId);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      // Save the signup information
+      await storage.saveQuoteSignupInfo(quoteId, quote.referralId, signupData);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving signup info:", error);
+      res.status(500).json({ message: "Failed to save signup information" });
+    }
+  });
+
   // User endpoint to update their own referrals
   app.patch('/api/referrals/:id', requireAuth, async (req: any, res) => {
     try {
