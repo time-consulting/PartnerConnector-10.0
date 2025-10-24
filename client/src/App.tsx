@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Router, Switch, Route, useLocation } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -106,7 +106,7 @@ function PrivateRoute({ children, bypassOnboarding = false }: { children: React.
   return <>{children}</>;
 }
 
-function Router() {
+function AppRoutes() {
   return (
     <Switch>
       {/* Public routes available to everyone */}
@@ -155,10 +155,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* <TooltipProvider> - Temporarily disabled due to React hook violation */}
-        <Suspense fallback={<LoadingFallback />}>
-          <Router />
-          {/* <PWAInstallPrompt /> */}
-        </Suspense>
+        <Router>
+          <Suspense fallback={<LoadingFallback />}>
+            <AppRoutes />
+            {/* <PWAInstallPrompt /> */}
+          </Suspense>
+        </Router>
         {/* <Toaster /> - Temporarily disabled due to React hook violation */}
       {/* </TooltipProvider> */}
     </QueryClientProvider>

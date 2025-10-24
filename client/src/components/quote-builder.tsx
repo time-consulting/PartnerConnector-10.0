@@ -56,8 +56,10 @@ type QuoteBuilderFormData = z.infer<typeof quoteBuilderSchema>;
 
 interface Device {
   type: "dojo_go" | "dojo_pocket";
+  name: string;
   quantity: number;
   price: number;
+  monthlyPrice: number;
 }
 
 interface QuoteBuilderProps {
@@ -103,7 +105,13 @@ export default function QuoteBuilder({ referralId, businessName, onQuoteCreated,
           : d
       ));
     } else {
-      setDevices([...devices, { type, quantity: 1, price }]);
+      setDevices([...devices, { 
+        type, 
+        name: pricing.name,
+        quantity: 1, 
+        price,
+        monthlyPrice: pricing.payMonthly
+      }]);
     }
   };
 
@@ -128,7 +136,12 @@ export default function QuoteBuilder({ referralId, businessName, onQuoteCreated,
     setDevices(devices.map(device => {
       const pricing = DEVICE_PRICING[device.type];
       const unitPrice = devicePaymentType === "pay_once" ? pricing.payOnce : pricing.payMonthly;
-      return { ...device, price: unitPrice * device.quantity };
+      return { 
+        ...device, 
+        name: pricing.name,
+        price: unitPrice * device.quantity,
+        monthlyPrice: pricing.payMonthly
+      };
     }));
   }, [devicePaymentType]);
 

@@ -1052,17 +1052,21 @@ export default function AdminDashboard() {
         </div>
 
         {/* Comprehensive Quote Builder */}
-        {selectedReferral && (
-          <QuoteBuilder
-            open={showQuoteModal}
-            onOpenChange={setShowQuoteModal}
-            referral={selectedReferral}
-            onSuccess={() => {
-              setShowQuoteModal(false);
-              queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
-            }}
-          />
-        )}
+        <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="modal-quote-builder">
+            {selectedReferral && (
+              <QuoteBuilder
+                referralId={selectedReferral.id}
+                businessName={selectedReferral.businessName}
+                onQuoteCreated={(quoteId) => {
+                  setShowQuoteModal(false);
+                  queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+                }}
+                onCancel={() => setShowQuoteModal(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Document Requirements Modal */}
         <Dialog open={showDocumentsModal} onOpenChange={setShowDocumentsModal}>
