@@ -1,113 +1,6 @@
 # Overview
 
-PartnerConnector is a professional referral platform designed for accountants, business consultants, and financial advisors to earn commissions by referring payment processing solutions to their clients. The application features a React-based frontend with a Node.js/Express backend, utilizing PostgreSQL for data persistence and implementing secure authentication through Replit's OAuth system.
-
-# Recent Changes
-
-**Onboarding and Team Tracking System (October 2025)**
-- **Mandatory Onboarding Flow**: New users must complete a 3-step onboarding form before accessing the platform
-  - Step 1: Personal information (first name, last name, phone)
-  - Step 2: Professional details (profession, company)
-  - Step 3: Client base size selection
-- **Database Schema Update**: Added `hasCompletedOnboarding` field to users table to track onboarding status
-- **Authentication Flow**: PrivateRoute component now checks onboarding status and redirects incomplete users to `/onboarding`
-- **Team Tracking via Referral Codes**: Fully functional invite/referral system linking users in database
-  - Each user gets a unique `referralCode` (set to their `partnerId` value)
-  - When a new user signs up via referral link, their `parentPartnerId` is set to the referring user's ID
-  - `setupReferralHierarchy()` method creates entries in `partnerHierarchy` table tracking 3 levels (L1=60%, L2=20%, L3=10%)
-  - Team Management page displays real team members queried by `parentPartnerId` relationship
-- **API Endpoints**: `/api/auth/complete-onboarding` handles onboarding submission and profile completion
-- **Referral Code Generation**: Automatically generates partner ID and sets it as referral code during onboarding
-- **Team Linkage**: Team members are automatically linked in database when they sign up using a referral code
-- **Real Team Data**: `/api/team/referrals` endpoint returns all users where `parentPartnerId` matches current user's ID
-
-**Admin Portal Complete Implementation (October 2025)**
-- **Comprehensive Admin Dashboard**: Full-featured admin portal with tabs for submissions, users, MLM network, analytics, and settings
-- **Deal Management**: Complete deal tracking with editable commissions, stage management, and quote sending
-- **CSV Export**: Export functionality for users, referrals, and payments data
-- **Analytics Dashboard**: KPI cards showing total users, referrals, commissions, and conversion rates
-- **MLM Structure Display**: Visual representation of 3-tier commission structure (60% L1, 20% L2, 10% L3)
-- **System Settings**: Integration status for Stripe and Go High Level, data export tools
-
-# Recent Changes
-
-**Team Analytics Real Data Integration (October 2025)**
-- **New API Endpoint**: `/api/team-analytics` created to fetch real team hierarchy data
-- **Storage Method**: Implemented `getTeamHierarchy()` to query direct team members with performance metrics
-- **Team Analytics Component**: Updated to use `useQuery` hook fetching from new endpoint instead of mock data
-- **Data Metrics**: Real-time calculation of team size, deals submitted, total revenue, and monthly revenue
-- **Commission Structure**: Maintained 60% direct, 20% L2, 10% L3 MLM structure in UI displays
-
-**Mobile Engagement Features Implementation (October 2025)**
-- **Real-time Notifications**: WebSocket infrastructure for instant referral status updates
-- **Quick Add Mobile Form**: 30-second lead capture form exclusive to mobile devices with 3-step flow
-- **Push Notifications**: Web Push API for commission approval alerts with browser notifications
-- **PWA Support**: Progressive Web App with offline mode, installability, and Service Worker caching
-- **Offline Sync**: IndexedDB storage with automatic sync when connection restored
-- **Mobile FAB**: Floating action button on dashboard for quick lead capture on mobile
-- **Voice Input**: Speech-to-text support in quick add form for hands-free note taking
-- Fixed duplicate notification bug by separating storage and broadcast logic
-- Moved VAPID keys to environment variables for security
-
-**Enhanced Authentication Options with Custom Login Page (October 2025)**
-- Created custom login page showing all available authentication methods (Google, Email, GitHub, Apple)
-- **Multiple Login Methods**: Replit Auth supports Google, Email/password, GitHub, Apple, and X (Twitter) login
-- **Visual Login Page**: New `/login` route with clear buttons for each authentication method
-- **Consistent Flow**: All authentication redirects now route through `/login` page instead of direct API calls
-- **Professional UI**: Login page includes benefits sidebar, social proof, and security notices
-- Fixed PrivateRoute and all authentication redirects (17 files updated) to use `/login` instead of `/api/login`
-- Testing confirmed successful authentication flow with all login methods working correctly
-
-**Contact Form Dialog Full-Width Enhancement (October 2025)**
-- Redesigned contact form dialog for desktop-first, near full-screen experience
-- **Desktop**: Dialog now uses 98% of viewport width (`sm:w-[98vw]`) with no maximum width constraint (`max-w-none`)
-- **Mobile**: Maintains 95% viewport width for touch-friendly spacing
-- **Enhanced spacing**: Increased internal padding to `p-8` for better content breathing room
-- **Smooth animations**: Added `transition-all duration-300 ease-in-out` for polished open/close transitions
-- **Vertical space**: Increased height to 98vh (`max-h-[98vh]`) for better form visibility
-- Fixed critical upsertUser bug where user IDs were being overwritten during updates, preventing foreign key relationship breakage
-- All changes architect-reviewed and approved with no regressions detected
-
-**Referral Form Complete Redesign (October 2025)**
-- **Full-width layout**: Removed earnings preview sidebar entirely for cleaner, focused submission experience
-- **3-stage mobile-first flow**: Client Info → Services → Upload & Submit
-  - Stage 1: Business name, contact details, email, phone, address (all plain text inputs)
-  - Stage 2: Product selection with visual cards, business type dropdown, monthly volume slider
-  - Stage 3: Review summary, GDPR consent, submission with file upload
-- **No search/autocomplete**: All inputs are simple text fields with autoComplete="off"
-- **Mobile-optimized**: Large h-14 inputs, rounded-2xl cards, teal/green Dojo brand colors
-- **Centered layout**: max-w-4xl container for optimal reading width on all devices
-- Form takes full page width for better UX and reduced cognitive load
-
-**Team Management Real Data Integration (October 2025)**
-- Replaced all mock data with real user data from database
-- Created `/api/team/progression` endpoint aggregating: partner level, team size, total revenue (direct + override), invite statistics
-- Updated Progression tab to display real metrics with null-safe SQL aggregation using coalesce
-- Simplified UI by removing gamification elements (XP, streaks, achievements) not tracked in database
-- Updated Referral Links tab to show user's actual referral code and signup links
-- Fixed Sheet component visibility issue: changed from transparent bg-background to solid bg-white with shadow-2xl and border-l-2 border-primary
-- Partner level mapping implemented server-side: 1→Bronze, 2→Silver, 3→Gold, 4→Platinum
-- All changes architect-reviewed and approved
-
-**Training System Redesign (September 2025)**
-- Complete transformation of training section into modern, gamified learning hub
-- **Product Training**: Comprehensive modules for Dojo card payments and business funding with competitive analysis, pricing mastery, and ROI calculators
-- **Platform Training**: Team invitation system with Level 2 (20%) and Extended network (10%) commission visualization and network growth strategies
-- **Platform Usage**: Step-by-step training for deal submission, referral tracking, payment processes, and dashboard navigation
-- **Enhanced Support**: Multi-channel support system with call booking, searchable knowledge base (15+ articles), and FAQ system with filtering
-- **Gamification System**: Bronze → Silver → Gold → Platinum Partner progression with 1850+ points, achievement badges, 7-day learning streaks, and celebration animations
-- Fixed critical framer-motion import errors and ensured consistent commission structure (L2=20%, Extended=10%) across all components
-- Added comprehensive data-testid attributes for testing and maintained responsive design with smooth animations
-
-**Dashboard UX Redesign (September 2025)**
-- Implemented comprehensive dashboard redesign with improved UX and navigation
-- Added desktop side navigation component with icon-based, expandable design (hover to expand from w-16 to w-64)
-- Redesigned dashboard layout into three distinct sections:
-  - **Hero Overview**: Welcome message, snapshot cards (Deals Submitted, Commission Pending, Total Referrals, Monthly Earnings), and progress tracking with gamification
-  - **Action Hub**: Prominent "Add Team Member" button and Quick Actions grid (Submit Deal, Track Referral, View Payout History, Upload Bills)
-  - **Engagement Feed**: Weekly tasks, recent referrals list, and daily suggestions for ongoing user engagement
-- Maintained responsive design with desktop side navigation and mobile hamburger menu
-- Preserved all existing functionality while dramatically improving visual hierarchy and user experience
+PartnerConnector is a professional referral platform for accountants, business consultants, and financial advisors. Its primary purpose is to facilitate the referral of payment processing solutions to clients, enabling partners to earn commissions. The platform aims to be a comprehensive tool for managing referrals, tracking commissions, and providing robust support for its users.
 
 # User Preferences
 
@@ -116,67 +9,88 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## Frontend Architecture
-The frontend is built using React with TypeScript and follows a component-based architecture:
-- **UI Framework**: React 18 with TypeScript for type safety
-- **Styling**: Tailwind CSS with shadcn/ui component library for consistent design
-- **Routing**: Wouter for lightweight client-side routing
-- **State Management**: TanStack Query (React Query) for server state management
-- **Form Handling**: React Hook Form with Zod validation for type-safe forms
-- **Build Tool**: Vite for fast development and optimized production builds
+The frontend is built with React 18 and TypeScript, utilizing a component-based architecture. Key technologies include:
+- **UI Framework**: React 18 with TypeScript.
+- **Styling**: Tailwind CSS with shadcn/ui for consistent design.
+- **Routing**: Wouter for client-side routing.
+- **State Management**: TanStack Query for server state management.
+- **Form Handling**: React Hook Form with Zod validation.
+- **Build Tool**: Vite for development and production builds.
 
 ## Backend Architecture
-The backend implements a RESTful API using Express.js:
-- **Framework**: Express.js with TypeScript for type safety
-- **Database ORM**: Drizzle ORM for type-safe database operations
-- **Authentication**: Replit Auth with OpenID Connect for secure user authentication
-- **Session Management**: Express sessions stored in PostgreSQL using connect-pg-simple
-- **File Handling**: Multer middleware for handling file uploads (bill uploads)
-- **API Design**: REST endpoints with consistent error handling and logging
+The backend is a RESTful API developed with Express.js and TypeScript, designed for scalability and maintainability.
+- **Framework**: Express.js with TypeScript.
+- **Database ORM**: Drizzle ORM for type-safe database operations.
+- **Authentication**: Replit Auth with OpenID Connect.
+- **Session Management**: Express sessions stored in PostgreSQL using connect-pg-simple.
+- **File Handling**: Multer for file uploads.
 
 ## Database Design
-PostgreSQL database with the following core entities:
-- **Users**: Stores user profiles with GDPR/marketing consent tracking
-- **Business Types**: Categorizes different types of businesses for commission calculation
-- **Referrals**: Tracks submitted referrals with status management
-- **Bill Uploads**: Handles client payment processing bill storage
-- **Commission Payments**: Tracks commission payments to users
-- **Sessions**: Stores user session data for authentication
+A PostgreSQL database underpins the application, featuring core entities such as:
+- **Users**: User profiles, including onboarding status and GDPR/marketing consent.
+- **Referrals**: Tracks submitted referrals, their status, and associated information.
+- **Quotes**: Manages quotes sent from Dojo, including customer journey status.
+- **Business Types**: Categorization of businesses for commission calculations.
+- **Bill Uploads**: Stores client payment processing bills.
+- **Commission Payments**: Records commission payouts to users.
+- **Sessions**: Stores user session data.
+- **Partner Hierarchy**: Tracks multi-level marketing (MLM) relationships and commission structures.
 
 ## Authentication & Authorization
-- **Provider**: Replit Auth using OpenID Connect protocol
-- **Session Storage**: PostgreSQL-backed sessions with configurable TTL
-- **Route Protection**: Middleware-based authentication checks for protected routes
-- **User Management**: Automatic user creation/updates on successful authentication
+- **Provider**: Replit Auth using OpenID Connect, supporting multiple login methods (Google, Email/password, GitHub, Apple, X).
+- **Session Storage**: PostgreSQL-backed sessions.
+- **Route Protection**: Middleware-based checks for secure access.
+- **User Management**: Automatic user creation and updates upon successful authentication, with a mandatory 3-step onboarding flow for new users.
 
 ## File Upload System
-- **Storage**: In-memory storage with Multer (10MB file size limit)
-- **Security**: File type and size validation
-- **Association**: Files linked to specific referrals for commission calculation
+- **Storage**: In-memory with Multer (10MB limit).
+- **Security**: File type and size validation.
+- **Association**: Files are linked to specific referrals.
+
+## UI/UX Decisions
+- **Design Language**: Inspired by Dojo.tech, featuring rounded cards, clear action buttons, and professional typography.
+- **Mobile-First Approach**: Responsive design across all components, including a mobile-optimized referral form and quick add lead capture.
+- **Dashboard Redesign**: Three distinct sections: Hero Overview, Action Hub, and Engagement Feed.
+- **Navigation**: Desktop side navigation (expandable) and mobile hamburger menu.
+- **Quotes Page**: Card-based grid layout with a full-screen detail modal and distinct customer journey stages.
+- **Referral Form Redesign**: Streamlined 3-stage mobile-first flow without an earnings preview sidebar.
+- **Admin Portal**: Comprehensive dashboard with tabs for submissions, users, MLM network, analytics, and settings.
+- **Training System**: Gamified learning hub with progression (Bronze to Platinum Partner), achievement badges, and learning streaks.
+
+## Features and Functionality
+- **Quotes Management**: View, approve, question, request rate changes, and send quotes to clients.
+- **Onboarding System**: Mandatory multi-step onboarding for new users.
+- **Team Tracking & MLM**: Referral code generation, hierarchical team linking (L1=60%, L2=20%, L3=10% commissions), and real-time team analytics.
+- **Admin Portal**: Deal management, CSV export, analytics, and system settings.
+- **Mobile Engagement**: Real-time notifications via WebSockets, quick add form, push notifications via Web Push API, PWA support with offline mode, and voice input.
+- **Custom Login Page**: Consolidated login page supporting all Replit Auth methods.
+- **Contact Form**: Full-width dialog for enhanced desktop experience.
 
 # External Dependencies
 
 ## Database Services
-- **PostgreSQL**: Primary database using Neon serverless PostgreSQL
-- **Drizzle ORM**: Database toolkit with PostgreSQL dialect
-- **Connection Pooling**: @neondatabase/serverless for optimized connections
+- **PostgreSQL**: Primary database provided by Neon serverless PostgreSQL.
+- **Drizzle ORM**: Database toolkit for PostgreSQL.
+- **@neondatabase/serverless**: For optimized connection pooling.
 
 ## Authentication Services
-- **Replit Auth**: OpenID Connect authentication provider
-- **Session Storage**: connect-pg-simple for PostgreSQL session storage
+- **Replit Auth**: OpenID Connect authentication provider.
+- **connect-pg-simple**: For PostgreSQL-backed session storage.
 
 ## Development Tools
-- **Replit Integration**: Cartographer and runtime error modal plugins
-- **Build System**: ESBuild for server bundling, Vite for client bundling
-- **Type Safety**: TypeScript across the entire stack
+- **Replit Integration**: Cartographer and runtime error modal plugins.
+- **ESBuild**: For server bundling.
+- **Vite**: For client bundling.
+- **TypeScript**: For type safety across the stack.
 
 ## UI Components & Styling
-- **Radix UI**: Headless component primitives for accessible UI
-- **Tailwind CSS**: Utility-first CSS framework
-- **shadcn/ui**: Pre-built component library with consistent design system
-- **Lucide React**: Icon library for consistent iconography
+- **Radix UI**: Headless component primitives for accessibility.
+- **Tailwind CSS**: Utility-first CSS framework.
+- **shadcn/ui**: Pre-built component library.
+- **Lucide React**: Icon library.
 
 ## Utility Libraries
-- **Form Validation**: Zod for runtime type checking and validation
-- **Date Handling**: date-fns for date manipulation
-- **Class Management**: clsx and tailwind-merge for conditional styling
-- **Query Management**: TanStack Query for server state synchronization
+- **Zod**: For runtime type checking and form validation.
+- **date-fns**: For date manipulation.
+- **clsx** and **tailwind-merge**: For conditional styling.
+- **TanStack Query**: For server state synchronization.
