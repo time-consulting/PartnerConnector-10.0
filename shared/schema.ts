@@ -574,6 +574,9 @@ export const quotes = pgTable("quotes", {
   approvedAt: timestamp("approved_at"),
   rejectedAt: timestamp("rejected_at"),
   status: varchar("status").notNull().default("draft"), // draft, sent, viewed, approved, rejected, expired
+  customerJourneyStatus: varchar("customer_journey_status").notNull().default("review_quote"), // review_quote, sent_to_client, awaiting_signup, agreement_sent, docs_required, approved
+  partnerQuestion: text("partner_question"), // Question from partner
+  partnerRateRequest: text("partner_rate_request"), // Request for different rates/offer
   adminNotes: text("admin_notes"),
   clientFeedback: text("client_feedback"),
   createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -582,6 +585,7 @@ export const quotes = pgTable("quotes", {
 }, (table) => [
   index("quotes_referral_id_idx").on(table.referralId),
   index("quotes_status_idx").on(table.status),
+  index("quotes_customer_journey_status_idx").on(table.customerJourneyStatus),
   index("quotes_created_by_idx").on(table.createdBy),
 ]);
 
