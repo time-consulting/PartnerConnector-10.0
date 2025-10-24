@@ -507,7 +507,6 @@ export default function Quotes() {
                       <p className="text-gray-700" data-testid="text-admin-notes">{selectedQuote.adminNotes}</p>
                     </div>
                   )}
-                </div>
 
                   {/* Action buttons */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
