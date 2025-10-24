@@ -795,6 +795,206 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Q&A routes for quotes
+  app.post('/api/quotes/:id/qa', requireAuth, async (req: any, res) => {
+    try {
+      const { message } = req.body;
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      const isAdmin = req.user.isAdmin;
+      const qaMessage = await storage.addQuoteQAMessage(
+        req.params.id,
+        isAdmin ? 'admin' : 'customer',
+        req.user.id,
+        message
+      );
+
+      res.json(qaMessage);
+    } catch (error) {
+      console.error("Error adding Q&A message:", error);
+      res.status(500).json({ message: "Failed to add message" });
+    }
+  });
+
+  app.get('/api/quotes/:id/qa', requireAuth, async (req: any, res) => {
+    try {
+      const messages = await storage.getQuoteQA(req.params.id);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching Q&A messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Bill upload routes for quotes
+  app.post('/api/quotes/:id/bill-upload', requireAuth, async (req: any, res) => {
+    try {
+      const { fileName, fileSize, fileType } = req.body;
+      const quote = await storage.getQuoteById(req.params.id);
+      
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      const upload = await storage.createQuoteBillUpload(
+        req.params.id,
+        quote.referralId,
+        fileName,
+        fileSize,
+        fileType,
+        req.user.id
+      );
+
+      res.json(upload);
+    } catch (error) {
+      console.error("Error uploading bill:", error);
+      res.status(500).json({ message: "Failed to upload bill" });
+    }
+  });
+
+  app.get('/api/quotes/:id/bills', requireAuth, async (req: any, res) => {
+    try {
+      const bills = await storage.getQuoteBillUploads(req.params.id);
+      res.json(bills);
+    } catch (error) {
+      console.error("Error fetching bills:", error);
+      res.status(500).json({ message: "Failed to fetch bills" });
+    }
+  });
+
+  // Admin routes for signups and quote management
+  app.get('/api/admin/signups', requireAdmin, async (req: any, res) => {
+    try {
+      const signups = await storage.getPendingSignups();
+      res.json(signups);
+    } catch (error) {
+      console.error("Error fetching signups:", error);
+      res.status(500).json({ message: "Failed to fetch signups" });
+    }
+  });
+
+  app.get('/api/admin/signups/:quoteId', requireAdmin, async (req: any, res) => {
+    try {
+      const signup = await storage.getSignupDetails(req.params.quoteId);
+      res.json(signup);
+    } catch (error) {
+      console.error("Error fetching signup details:", error);
+      res.status(500).json({ message: "Failed to fetch signup details" });
+    }
+  });
+
+  app.get('/api/admin/quotes', requireAdmin, async (req: any, res) => {
+    try {
+      const quotes = await storage.getAllQuotesForAdmin();
+      res.json(quotes);
+    } catch (error) {
+      console.error("Error fetching admin quotes:", error);
+      res.status(500).json({ message: "Failed to fetch quotes" });
+    }
+  });
+
+  app.post('/api/admin/quotes/:id/commission', requireAdmin, async (req: any, res) => {
+    try {
+      const { estimatedCommission } = req.body;
+      if (estimatedCommission === undefined) {
+        return res.status(400).json({ message: "Estimated commission is required" });
+      }
+
+      await storage.updateQuoteCommission(req.params.id, parseFloat(estimatedCommission));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating commission:", error);
+      res.status(500).json({ message: "Failed to update commission" });
+    }
+  });
+
+  app.post('/api/admin/quotes/:id/business-type', requireAdmin, async (req: any, res) => {
+    try {
+      const { businessType, billUploadRequired } = req.body;
+      if (!businessType) {
+        return res.status(400).json({ message: "Business type is required" });
+      }
+
+      await storage.updateQuoteBusinessType(req.params.id, businessType, billUploadRequired || false);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating business type:", error);
+      res.status(500).json({ message: "Failed to update business type" });
+    }
+  });
+
+  app.post('/api/admin/bills/:billId/approve', requireAdmin, async (req: any, res) => {
+    try {
+      const { adminNotes } = req.body;
+      await storage.approveQuoteBill(req.params.billId, adminNotes);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error approving bill:", error);
+      res.status(500).json({ message: "Failed to approve bill" });
+    }
+  });
+
+  app.post('/api/admin/bills/:billId/reject', requireAdmin, async (req: any, res) => {
+    try {
+      const { adminNotes } = req.body;
+      if (!adminNotes) {
+        return res.status(400).json({ message: "Admin notes are required for rejection" });
+      }
+
+      await storage.rejectQuoteBill(req.params.billId, adminNotes);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error rejecting bill:", error);
+      res.status(500).json({ message: "Failed to reject bill" });
+    }
+  });
+
+  // Stripe commission payment route
+  app.post('/api/admin/quotes/:id/pay-commission', requireAdmin, async (req: any, res) => {
+    try {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ message: "Stripe is not configured. Please set STRIPE_SECRET_KEY" });
+      }
+
+      const { amount, partnerEmail, partnerName } = req.body;
+      
+      if (!amount || !partnerEmail) {
+        return res.status(400).json({ message: "Amount and partner email are required" });
+      }
+
+      // Initialize Stripe
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2023-10-16",
+      });
+
+      // Create a payment intent (in real implementation, you'd want to use Stripe Connect for payouts)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(parseFloat(amount) * 100), // Convert to cents
+        currency: 'gbp',
+        description: `Commission payment to ${partnerName || partnerEmail}`,
+        metadata: {
+          quoteId: req.params.id,
+          partnerEmail,
+          paymentType: 'commission'
+        }
+      });
+
+      // Record the payment in the database
+      await storage.recordCommissionPayment(req.params.id, paymentIntent.id);
+
+      res.json({ 
+        success: true, 
+        paymentIntentId: paymentIntent.id,
+        clientSecret: paymentIntent.client_secret 
+      });
+    } catch (error: any) {
+      console.error("Error processing commission payment:", error);
+      res.status(500).json({ message: "Failed to process payment: " + error.message });
+    }
+  });
+
   // User endpoint to update their own referrals
   app.patch('/api/referrals/:id', requireAuth, async (req: any, res) => {
     try {
