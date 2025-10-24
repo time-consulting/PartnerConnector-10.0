@@ -47,29 +47,28 @@ export default function Login() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('POST', '/api/auth/login', data);
+      const result = await response.json();
 
-      if (response.success) {
+      if (result.success) {
         toast({
           title: "Welcome back!",
           description: "Logging you in...",
         });
 
         // Check if user has completed onboarding
-        if (response.user.hasCompletedOnboarding) {
+        if (result.user.hasCompletedOnboarding) {
           setLocation('/dashboard');
         } else {
           setLocation('/onboarding');
         }
       }
     } catch (error: any) {
+      // Show clear error message
+      const errorMessage = error.message || "Invalid email or password";
       toast({
         title: "Login failed",
-        description: error.message || "Invalid email or password",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
