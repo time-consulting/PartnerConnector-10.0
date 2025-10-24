@@ -23,6 +23,7 @@ import {
   waitlist,
   partnerHierarchy,
   pushSubscriptions,
+  quotes,
   type User,
   type UpsertUser,
   type Audit,
@@ -237,6 +238,15 @@ export interface IStorage {
     totalInvites: number;
     successfulInvites: number;
   }>;
+
+  // Quotes operations
+  getQuotesByUserId(userId: string): Promise<any[]>;
+  getQuoteById(quoteId: string): Promise<any | undefined>;
+  updateQuoteJourneyStatus(quoteId: string, status: string): Promise<void>;
+  addQuoteQuestion(quoteId: string, question: string): Promise<void>;
+  addQuoteRateRequest(quoteId: string, request: string): Promise<void>;
+  approveQuoteByPartner(quoteId: string): Promise<void>;
+  sendQuoteToClient(quoteId: string): Promise<void>;
 
   // Test data seeding
   seedTestReferrals(): Promise<void>;
@@ -2031,6 +2041,98 @@ export class DatabaseStorage implements IStorage {
       totalInvites: teamStats.sent,
       successfulInvites: teamStats.registered
     };
+  }
+
+  // Quotes operations
+  async getQuotesByUserId(userId: string): Promise<any[]> {
+    const result = await db
+      .select({
+        quote: quotes,
+        referral: referrals,
+      })
+      .from(quotes)
+      .innerJoin(referrals, eq(quotes.referralId, referrals.id))
+      .where(eq(referrals.referrerId, userId))
+      .orderBy(desc(quotes.createdAt));
+    
+    return result.map(row => ({
+      ...row.quote,
+      businessName: row.referral.businessName,
+      contactName: row.referral.contactName,
+    }));
+  }
+
+  async getQuoteById(quoteId: string): Promise<any | undefined> {
+    const result = await db
+      .select({
+        quote: quotes,
+        referral: referrals,
+      })
+      .from(quotes)
+      .innerJoin(referrals, eq(quotes.referralId, referrals.id))
+      .where(eq(quotes.id, quoteId));
+    
+    if (result.length === 0) return undefined;
+    
+    return {
+      ...result[0].quote,
+      businessName: result[0].referral.businessName,
+      contactName: result[0].referral.contactName,
+      contactEmail: result[0].referral.contactEmail,
+      contactPhone: result[0].referral.contactPhone,
+    };
+  }
+
+  async updateQuoteJourneyStatus(quoteId: string, status: string): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ 
+        customerJourneyStatus: status,
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+  }
+
+  async addQuoteQuestion(quoteId: string, question: string): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ 
+        partnerQuestion: question,
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+  }
+
+  async addQuoteRateRequest(quoteId: string, request: string): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ 
+        partnerRateRequest: request,
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+  }
+
+  async approveQuoteByPartner(quoteId: string): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ 
+        customerJourneyStatus: 'awaiting_signup',
+        viewedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
+  }
+
+  async sendQuoteToClient(quoteId: string): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ 
+        customerJourneyStatus: 'sent_to_client',
+        sentAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(quotes.id, quoteId));
   }
 
   // Test data seeding function for demonstrating referral system functionality
