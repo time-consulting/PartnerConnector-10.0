@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X } from "lucide-react";
-import MainLayout from "@/components/layouts/main-layout";
+import Navigation from "@/components/navigation";
+import SideNavigation from "@/components/side-navigation";
 import { useToast } from "@/hooks/use-toast";
 
 // Status mapping with colors
@@ -47,6 +49,7 @@ const STATUS_CONFIG = {
 
 export default function Quotes() {
   const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [showRateRequestModal, setShowRateRequestModal] = useState(false);
@@ -55,6 +58,7 @@ export default function Quotes() {
 
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ['/api/quotes'],
+    enabled: isAuthenticated,
   });
 
   const updateStatusMutation = useMutation({
@@ -168,21 +172,26 @@ export default function Quotes() {
     sendToClientMutation.mutate(quoteId);
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <MainLayout>
-        <div className="p-6 max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-gray-600">Loading quotes...</div>
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <SideNavigation />
+        <div className="lg:ml-16">
+          <div className="p-6 max-w-7xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-lg text-gray-600">Loading quotes...</div>
+            </div>
           </div>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <SideNavigation />
+      <div className="lg:ml-16">
+        <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="page-title-quotes">
@@ -466,7 +475,8 @@ export default function Quotes() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
-    </MainLayout>
+    </div>
   );
 }
