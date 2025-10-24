@@ -112,6 +112,9 @@ export default function AdminDashboard() {
   const [selectedReferrals, setSelectedReferrals] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [seedingTestData, setSeedingTestData] = useState(false);
+  const [selectedSignup, setSelectedSignup] = useState<any>(null);
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [commissionStep, setCommissionStep] = useState<'review' | 'confirm'>('review');
 
   // Check if user is admin
   if (authLoading) {
@@ -821,6 +824,36 @@ export default function AdminDashboard() {
                                     <p><strong>Partner Email:</strong> {signup.partnerEmail}</p>
                                     <p><strong>Submitted:</strong> {new Date(signup.createdAt).toLocaleDateString()}</p>
                                   </div>
+                                  
+                                  {/* Commission Payment Section */}
+                                  <div className="mt-4 pt-4 border-t">
+                                    {signup.estimatedCommission && (
+                                      <div className="space-y-2">
+                                        <p className="text-lg font-bold text-green-600">
+                                          £{parseFloat(signup.estimatedCommission).toFixed(2)} Commission
+                                        </p>
+                                        {signup.commissionPaid ? (
+                                          <div className="flex items-center gap-2 text-green-600">
+                                            <CheckCircle className="w-4 h-4" />
+                                            <span className="text-sm font-medium">Paid</span>
+                                          </div>
+                                        ) : (
+                                          <Button
+                                            size="sm"
+                                            className="bg-green-600 hover:bg-green-700 w-full"
+                                            onClick={() => {
+                                              setSelectedSignup(signup);
+                                              setShowCommissionModal(true);
+                                            }}
+                                            data-testid={`button-pay-commission-${signup.quoteId}`}
+                                          >
+                                            <DollarSign className="w-4 h-4 mr-2" />
+                                            Pay Commission
+                                          </Button>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1341,6 +1374,152 @@ export default function AdminDashboard() {
                 </div>
               </form>
             </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Commission Payment Modal - Two Step Confirmation */}
+        <Dialog open={showCommissionModal} onOpenChange={(open) => {
+          if (!open) {
+            setShowCommissionModal(false);
+            setCommissionStep('review');
+            setSelectedSignup(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-[600px]" data-testid="modal-commission-payment">
+            <DialogHeader>
+              <DialogTitle>
+                {commissionStep === 'review' ? 'Review Commission Payment' : 'Confirm Payment'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedSignup && (
+              <div className="space-y-6">
+                {commissionStep === 'review' ? (
+                  <>
+                    {/* Step 1: Review */}
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                      <h3 className="font-semibold text-lg">Payment Details</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Business:</span>
+                          <span className="font-medium">{selectedSignup.businessName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Partner:</span>
+                          <span className="font-medium">{selectedSignup.partnerName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Partner Email:</span>
+                          <span className="font-medium">{selectedSignup.partnerEmail}</span>
+                        </div>
+                        <div className="flex justify-between pt-3 border-t">
+                          <span className="text-gray-900 font-semibold">Commission Amount:</span>
+                          <span className="text-2xl font-bold text-green-600">
+                            £{parseFloat(selectedSignup.estimatedCommission).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-900">
+                        <strong>Note:</strong> This payment will be processed via Stripe. 
+                        Please verify all details before proceeding to confirmation.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowCommissionModal(false);
+                          setCommissionStep('review');
+                        }}
+                        data-testid="button-cancel-commission"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={() => setCommissionStep('confirm')}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        data-testid="button-proceed-payment"
+                      >
+                        Proceed to Payment
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Step 2: Confirm */}
+                    <div className="space-y-4">
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-amber-900 mb-2">Final Confirmation Required</h3>
+                        <p className="text-sm text-amber-800">
+                          You are about to process a commission payment of{' '}
+                          <strong className="text-lg">£{parseFloat(selectedSignup.estimatedCommission).toFixed(2)}</strong>
+                          {' '}to {selectedSignup.partnerName} via Stripe.
+                        </p>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Recipient:</span>
+                          <span className="font-medium">{selectedSignup.partnerName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Email:</span>
+                          <span className="font-medium">{selectedSignup.partnerEmail}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">For Business:</span>
+                          <span className="font-medium">{selectedSignup.businessName}</span>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t">
+                          <span className="font-semibold">Total Amount:</span>
+                          <span className="text-xl font-bold text-green-600">
+                            £{parseFloat(selectedSignup.estimatedCommission).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-3">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setCommissionStep('review')}
+                          data-testid="button-back-review"
+                        >
+                          Back
+                        </Button>
+                        <Button 
+                          onClick={async () => {
+                            try {
+                              await apiRequest('POST', `/api/admin/quotes/${selectedSignup.quoteId}/pay-commission`, {
+                                amount: selectedSignup.estimatedCommission,
+                                partnerEmail: selectedSignup.partnerEmail,
+                                partnerName: selectedSignup.partnerName,
+                              });
+                              queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+                              setShowCommissionModal(false);
+                              setCommissionStep('review');
+                              setSelectedSignup(null);
+                            } catch (error) {
+                              console.error('Payment error:', error);
+                            }
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                          data-testid="button-confirm-payment"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Confirm & Process Payment
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
