@@ -4,28 +4,16 @@ import { storage } from '../storage';
 // Admin authentication middleware
 export const requireAdmin = async (req: any, res: Response, next: NextFunction) => {
   try {
-    // Check if user is authenticated first
-    if (!req.user || !req.user.claims || !req.user.claims.sub) {
+    // Check if user is authenticated first (req.user is set by requireAuth middleware)
+    if (!req.user || !req.user.id) {
       return res.status(401).json({ 
         success: false, 
         message: 'Authentication required' 
       });
     }
 
-    const userId = req.user.claims.sub;
-    
-    // Get user from database to check admin status
-    const user = await storage.getUser(userId);
-    
-    if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'User not found' 
-      });
-    }
-
-    // Check if user is admin
-    if (!user.isAdmin) {
+    // User is already loaded by requireAuth, just check admin status
+    if (!req.user.isAdmin) {
       return res.status(403).json({ 
         success: false, 
         message: 'Admin access required' 
@@ -33,7 +21,7 @@ export const requireAdmin = async (req: any, res: Response, next: NextFunction) 
     }
 
     // Store admin user data for use in routes
-    req.adminUser = user;
+    req.adminUser = req.user;
     next();
   } catch (error) {
     console.error('Error in requireAdmin middleware:', error);
