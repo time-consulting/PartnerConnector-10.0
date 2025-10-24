@@ -11,7 +11,8 @@ import {
   ChevronRight,
   Contact,
   Target,
-  ClipboardList
+  ClipboardList,
+  FileText
 } from "lucide-react";
 
 export default function SideNavigation() {
@@ -56,6 +57,12 @@ export default function SideNavigation() {
       label: "Track Submissions",
       path: "/track-referrals",
       testId: "sidenav-track-submissions"
+    },
+    {
+      icon: FileText,
+      label: "Quotes",
+      path: "/quotes",
+      testId: "sidenav-quotes"
     },
     {
       icon: Users,

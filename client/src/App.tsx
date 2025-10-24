@@ -35,6 +35,7 @@ const LoginPage = lazy(() => import("@/pages/login"));
 const OnboardingPage = lazy(() => import("@/pages/onboarding"));
 const QuickAddReferral = lazy(() => import("@/pages/quick-add-referral"));
 const OfflinePage = lazy(() => import("@/pages/offline"));
+const QuotesPage = lazy(() => import("@/pages/quotes"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component with app branding
@@ -136,6 +137,7 @@ function Router() {
       <Route path="/training" component={() => <PrivateRoute><Training /></PrivateRoute>} />
       <Route path="/upload-bills" component={() => <PrivateRoute><UploadBills /></PrivateRoute>} />
       <Route path="/track-referrals" component={() => <PrivateRoute><TrackReferrals /></PrivateRoute>} />
+      <Route path="/quotes" component={() => <PrivateRoute><QuotesPage /></PrivateRoute>} />
       <Route path="/team-management" component={() => <PrivateRoute><TeamManagement /></PrivateRoute>} />
       <Route path="/account/profile" component={() => <PrivateRoute><ProfilePage /></PrivateRoute>} />
       <Route path="/account/banking" component={() => <PrivateRoute><BankingPage /></PrivateRoute>} />

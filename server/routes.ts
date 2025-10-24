@@ -687,6 +687,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quotes endpoints
+  app.get('/api/quotes', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const quotes = await storage.getQuotesByUserId(userId);
+      res.json(quotes);
+    } catch (error) {
+      console.error("Error fetching quotes:", error);
+      res.status(500).json({ message: "Failed to fetch quotes" });
+    }
+  });
+
+  app.get('/api/quotes/:id', requireAuth, async (req: any, res) => {
+    try {
+      const quote = await storage.getQuoteById(req.params.id);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+      res.json(quote);
+    } catch (error) {
+      console.error("Error fetching quote:", error);
+      res.status(500).json({ message: "Failed to fetch quote" });
+    }
+  });
+
+  app.post('/api/quotes/:id/update-status', requireAuth, async (req: any, res) => {
+    try {
+      const { status } = req.body;
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      await storage.updateQuoteJourneyStatus(req.params.id, status);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating quote status:", error);
+      res.status(500).json({ message: "Failed to update quote status" });
+    }
+  });
+
+  app.post('/api/quotes/:id/question', requireAuth, async (req: any, res) => {
+    try {
+      const { question } = req.body;
+      if (!question) {
+        return res.status(400).json({ message: "Question is required" });
+      }
+      await storage.addQuoteQuestion(req.params.id, question);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error adding question:", error);
+      res.status(500).json({ message: "Failed to add question" });
+    }
+  });
+
+  app.post('/api/quotes/:id/rate-request', requireAuth, async (req: any, res) => {
+    try {
+      const { request } = req.body;
+      if (!request) {
+        return res.status(400).json({ message: "Request is required" });
+      }
+      await storage.addQuoteRateRequest(req.params.id, request);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error adding rate request:", error);
+      res.status(500).json({ message: "Failed to add rate request" });
+    }
+  });
+
+  app.post('/api/quotes/:id/approve', requireAuth, async (req: any, res) => {
+    try {
+      await storage.approveQuoteByPartner(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error approving quote:", error);
+      res.status(500).json({ message: "Failed to approve quote" });
+    }
+  });
+
+  app.post('/api/quotes/:id/send-to-client', requireAuth, async (req: any, res) => {
+    try {
+      await storage.sendQuoteToClient(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error sending quote to client:", error);
+      res.status(500).json({ message: "Failed to send quote to client" });
+    }
+  });
+
   // User endpoint to update their own referrals
   app.patch('/api/referrals/:id', requireAuth, async (req: any, res) => {
     try {
