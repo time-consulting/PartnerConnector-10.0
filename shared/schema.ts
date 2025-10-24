@@ -597,6 +597,15 @@ export const quotes = pgTable("quotes", {
   monthlyDeviceCost: decimal("monthly_device_cost", { precision: 10, scale: 2 }),
   oneTimeDeviceCost: decimal("one_time_device_cost", { precision: 10, scale: 2 }),
   
+  // Business Type & Commission Tracking
+  businessType: varchar("business_type").default("new_to_card"), // switcher, new_to_card
+  billUploadRequired: boolean("bill_upload_required").default(false),
+  billUploaded: boolean("bill_uploaded").default(false),
+  estimatedCommission: decimal("estimated_commission", { precision: 10, scale: 2 }),
+  commissionPaid: boolean("commission_paid").default(false),
+  commissionPaidDate: timestamp("commission_paid_date"),
+  stripePaymentId: varchar("stripe_payment_id"),
+  
   // Legacy field for backwards compatibility
   ratesData: jsonb("rates_data"), // Detailed rate breakdown - keeping for old quotes
   
@@ -619,6 +628,37 @@ export const quotes = pgTable("quotes", {
   index("quotes_status_idx").on(table.status),
   index("quotes_customer_journey_status_idx").on(table.customerJourneyStatus),
   index("quotes_created_by_idx").on(table.createdBy),
+]);
+
+// Q&A threads for quotes - customer questions and admin replies
+export const quoteQA = pgTable("quote_qa", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quoteId: varchar("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+  authorType: varchar("author_type").notNull(), // 'customer' or 'admin'
+  authorId: varchar("author_id").references(() => users.id, { onDelete: "set null" }),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("quote_qa_quote_id_idx").on(table.quoteId),
+  index("quote_qa_created_at_idx").on(table.createdAt),
+]);
+
+// Bill uploads for switcher businesses
+export const quoteBillUploads = pgTable("quote_bill_uploads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quoteId: varchar("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+  referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
+  fileName: varchar("file_name").notNull(),
+  fileSize: integer("file_size"),
+  fileType: varchar("file_type"),
+  uploadedBy: varchar("uploaded_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  uploadType: varchar("upload_type").notNull().default("switcher_bill"), // switcher_bill, bank_statement, etc.
+  status: varchar("status").notNull().default("pending"), // pending, approved, rejected
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("quote_bill_uploads_quote_id_idx").on(table.quoteId),
+  index("quote_bill_uploads_referral_id_idx").on(table.referralId),
 ]);
 
 // Notifications for user activity
@@ -1165,6 +1205,16 @@ export const insertQuote = createInsertSchema(quotes);
 export const selectQuote = quotes.$inferSelect;
 export type InsertQuote = z.infer<typeof insertQuote>;
 export type Quote = typeof quotes.$inferSelect;
+
+export const insertQuoteQA = createInsertSchema(quoteQA);
+export const selectQuoteQA = quoteQA.$inferSelect;
+export type InsertQuoteQA = z.infer<typeof insertQuoteQA>;
+export type QuoteQA = typeof quoteQA.$inferSelect;
+
+export const insertQuoteBillUpload = createInsertSchema(quoteBillUploads);
+export const selectQuoteBillUpload = quoteBillUploads.$inferSelect;
+export type InsertQuoteBillUpload = z.infer<typeof insertQuoteBillUpload>;
+export type QuoteBillUpload = typeof quoteBillUploads.$inferSelect;
 
 // Enhanced referral update schema for admin use
 export const adminReferralUpdateSchema = createInsertSchema(referrals).omit({
