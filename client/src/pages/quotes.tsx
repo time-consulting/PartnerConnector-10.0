@@ -63,10 +63,7 @@ export default function Quotes() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      return apiRequest(`/api/quotes/${id}/update-status`, {
-        method: 'POST',
-        body: JSON.stringify({ status }),
-      });
+      return apiRequest('POST', `/api/quotes/${id}/update-status`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
@@ -79,10 +76,7 @@ export default function Quotes() {
 
   const askQuestionMutation = useMutation({
     mutationFn: async ({ id, question }: { id: string; question: string }) => {
-      return apiRequest(`/api/quotes/${id}/question`, {
-        method: 'POST',
-        body: JSON.stringify({ question }),
-      });
+      return apiRequest('POST', `/api/quotes/${id}/question`, { question });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
@@ -97,10 +91,7 @@ export default function Quotes() {
 
   const requestRateMutation = useMutation({
     mutationFn: async ({ id, request }: { id: string; request: string }) => {
-      return apiRequest(`/api/quotes/${id}/rate-request`, {
-        method: 'POST',
-        body: JSON.stringify({ request }),
-      });
+      return apiRequest('POST', `/api/quotes/${id}/rate-request`, { request });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
@@ -115,9 +106,7 @@ export default function Quotes() {
 
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/quotes/${id}/approve`, {
-        method: 'POST',
-      });
+      return apiRequest('POST', `/api/quotes/${id}/approve`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
@@ -131,9 +120,7 @@ export default function Quotes() {
 
   const sendToClientMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/quotes/${id}/send-to-client`, {
-        method: 'POST',
-      });
+      return apiRequest('POST', `/api/quotes/${id}/send-to-client`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
