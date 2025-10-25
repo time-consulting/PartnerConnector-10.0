@@ -186,6 +186,49 @@ export default function AdminDashboard() {
     enabled: !!(user as any)?.isAdmin,
   });
 
+  // Fetch completed deals
+  const { data: completedDeals, isLoading: completedDealsLoading } = useQuery<any[]>({
+    queryKey: ['/api/admin/completed-deals'],
+    enabled: !!(user as any)?.isAdmin,
+  });
+
+  // Calculate notification counts for tabs
+  const getNotificationCounts = () => {
+    const counts = {
+      submissions: 0,
+      signups: 0,
+      completedDeals: 0,
+    };
+
+    // Count submissions that need review (new or quote_requested status)
+    if (referralsData?.referrals) {
+      counts.submissions = referralsData.referrals.filter(
+        (r: any) => r.status === 'new' || r.status === 'quote_requested'
+      ).length;
+    }
+
+    // Count signups that need document actions
+    if (signups) {
+      counts.signups = signups.filter((s: any) => {
+        // Need docs out if status is still at agreement_sent
+        if (s.customerJourneyStatus === 'agreement_sent') return true;
+        // Need docs follow-up if docs_out
+        if (s.customerJourneyStatus === 'docs_out') return true;
+        // Need commission payment if ready
+        if (s.billUploadRequired && s.billUploaded && !s.commissionPaid) return true;
+        if (!s.billUploadRequired && !s.commissionPaid) return true;
+        return false;
+      }).length;
+    }
+
+    // Completed deals don't need action, so count is 0
+    counts.completedDeals = 0;
+
+    return counts;
+  };
+
+  const notificationCounts = getNotificationCounts();
+
   // Quote form
   const quoteForm = useForm<z.infer<typeof quoteFormSchema>>({
     resolver: zodResolver(quoteFormSchema),
@@ -464,14 +507,33 @@ export default function AdminDashboard() {
           </section>
 
           <Tabs defaultValue="submissions" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-8">
-              <TabsTrigger value="submissions" data-testid="tab-submissions">
+            <TabsList className="grid w-full grid-cols-7 mb-8">
+              <TabsTrigger value="submissions" data-testid="tab-submissions" className="relative">
                 <FileText className="w-4 h-4 mr-2" />
                 Submissions Portal
+                {notificationCounts.submissions > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {notificationCounts.submissions}
+                  </span>
+                )}
               </TabsTrigger>
-              <TabsTrigger value="signups" data-testid="tab-signups">
+              <TabsTrigger value="signups" data-testid="tab-signups" className="relative">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Signups
+                {notificationCounts.signups > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {notificationCounts.signups}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="completed" data-testid="tab-completed" className="relative">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Completed Deals
+                {notificationCounts.completedDeals > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {notificationCounts.completedDeals}
+                  </span>
+                )}
               </TabsTrigger>
               <TabsTrigger value="users" data-testid="tab-users">
                 <Users className="w-4 h-4 mr-2" />
@@ -964,6 +1026,109 @@ export default function AdminDashboard() {
                                   </div>
                                 )}
                               </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="completed">
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <DollarSign className="w-6 h-6 text-green-600" />
+                    Completed Deals - Commission Paid
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {completedDealsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Loading completed deals...</p>
+                    </div>
+                  ) : !completedDeals || completedDeals.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <p>No completed deals yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {completedDeals.map((deal: any) => (
+                        <Card key={deal.quoteId} className="border-2 border-green-200 bg-green-50/30">
+                          <CardContent className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {/* Business Information */}
+                              <div>
+                                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                  <Building className="w-5 h-5 text-green-600" />
+                                  Business Information
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Business Name:</strong> {deal.businessName}</p>
+                                  <p><strong>Trading Name:</strong> {deal.tradingName}</p>
+                                  <p><strong>Email:</strong> {deal.businessEmail}</p>
+                                  <p><strong>Structure:</strong> {deal.businessStructure}</p>
+                                  {deal.limitedCompanyName && (
+                                    <p><strong>Company Name:</strong> {deal.limitedCompanyName}</p>
+                                  )}
+                                  <p><strong>Address:</strong> {deal.tradingAddress}</p>
+                                </div>
+                              </div>
+
+                              {/* Director/Owner Information */}
+                              <div>
+                                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                  <User className="w-5 h-5 text-green-600" />
+                                  Director/Owner Details
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                  <p><strong>Name:</strong> {deal.ownerFirstName} {deal.ownerLastName}</p>
+                                  <p><strong>Email:</strong> {deal.ownerEmail}</p>
+                                  <p><strong>Phone:</strong> {deal.ownerPhone}</p>
+                                  {deal.ownerHomeAddress && (
+                                    <p><strong>Home Address:</strong> {deal.ownerHomeAddress}</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Commission & Partner Information */}
+                              <div>
+                                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                  <DollarSign className="w-5 h-5 text-green-600" />
+                                  Commission & Partner Info
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                  <div className="bg-green-100 p-3 rounded-lg">
+                                    <p className="text-lg font-bold text-green-700">
+                                      £{parseFloat(deal.estimatedCommission || 0).toFixed(2)}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-green-700 mt-1">
+                                      <CheckCircle className="w-4 h-4" />
+                                      <span className="text-sm font-medium">Commission Paid</span>
+                                    </div>
+                                  </div>
+                                  <div className="mt-4 pt-4 border-t">
+                                    <p><strong>Partner:</strong> {deal.partnerName}</p>
+                                    <p><strong>Email:</strong> {deal.partnerEmail}</p>
+                                    <p><strong>Completed:</strong> {new Date(deal.createdAt).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Status Badge */}
+                            <div className="mt-6 pt-6 border-t flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                <span className="text-sm font-medium text-green-700">Deal Completed & Commission Paid</span>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                Journey Status: {deal.customerJourneyStatus?.replace('_', ' ') || 'Completed'}
+                              </span>
                             </div>
                           </CardContent>
                         </Card>
