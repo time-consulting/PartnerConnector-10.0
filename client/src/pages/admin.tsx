@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -122,6 +123,7 @@ export default function AdminDashboard() {
   const [docsOutNotes, setDocsOutNotes] = useState("");
   const [awaitingDocsNotes, setAwaitingDocsNotes] = useState("");
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [sentDealsExpanded, setSentDealsExpanded] = useState(true);
 
   // Check if user is admin
   if (authLoading) {
@@ -932,7 +934,7 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
                     <CheckCircle className="w-6 h-6 text-green-600" />
-                    Pending Signups - Action Required
+                    Signups Management
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -944,11 +946,23 @@ export default function AdminDashboard() {
                   ) : !signups || signups.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
                       <CheckCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                      <p>No pending signups</p>
+                      <p>No signups</p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {signups.map((signup: any) => (
+                    <div className="space-y-6">
+                      {/* Active Signups Section */}
+                      <div>
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                          <Clock className="w-5 h-5 text-orange-600" />
+                          Active Signups - Action Required
+                          <Badge className="ml-2 bg-orange-600">
+                            {signups.filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'request_documents').length}
+                          </Badge>
+                        </h3>
+                        <div className="space-y-4">
+                          {signups
+                            .filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'request_documents')
+                            .map((signup: any) => (
                         <Card key={signup.quoteId} className="border-2">
                           <CardContent className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1079,6 +1093,139 @@ export default function AdminDashboard() {
                           </CardContent>
                         </Card>
                       ))}
+                          {signups.filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'request_documents').length === 0 && (
+                            <div className="text-center py-8 text-gray-500">
+                              <CheckCircle className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                              <p>No active signups</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Sent Deals Section - Collapsible */}
+                      {signups.filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'request_documents').length > 0 && (
+                        <Collapsible open={sentDealsExpanded} onOpenChange={setSentDealsExpanded}>
+                          <div className="border-t pt-6">
+                            <CollapsibleTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-between mb-4"
+                                data-testid="button-toggle-sent-deals"
+                              >
+                                <span className="flex items-center gap-2">
+                                  <FileText className="w-5 h-5 text-blue-600" />
+                                  <span className="font-semibold text-lg">Sent Deals</span>
+                                  <Badge className="ml-2 bg-blue-600">
+                                    {signups.filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'request_documents').length}
+                                  </Badge>
+                                </span>
+                                {sentDealsExpanded ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                              </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <div className="space-y-4">
+                                {signups
+                                  .filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'request_documents')
+                                  .map((signup: any) => (
+                                    <Card key={signup.quoteId} className="border-2 border-blue-200 bg-blue-50/20">
+                                      <CardContent className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                          {/* Business Information */}
+                                          <div>
+                                            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                              <Building className="w-5 h-5" />
+                                              Business Information
+                                            </h3>
+                                            <div className="space-y-2 text-sm">
+                                              <p><strong>Business Name:</strong> {signup.businessName}</p>
+                                              <p><strong>Trading Name:</strong> {signup.tradingName}</p>
+                                              <p><strong>Email:</strong> {signup.businessEmail}</p>
+                                              <p><strong>Structure:</strong> {signup.businessStructure}</p>
+                                              {signup.limitedCompanyName && (
+                                                <p><strong>Company Name:</strong> {signup.limitedCompanyName}</p>
+                                              )}
+                                              <p><strong>Address:</strong> {signup.tradingAddress}</p>
+                                            </div>
+                                          </div>
+
+                                          {/* Director/Owner Information */}
+                                          <div>
+                                            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                              <User className="w-5 h-5" />
+                                              Director/Owner Details
+                                            </h3>
+                                            <div className="space-y-2 text-sm">
+                                              <p><strong>Name:</strong> {signup.ownerFirstName} {signup.ownerLastName}</p>
+                                              <p><strong>Email:</strong> {signup.ownerEmail}</p>
+                                              <p><strong>Phone:</strong> {signup.ownerPhone}</p>
+                                              {signup.ownerHomeAddress && (
+                                                <p><strong>Home Address:</strong> {signup.ownerHomeAddress}</p>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          {/* Banking & Partner Information */}
+                                          <div>
+                                            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                              <DollarSign className="w-5 h-5" />
+                                              Banking & Partner Info
+                                            </h3>
+                                            <div className="space-y-2 text-sm">
+                                              <p><strong>Sort Code:</strong> {signup.bankSortCode}</p>
+                                              <p><strong>Account Number:</strong> {signup.bankAccountNumber}</p>
+                                              <div className="mt-4 pt-4 border-t">
+                                                <p><strong>Submitted By:</strong> {signup.partnerName}</p>
+                                                <p><strong>Partner Email:</strong> {signup.partnerEmail}</p>
+                                                <p><strong>Submitted:</strong> {new Date(signup.createdAt).toLocaleDateString()}</p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Document Status & Audit Trail */}
+                                        <div className="mt-6 pt-6 border-t">
+                                          <div className="flex items-center justify-between mb-4">
+                                            <div>
+                                              <h4 className="font-semibold text-md mb-1">Document Workflow</h4>
+                                              <p className="text-sm text-gray-600">
+                                                Current Stage: <span className="font-medium capitalize">{signup.customerJourneyStatus?.replace(/_/g, ' ')}</span>
+                                              </p>
+                                              {/* Audit Trail */}
+                                              {signup.docsOutDate && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                  Docs sent on: {new Date(signup.docsOutDate).toLocaleString()}
+                                                </p>
+                                              )}
+                                              {signup.requestDocumentsDate && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                  Documents requested on: {new Date(signup.requestDocumentsDate).toLocaleString()}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                          
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <Button
+                                              onClick={() => {
+                                                setSelectedSignupForDocs(signup);
+                                                setShowAwaitingDocsDialog(true);
+                                              }}
+                                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                                              data-testid={`button-request-docs-${signup.quoteId}`}
+                                            >
+                                              <Clock className="w-4 h-4 mr-2" />
+                                              Request Documents
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  ))}
+                              </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+                      )}
                     </div>
                   )}
                 </CardContent>

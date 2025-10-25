@@ -2244,6 +2244,8 @@ export class DatabaseStorage implements IStorage {
         businessEmail: referrals.businessEmail,
         customerJourneyStatus: quotes.customerJourneyStatus,
         createdAt: quotes.createdAt,
+        docsOutDate: quotes.docsOutDate,
+        requestDocumentsDate: quotes.requestDocumentsDate,
         partnerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
         partnerEmail: users.email,
         ownerId: businessOwners.id,
@@ -2273,8 +2275,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
       .where(and(
         sql`${businessOwners.id} IS NOT NULL`,
-        sql`${quotes.commissionPaid} = false`,
-        sql`${quotes.customerJourneyStatus} NOT IN ('docs_out', 'request_documents')`
+        sql`${quotes.commissionPaid} = false`
       ))
       .orderBy(desc(quotes.createdAt));
 
