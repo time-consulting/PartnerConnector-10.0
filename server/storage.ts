@@ -104,7 +104,7 @@ export interface IStorage {
   getBillUploadsByReferralId(referralId: string): Promise<BillUpload[]>;
   
   // Partner ID operations
-  generatePartnerId(userId: string): Promise<string>;
+  generatePartnerId(userId: string, parentPartnerId?: string): Promise<string>;
   getUserByPartnerId(partnerId: string): Promise<User | undefined>;
   
   // MLM level tracking operations
@@ -1134,16 +1134,37 @@ export class DatabaseStorage implements IStorage {
     return upload;
   }
   
-  async generatePartnerId(userId: string): Promise<string> {
-    // Generate a unique partner ID based on user info and timestamp
+  async generatePartnerId(userId: string, parentPartnerId?: string): Promise<string> {
+    // Generate hierarchical partner ID based on chain position
     const user = await this.getUser(userId);
     if (!user) throw new Error('User not found');
     
-    // Create a partner ID format: PC-{FIRST_INITIAL}{LAST_INITIAL}-{TIMESTAMP_SUFFIX}
-    const firstInitial = (user.firstName || 'X').charAt(0).toUpperCase();
-    const lastInitial = (user.lastName || 'X').charAt(0).toUpperCase();
-    const timestamp = Date.now().toString().slice(-6); // Last 6 digits
-    const partnerId = `PC-${firstInitial}${lastInitial}-${timestamp}`;
+    let partnerId: string;
+    
+    if (!parentPartnerId) {
+      // Root partner: Generate PC-001, PC-002, etc.
+      // Count existing root partners (those without a dot in their partnerId)
+      const rootPartnersCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(sql`partner_id IS NOT NULL AND partner_id NOT LIKE '%.%'`);
+      
+      const nextNumber = (rootPartnersCount[0]?.count || 0) + 1;
+      partnerId = `PC-${String(nextNumber).padStart(3, '0')}`;
+    } else {
+      // Child partner: Append to parent's code (e.g., PC-001.1, PC-001.1.2)
+      const parent = await this.getUserByPartnerId(parentPartnerId);
+      if (!parent) throw new Error('Parent partner not found');
+      
+      // Count existing children under this parent
+      const childrenCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(eq(users.parentPartnerId, parent.id));
+      
+      const nextChildNumber = (childrenCount[0]?.count || 0) + 1;
+      partnerId = `${parentPartnerId}.${nextChildNumber}`;
+    }
     
     // Update user with partner ID and use it as referral code
     await db
@@ -1154,6 +1175,8 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date() 
       })
       .where(eq(users.id, userId));
+    
+    console.log(`[PARTNER_ID] Generated ${partnerId} for user ${userId}${parentPartnerId ? ` (parent: ${parentPartnerId})` : ' (root)'}`);
     
     return partnerId;
   }
