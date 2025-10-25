@@ -193,12 +193,19 @@ export default function AdminDashboard() {
     enabled: !!(user as any)?.isAdmin,
   });
 
+  // Fetch all messages for admin
+  const { data: allMessages, isLoading: messagesLoading } = useQuery<any[]>({
+    queryKey: ['/api/admin/messages'],
+    enabled: !!(user as any)?.isAdmin,
+  });
+
   // Calculate notification counts for tabs
   const getNotificationCounts = () => {
     const counts = {
       submissions: 0,
       signups: 0,
       completedDeals: 0,
+      messages: 0,
     };
 
     // Count submissions that need review (new or quote_requested status)
@@ -224,6 +231,11 @@ export default function AdminDashboard() {
 
     // Completed deals don't need action, so count is 0
     counts.completedDeals = 0;
+
+    // Count unread partner messages (where authorType = 'partner')
+    if (allMessages) {
+      counts.messages = allMessages.filter((m: any) => m.authorType === 'partner').length;
+    }
 
     return counts;
   };
@@ -543,7 +555,7 @@ export default function AdminDashboard() {
           </section>
 
           <Tabs defaultValue="submissions" className="w-full">
-            <TabsList className="grid w-full grid-cols-7 mb-8">
+            <TabsList className="grid w-full grid-cols-8 mb-8">
               <TabsTrigger value="submissions" data-testid="tab-submissions" className="relative">
                 <FileText className="w-4 h-4 mr-2" />
                 Submissions Portal
@@ -568,6 +580,15 @@ export default function AdminDashboard() {
                 {notificationCounts.completedDeals > 0 && (
                   <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                     {notificationCounts.completedDeals}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="messages" data-testid="tab-messages" className="relative">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Messages
+                {notificationCounts.messages > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {notificationCounts.messages}
                   </span>
                 )}
               </TabsTrigger>
@@ -1156,6 +1177,81 @@ export default function AdminDashboard() {
                               <span className="text-xs text-gray-500">
                                 Journey Status: {deal.customerJourneyStatus?.replace('_', ' ') || 'Completed'}
                               </span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="messages">
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <MessageSquare className="w-6 h-6 text-blue-600" />
+                    All Messages
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {messagesLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Loading messages...</p>
+                    </div>
+                  ) : !allMessages || allMessages.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <p>No messages yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {allMessages.map((message: any) => (
+                        <Card key={message.id} className={`border-2 ${message.authorType === 'partner' ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200'}`}>
+                          <CardContent className="p-6">
+                            <div className="flex items-start gap-4">
+                              <div className={`rounded-full p-3 ${message.authorType === 'partner' ? 'bg-blue-600' : 'bg-gray-600'}`}>
+                                <User className="h-5 w-5 text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div>
+                                    <h3 className="font-semibold text-lg">
+                                      {message.authorType === 'admin' ? 'Dojo Admin' : message.authorName || 'Partner'}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                      Quote ID: {message.quoteId}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm text-gray-500">
+                                      {new Date(message.createdAt).toLocaleString()}
+                                    </p>
+                                    {message.authorType === 'partner' && (
+                                      <Badge className="mt-1 bg-blue-600">New from Partner</Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                                  <p className="text-gray-900 whitespace-pre-wrap">{message.message}</p>
+                                </div>
+                                <div className="mt-3 flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Navigate to quote detail or open reply dialog
+                                      window.location.href = `/quotes#${message.quoteId}`;
+                                    }}
+                                    data-testid={`button-view-quote-${message.id}`}
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Quote
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>

@@ -885,6 +885,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/messages', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const messages = await storage.getAllQuoteMessages();
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
   app.get('/api/admin/signups/:quoteId', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const signup = await storage.getSignupDetails(req.params.quoteId);

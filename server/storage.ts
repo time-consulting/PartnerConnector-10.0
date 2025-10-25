@@ -261,6 +261,7 @@ export interface IStorage {
   // Quote Q&A operations
   addQuoteQAMessage(quoteId: string, authorType: string, authorId: string | null, message: string): Promise<any>;
   getQuoteQA(quoteId: string): Promise<any[]>;
+  getAllQuoteMessages(): Promise<any[]>;
   
   // Quote bill upload operations
   createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string): Promise<any>;
@@ -2412,6 +2413,25 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(quoteQA.authorId, users.id))
       .where(eq(quoteQA.quoteId, quoteId))
       .orderBy(quoteQA.createdAt);
+
+    return result;
+  }
+
+  async getAllQuoteMessages(): Promise<any[]> {
+    const { quoteQA } = await import("@shared/schema");
+    const result = await db
+      .select({
+        id: quoteQA.id,
+        quoteId: quoteQA.quoteId,
+        authorType: quoteQA.authorType,
+        authorId: quoteQA.authorId,
+        authorName: sql<string>`COALESCE(${users.firstName} || ' ' || ${users.lastName}, 'Customer')`,
+        message: quoteQA.message,
+        createdAt: quoteQA.createdAt,
+      })
+      .from(quoteQA)
+      .leftJoin(users, eq(quoteQA.authorId, users.id))
+      .orderBy(desc(quoteQA.createdAt));
 
     return result;
   }
