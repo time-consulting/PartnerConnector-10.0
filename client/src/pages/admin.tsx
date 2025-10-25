@@ -535,85 +535,104 @@ export default function AdminDashboard() {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header Section */}
-          <section className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-800 relative overflow-hidden mb-8 rounded-2xl">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-purple-600/20"></div>
-            
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">Admin Dashboard</h1>
-                  <p className="text-white/90 text-lg md:text-xl">Comprehensive submissions portal and deal management</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Button 
-                    variant="outline" 
-                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-                    onClick={() => queryClient.invalidateQueries()}
-                    data-testid="button-refresh-data"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Refresh Data
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </section>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="page-title-admin">
+              Admin Dashboard
+            </h1>
+            <p className="text-gray-600" data-testid="text-admin-description">
+              Comprehensive deal management and backend administration
+            </p>
+          </div>
 
-          <Tabs defaultValue="submissions" className="w-full">
-            <TabsList className="grid w-full grid-cols-8 mb-8">
-              <TabsTrigger value="submissions" data-testid="tab-submissions" className="relative">
-                <FileText className="w-4 h-4 mr-2" />
-                Submissions Portal
-                {notificationCounts.submissions > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {notificationCounts.submissions}
-                  </span>
+          {/* Main Section Tabs */}
+          <Tabs defaultValue="deals" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8 h-auto bg-white shadow-md rounded-xl">
+              <TabsTrigger 
+                value="deals" 
+                data-testid="tab-deals-section"
+                className="flex-col h-auto py-4 px-6 data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-50 data-[state=active]:to-indigo-50 data-[state=active]:shadow-lg rounded-xl"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <FileText className="h-5 w-5" />
+                  <span className="text-base font-bold">Deals & User Requirements</span>
+                </div>
+                <span className="text-xs text-gray-600">Submissions, Signups, Messages & Completed Deals</span>
+                {(notificationCounts.submissions + notificationCounts.signups + notificationCounts.messages + notificationCounts.completedDeals) > 0 && (
+                  <Badge className="mt-2 bg-red-500 text-white" variant="secondary">
+                    {notificationCounts.submissions + notificationCounts.signups + notificationCounts.messages + notificationCounts.completedDeals}
+                  </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="signups" data-testid="tab-signups" className="relative">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Signups
-                {notificationCounts.signups > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {notificationCounts.signups}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="completed" data-testid="tab-completed" className="relative">
-                <DollarSign className="w-4 h-4 mr-2" />
-                Completed Deals
-                {notificationCounts.completedDeals > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {notificationCounts.completedDeals}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="messages" data-testid="tab-messages" className="relative">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Messages
-                {notificationCounts.messages > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {notificationCounts.messages}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="users" data-testid="tab-users">
-                <Users className="w-4 h-4 mr-2" />
-                User Management
-              </TabsTrigger>
-              <TabsTrigger value="mlm" data-testid="tab-mlm">
-                <Target className="w-4 h-4 mr-2" />
-                MLM Network
-              </TabsTrigger>
-              <TabsTrigger value="analytics" data-testid="tab-analytics">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="settings" data-testid="tab-settings">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
+              <TabsTrigger 
+                value="backend" 
+                data-testid="tab-backend-section"
+                className="flex-col h-auto py-4 px-6 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-50 data-[state=active]:to-pink-50 data-[state=active]:shadow-lg rounded-xl"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Database className="h-5 w-5" />
+                  <span className="text-base font-bold">Backend Management</span>
+                </div>
+                <span className="text-xs text-gray-600">MLM Network, Analytics, Users & Settings</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* Deals & User Requirements Section */}
+            <TabsContent value="deals">
+              <Tabs defaultValue="submissions" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-6 h-auto">
+                  <TabsTrigger 
+                    value="submissions" 
+                    data-testid="tab-submissions" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md relative"
+                  >
+                    <FileText className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Submissions Portal</span>
+                    {notificationCounts.submissions > 0 && (
+                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs bg-red-500 text-white absolute -top-1 -right-1 rounded-full">
+                        {notificationCounts.submissions}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="signups" 
+                    data-testid="tab-signups" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md relative"
+                  >
+                    <CheckCircle className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Signups</span>
+                    {notificationCounts.signups > 0 && (
+                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs bg-red-500 text-white absolute -top-1 -right-1 rounded-full">
+                        {notificationCounts.signups}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="messages" 
+                    data-testid="tab-messages" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md relative"
+                  >
+                    <MessageSquare className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Messages</span>
+                    {notificationCounts.messages > 0 && (
+                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs bg-blue-500 text-white absolute -top-1 -right-1 rounded-full">
+                        {notificationCounts.messages}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="completed" 
+                    data-testid="tab-completed" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md relative"
+                  >
+                    <DollarSign className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Completed Deals</span>
+                    {notificationCounts.completedDeals > 0 && (
+                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs bg-green-500 text-white absolute -top-1 -right-1 rounded-full">
+                        {notificationCounts.completedDeals}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
 
             <TabsContent value="submissions">
               <div className="space-y-6">
@@ -1411,6 +1430,46 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </TabsContent>
+              </Tabs>
+            </TabsContent>
+
+            {/* Backend Management Section */}
+            <TabsContent value="backend">
+              <Tabs defaultValue="users" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-6 h-auto">
+                  <TabsTrigger 
+                    value="users" 
+                    data-testid="tab-users" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Users className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">User Management</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="mlm" 
+                    data-testid="tab-mlm" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Target className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">MLM Network</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="analytics" 
+                    data-testid="tab-analytics" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <TrendingUp className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Analytics</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="settings" 
+                    data-testid="tab-settings" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Settings className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Settings</span>
+                  </TabsTrigger>
+                </TabsList>
 
             <TabsContent value="users">
               <Card className="border-0 shadow-lg">
@@ -1724,11 +1783,108 @@ export default function AdminDashboard() {
                 </Card>
               </div>
             </TabsContent>
+              </Tabs>
+            </TabsContent>
 
+            {/* Backend Management Section */}
+            <TabsContent value="backend">
+              <Tabs defaultValue="users" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-6 h-auto">
+                  <TabsTrigger 
+                    value="users" 
+                    data-testid="tab-users" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Users className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">User Management</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="mlm" 
+                    data-testid="tab-mlm" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Target className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">MLM Network</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="analytics" 
+                    data-testid="tab-analytics" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <TrendingUp className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Analytics</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="settings" 
+                    data-testid="tab-settings" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Settings className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Settings</span>
+                  </TabsTrigger>
+                </TabsList>
+
+            <TabsContent value="users">
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <Users className="w-6 h-6 text-blue-600" />
+                    User Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {usersLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="animate-pulse border rounded-lg p-4">
+                          <div className="flex justify-between items-center">
+                            <div className="space-y-2">
+                              <div className="h-4 bg-gray-200 rounded w-48"></div>
+                              <div className="h-3 bg-gray-200 rounded w-32"></div>
+                            </div>
+                            <div className="h-6 bg-gray-200 rounded w-20"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {users?.map((user: any) => (
+                        <div key={user.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h3 className="font-semibold">{user.firstName} {user.lastName}</h3>
+                              <p className="text-sm text-gray-600">{user.email}</p>
+                              <p className="text-xs text-gray-500">
+                                Partner ID: {user.partnerId || 'Not assigned'}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {user.isAdmin && (
+                                <Badge className="bg-red-100 text-red-800">Admin</Badge>
+                              )}
+                              <Badge className="bg-blue-100 text-blue-800">
+                                Level {user.partnerLevel || 1}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="mlm">
+              <MlmVisualization userId={(user as any)?.id} showFullTree={true} />
+            </TabsContent>
+            </Tabs>
+            </TabsContent>
           </Tabs>
         </div>
 
-        {/* Comprehensive Quote Builder */}
+        {/* Dialogs moved outside tab structure */}
         <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
           <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="modal-quote-builder">
             {selectedReferral && (
