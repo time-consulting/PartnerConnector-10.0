@@ -311,23 +311,25 @@ export class DatabaseStorage implements IStorage {
 
     console.log('[AUTH] New user created:', user.id, user.email);
 
-    // Generate partner ID and referral code
-    if (!user.partnerId || !user.referralCode) {
-      await this.generatePartnerId(user.id);
-    }
-
     // Setup referral hierarchy if referral code provided
+    let referrerPartnerId: string | undefined;
     if (referralCode) {
       console.log('[AUTH] Setting up referral hierarchy for:', user.email);
       try {
         const referrer = await this.getUserByReferralCode(referralCode);
         if (referrer && referrer.id !== user.id) {
+          referrerPartnerId = referrer.partnerId;
           await this.setupReferralHierarchy(user.id, referrer.id);
           console.log('[AUTH] Referral hierarchy created successfully');
         }
       } catch (error) {
         console.error('[AUTH] Error setting up referral hierarchy:', error);
       }
+    }
+
+    // Generate partner ID and referral code (with parent context if available)
+    if (!user.partnerId || !user.referralCode) {
+      await this.generatePartnerId(user.id, referrerPartnerId);
     }
 
     return await this.getUser(user.id) as User;
@@ -388,17 +390,8 @@ export class DatabaseStorage implements IStorage {
     
     let user = (result as User[])[0];
 
-    // Safety check: Ensure all new users have partnerId and referralCode
-    if (isNewUser && (!user.partnerId || !user.referralCode)) {
-      console.log('[SAFETY] New user missing partnerId or referralCode, generating...');
-      await this.generatePartnerId(user.id);
-      const updatedUser = await this.getUser(user.id);
-      if (updatedUser) {
-        user = updatedUser;
-        console.log('[SAFETY] Generated partnerId:', user.partnerId);
-      }
-    }
-
+    // For new users with referral code, set up hierarchy first to get parent info
+    let referrerPartnerId: string | undefined;
     if (isNewUser && referralCode) {
       console.log('[REFERRAL] New user detected. Setting up referral hierarchy...');
       console.log('[REFERRAL] User ID:', user.id, 'Email:', user.email);
@@ -410,6 +403,7 @@ export class DatabaseStorage implements IStorage {
         
         if (referrer && referrer.id !== user.id) {
           console.log('[REFERRAL] Linking user to referrer...');
+          referrerPartnerId = referrer.partnerId;
           await this.setupReferralHierarchy(user.id, referrer.id);
         } else if (!referrer) {
           console.error('[REFERRAL] ERROR: Referral code not found in database:', referralCode);
@@ -424,6 +418,17 @@ export class DatabaseStorage implements IStorage {
         console.log('[REFERRAL] Existing user login - no referral setup needed');
       } else if (!referralCode) {
         console.log('[REFERRAL] New user but no referral code provided');
+      }
+    }
+
+    // Safety check: Ensure all new users have partnerId and referralCode (with parent context if available)
+    if (isNewUser && (!user.partnerId || !user.referralCode)) {
+      console.log('[SAFETY] New user missing partnerId or referralCode, generating...');
+      await this.generatePartnerId(user.id, referrerPartnerId);
+      const updatedUser = await this.getUser(user.id);
+      if (updatedUser) {
+        user = updatedUser;
+        console.log('[SAFETY] Generated partnerId:', user.partnerId);
       }
     }
 
@@ -489,7 +494,7 @@ export class DatabaseStorage implements IStorage {
     let referralCodeToSet = newUser.referralCode;
     if (!referralCodeToSet) {
       if (!newUser.partnerId) {
-        await this.generatePartnerId(newUserId);
+        await this.generatePartnerId(newUserId, referrer.partnerId);
         const updatedUser = await this.getUser(newUserId);
         referralCodeToSet = updatedUser?.partnerId || `REF-${Date.now().toString().slice(-8)}`;
       } else {
@@ -907,10 +912,10 @@ export class DatabaseStorage implements IStorage {
     try {
       let referrer = await this.getUser(referral.referrerId);
       
-      // Auto-generate partner ID if user doesn't have one
+      // Auto-generate partner ID if user doesn't have one (root partner - no parent)
       if (referrer && !referrer.partnerId && referrer.firstName && referrer.lastName) {
         console.log('Generating partner ID for user:', referrer.id);
-        await this.generatePartnerId(referrer.id);
+        await this.generatePartnerId(referrer.id); // No parent, will be root partner
         referrer = await this.getUser(referral.referrerId); // Refresh user data
       }
       
