@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User } from "lucide-react";
+import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User, Upload, AlertCircle } from "lucide-react";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -104,6 +104,148 @@ function QuoteQASection({ quoteId }: { quoteId: string }) {
           data-testid="button-send-qa"
         >
           <Send className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Document Upload Section Component
+function DocumentUploadSection({ quoteId }: { quoteId: string }) {
+  const { toast } = useToast();
+  const [switcherStatement, setSwitcherStatement] = useState<File | null>(null);
+  const [photoId, setPhotoId] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'statement' | 'id') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (type === 'statement') {
+        setSwitcherStatement(file);
+      } else {
+        setPhotoId(file);
+      }
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!switcherStatement && !photoId) {
+      toast({
+        title: "No files selected",
+        description: "Please select at least one document to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    if (switcherStatement) formData.append('switcherStatement', switcherStatement);
+    if (photoId) formData.append('photoId', photoId);
+
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/documents`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Documents uploaded",
+          description: "Your documents have been submitted successfully",
+        });
+        setSwitcherStatement(null);
+        setPhotoId(null);
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your documents. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
+      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <Upload className="h-5 w-5" />
+        Upload Documents
+      </h3>
+      
+      <div className="space-y-4">
+        {/* Switcher Statement Upload */}
+        <div>
+          <Label htmlFor="switcherStatement" className="text-sm font-medium mb-2 block">
+            Switcher Statement
+            <span className="text-gray-500 font-normal ml-2">(Highest dated within 6 months)</span>
+          </Label>
+          <div className="flex items-center gap-3">
+            <Input
+              id="switcherStatement"
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => handleFileChange(e, 'statement')}
+              className="flex-1"
+              data-testid="input-switcher-statement"
+            />
+            {switcherStatement && (
+              <span className="text-sm text-green-600 flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4" />
+                {switcherStatement.name}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Photo ID Upload */}
+        <div>
+          <Label htmlFor="photoId" className="text-sm font-medium mb-2 block">
+            Photo ID
+            <span className="text-gray-500 font-normal ml-2">(Driving License or Passport only)</span>
+          </Label>
+          <div className="flex items-center gap-3">
+            <Input
+              id="photoId"
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, 'id')}
+              className="flex-1"
+              data-testid="input-photo-id"
+            />
+            {photoId && (
+              <span className="text-sm text-green-600 flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4" />
+                {photoId.name}
+              </span>
+            )}
+          </div>
+          
+          {/* ID Upload Note */}
+          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <p className="font-medium mb-1">Important: ID Photo Requirements</p>
+                <p>Please ensure your ID image is clear and all text is readable. After uploading, you will still need to complete a selfie verification using the Onfido link sent to you.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Upload Button */}
+        <Button
+          onClick={handleUpload}
+          disabled={uploading || (!switcherStatement && !photoId)}
+          className="w-full h-12 rounded-xl"
+          data-testid="button-upload-documents"
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          {uploading ? 'Uploading...' : 'Upload Documents'}
         </Button>
       </div>
     </div>
@@ -616,6 +758,9 @@ export default function Quotes() {
                     </div>
                   )}
 
+                  {/* Document Upload Section */}
+                  <DocumentUploadSection quoteId={selectedQuote.id} />
+
                   {/* Q&A Thread Section */}
                   <QuoteQASection quoteId={selectedQuote.id} />
 
@@ -634,10 +779,10 @@ export default function Quotes() {
                       onClick={() => setShowQuestionModal(true)}
                       variant="outline"
                       className="h-14 border-2 rounded-xl font-semibold"
-                      data-testid="button-ask-question"
+                      data-testid="button-request-update"
                     >
                       <MessageSquare className="mr-2 h-5 w-5" />
-                      Ask a Question
+                      Request Update
                     </Button>
                     <Button
                       onClick={() => setShowRateRequestModal(true)}
@@ -665,23 +810,23 @@ export default function Quotes() {
           </DialogContent>
         </Dialog>
 
-        {/* Ask Question Modal */}
+        {/* Request Update Modal */}
         <Dialog open={showQuestionModal} onOpenChange={setShowQuestionModal}>
           <DialogContent className="rounded-2xl">
             <DialogHeader>
-              <DialogTitle data-testid="text-question-modal-title">Ask a Question</DialogTitle>
+              <DialogTitle data-testid="text-question-modal-title">Request Update</DialogTitle>
               <DialogDescription data-testid="text-question-modal-description">
-                Send your question to Dojo and they'll get back to you shortly.
+                Send a message or request an update from Dojo and they'll respond through the quote messaging system.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="question">Your Question</Label>
+                <Label htmlFor="question">Your Message</Label>
                 <Textarea
                   id="question"
                   value={questionText}
                   onChange={(e) => setQuestionText(e.target.value)}
-                  placeholder="Type your question here..."
+                  placeholder="Type your message or update request here..."
                   rows={5}
                   className="mt-2 rounded-xl"
                   data-testid="input-question"
@@ -694,7 +839,7 @@ export default function Quotes() {
                   className="flex-1 h-12 rounded-xl"
                   data-testid="button-submit-question"
                 >
-                  Submit Question
+                  Send Message
                 </Button>
                 <Button
                   onClick={() => {
