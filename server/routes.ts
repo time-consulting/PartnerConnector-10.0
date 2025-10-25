@@ -865,7 +865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes for signups and quote management
-  app.get('/api/admin/signups', requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/signups', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const signups = await storage.getPendingSignups();
       res.json(signups);
@@ -875,7 +875,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/signups/:quoteId', requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/signups/:quoteId', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const signup = await storage.getSignupDetails(req.params.quoteId);
       res.json(signup);
@@ -885,7 +885,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/quotes', requireAdmin, async (req: any, res) => {
+  // Confirm "Docs Out" (agreement sent) for a signup
+  app.post('/api/admin/signups/:quoteId/docs-out', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { quoteId } = req.params;
+      const { communicationNotes, requiredDocuments } = req.body;
+
+      // Update quote journey status to "Docs Out"
+      await storage.updateQuoteJourneyStatus(quoteId, 'docs_out');
+
+      // Get the quote to find the associated referral
+      const quote = await storage.getQuoteById(quoteId);
+      if (quote && quote.referralId) {
+        // Update referral with admin notes about required documents
+        const noteText = `\n[${new Date().toLocaleString()}] Docs Out Confirmed - Agreement sent. ${communicationNotes || ''}`;
+        await storage.updateReferral(quote.referralId, {
+          docsOutConfirmed: true,
+          docsOutConfirmedAt: new Date(),
+          requiredDocuments: requiredDocuments || ['identification', 'proof_of_bank'],
+          adminNotes: (quote.adminNotes || '') + noteText,
+          updatedAt: new Date()
+        });
+      }
+
+      res.json({ success: true, message: "Docs Out confirmed successfully" });
+    } catch (error) {
+      console.error("Error confirming docs out:", error);
+      res.status(500).json({ message: "Failed to confirm docs out" });
+    }
+  });
+
+  // Confirm "Awaiting Docs" (after signup, waiting for documents)
+  app.post('/api/admin/signups/:quoteId/awaiting-docs', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { quoteId } = req.params;
+      const { communicationNotes } = req.body;
+
+      // Update quote journey status to "Awaiting Docs"
+      await storage.updateQuoteJourneyStatus(quoteId, 'awaiting_docs');
+
+      // Get the quote to find the associated referral
+      const quote = await storage.getQuoteById(quoteId);
+      if (quote && quote.referralId) {
+        const noteText = `\n[${new Date().toLocaleString()}] Awaiting Documents - ${communicationNotes || 'Waiting for Onfido ID and proof of bank'}`;
+        await storage.updateReferral(quote.referralId, {
+          adminNotes: (quote.adminNotes || '') + noteText,
+          updatedAt: new Date()
+        });
+      }
+
+      res.json({ success: true, message: "Status updated to Awaiting Docs" });
+    } catch (error) {
+      console.error("Error updating to awaiting docs:", error);
+      res.status(500).json({ message: "Failed to update status" });
+    }
+  });
+
+  app.get('/api/admin/quotes', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const quotes = await storage.getAllQuotesForAdmin();
       res.json(quotes);
@@ -895,7 +951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/quotes/:id/commission', requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/quotes/:id/commission', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { estimatedCommission } = req.body;
       if (estimatedCommission === undefined) {
@@ -910,7 +966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/quotes/:id/business-type', requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/quotes/:id/business-type', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { businessType, billUploadRequired } = req.body;
       if (!businessType) {
@@ -925,7 +981,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/bills/:billId/approve', requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/bills/:billId/approve', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { adminNotes } = req.body;
       await storage.approveQuoteBill(req.params.billId, adminNotes);
@@ -936,7 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/bills/:billId/reject', requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/bills/:billId/reject', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { adminNotes } = req.body;
       if (!adminNotes) {
@@ -952,7 +1008,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe commission payment route
-  app.post('/api/admin/quotes/:id/pay-commission', requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/quotes/:id/pay-commission', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       if (!process.env.STRIPE_SECRET_KEY) {
         return res.status(500).json({ message: "Stripe is not configured. Please set STRIPE_SECRET_KEY" });

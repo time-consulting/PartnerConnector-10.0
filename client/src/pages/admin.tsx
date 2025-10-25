@@ -115,6 +115,11 @@ export default function AdminDashboard() {
   const [selectedSignup, setSelectedSignup] = useState<any>(null);
   const [showCommissionModal, setShowCommissionModal] = useState(false);
   const [commissionStep, setCommissionStep] = useState<'review' | 'confirm'>('review');
+  const [selectedSignupForDocs, setSelectedSignupForDocs] = useState<any>(null);
+  const [showDocsOutDialog, setShowDocsOutDialog] = useState(false);
+  const [showAwaitingDocsDialog, setShowAwaitingDocsDialog] = useState(false);
+  const [docsOutNotes, setDocsOutNotes] = useState("");
+  const [awaitingDocsNotes, setAwaitingDocsNotes] = useState("");
 
   // Check if user is admin
   if (authLoading) {
@@ -351,6 +356,47 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+    },
+  });
+
+  // Signup Docs Out confirmation mutation
+  const signupDocsOutMutation = useMutation({
+    mutationFn: async (data: { quoteId: string; notes: string }) => {
+      const response = await fetch(`/api/admin/signups/${data.quoteId}/docs-out`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          communicationNotes: data.notes,
+          requiredDocuments: ['identification', 'proof_of_bank']
+        }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      setShowDocsOutDialog(false);
+      setDocsOutNotes("");
+      setSelectedSignupForDocs(null);
+    },
+  });
+
+  // Signup Awaiting Docs mutation
+  const signupAwaitingDocsMutation = useMutation({
+    mutationFn: async (data: { quoteId: string; notes: string }) => {
+      const response = await fetch(`/api/admin/signups/${data.quoteId}/awaiting-docs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          communicationNotes: data.notes
+        }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      setShowAwaitingDocsDialog(false);
+      setAwaitingDocsNotes("");
+      setSelectedSignupForDocs(null);
     },
   });
 
@@ -868,6 +914,55 @@ export default function AdminDashboard() {
                                     )}
                                   </div>
                                 </div>
+                              </div>
+                            </div>
+
+                            {/* Document Status & Actions */}
+                            <div className="mt-6 pt-6 border-t">
+                              <div className="flex items-center justify-between mb-4">
+                                <div>
+                                  <h4 className="font-semibold text-md mb-1">Document Status</h4>
+                                  <p className="text-sm text-gray-600">
+                                    Current Stage: <span className="font-medium capitalize">{signup.journeyStatus?.replace('_', ' ') || 'Signup Completed'}</span>
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {(!signup.journeyStatus || signup.journeyStatus === 'signup_completed') && (
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedSignupForDocs(signup);
+                                      setShowDocsOutDialog(true);
+                                    }}
+                                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                                    data-testid={`button-docs-out-${signup.quoteId}`}
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Confirm Docs Out
+                                  </Button>
+                                )}
+                                
+                                {signup.journeyStatus === 'docs_out' && (
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedSignupForDocs(signup);
+                                      setShowAwaitingDocsDialog(true);
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    data-testid={`button-awaiting-docs-${signup.quoteId}`}
+                                  >
+                                    <Clock className="w-4 h-4 mr-2" />
+                                    Move to Awaiting Docs
+                                  </Button>
+                                )}
+                                
+                                {signup.journeyStatus === 'awaiting_docs' && (
+                                  <div className="flex items-center gap-2 text-blue-600 col-span-2">
+                                    <Clock className="w-5 h-5" />
+                                    <span className="font-medium">Awaiting Document Submission</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </CardContent>
@@ -1531,6 +1626,170 @@ export default function AdminDashboard() {
                     </div>
                   </>
                 )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Docs Out Confirmation Dialog */}
+        <Dialog open={showDocsOutDialog} onOpenChange={setShowDocsOutDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                <FileText className="w-6 h-6 text-orange-600" />
+                Confirm Docs Out - Agreement Sent
+              </DialogTitle>
+            </DialogHeader>
+            {selectedSignupForDocs && (
+              <div className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700 mb-2">
+                    <strong>Business:</strong> {selectedSignupForDocs.businessName}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Contact:</strong> {selectedSignupForDocs.ownerFirstName} {selectedSignupForDocs.ownerLastName} ({selectedSignupForDocs.ownerEmail})
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Communication Notes
+                    <span className="text-gray-500 font-normal ml-2">(What documents are required?)</span>
+                  </label>
+                  <Textarea
+                    value={docsOutNotes}
+                    onChange={(e) => setDocsOutNotes(e.target.value)}
+                    placeholder="E.g., Agreement sent via email. Please complete Onfido photo ID verification and provide proof of bank account (for sole traders only)"
+                    rows={5}
+                    className="w-full"
+                    data-testid="textarea-docs-out-notes"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    This note will be saved for tracking purposes and to communicate with the customer about required documents.
+                  </p>
+                </div>
+
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Default Required Documents:</p>
+                      <ul className="mt-2 text-sm text-gray-700 list-disc list-inside">
+                        <li>Onfido Photo ID Verification</li>
+                        <li>Proof of Bank Account (for sole traders)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowDocsOutDialog(false);
+                      setDocsOutNotes("");
+                      setSelectedSignupForDocs(null);
+                    }}
+                    data-testid="button-cancel-docs-out"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      signupDocsOutMutation.mutate({
+                        quoteId: selectedSignupForDocs.quoteId,
+                        notes: docsOutNotes
+                      });
+                    }}
+                    disabled={signupDocsOutMutation.isPending}
+                    className="bg-orange-600 hover:bg-orange-700"
+                    data-testid="button-confirm-docs-out"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    {signupDocsOutMutation.isPending ? 'Confirming...' : 'Confirm Docs Out'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Awaiting Docs Dialog */}
+        <Dialog open={showAwaitingDocsDialog} onOpenChange={setShowAwaitingDocsDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                <Clock className="w-6 h-6 text-blue-600" />
+                Move to Awaiting Documents
+              </DialogTitle>
+            </DialogHeader>
+            {selectedSignupForDocs && (
+              <div className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700 mb-2">
+                    <strong>Business:</strong> {selectedSignupForDocs.businessName}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Contact:</strong> {selectedSignupForDocs.ownerFirstName} {selectedSignupForDocs.ownerLastName} ({selectedSignupForDocs.ownerEmail})
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Communication Notes
+                    <span className="text-gray-500 font-normal ml-2">(Additional instructions for the customer)</span>
+                  </label>
+                  <Textarea
+                    value={awaitingDocsNotes}
+                    onChange={(e) => setAwaitingDocsNotes(e.target.value)}
+                    placeholder="E.g., Please complete your Onfido ID verification within 48 hours. As a sole trader, you'll also need to provide proof of your bank account"
+                    rows={5}
+                    className="w-full"
+                    data-testid="textarea-awaiting-docs-notes"
+                  />
+                </div>
+
+                <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                  <div className="flex items-start gap-2">
+                    <Clock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Status Update</p>
+                      <p className="mt-1 text-sm text-gray-700">
+                        This will update the signup status to "Awaiting Documents" and notify relevant parties that we're waiting for the customer to submit their required documents.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAwaitingDocsDialog(false);
+                      setAwaitingDocsNotes("");
+                      setSelectedSignupForDocs(null);
+                    }}
+                    data-testid="button-cancel-awaiting-docs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      signupAwaitingDocsMutation.mutate({
+                        quoteId: selectedSignupForDocs.quoteId,
+                        notes: awaitingDocsNotes
+                      });
+                    }}
+                    disabled={signupAwaitingDocsMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid="button-confirm-awaiting-docs"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    {signupAwaitingDocsMutation.isPending ? 'Updating...' : 'Confirm Awaiting Docs'}
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
