@@ -124,6 +124,8 @@ export default function AdminDashboard() {
   const [awaitingDocsNotes, setAwaitingDocsNotes] = useState("");
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [sentDealsExpanded, setSentDealsExpanded] = useState(true);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [searchedUsers, setSearchedUsers] = useState<any[]>([]);
 
   // Check if user is admin
   if (authLoading) {
@@ -417,6 +419,30 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+    },
+  });
+
+  // User search function
+  const searchUsers = async (query: string) => {
+    if (!query || query.length < 2) {
+      setSearchedUsers([]);
+      return;
+    }
+    const response = await fetch(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
+    const data = await response.json();
+    setSearchedUsers(data);
+  };
+
+  // Impersonate user mutation
+  const impersonateMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest(`/api/admin/impersonate/${userId}`, {
+        method: 'POST'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      window.location.href = '/dashboard';
     },
   });
 
@@ -1476,30 +1502,40 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
                     <Users className="w-6 h-6 text-blue-600" />
-                    User Management
+                    User Management & Impersonation
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {usersLoading ? (
-                    <div className="space-y-4">
-                      {[...Array(5)].map((_, i) => (
-                        <div key={i} className="animate-pulse border rounded-lg p-4">
-                          <div className="flex justify-between items-center">
-                            <div className="space-y-2">
-                              <div className="h-4 bg-gray-200 rounded w-48"></div>
-                              <div className="h-3 bg-gray-200 rounded w-32"></div>
-                            </div>
-                            <div className="h-6 bg-gray-200 rounded w-20"></div>
-                          </div>
-                        </div>
-                      ))}
+                  {/* User Search */}
+                  <div className="mb-6">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Input
+                        placeholder="Search users by name, email, or partner ID..."
+                        value={userSearchTerm}
+                        onChange={(e) => {
+                          setUserSearchTerm(e.target.value);
+                          searchUsers(e.target.value);
+                        }}
+                        className="pl-12 h-12 text-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                        data-testid="input-search-users"
+                      />
                     </div>
-                  ) : (
+                    {userSearchTerm.length > 0 && userSearchTerm.length < 2 && (
+                      <p className="text-sm text-gray-500 mt-2">Type at least 2 characters to search...</p>
+                    )}
+                  </div>
+
+                  {/* Search Results or All Users */}
+                  {userSearchTerm.length >= 2 ? (
                     <div className="space-y-4">
-                      {users?.map((user: any) => (
+                      <p className="text-sm text-gray-600 mb-3">
+                        Found {searchedUsers.length} user{searchedUsers.length !== 1 ? 's' : ''}
+                      </p>
+                      {searchedUsers.map((user: any) => (
                         <div key={user.id} className="border rounded-lg p-4 hover:bg-gray-50">
                           <div className="flex justify-between items-center">
-                            <div>
+                            <div className="flex-1">
                               <h3 className="font-semibold">{user.firstName} {user.lastName}</h3>
                               <p className="text-sm text-gray-600">{user.email}</p>
                               <p className="text-xs text-gray-500">
@@ -1513,11 +1549,51 @@ export default function AdminDashboard() {
                               <Badge className="bg-blue-100 text-blue-800">
                                 Level {user.partnerLevel || 1}
                               </Badge>
+                              <Button
+                                onClick={() => {
+                                  if (confirm(`View account as ${user.firstName} ${user.lastName}? You'll be able to see and modify their account.`)) {
+                                    impersonateMutation.mutate(user.id);
+                                  }
+                                }}
+                                disabled={impersonateMutation.isPending}
+                                variant="outline"
+                                size="sm"
+                                className="ml-2"
+                                data-testid={`button-impersonate-${user.id}`}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                View As User
+                              </Button>
                             </div>
                           </div>
                         </div>
                       ))}
+                      {searchedUsers.length === 0 && (
+                        <p className="text-center text-gray-500 py-8">No users found matching "{userSearchTerm}"</p>
+                      )}
                     </div>
+                  ) : (
+                    usersLoading ? (
+                      <div className="space-y-4">
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i} className="animate-pulse border rounded-lg p-4">
+                            <div className="flex justify-between items-center">
+                              <div className="space-y-2">
+                                <div className="h-4 bg-gray-200 rounded w-48"></div>
+                                <div className="h-3 bg-gray-200 rounded w-32"></div>
+                              </div>
+                              <div className="h-6 bg-gray-200 rounded w-20"></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-500 py-8">
+                        <Search className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                        <p className="text-lg font-medium">Search for users</p>
+                        <p className="text-sm">Enter a name, email, or partner ID to find and view user accounts</p>
+                      </div>
+                    )
                   )}
                 </CardContent>
               </Card>

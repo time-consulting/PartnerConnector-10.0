@@ -459,7 +459,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If firstName/lastName are missing, skip generation - it will happen later when they complete their profile
       }
       
-      res.json(user);
+      // Add impersonation status to response
+      const userWithImpersonation = {
+        ...user,
+        impersonating: req.session.impersonating || false,
+        originalAdminId: req.session.originalAdminId || null
+      };
+      
+      res.json(userWithImpersonation);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
