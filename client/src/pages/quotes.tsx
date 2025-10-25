@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User, Upload, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User, Upload, AlertCircle, Clock, DollarSign } from "lucide-react";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -267,39 +268,67 @@ function DocumentUploadSection({ quoteId }: { quoteId: string }) {
   );
 }
 
-// Status mapping with colors
+// Status mapping with colors and user-friendly labels
 const STATUS_CONFIG = {
   review_quote: {
-    label: "Review Quote",
+    label: "Quote Received",
+    stage: "quote_received",
     color: "bg-blue-100 text-blue-800 border-blue-200",
     icon: Eye
   },
   sent_to_client: {
-    label: "Sent to Client for Approval",
+    label: "Quote Received",
+    stage: "quote_received",
+    color: "bg-blue-100 text-blue-800 border-blue-200",
+    icon: Eye
+  },
+  awaiting_signup: {
+    label: "Application Sent",
+    stage: "application_sent",
     color: "bg-purple-100 text-purple-800 border-purple-200",
     icon: Send
   },
-  awaiting_signup: {
-    label: "Awaiting Sign Up Info",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: FileText
-  },
   agreement_sent: {
-    label: "Agreement Sent",
-    color: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    label: "Application Sent",
+    stage: "application_sent",
+    color: "bg-purple-100 text-purple-800 border-purple-200",
+    icon: Send
+  },
+  docs_out: {
+    label: "Documents Required",
+    stage: "documents_required",
+    color: "bg-orange-100 text-orange-800 border-orange-200",
     icon: FileText
   },
-  docs_required: {
-    label: "Docs Required",
+  awaiting_docs: {
+    label: "Documents Required",
+    stage: "documents_required",
     color: "bg-orange-100 text-orange-800 border-orange-200",
     icon: FileText
   },
   approved: {
-    label: "Approved",
+    label: "Approved for Delivery",
+    stage: "approved",
     color: "bg-green-100 text-green-800 border-green-200",
     icon: CheckCircle2
   },
+  live: {
+    label: "Live & Ready for Payment",
+    stage: "live",
+    color: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    icon: DollarSign
+  },
 };
+
+// Stage categories for tabs
+const QUOTE_STAGES = [
+  { value: 'all', label: 'All Quotes', icon: FileText },
+  { value: 'quote_received', label: 'Quote Received', icon: Eye },
+  { value: 'application_sent', label: 'Application Sent', icon: Send },
+  { value: 'documents_required', label: 'Documents Required', icon: Clock },
+  { value: 'approved', label: 'Approved for Delivery', icon: CheckCircle2 },
+  { value: 'live', label: 'Live & Ready for Payment', icon: DollarSign },
+];
 
 export default function Quotes() {
   const { toast } = useToast();
@@ -310,6 +339,7 @@ export default function Quotes() {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [rateRequestText, setRateRequestText] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
 
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ['/api/quotes'],
@@ -446,7 +476,7 @@ export default function Quotes() {
         </div>
 
         {/* Empty state */}
-        {quotes.length === 0 && (
+        {quotes.length === 0 ? (
           <Card className="border-2 border-dashed" data-testid="card-empty-state">
             <CardContent className="py-12 text-center">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -456,61 +486,114 @@ export default function Quotes() {
               </p>
             </CardContent>
           </Card>
-        )}
+        ) : (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-6 mb-6 h-auto">
+              {QUOTE_STAGES.map((stage) => {
+                const StageIcon = stage.icon;
+                const stageQuotes = stage.value === 'all' 
+                  ? quotes 
+                  : quotes.filter((q: any) => {
+                      const config = STATUS_CONFIG[q.customerJourneyStatus as keyof typeof STATUS_CONFIG];
+                      return config?.stage === stage.value;
+                    });
+                
+                return (
+                  <TabsTrigger 
+                    key={stage.value} 
+                    value={stage.value}
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                    data-testid={`tab-${stage.value}`}
+                  >
+                    <StageIcon className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">{stage.label}</span>
+                    {stageQuotes.length > 0 && (
+                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs" variant="secondary">
+                        {stageQuotes.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
 
-        {/* Quotes grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {quotes.map((quote: any) => {
-            const statusConfig = STATUS_CONFIG[quote.customerJourneyStatus as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.review_quote;
-            const Icon = statusConfig.icon;
+            {QUOTE_STAGES.map((stage) => {
+              const filteredQuotes = stage.value === 'all' 
+                ? quotes 
+                : quotes.filter((q: any) => {
+                    const config = STATUS_CONFIG[q.customerJourneyStatus as keyof typeof STATUS_CONFIG];
+                    return config?.stage === stage.value;
+                  });
 
-            return (
-              <Card
-                key={quote.id}
-                className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-2xl"
-                onClick={() => setSelectedQuote(quote)}
-                data-testid={`card-quote-${quote.id}`}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <CardTitle className="text-xl font-bold text-gray-900 mb-1" data-testid={`text-business-name-${quote.id}`}>
-                        {quote.businessName}
-                      </CardTitle>
-                      {quote.contactName && (
-                        <CardDescription className="text-sm" data-testid={`text-contact-name-${quote.id}`}>
-                          {quote.contactName}
-                        </CardDescription>
-                      )}
-                    </div>
-                    <Icon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <Badge className={`${statusConfig.color} border rounded-full px-3 py-1 text-xs font-medium`} data-testid={`badge-status-${quote.id}`}>
-                    {statusConfig.label}
-                  </Badge>
-                </CardHeader>
-                <CardContent>
-                  {quote.totalAmount && (
-                    <div className="mb-3">
-                      <p className="text-sm text-gray-600">Quote Amount</p>
-                      <p className="text-2xl font-bold text-gray-900" data-testid={`text-amount-${quote.id}`}>
-                        £{parseFloat(quote.totalAmount).toLocaleString()}
-                      </p>
+              return (
+                <TabsContent key={stage.value} value={stage.value}>
+                  {filteredQuotes.length === 0 ? (
+                    <Card className="border-2 border-dashed">
+                      <CardContent className="py-12 text-center">
+                        <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No {stage.label.toLowerCase()}</h3>
+                        <p className="text-gray-600">Quotes at this stage will appear here</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredQuotes.map((quote: any) => {
+                        const statusConfig = STATUS_CONFIG[quote.customerJourneyStatus as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.review_quote;
+                        const Icon = statusConfig.icon;
+
+                        return (
+                          <Card
+                            key={quote.id}
+                            className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-2xl"
+                            onClick={() => setSelectedQuote(quote)}
+                            data-testid={`card-quote-${quote.id}`}
+                          >
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1">
+                                  <CardTitle className="text-xl font-bold text-gray-900 mb-1" data-testid={`text-business-name-${quote.id}`}>
+                                    {quote.businessName}
+                                  </CardTitle>
+                                  {quote.contactName && (
+                                    <CardDescription className="text-sm" data-testid={`text-contact-name-${quote.id}`}>
+                                      {quote.contactName}
+                                    </CardDescription>
+                                  )}
+                                </div>
+                                <Icon className="h-5 w-5 text-gray-400" />
+                              </div>
+                              <Badge className={`${statusConfig.color} border rounded-full px-3 py-1 text-xs font-medium`} data-testid={`badge-status-${quote.id}`}>
+                                {statusConfig.label}
+                              </Badge>
+                            </CardHeader>
+                            <CardContent>
+                              {quote.totalAmount && (
+                                <div className="mb-3">
+                                  <p className="text-sm text-gray-600">Quote Amount</p>
+                                  <p className="text-2xl font-bold text-gray-900" data-testid={`text-amount-${quote.id}`}>
+                                    £{parseFloat(quote.totalAmount).toLocaleString()}
+                                  </p>
+                                </div>
+                              )}
+                              <div className="text-sm text-gray-600">
+                                <p data-testid={`text-version-${quote.id}`}>Version {quote.version}</p>
+                                {quote.validUntil && (
+                                  <p data-testid={`text-valid-until-${quote.id}`}>
+                                    Valid until: {new Date(quote.validUntil).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
                   )}
-                  <div className="text-sm text-gray-600">
-                    <p data-testid={`text-version-${quote.id}`}>Version {quote.version}</p>
-                    {quote.validUntil && (
-                      <p data-testid={`text-valid-until-${quote.id}`}>
-                        Valid until: {new Date(quote.validUntil).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+        )}
 
         {/* Full-screen quote detail modal */}
         <Dialog open={!!selectedQuote} onOpenChange={(open) => !open && setSelectedQuote(null)}>
