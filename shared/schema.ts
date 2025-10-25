@@ -616,6 +616,9 @@ export const quotes = pgTable("quotes", {
   rejectedAt: timestamp("rejected_at"),
   status: varchar("status").notNull().default("draft"), // draft, sent, viewed, approved, rejected, expired
   customerJourneyStatus: varchar("customer_journey_status").notNull().default("review_quote"), // review_quote, sent_to_client, awaiting_signup, agreement_sent, docs_required, approved
+  // Audit trail for status changes
+  docsOutDate: timestamp("docs_out_date"),
+  requestDocumentsDate: timestamp("request_documents_date"),
   partnerQuestion: text("partner_question"), // Question from partner
   partnerRateRequest: text("partner_rate_request"), // Request for different rates/offer
   adminNotes: text("admin_notes"),
