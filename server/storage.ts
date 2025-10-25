@@ -2113,12 +2113,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateQuoteJourneyStatus(quoteId: string, status: string): Promise<void> {
+    const updateData: any = { 
+      customerJourneyStatus: status,
+      updatedAt: new Date()
+    };
+    
+    // Add audit trail dates for specific statuses
+    if (status === 'docs_out') {
+      updateData.docsOutDate = new Date();
+    } else if (status === 'request_documents') {
+      updateData.requestDocumentsDate = new Date();
+    }
+    
     await db
       .update(quotes)
-      .set({ 
-        customerJourneyStatus: status,
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(eq(quotes.id, quoteId));
   }
 
