@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import AdditionalDetailsForm from "@/components/additional-details-form";
 
 // Q&A Section Component
-function QuoteQASection({ quoteId }: { quoteId: string }) {
+function QuoteQASection({ quoteId, quote }: { quoteId: string; quote?: any }) {
   const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
 
@@ -57,8 +57,23 @@ function QuoteQASection({ quoteId }: { quoteId: string }) {
     <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
       <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
         <MessageSquare className="h-5 w-5" />
-        Questions & Answers
+        Conversation
       </h3>
+      
+      {/* Audit Trail */}
+      {quote && (quote.docsOutDate || quote.requestDocumentsDate) && (
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-sm font-medium text-gray-700 mb-2">Activity History</p>
+          <div className="space-y-1 text-xs text-gray-600">
+            {quote.docsOutDate && (
+              <p>✓ Docs sent on: {new Date(quote.docsOutDate).toLocaleString()}</p>
+            )}
+            {quote.requestDocumentsDate && (
+              <p>✓ Documents requested on: {new Date(quote.requestDocumentsDate).toLocaleString()}</p>
+            )}
+          </div>
+        </div>
+      )}
       
       {qaMessages.length > 0 ? (
         <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
@@ -762,7 +777,7 @@ export default function Quotes() {
                   <DocumentUploadSection quoteId={selectedQuote.id} />
 
                   {/* Q&A Thread Section */}
-                  <QuoteQASection quoteId={selectedQuote.id} />
+                  <QuoteQASection quoteId={selectedQuote.id} quote={selectedQuote} />
 
                   {/* Action buttons */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -774,15 +789,6 @@ export default function Quotes() {
                     >
                       <CheckCircle2 className="mr-2 h-5 w-5" />
                       Approve Quote & Continue
-                    </Button>
-                    <Button
-                      onClick={() => setShowQuestionModal(true)}
-                      variant="outline"
-                      className="h-14 border-2 rounded-xl font-semibold"
-                      data-testid="button-request-update"
-                    >
-                      <MessageSquare className="mr-2 h-5 w-5" />
-                      Request Update
                     </Button>
                     <Button
                       onClick={() => setShowRateRequestModal(true)}
