@@ -2008,6 +2008,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin user search endpoint
+  app.get('/api/admin/users/search', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { query } = req.query;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+
+      const users = await storage.getAllUsers();
+      const searchTerm = query.toLowerCase();
+      
+      // Search by name, email, or partner ID
+      const filteredUsers = users.filter((u: any) => 
+        u.firstName?.toLowerCase().includes(searchTerm) ||
+        u.lastName?.toLowerCase().includes(searchTerm) ||
+        u.email?.toLowerCase().includes(searchTerm) ||
+        u.partnerId?.toLowerCase().includes(searchTerm)
+      );
+      
+      res.json(filteredUsers);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({ message: "Failed to search users" });
+    }
+  });
+
+  // Admin impersonate user endpoint
+  app.post('/api/admin/impersonate/:userId', requireAuth, requireAdmin, auditAdminAction('impersonate_user', 'admin'), async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Get the user to impersonate
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Store original admin user ID in session
+      if (!req.session.originalAdminId) {
+        req.session.originalAdminId = req.user.id;
+      }
+      
+      // Switch session to target user
+      req.session.userId = targetUser.id;
+      req.session.impersonating = true;
+      
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err: any) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      
+      console.log(`Admin ${req.user.email} is now impersonating user ${targetUser.email}`);
+      
+      res.json({ 
+        success: true, 
+        message: `Now viewing as ${targetUser.firstName} ${targetUser.lastName}`,
+        user: targetUser 
+      });
+    } catch (error) {
+      console.error("Error impersonating user:", error);
+      res.status(500).json({ message: "Failed to impersonate user" });
+    }
+  });
+
+  // Admin exit impersonation endpoint
+  app.post('/api/admin/exit-impersonation', requireAuth, async (req: any, res) => {
+    try {
+      if (!req.session.impersonating || !req.session.originalAdminId) {
+        return res.status(400).json({ message: "Not currently impersonating" });
+      }
+      
+      const originalAdminId = req.session.originalAdminId;
+      
+      // Restore original admin session
+      req.session.userId = originalAdminId;
+      delete req.session.originalAdminId;
+      delete req.session.impersonating;
+      
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err: any) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      
+      const adminUser = await storage.getUser(originalAdminId);
+      
+      console.log(`Admin ${adminUser?.email} exited impersonation mode`);
+      
+      res.json({ 
+        success: true, 
+        message: "Exited impersonation mode",
+        user: adminUser 
+      });
+    } catch (error) {
+      console.error("Error exiting impersonation:", error);
+      res.status(500).json({ message: "Failed to exit impersonation" });
+    }
+  });
+
   // Enhanced admin referrals list with search and filtering
   app.get('/api/admin/referrals', requireAuth, requireAdmin, async (req: any, res) => {
     try {
