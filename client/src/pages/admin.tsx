@@ -120,6 +120,7 @@ export default function AdminDashboard() {
   const [showAwaitingDocsDialog, setShowAwaitingDocsDialog] = useState(false);
   const [docsOutNotes, setDocsOutNotes] = useState("");
   const [awaitingDocsNotes, setAwaitingDocsNotes] = useState("");
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
 
   // Check if user is admin
   if (authLoading) {
@@ -405,6 +406,16 @@ export default function AdminDashboard() {
   // Signup Docs Out confirmation mutation
   const signupDocsOutMutation = useMutation({
     mutationFn: async (data: { quoteId: string; notes: string }) => {
+      // Post message to quote Q&A system
+      const message = `📄 **Documents Sent**\n\nAgreement and terms have been sent to the client.\n\n${data.notes ? `**Notes:** ${data.notes}` : ''}`;
+      
+      await fetch(`/api/quotes/${data.quoteId}/qa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      
+      // Update journey status
       const response = await fetch(`/api/admin/signups/${data.quoteId}/docs-out`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -417,6 +428,7 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
       setShowDocsOutDialog(false);
       setDocsOutNotes("");
       setSelectedSignupForDocs(null);
@@ -425,20 +437,44 @@ export default function AdminDashboard() {
 
   // Signup Awaiting Docs mutation
   const signupAwaitingDocsMutation = useMutation({
-    mutationFn: async (data: { quoteId: string; notes: string }) => {
+    mutationFn: async (data: { quoteId: string; notes: string; documents: string[] }) => {
+      // Build document list message
+      const docLabels: Record<string, string> = {
+        identification: 'ID (Passport/Driving License)',
+        proof_of_bank: 'Proof of Bank Account',
+        business_registration: 'Business Registration',
+        vat_certificate: 'VAT Certificate',
+        proof_of_address: 'Proof of Address',
+        other: 'Other Documents'
+      };
+      
+      const docList = data.documents.map(doc => `• ${docLabels[doc] || doc}`).join('\n');
+      const message = `📋 **Documents Required**\n\nPlease provide the following documents:\n\n${docList}\n\n${data.notes ? `**Additional Notes:** ${data.notes}` : ''}`;
+      
+      // Post message to quote Q&A system
+      await fetch(`/api/quotes/${data.quoteId}/qa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      
+      // Update journey status
       const response = await fetch(`/api/admin/signups/${data.quoteId}/awaiting-docs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          communicationNotes: data.notes
+          communicationNotes: data.notes,
+          requiredDocuments: data.documents
         }),
       });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
       setShowAwaitingDocsDialog(false);
       setAwaitingDocsNotes("");
+      setSelectedDocuments([]);
       setSelectedSignupForDocs(null);
     },
   });
@@ -983,48 +1019,39 @@ export default function AdminDashboard() {
                             <div className="mt-6 pt-6 border-t">
                               <div className="flex items-center justify-between mb-4">
                                 <div>
-                                  <h4 className="font-semibold text-md mb-1">Document Status</h4>
+                                  <h4 className="font-semibold text-md mb-1">Document Workflow</h4>
                                   <p className="text-sm text-gray-600">
-                                    Current Stage: <span className="font-medium capitalize">{signup.journeyStatus?.replace('_', ' ') || 'Signup Completed'}</span>
+                                    Current Stage: <span className="font-medium capitalize">{signup.customerJourneyStatus?.replace(/_/g, ' ') || 'Agreement Sent'}</span>
                                   </p>
                                 </div>
                               </div>
                               
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {(!signup.journeyStatus || signup.journeyStatus === 'signup_completed') && (
-                                  <Button
-                                    onClick={() => {
-                                      setSelectedSignupForDocs(signup);
-                                      setShowDocsOutDialog(true);
-                                    }}
-                                    className="bg-orange-600 hover:bg-orange-700 text-white"
-                                    data-testid={`button-docs-out-${signup.quoteId}`}
-                                  >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    Confirm Docs Out
-                                  </Button>
-                                )}
+                                <Button
+                                  onClick={() => {
+                                    setSelectedSignupForDocs(signup);
+                                    setShowDocsOutDialog(true);
+                                  }}
+                                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                                  data-testid={`button-docs-out-${signup.quoteId}`}
+                                  disabled={signup.customerJourneyStatus === 'docs_out' || signup.customerJourneyStatus === 'awaiting_docs'}
+                                >
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  {signup.customerJourneyStatus === 'docs_out' || signup.customerJourneyStatus === 'awaiting_docs' ? 'Docs Sent ✓' : 'Send Docs Out'}
+                                </Button>
                                 
-                                {signup.journeyStatus === 'docs_out' && (
-                                  <Button
-                                    onClick={() => {
-                                      setSelectedSignupForDocs(signup);
-                                      setShowAwaitingDocsDialog(true);
-                                    }}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                    data-testid={`button-awaiting-docs-${signup.quoteId}`}
-                                  >
-                                    <Clock className="w-4 h-4 mr-2" />
-                                    Move to Awaiting Docs
-                                  </Button>
-                                )}
-                                
-                                {signup.journeyStatus === 'awaiting_docs' && (
-                                  <div className="flex items-center gap-2 text-blue-600 col-span-2">
-                                    <Clock className="w-5 h-5" />
-                                    <span className="font-medium">Awaiting Document Submission</span>
-                                  </div>
-                                )}
+                                <Button
+                                  onClick={() => {
+                                    setSelectedSignupForDocs(signup);
+                                    setShowAwaitingDocsDialog(true);
+                                  }}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  data-testid={`button-awaiting-docs-${signup.quoteId}`}
+                                  disabled={signup.customerJourneyStatus !== 'docs_out' && signup.customerJourneyStatus !== 'awaiting_docs'}
+                                >
+                                  <Clock className="w-4 h-4 mr-2" />
+                                  {signup.customerJourneyStatus === 'awaiting_docs' ? 'Awaiting Docs ⏳' : 'Request Documents'}
+                                </Button>
                               </div>
                             </div>
                           </CardContent>
@@ -1901,15 +1928,51 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Required Documents
+                  </label>
+                  <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                    {[
+                      { id: 'identification', label: 'ID (Passport/Driving License)' },
+                      { id: 'proof_of_bank', label: 'Proof of Bank Account' },
+                      { id: 'business_registration', label: 'Business Registration' },
+                      { id: 'vat_certificate', label: 'VAT Certificate' },
+                      { id: 'proof_of_address', label: 'Proof of Address' },
+                      { id: 'other', label: 'Other Documents' },
+                    ].map((doc) => (
+                      <div key={doc.id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`doc-${doc.id}`}
+                          checked={selectedDocuments.includes(doc.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedDocuments([...selectedDocuments, doc.id]);
+                            } else {
+                              setSelectedDocuments(selectedDocuments.filter(d => d !== doc.id));
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          data-testid={`checkbox-doc-${doc.id}`}
+                        />
+                        <label htmlFor={`doc-${doc.id}`} className="ml-2 text-sm text-gray-700">
+                          {doc.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Communication Notes
-                    <span className="text-gray-500 font-normal ml-2">(Additional instructions for the customer)</span>
+                    Additional Notes
+                    <span className="text-gray-500 font-normal ml-2">(Optional instructions for the customer)</span>
                   </label>
                   <Textarea
                     value={awaitingDocsNotes}
                     onChange={(e) => setAwaitingDocsNotes(e.target.value)}
-                    placeholder="E.g., Please complete your Onfido ID verification within 48 hours. As a sole trader, you'll also need to provide proof of your bank account"
-                    rows={5}
+                    placeholder="E.g., Please complete your Onfido ID verification within 48 hours"
+                    rows={4}
                     className="w-full"
                     data-testid="textarea-awaiting-docs-notes"
                   />
@@ -1919,9 +1982,9 @@ export default function AdminDashboard() {
                   <div className="flex items-start gap-2">
                     <Clock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Status Update</p>
+                      <p className="text-sm font-medium text-gray-900">This will be posted to the Quote Messages</p>
                       <p className="mt-1 text-sm text-gray-700">
-                        This will update the signup status to "Awaiting Documents" and notify relevant parties that we're waiting for the customer to submit their required documents.
+                        The selected documents and notes will be posted to the quote messaging system and the signup status will be updated to "Awaiting Documents".
                       </p>
                     </div>
                   </div>
@@ -1934,6 +1997,7 @@ export default function AdminDashboard() {
                     onClick={() => {
                       setShowAwaitingDocsDialog(false);
                       setAwaitingDocsNotes("");
+                      setSelectedDocuments([]);
                       setSelectedSignupForDocs(null);
                     }}
                     data-testid="button-cancel-awaiting-docs"
@@ -1944,15 +2008,16 @@ export default function AdminDashboard() {
                     onClick={() => {
                       signupAwaitingDocsMutation.mutate({
                         quoteId: selectedSignupForDocs.quoteId,
-                        notes: awaitingDocsNotes
+                        notes: awaitingDocsNotes,
+                        documents: selectedDocuments.length > 0 ? selectedDocuments : ['identification', 'proof_of_bank']
                       });
                     }}
-                    disabled={signupAwaitingDocsMutation.isPending}
+                    disabled={signupAwaitingDocsMutation.isPending || selectedDocuments.length === 0}
                     className="bg-blue-600 hover:bg-blue-700"
                     data-testid="button-confirm-awaiting-docs"
                   >
                     <Clock className="w-4 h-4 mr-2" />
-                    {signupAwaitingDocsMutation.isPending ? 'Updating...' : 'Confirm Awaiting Docs'}
+                    {signupAwaitingDocsMutation.isPending ? 'Updating...' : 'Request Documents'}
                   </Button>
                 </div>
               </div>
