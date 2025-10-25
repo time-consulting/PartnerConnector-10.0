@@ -218,11 +218,11 @@ export default function AdminDashboard() {
       ).length;
     }
 
-    // Count signups that need action (NOT already actioned with docs_out or request_documents)
+    // Count signups that need action (NOT already actioned with docs_out or awaiting_docs)
     if (signups) {
       counts.signups = signups.filter((s: any) => {
         // Exclude deals that have already been actioned
-        if (s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'request_documents') {
+        if (s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'awaiting_docs') {
           return false;
         }
         // Need docs out if status is still at agreement_sent
@@ -958,12 +958,12 @@ export default function AdminDashboard() {
                           <Clock className="w-5 h-5 text-orange-600" />
                           Active Signups - Action Required
                           <Badge className="ml-2 bg-orange-600">
-                            {signups.filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'request_documents').length}
+                            {signups.filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'awaiting_docs').length}
                           </Badge>
                         </h3>
                         <div className="space-y-4">
                           {signups
-                            .filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'request_documents')
+                            .filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'awaiting_docs')
                             .map((signup: any) => (
                         <Card key={signup.quoteId} className="border-2">
                           <CardContent className="p-6">
@@ -1095,7 +1095,7 @@ export default function AdminDashboard() {
                           </CardContent>
                         </Card>
                       ))}
-                          {signups.filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'request_documents').length === 0 && (
+                          {signups.filter((s: any) => s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'awaiting_docs').length === 0 && (
                             <div className="text-center py-8 text-gray-500">
                               <CheckCircle className="w-10 h-10 mx-auto mb-3 text-gray-400" />
                               <p>No active signups</p>
@@ -1105,7 +1105,7 @@ export default function AdminDashboard() {
                       </div>
 
                       {/* Sent Deals Section - Collapsible */}
-                      {signups.filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'request_documents').length > 0 && (
+                      {signups.filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'awaiting_docs').length > 0 && (
                         <Collapsible open={sentDealsExpanded} onOpenChange={setSentDealsExpanded}>
                           <div className="border-t pt-6">
                             <CollapsibleTrigger asChild>
@@ -1118,7 +1118,7 @@ export default function AdminDashboard() {
                                   <FileText className="w-5 h-5 text-blue-600" />
                                   <span className="font-semibold text-lg">Sent Deals</span>
                                   <Badge className="ml-2 bg-blue-600">
-                                    {signups.filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'request_documents').length}
+                                    {signups.filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'awaiting_docs').length}
                                   </Badge>
                                 </span>
                                 {sentDealsExpanded ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
@@ -1127,7 +1127,7 @@ export default function AdminDashboard() {
                             <CollapsibleContent>
                               <div className="space-y-4">
                                 {signups
-                                  .filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'request_documents')
+                                  .filter((s: any) => s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'awaiting_docs')
                                   .map((signup: any) => (
                                     <Card key={signup.quoteId} className="border-2 border-blue-200 bg-blue-50/20">
                                       <CardContent className="p-6">

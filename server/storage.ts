@@ -2121,7 +2121,7 @@ export class DatabaseStorage implements IStorage {
     // Add audit trail dates for specific statuses
     if (status === 'docs_out') {
       updateData.docsOutDate = new Date();
-    } else if (status === 'request_documents') {
+    } else if (status === 'request_documents' || status === 'awaiting_docs') {
       updateData.requestDocumentsDate = new Date();
     }
     
