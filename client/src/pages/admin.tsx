@@ -218,16 +218,18 @@ export default function AdminDashboard() {
       ).length;
     }
 
-    // Count signups that need document actions
+    // Count signups that need action (NOT already actioned with docs_out or request_documents)
     if (signups) {
       counts.signups = signups.filter((s: any) => {
+        // Exclude deals that have already been actioned
+        if (s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'request_documents') {
+          return false;
+        }
         // Need docs out if status is still at agreement_sent
         if (s.customerJourneyStatus === 'agreement_sent') return true;
-        // Need commission payment if ready (but exclude docs_out and request_documents stages)
-        if (s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'request_documents') {
-          if (s.billUploadRequired && s.billUploaded && !s.commissionPaid) return true;
-          if (!s.billUploadRequired && !s.commissionPaid) return true;
-        }
+        // Need commission payment if ready
+        if (s.billUploadRequired && s.billUploaded && !s.commissionPaid) return true;
+        if (!s.billUploadRequired && !s.commissionPaid) return true;
         return false;
       }).length;
     }
