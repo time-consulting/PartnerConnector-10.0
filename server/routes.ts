@@ -875,6 +875,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/completed-deals', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const completedDeals = await storage.getCompletedDeals();
+      res.json(completedDeals);
+    } catch (error) {
+      console.error("Error fetching completed deals:", error);
+      res.status(500).json({ message: "Failed to fetch completed deals" });
+    }
+  });
+
   app.get('/api/admin/signups/:quoteId', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const signup = await storage.getSignupDetails(req.params.quoteId);

@@ -252,6 +252,7 @@ export interface IStorage {
   sendQuoteToClient(quoteId: string): Promise<void>;
   saveQuoteSignupInfo(quoteId: string, referralId: string, signupData: any): Promise<void>;
   getPendingSignups(): Promise<any[]>;
+  getCompletedDeals(): Promise<any[]>;
   getSignupDetails(quoteId: string): Promise<any>;
   updateQuoteCommission(quoteId: string, estimatedCommission: number): Promise<void>;
   updateQuoteBusinessType(quoteId: string, businessType: string, billUploadRequired: boolean): Promise<void>;
@@ -2249,6 +2250,11 @@ export class DatabaseStorage implements IStorage {
         limitedCompanyName: businessDetails.limitedCompanyName,
         bankSortCode: businessDetails.bankSortCode,
         bankAccountNumber: businessDetails.bankAccountNumber,
+        estimatedCommission: quotes.estimatedCommission,
+        businessType: quotes.businessType,
+        billUploadRequired: quotes.billUploadRequired,
+        billUploaded: quotes.billUploaded,
+        commissionPaid: quotes.commissionPaid,
       })
       .from(quotes)
       .leftJoin(referrals, eq(quotes.referralId, referrals.id))
@@ -2257,7 +2263,52 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
       .where(and(
         sql`${businessOwners.id} IS NOT NULL`,
-        sql`${quotes.customerJourneyStatus} = 'agreement_sent'`
+        sql`${quotes.commissionPaid} = false`
+      ))
+      .orderBy(desc(quotes.createdAt));
+
+    return result;
+  }
+
+  async getCompletedDeals(): Promise<any[]> {
+    const result = await db
+      .select({
+        quoteId: quotes.id,
+        referralId: quotes.referralId,
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
+        customerJourneyStatus: quotes.customerJourneyStatus,
+        createdAt: quotes.createdAt,
+        partnerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        partnerEmail: users.email,
+        ownerId: businessOwners.id,
+        ownerFirstName: businessOwners.firstName,
+        ownerLastName: businessOwners.lastName,
+        ownerEmail: businessOwners.email,
+        ownerPhone: businessOwners.phone,
+        ownerHomeAddress: businessOwners.homeAddress,
+        detailsId: businessDetails.id,
+        tradingName: businessDetails.tradingName,
+        tradingAddress: businessDetails.tradingAddress,
+        businessDescription: businessDetails.businessDescription,
+        businessStructure: businessDetails.businessStructure,
+        limitedCompanyName: businessDetails.limitedCompanyName,
+        bankSortCode: businessDetails.bankSortCode,
+        bankAccountNumber: businessDetails.bankAccountNumber,
+        estimatedCommission: quotes.estimatedCommission,
+        businessType: quotes.businessType,
+        billUploadRequired: quotes.billUploadRequired,
+        billUploaded: quotes.billUploaded,
+        commissionPaid: quotes.commissionPaid,
+      })
+      .from(quotes)
+      .leftJoin(referrals, eq(quotes.referralId, referrals.id))
+      .leftJoin(users, eq(quotes.createdBy, users.id))
+      .leftJoin(businessOwners, eq(businessOwners.referralId, quotes.referralId))
+      .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
+      .where(and(
+        sql`${businessOwners.id} IS NOT NULL`,
+        sql`${quotes.commissionPaid} = true`
       ))
       .orderBy(desc(quotes.createdAt));
 
