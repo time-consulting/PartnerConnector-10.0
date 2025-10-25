@@ -56,7 +56,8 @@ import {
   Bell,
   Home,
   Database,
-  FileBarChart
+  FileBarChart,
+  MessageSquare
 } from "lucide-react";
 
 // Quote form schema
@@ -220,11 +221,11 @@ export default function AdminDashboard() {
       counts.signups = signups.filter((s: any) => {
         // Need docs out if status is still at agreement_sent
         if (s.customerJourneyStatus === 'agreement_sent') return true;
-        // Need docs follow-up if docs_out
-        if (s.customerJourneyStatus === 'docs_out') return true;
-        // Need commission payment if ready
-        if (s.billUploadRequired && s.billUploaded && !s.commissionPaid) return true;
-        if (!s.billUploadRequired && !s.commissionPaid) return true;
+        // Need commission payment if ready (but exclude docs_out and request_documents stages)
+        if (s.customerJourneyStatus !== 'docs_out' && s.customerJourneyStatus !== 'request_documents') {
+          if (s.billUploadRequired && s.billUploaded && !s.commissionPaid) return true;
+          if (!s.billUploadRequired && !s.commissionPaid) return true;
+        }
         return false;
       }).length;
     }
