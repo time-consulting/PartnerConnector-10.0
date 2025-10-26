@@ -843,7 +843,7 @@ export default function AdminDashboard() {
                         setShowQuoteModal={setShowQuoteModal}
                         setSelectedReferral={setSelectedReferral}
                       />
-                    </CardContent}
+                    </CardContent>
                   </Card>
                 </TabsContent>
 
