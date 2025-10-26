@@ -691,64 +691,9 @@ export default function AdminDashboard() {
 
             {/* Deals & User Requirements Section */}
             <TabsContent value="deals">
-              <Tabs defaultValue="submissions" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-6 h-auto">
-                  <TabsTrigger 
-                    value="submissions" 
-                    data-testid="tab-submissions" 
-                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md relative"
-                  >
-                    <FileText className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">Submissions Portal</span>
-                    {notificationCounts.submissions > 0 && (
-                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs bg-red-500 text-white absolute -top-1 -right-1 rounded-full">
-                        {notificationCounts.submissions}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="signups" 
-                    data-testid="tab-signups" 
-                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md relative"
-                  >
-                    <CheckCircle className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">Signups</span>
-                    {notificationCounts.signups > 0 && (
-                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs bg-red-500 text-white absolute -top-1 -right-1 rounded-full">
-                        {notificationCounts.signups}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="messages" 
-                    data-testid="tab-messages" 
-                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md relative"
-                  >
-                    <MessageSquare className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">Messages</span>
-                    {notificationCounts.messages > 0 && (
-                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs bg-blue-500 text-white absolute -top-1 -right-1 rounded-full">
-                        {notificationCounts.messages}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="completed" 
-                    data-testid="tab-completed" 
-                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md relative"
-                  >
-                    <DollarSign className="h-5 w-5 mb-1" />
-                    <span className="text-xs font-medium">Completed Deals</span>
-                    {notificationCounts.completedDeals > 0 && (
-                      <Badge className="mt-1 h-5 min-w-5 px-1 text-xs bg-green-500 text-white absolute -top-1 -right-1 rounded-full">
-                        {notificationCounts.completedDeals}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                </TabsList>
-
-            <TabsContent value="submissions">
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Deal Pipeline - Takes up 2 columns */}
+                <div className="lg:col-span-2 space-y-6">
                 {/* Search and Filter */}
                 <Card className="border-0 shadow-lg">
                   <CardContent className="p-6">
@@ -1178,115 +1123,118 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </div>
-            </TabsContent>
 
-            <TabsContent value="signups">
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                    Deal Management Pipeline
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AdminSignupsTabs
-                    signupsLoading={signupsLoading}
-                    signups={signups}
-                    referralsData={referralsData}
-                    signupSubTab={signupSubTab}
-                    setSignupSubTab={setSignupSubTab}
-                    setSelectedSignupForDocs={setSelectedSignupForDocs}
-                    setShowDocsOutDialog={setShowDocsOutDialog}
-                    setShowAwaitingDocsDialog={setShowAwaitingDocsDialog}
-                    setShowDocsInDialog={setShowDocsInDialog}
-                    setReceivedDocuments={setReceivedDocuments}
-                    setShowDecisionDialog={setShowDecisionDialog}
-                    setDecision={setDecision}
-                    setDecisionCommission={setDecisionCommission}
-                    setSelectedSignup={setSelectedSignup}
-                    setShowCommissionModal={setShowCommissionModal}
-                    setShowQuoteModal={setShowQuoteModal}
-                    setSelectedReferral={setSelectedReferral}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  {/* Deal Management Pipeline Card */}
+                  <Card className="border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-3">
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                        Deal Management Pipeline
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <AdminSignupsTabs
+                        signupsLoading={signupsLoading}
+                        signups={signups}
+                        referralsData={referralsData}
+                        signupSubTab={signupSubTab}
+                        setSignupSubTab={setSignupSubTab}
+                        setSelectedSignupForDocs={setSelectedSignupForDocs}
+                        setShowDocsOutDialog={setShowDocsOutDialog}
+                        setShowAwaitingDocsDialog={setShowAwaitingDocsDialog}
+                        setShowDocsInDialog={setShowDocsInDialog}
+                        setReceivedDocuments={setReceivedDocuments}
+                        setShowDecisionDialog={setShowDecisionDialog}
+                        setDecision={setDecision}
+                        setDecisionCommission={setDecisionCommission}
+                        setSelectedSignup={setSelectedSignup}
+                        setShowCommissionModal={setShowCommissionModal}
+                        setShowQuoteModal={setShowQuoteModal}
+                        setSelectedReferral={setSelectedReferral}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
 
-            <TabsContent value="messages">
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <MessageSquare className="w-6 h-6 text-blue-600" />
-                    All Messages
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {messagesLoading ? (
-                    <div className="text-center py-12">
-                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-                      <p className="mt-4 text-gray-600">Loading messages...</p>
-                    </div>
-                  ) : !allMessages || allMessages.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                      <p>No messages yet</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {allMessages.map((message: any) => (
-                        <Card key={message.id} className={`border-2 ${message.authorType === 'partner' ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200'}`}>
-                          <CardContent className="p-6">
-                            <div className="flex items-start gap-4">
-                              <div className={`rounded-full p-3 ${message.authorType === 'partner' ? 'bg-blue-600' : 'bg-gray-600'}`}>
-                                <User className="h-5 w-5 text-white" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div>
-                                    <h3 className="font-semibold text-lg">
-                                      {message.authorType === 'admin' ? 'Dojo Admin' : message.authorName || 'Partner'}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">
-                                      Quote ID: {message.quoteId}
-                                    </p>
+                {/* Messages Sidebar - 1 column */}
+                <div className="lg:col-span-1">
+                  <Card className="border-0 shadow-lg sticky top-6">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="w-5 h-5 text-blue-600" />
+                          <span>Messages</span>
+                        </div>
+                        {notificationCounts.messages > 0 && (
+                          <Badge className="bg-blue-500 text-white">
+                            {notificationCounts.messages}
+                          </Badge>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="max-h-[800px] overflow-y-auto">
+                      {messagesLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin w-6 h-6 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+                          <p className="mt-3 text-sm text-gray-600">Loading...</p>
+                        </div>
+                      ) : !allMessages || allMessages.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <MessageSquare className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                          <p className="text-sm">No messages yet</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {allMessages.map((message: any) => (
+                            <Card key={message.id} className={`border ${message.authorType === 'partner' ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200'}`}>
+                              <CardContent className="p-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-start gap-2">
+                                    <div className={`rounded-full p-2 ${message.authorType === 'partner' ? 'bg-blue-600' : 'bg-gray-600'}`}>
+                                      <User className="h-3 w-3 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <h3 className="font-semibold text-sm truncate">
+                                          {message.authorType === 'admin' ? 'Admin' : message.authorName || 'Partner'}
+                                        </h3>
+                                        {message.authorType === 'partner' && (
+                                          <Badge className="bg-blue-600 text-xs">New</Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-gray-600 truncate">
+                                        {message.quoteId}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {new Date(message.createdAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div className="text-right">
-                                    <p className="text-sm text-gray-500">
-                                      {new Date(message.createdAt).toLocaleString()}
-                                    </p>
-                                    {message.authorType === 'partner' && (
-                                      <Badge className="mt-1 bg-blue-600">New from Partner</Badge>
-                                    )}
+                                  <div className="bg-white rounded p-2 border border-gray-200">
+                                    <p className="text-xs text-gray-900 line-clamp-3">{message.message}</p>
                                   </div>
-                                </div>
-                                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                                  <p className="text-gray-900 whitespace-pre-wrap">{message.message}</p>
-                                </div>
-                                <div className="mt-3 flex gap-2">
                                   <Button
                                     size="sm"
                                     variant="outline"
+                                    className="w-full text-xs h-8"
                                     onClick={() => {
-                                      // Navigate to quote detail or open reply dialog
                                       window.location.href = `/quotes#${message.quoteId}`;
                                     }}
                                     data-testid={`button-view-quote-${message.id}`}
                                   >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    View Quote
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    View
                                   </Button>
                                 </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-              </Tabs>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </TabsContent>
 
             {/* Backend Management Section */}
