@@ -58,7 +58,8 @@ import {
   Home,
   Database,
   FileBarChart,
-  MessageSquare
+  MessageSquare,
+  XCircle
 } from "lucide-react";
 
 // Quote form schema
@@ -1322,7 +1323,7 @@ export default function AdminDashboard() {
                                   disabled={signup.customerJourneyStatus === 'docs_out' || signup.customerJourneyStatus === 'awaiting_docs'}
                                 >
                                   <FileText className="w-4 h-4 mr-2" />
-                                  {signup.customerJourneyStatus === 'docs_out' || signup.customerJourneyStatus === 'awaiting_docs' ? 'Docs Sent ✓' : 'Send Docs Out'}
+                                  {signup.customerJourneyStatus === 'docs_out' || signup.customerJourneyStatus === 'awaiting_docs' ? 'Docs Sent ✓' : 'Docs Out'}
                                 </Button>
                                 
                                 <Button
@@ -1453,17 +1454,46 @@ export default function AdminDashboard() {
                                             </div>
                                           </div>
                                           
-                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                             <Button
                                               onClick={() => {
                                                 setSelectedSignupForDocs(signup);
-                                                setShowAwaitingDocsDialog(true);
+                                                setReceivedDocuments(['identification', 'proof_of_bank']); // Default
+                                                setShowDocsInDialog(true);
                                               }}
-                                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                                              data-testid={`button-request-docs-${signup.quoteId}`}
+                                              className="bg-green-600 hover:bg-green-700 text-white"
+                                              data-testid={`button-docs-in-${signup.quoteId}`}
+                                              disabled={signup.customerJourneyStatus === 'docs_received' || signup.customerJourneyStatus === 'approved' || signup.customerJourneyStatus === 'declined'}
                                             >
-                                              <Clock className="w-4 h-4 mr-2" />
-                                              Request Documents
+                                              <CheckCircle className="w-4 h-4 mr-2" />
+                                              {signup.customerJourneyStatus === 'docs_received' ? 'Docs Received ✓' : 'Mark Docs In'}
+                                            </Button>
+                                            <Button
+                                              onClick={() => {
+                                                setSelectedSignupForDocs(signup);
+                                                setDecision('approved');
+                                                setDecisionCommission(signup.estimatedCommission || '');
+                                                setShowDecisionDialog(true);
+                                              }}
+                                              className="bg-green-600 hover:bg-green-700 text-white"
+                                              data-testid={`button-approve-${signup.quoteId}`}
+                                              disabled={signup.customerJourneyStatus !== 'docs_received' || signup.customerJourneyStatus === 'approved'}
+                                            >
+                                              <CheckCircle className="w-4 h-4 mr-2" />
+                                              Approve
+                                            </Button>
+                                            <Button
+                                              onClick={() => {
+                                                setSelectedSignupForDocs(signup);
+                                                setDecision('declined');
+                                                setShowDecisionDialog(true);
+                                              }}
+                                              variant="destructive"
+                                              data-testid={`button-decline-${signup.quoteId}`}
+                                              disabled={signup.customerJourneyStatus !== 'docs_received' || signup.customerJourneyStatus === 'declined'}
+                                            >
+                                              <XCircle className="w-4 h-4 mr-2" />
+                                              Decline
                                             </Button>
                                           </div>
                                         </div>
@@ -2827,6 +2857,279 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Docs In Dialog */}
+        <Dialog open={showDocsInDialog} onOpenChange={setShowDocsInDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                <FileText className="w-6 h-6 text-green-600" />
+                Mark Documents Received
+              </DialogTitle>
+            </DialogHeader>
+            {selectedSignupForDocs && (
+              <div className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700 mb-2">
+                    <strong>Business:</strong> {selectedSignupForDocs.businessName}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Contact:</strong> {selectedSignupForDocs.ownerFirstName} {selectedSignupForDocs.ownerLastName}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Documents Received
+                  </label>
+                  <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                    {[
+                      { id: 'identification', label: 'ID (Passport/Driving License)' },
+                      { id: 'proof_of_bank', label: 'Proof of Bank Account' },
+                      { id: 'business_registration', label: 'Business Registration' },
+                      { id: 'vat_certificate', label: 'VAT Certificate' },
+                      { id: 'proof_of_address', label: 'Proof of Address' },
+                      { id: 'other', label: 'Other Documents' },
+                    ].map((doc) => (
+                      <div key={doc.id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`received-${doc.id}`}
+                          checked={receivedDocuments.includes(doc.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setReceivedDocuments([...receivedDocuments, doc.id]);
+                              setOutstandingDocuments(outstandingDocuments.filter(d => d !== doc.id));
+                            } else {
+                              setReceivedDocuments(receivedDocuments.filter(d => d !== doc.id));
+                            }
+                          }}
+                          className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          data-testid={`checkbox-received-${doc.id}`}
+                        />
+                        <label htmlFor={`received-${doc.id}`} className="ml-2 text-sm text-gray-700">
+                          {doc.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Outstanding Documents
+                    <span className="text-gray-500 font-normal ml-2">(Still waiting for these)</span>
+                  </label>
+                  <div className="space-y-3 bg-amber-50 p-4 rounded-lg">
+                    {[
+                      { id: 'identification', label: 'ID (Passport/Driving License)' },
+                      { id: 'proof_of_bank', label: 'Proof of Bank Account' },
+                      { id: 'business_registration', label: 'Business Registration' },
+                      { id: 'vat_certificate', label: 'VAT Certificate' },
+                      { id: 'proof_of_address', label: 'Proof of Address' },
+                      { id: 'other', label: 'Other Documents' },
+                    ].map((doc) => (
+                      <div key={doc.id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`outstanding-${doc.id}`}
+                          checked={outstandingDocuments.includes(doc.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setOutstandingDocuments([...outstandingDocuments, doc.id]);
+                              setReceivedDocuments(receivedDocuments.filter(d => d !== doc.id));
+                            } else {
+                              setOutstandingDocuments(outstandingDocuments.filter(d => d !== doc.id));
+                            }
+                          }}
+                          className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                          data-testid={`checkbox-outstanding-${doc.id}`}
+                        />
+                        <label htmlFor={`outstanding-${doc.id}`} className="ml-2 text-sm text-gray-700">
+                          {doc.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Additional Notes
+                  </label>
+                  <Textarea
+                    value={docsInNotes}
+                    onChange={(e) => setDocsInNotes(e.target.value)}
+                    placeholder="E.g., All documents verified and approved"
+                    rows={4}
+                    className="w-full"
+                    data-testid="textarea-docs-in-notes"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowDocsInDialog(false);
+                      setDocsInNotes("");
+                      setReceivedDocuments([]);
+                      setOutstandingDocuments([]);
+                      setSelectedSignupForDocs(null);
+                    }}
+                    data-testid="button-cancel-docs-in"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      signupDocsInMutation.mutate({
+                        quoteId: selectedSignupForDocs.quoteId,
+                        notes: docsInNotes,
+                        receivedDocuments,
+                        outstandingDocuments
+                      });
+                    }}
+                    disabled={signupDocsInMutation.isPending || receivedDocuments.length === 0}
+                    className="bg-green-600 hover:bg-green-700"
+                    data-testid="button-confirm-docs-in"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    {signupDocsInMutation.isPending ? 'Processing...' : 'Confirm Docs Received'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Final Decision Dialog (Approve/Decline) */}
+        <Dialog open={showDecisionDialog} onOpenChange={setShowDecisionDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                {decision === 'approved' ? (
+                  <>
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                    Approve Deal
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-6 h-6 text-red-600" />
+                    Decline Deal
+                  </>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedSignupForDocs && (
+              <div className="space-y-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700 mb-2">
+                    <strong>Business:</strong> {selectedSignupForDocs.businessName}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Contact:</strong> {selectedSignupForDocs.ownerFirstName} {selectedSignupForDocs.ownerLastName}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Decision
+                  </label>
+                  <div className="flex gap-4">
+                    <Button
+                      type="button"
+                      variant={decision === 'approved' ? 'default' : 'outline'}
+                      className={decision === 'approved' ? 'bg-green-600 hover:bg-green-700' : ''}
+                      onClick={() => setDecision('approved')}
+                      data-testid="button-decision-approved"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Approve
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={decision === 'declined' ? 'default' : 'outline'}
+                      className={decision === 'declined' ? 'bg-red-600 hover:bg-red-700' : ''}
+                      onClick={() => setDecision('declined')}
+                      data-testid="button-decision-declined"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Decline
+                    </Button>
+                  </div>
+                </div>
+
+                {decision === 'approved' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Commission Amount (£)
+                    </label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={decisionCommission}
+                      onChange={(e) => setDecisionCommission(e.target.value)}
+                      placeholder="100.00"
+                      className="w-full"
+                      data-testid="input-decision-commission"
+                    />
+                    <p className="text-sm text-gray-600 mt-2">
+                      This commission will be distributed across the upline chain when payment is processed.
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Decision Notes
+                  </label>
+                  <Textarea
+                    value={decisionNotes}
+                    onChange={(e) => setDecisionNotes(e.target.value)}
+                    placeholder={decision === 'approved' ? 'E.g., All checks passed, approved for processing' : 'E.g., Documents incomplete, declined'}
+                    rows={4}
+                    className="w-full"
+                    data-testid="textarea-decision-notes"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowDecisionDialog(false);
+                      setDecisionNotes("");
+                      setDecisionCommission("");
+                      setSelectedSignupForDocs(null);
+                    }}
+                    data-testid="button-cancel-decision"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      finalDecisionMutation.mutate({
+                        quoteId: selectedSignupForDocs.quoteId,
+                        decision,
+                        notes: decisionNotes,
+                        actualCommission: decision === 'approved' ? decisionCommission : undefined
+                      });
+                    }}
+                    disabled={finalDecisionMutation.isPending || !decisionNotes}
+                    className={decision === 'approved' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+                    data-testid="button-confirm-decision"
+                  >
+                    {decision === 'approved' ? <CheckCircle className="w-4 h-4 mr-2" /> : <XCircle className="w-4 h-4 mr-2" />}
+                    {finalDecisionMutation.isPending ? 'Processing...' : `Confirm ${decision === 'approved' ? 'Approval' : 'Decline'}`}
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
