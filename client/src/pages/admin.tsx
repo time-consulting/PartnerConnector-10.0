@@ -128,6 +128,16 @@ export default function AdminDashboard() {
   const [sentDealsExpanded, setSentDealsExpanded] = useState(true);
   const [userSearchTerm, setUserSearchTerm] = useState("");
   const [searchedUsers, setSearchedUsers] = useState<any[]>([]);
+  const [signupSubTab, setSignupSubTab] = useState("docs_out");
+  const [sentDealsSearchTerm, setSentDealsSearchTerm] = useState("");
+  const [showDocsInDialog, setShowDocsInDialog] = useState(false);
+  const [showDecisionDialog, setShowDecisionDialog] = useState(false);
+  const [docsInNotes, setDocsInNotes] = useState("");
+  const [receivedDocuments, setReceivedDocuments] = useState<string[]>([]);
+  const [outstandingDocuments, setOutstandingDocuments] = useState<string[]>([]);
+  const [decision, setDecision] = useState<'approved' | 'declined'>('approved');
+  const [decisionNotes, setDecisionNotes] = useState("");
+  const [decisionCommission, setDecisionCommission] = useState("");
 
   // Check if user is admin
   if (authLoading) {
@@ -544,6 +554,55 @@ export default function AdminDashboard() {
       setShowAwaitingDocsDialog(false);
       setAwaitingDocsNotes("");
       setSelectedDocuments([]);
+      setSelectedSignupForDocs(null);
+    },
+  });
+
+  // Signup Docs In mutation
+  const signupDocsInMutation = useMutation({
+    mutationFn: async (data: { quoteId: string; notes: string; receivedDocuments: string[]; outstandingDocuments: string[] }) => {
+      const response = await fetch(`/api/admin/signups/${data.quoteId}/docs-in`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: data.notes,
+          receivedDocuments: data.receivedDocuments,
+          outstandingDocuments: data.outstandingDocuments
+        }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+      setShowDocsInDialog(false);
+      setDocsInNotes("");
+      setReceivedDocuments([]);
+      setOutstandingDocuments([]);
+      setSelectedSignupForDocs(null);
+    },
+  });
+
+  // Final decision mutation (approve/decline)
+  const finalDecisionMutation = useMutation({
+    mutationFn: async (data: { quoteId: string; decision: 'approved' | 'declined'; notes: string; actualCommission?: string }) => {
+      const response = await fetch(`/api/admin/signups/${data.quoteId}/final-decision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          decision: data.decision,
+          notes: data.notes,
+          actualCommission: data.actualCommission
+        }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+      setShowDecisionDialog(false);
+      setDecisionNotes("");
+      setDecisionCommission("");
       setSelectedSignupForDocs(null);
     },
   });
