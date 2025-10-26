@@ -2302,10 +2302,9 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(quotes.createdBy, users.id))
       .leftJoin(businessOwners, eq(businessOwners.referralId, quotes.referralId))
       .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
-      .where(and(
-        sql`${businessOwners.id} IS NOT NULL`,
-        sql`${quotes.commissionPaid} = false`
-      ))
+      .where(
+        sql`${quotes.commissionPaid} = false OR ${quotes.commissionPaid} IS NULL`
+      )
       .orderBy(desc(quotes.createdAt));
 
     return result;

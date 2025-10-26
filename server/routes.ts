@@ -795,10 +795,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save the signup information
       await storage.saveQuoteSignupInfo(quoteId, quote.referralId, signupData);
       
-      res.json({ success: true });
+      return res.json({ success: true });
     } catch (error) {
       console.error("Error saving signup info:", error);
-      res.status(500).json({ message: "Failed to save signup information" });
+      if (!res.headersSent) {
+        return res.status(500).json({ message: "Failed to save signup information" });
+      }
     }
   });
 
