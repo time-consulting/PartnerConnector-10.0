@@ -56,10 +56,6 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   } = props;
 
   // Filter functions for each tab
-  const quoteRequests = referralsData?.referrals?.filter((r: any) => 
-    r.status === 'pending' && (!r.quoteId || r.quoteStatus === null)
-  ) || [];
-  
   const sentQuotes = signups?.filter((s: any) => 
     s.customerJourneyStatus === 'review_quote' || s.customerJourneyStatus === 'quote_sent'
   ) || [];
@@ -363,11 +359,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
 
   return (
     <Tabs value={signupSubTab} onValueChange={setSignupSubTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1">
-        <TabsTrigger value="quote_request" className="text-xs" data-testid="tab-quote-request">
-          Quote Request
-          <Badge className="ml-1 bg-blue-600">{quoteRequests.length}</Badge>
-        </TabsTrigger>
+      <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 gap-1">
         <TabsTrigger value="sent_quotes" className="text-xs" data-testid="tab-sent-quotes">
           Sent Quotes
           <Badge className="ml-1 bg-purple-600">{sentQuotes.length}</Badge>
@@ -397,10 +389,6 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
           <Badge className="ml-1 bg-red-600">{declinedDeals.length}</Badge>
         </TabsTrigger>
       </TabsList>
-
-      <TabsContent value="quote_request" className="mt-6">
-        {renderTabContent(quoteRequests, "No quote requests", true)}
-      </TabsContent>
 
       <TabsContent value="sent_quotes" className="mt-6">
         {renderTabContent(sentQuotes, "No sent quotes")}
