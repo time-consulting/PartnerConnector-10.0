@@ -2559,9 +2559,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send notifications to each person in the commission chain
       for (const approval of approvals) {
-        const commissionPercentage = parseFloat(approval.ratesData?.commissionRate || '0%');
+        const ratesData = approval.ratesData as any || {};
+        const commissionPercentage = parseFloat(ratesData.commissionRate || '0%');
         const commissionAmount = parseFloat(approval.commissionAmount);
-        const commissionType = approval.ratesData?.commissionType || 'direct';
+        const commissionType = ratesData.commissionType || 'direct';
         
         await createNotificationForUser(approval.userId, {
           type: 'commission_paid',
@@ -2585,7 +2586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             referralId: referralId,
             businessName: referral.businessName,
             amount: commissionAmount,
-            level: approval.ratesData?.level || 1,
+            level: ratesData.level || 1,
             percentage: commissionPercentage
           }
         );
@@ -2601,12 +2602,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           reference: paymentReference,
           method: paymentMethod || 'Bank Transfer',
           date: new Date(),
-          distributionBreakdown: approvals.map(a => ({
-            userId: a.userId,
-            amount: parseFloat(a.commissionAmount),
-            percentage: a.ratesData?.commissionRate,
-            type: a.ratesData?.commissionType
-          }))
+          distributionBreakdown: approvals.map(a => {
+            const ratesData = a.ratesData as any || {};
+            return {
+              userId: a.userId,
+              amount: parseFloat(a.commissionAmount),
+              percentage: ratesData.commissionRate,
+              type: ratesData.commissionType
+            };
+          })
         }
       });
     } catch (error) {

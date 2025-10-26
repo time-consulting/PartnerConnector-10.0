@@ -110,6 +110,8 @@ export default function AdminDashboard() {
   const [showStageModal, setShowStageModal] = useState(false);
   const [showStageOverrideModal, setShowStageOverrideModal] = useState(false);
   const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
+  const [paymentStep, setPaymentStep] = useState<'input' | 'preview' | 'confirm'>('input');
+  const [commissionPreview, setCommissionPreview] = useState<any>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedReferrals, setSelectedReferrals] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -369,6 +371,22 @@ export default function AdminDashboard() {
     },
   });
 
+  // Preview commission distribution
+  const previewCommissionMutation = useMutation({
+    mutationFn: async (data: { referralId: string; actualCommission: string }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/preview-commission`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actualCommission: data.actualCommission }),
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setCommissionPreview(data);
+      setPaymentStep('preview');
+    },
+  });
+
   // Confirm payment mutation
   const confirmPaymentMutation = useMutation({
     mutationFn: async (data: { referralId: string; paymentData: any }) => {
@@ -382,6 +400,8 @@ export default function AdminDashboard() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setShowConfirmPaymentModal(false);
+      setPaymentStep('input');
+      setCommissionPreview(null);
       confirmPaymentForm.reset();
       
       // Show breakdown of commission distribution
@@ -933,6 +953,29 @@ export default function AdminDashboard() {
                                   <Edit className="w-4 h-4 mr-2" />
                                   Edit Stage
                                 </Button>
+                                
+                                {referral.status === 'approved' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedReferral(referral);
+                                      setShowConfirmPaymentModal(true);
+                                      setPaymentStep('input');
+                                      confirmPaymentForm.reset({
+                                        actualCommission: referral.estimatedCommission || '',
+                                        paymentReference: '',
+                                        paymentMethod: 'Bank Transfer',
+                                        paymentNotes: ''
+                                      });
+                                    }}
+                                    className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                                    data-testid={`button-confirm-payment-${referral.id}`}
+                                  >
+                                    <DollarSign className="w-4 h-4 mr-2" />
+                                    Confirm Payment
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -2408,6 +2451,229 @@ export default function AdminDashboard() {
                     {signupAwaitingDocsMutation.isPending ? 'Updating...' : 'Request Documents'}
                   </Button>
                 </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirm Payment Modal - Three Step Flow with Commission Preview */}
+        <Dialog open={showConfirmPaymentModal} onOpenChange={(open) => {
+          if (!open) {
+            setShowConfirmPaymentModal(false);
+            setPaymentStep('input');
+            setCommissionPreview(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-[700px]" data-testid="modal-confirm-payment">
+            <DialogHeader>
+              <DialogTitle>
+                {paymentStep === 'input' && 'Enter Payment Details'}
+                {paymentStep === 'preview' && 'Commission Distribution Preview'}
+                {paymentStep === 'confirm' && 'Final Confirmation'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedReferral && (
+              <div className="space-y-6">
+                {paymentStep === 'input' && (
+                  <Form {...confirmPaymentForm}>
+                    <form onSubmit={confirmPaymentForm.handleSubmit((values) => {
+                      previewCommissionMutation.mutate({
+                        referralId: selectedReferral.id,
+                        actualCommission: values.actualCommission
+                      });
+                    })} className="space-y-4">
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <h3 className="font-semibold">Deal Information</h3>
+                        <p className="text-sm"><strong>Business:</strong> {selectedReferral.businessName}</p>
+                        <p className="text-sm"><strong>Estimated Commission:</strong> £{selectedReferral.estimatedCommission}</p>
+                      </div>
+
+                      <FormField
+                        control={confirmPaymentForm.control}
+                        name="actualCommission"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Total Commission Amount (£)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="100.00" {...field} data-testid="input-commission-amount" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={confirmPaymentForm.control}
+                        name="paymentReference"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Payment Reference</FormLabel>
+                            <FormControl>
+                              <Input placeholder="PAY-001-2025" {...field} data-testid="input-payment-reference" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={confirmPaymentForm.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Payment Method</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-payment-method">
+                                  <SelectValue placeholder="Select method" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                                <SelectItem value="Stripe">Stripe</SelectItem>
+                                <SelectItem value="PayPal">PayPal</SelectItem>
+                                <SelectItem value="Check">Check</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={confirmPaymentForm.control}
+                        name="paymentNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Payment Notes (Optional)</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Any additional notes..." data-testid="textarea-payment-notes" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex justify-end gap-3 pt-4 border-t">
+                        <Button type="button" variant="outline" onClick={() => {
+                          setShowConfirmPaymentModal(false);
+                          setPaymentStep('input');
+                        }} data-testid="button-cancel-payment">
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={previewCommissionMutation.isPending} data-testid="button-preview-commission">
+                          {previewCommissionMutation.isPending ? 'Loading...' : 'Preview Distribution'}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                )}
+
+                {paymentStep === 'preview' && commissionPreview && (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <h3 className="font-semibold text-lg mb-2">Distribution Overview</h3>
+                      <p className="text-sm text-gray-700">
+                        Total Commission: <strong className="text-xl text-green-600">£{commissionPreview.totalCommission.toFixed(2)}</strong>
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">For: {commissionPreview.businessName}</p>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-lg divide-y">
+                      {commissionPreview.distribution.map((recipient: any, index: number) => (
+                        <div key={recipient.userId} className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  {index === 0 ? 'Direct Referral' : `Level ${index} Override`}
+                                </span>
+                              </div>
+                              <p className="font-semibold text-gray-900">{recipient.userName}</p>
+                              <p className="text-sm text-gray-600">{recipient.email}</p>
+                              <p className="text-xs text-gray-500 mt-1">Partner ID: {recipient.partnerId}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-green-600">£{recipient.amount.toFixed(2)}</div>
+                              <div className="text-sm text-gray-600">{recipient.percentage}%</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <p className="text-sm text-amber-900">
+                        <strong>Note:</strong> This payment will be distributed to {commissionPreview.distribution.length} people in the upline chain.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                      <Button type="button" variant="outline" onClick={() => {
+                        setPaymentStep('input');
+                        setCommissionPreview(null);
+                      }} data-testid="button-back-to-input">
+                        Back
+                      </Button>
+                      <Button onClick={() => setPaymentStep('confirm')} className="bg-blue-600 hover:bg-blue-700" data-testid="button-proceed-confirm">
+                        Proceed to Confirm
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {paymentStep === 'confirm' && commissionPreview && (
+                  <div className="space-y-4">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-red-900 mb-2">⚠️ Final Confirmation Required</h3>
+                      <p className="text-sm text-red-800">
+                        You are about to process and distribute{' '}
+                        <strong className="text-lg">£{commissionPreview.totalCommission.toFixed(2)}</strong>
+                        {' '}to {commissionPreview.distribution.length} people.
+                      </p>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Business:</span>
+                        <span className="font-medium">{commissionPreview.businessName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Payment Method:</span>
+                        <span className="font-medium">{confirmPaymentForm.getValues('paymentMethod')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Reference:</span>
+                        <span className="font-medium">{confirmPaymentForm.getValues('paymentReference')}</span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t">
+                        <span className="font-semibold">Total Amount:</span>
+                        <span className="text-xl font-bold text-green-600">£{commissionPreview.totalCommission.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                      <Button type="button" variant="outline" onClick={() => setPaymentStep('preview')} data-testid="button-back-to-preview">
+                        Back
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          confirmPaymentMutation.mutate({
+                            referralId: selectedReferral.id,
+                            paymentData: confirmPaymentForm.getValues()
+                          });
+                        }}
+                        disabled={confirmPaymentMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700"
+                        data-testid="button-final-confirm"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        {confirmPaymentMutation.isPending ? 'Processing...' : 'Confirm & Process Payment'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </DialogContent>
