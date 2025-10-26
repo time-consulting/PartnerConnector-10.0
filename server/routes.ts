@@ -968,6 +968,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Confirm "Docs In" (documents received from customer)
+  app.post('/api/admin/signups/:quoteId/docs-in', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { quoteId } = req.params;
+      const { receivedDocuments, outstandingDocuments, notes } = req.body;
+
+      // Update quote journey status to "Docs Received"
+      await storage.updateQuoteJourneyStatus(quoteId, 'docs_received');
+
+      // Update quote with document tracking
+      await storage.db.update(storage.schema.quotes)
+        .set({
+          customerJourneyStatus: 'docs_received',
+          docsReceivedDate: new Date(),
+          outstandingDocuments: outstandingDocuments || [],
+          updatedAt: new Date()
+        })
+        .where(storage.eq(storage.schema.quotes.id, quoteId));
+
+      // Get the quote to find the associated referral
+      const quote = await storage.getQuoteById(quoteId);
+      if (quote && quote.referralId) {
+        const noteText = `\n[${new Date().toLocaleString()}] Documents Received - ${notes || 'All required documents received'}`;
+        await storage.updateReferral(quote.referralId, {
+          adminNotes: (quote.adminNotes || '') + noteText,
+          receivedDocuments: receivedDocuments || [],
+          updatedAt: new Date()
+        });
+      }
+
+      res.json({ success: true, message: "Status updated to Docs Received" });
+    } catch (error) {
+      console.error("Error updating to docs received:", error);
+      res.status(500).json({ message: "Failed to update status" });
+    }
+  });
+
+  // Approve or Decline a deal
+  app.post('/api/admin/signups/:quoteId/final-decision', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { quoteId } = req.params;
+      const { decision, notes, actualCommission } = req.body;
+
+      if (!decision || !['approved', 'declined'].includes(decision)) {
+        return res.status(400).json({ message: "Decision must be 'approved' or 'declined'" });
+      }
+
+      const customerJourneyStatus = decision === 'approved' ? 'approved' : 'declined';
+
+      // Update quote with final decision
+      await storage.db.update(storage.schema.quotes)
+        .set({
+          customerJourneyStatus,
+          finalDecision: decision,
+          finalDecisionDate: new Date(),
+          finalDecisionNotes: notes || null,
+          actualCommission: actualCommission ? parseFloat(actualCommission) : null,
+          updatedAt: new Date()
+        })
+        .where(storage.eq(storage.schema.quotes.id, quoteId));
+
+      // Get the quote to find the associated referral
+      const quote = await storage.getQuoteById(quoteId);
+      if (quote && quote.referralId) {
+        const noteText = `\n[${new Date().toLocaleString()}] Deal ${decision.toUpperCase()} - ${notes || ''}`;
+        await storage.updateReferral(quote.referralId, {
+          status: decision,
+          adminNotes: (quote.adminNotes || '') + noteText,
+          actualCommission: actualCommission ? parseFloat(actualCommission) : null,
+          updatedAt: new Date()
+        });
+      }
+
+      res.json({ success: true, message: `Deal ${decision} successfully` });
+    } catch (error) {
+      console.error("Error updating final decision:", error);
+      res.status(500).json({ message: "Failed to update decision" });
+    }
+  });
+
+  // Mark deal as complete (after payment processing)
+  app.post('/api/admin/signups/:quoteId/mark-complete', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { quoteId } = req.params;
+
+      // Update quote journey status to "Complete"
+      await storage.db.update(storage.schema.quotes)
+        .set({
+          customerJourneyStatus: 'complete',
+          updatedAt: new Date()
+        })
+        .where(storage.eq(storage.schema.quotes.id, quoteId));
+
+      res.json({ success: true, message: "Deal marked as complete" });
+    } catch (error) {
+      console.error("Error marking deal as complete:", error);
+      res.status(500).json({ message: "Failed to mark deal as complete" });
+    }
+  });
+
   app.get('/api/admin/quotes', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const quotes = await storage.getAllQuotesForAdmin();

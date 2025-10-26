@@ -615,10 +615,18 @@ export const quotes = pgTable("quotes", {
   approvedAt: timestamp("approved_at"),
   rejectedAt: timestamp("rejected_at"),
   status: varchar("status").notNull().default("draft"), // draft, sent, viewed, approved, rejected, expired
-  customerJourneyStatus: varchar("customer_journey_status").notNull().default("review_quote"), // review_quote, sent_to_client, awaiting_signup, agreement_sent, docs_required, approved
+  customerJourneyStatus: varchar("customer_journey_status").notNull().default("review_quote"), // review_quote, sent_to_client, awaiting_signup, agreement_sent, docs_out, awaiting_documents, docs_received, approved, declined, complete
   // Audit trail for status changes
   docsOutDate: timestamp("docs_out_date"),
+  docsOutNotes: text("docs_out_notes"),
   requestDocumentsDate: timestamp("request_documents_date"),
+  requestedDocuments: text("requested_documents").array().default(sql`ARRAY[]::text[]`), // Documents requested from customer
+  docsReceivedDate: timestamp("docs_received_date"),
+  outstandingDocuments: text("outstanding_documents").array().default(sql`ARRAY[]::text[]`), // Documents still outstanding
+  finalDecision: varchar("final_decision"), // approved or declined
+  finalDecisionDate: timestamp("final_decision_date"),
+  finalDecisionNotes: text("final_decision_notes"),
+  actualCommission: decimal("actual_commission", { precision: 10, scale: 2 }),
   partnerQuestion: text("partner_question"), // Question from partner
   partnerRateRequest: text("partner_rate_request"), // Request for different rates/offer
   adminNotes: text("admin_notes"),
