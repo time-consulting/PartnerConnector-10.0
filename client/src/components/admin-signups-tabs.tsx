@@ -1,0 +1,434 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Building, 
+  User, 
+  DollarSign, 
+  CheckCircle, 
+  FileText, 
+  Clock,
+  Send,
+  XCircle,
+  AlertCircle
+} from "lucide-react";
+
+interface AdminSignupsTabsProps {
+  signupsLoading: boolean;
+  signups: any[];
+  referralsData: { referrals: any[] };
+  signupSubTab: string;
+  setSignupSubTab: (tab: string) => void;
+  setSelectedSignupForDocs: (signup: any) => void;
+  setShowDocsOutDialog: (show: boolean) => void;
+  setShowAwaitingDocsDialog: (show: boolean) => void;
+  setShowDocsInDialog: (show: boolean) => void;
+  setReceivedDocuments: (docs: string[]) => void;
+  setShowDecisionDialog: (show: boolean) => void;
+  setDecision: (decision: 'approved' | 'declined') => void;
+  setDecisionCommission: (commission: string) => void;
+  setSelectedSignup: (signup: any) => void;
+  setShowCommissionModal: (show: boolean) => void;
+  setShowQuoteModal: (show: boolean) => void;
+  setSelectedReferral: (referral: any) => void;
+}
+
+export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
+  const {
+    signupsLoading,
+    signups,
+    referralsData,
+    signupSubTab,
+    setSignupSubTab,
+    setSelectedSignupForDocs,
+    setShowDocsOutDialog,
+    setShowAwaitingDocsDialog,
+    setShowDocsInDialog,
+    setReceivedDocuments,
+    setShowDecisionDialog,
+    setDecision,
+    setDecisionCommission,
+    setSelectedSignup,
+    setShowCommissionModal,
+    setShowQuoteModal,
+    setSelectedReferral
+  } = props;
+
+  // Filter functions for each tab
+  const quoteRequests = referralsData?.referrals?.filter((r: any) => 
+    r.status === 'pending' && (!r.quoteId || r.quoteStatus === null)
+  ) || [];
+  
+  const sentQuotes = signups?.filter((s: any) => 
+    s.customerJourneyStatus === 'review_quote' || s.customerJourneyStatus === 'quote_sent'
+  ) || [];
+  
+  const signupStage = signups?.filter((s: any) => 
+    s.customerJourneyStatus === 'awaiting_signup' || s.customerJourneyStatus === 'agreement_sent'
+  ) || [];
+  
+  const docsOutStage = signups?.filter((s: any) => 
+    s.customerJourneyStatus === 'docs_out'
+  ) || [];
+  
+  const awaitingDocsStage = signups?.filter((s: any) => 
+    s.customerJourneyStatus === 'awaiting_docs' || s.customerJourneyStatus === 'docs_received'
+  ) || [];
+  
+  const approvedDeals = signups?.filter((s: any) => 
+    s.customerJourneyStatus === 'approved' && !s.commissionPaid
+  ) || [];
+  
+  const completedDeals = signups?.filter((s: any) => 
+    s.commissionPaid === true
+  ) || [];
+  
+  const declinedDeals = signups?.filter((s: any) => 
+    s.customerJourneyStatus === 'declined'
+  ) || [];
+
+  const renderBusinessCard = (item: any, isReferral: boolean = false) => {
+    const data = isReferral ? item : item;
+    
+    return (
+      <Card key={item.id || item.quoteId} className="border-2">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Business Information */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <Building className="w-5 h-5" />
+                Business Information
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p><strong>Business Name:</strong> {data.businessName}</p>
+                {data.tradingName && <p><strong>Trading Name:</strong> {data.tradingName}</p>}
+                <p><strong>Email:</strong> {data.businessEmail}</p>
+                {data.businessStructure && <p><strong>Structure:</strong> {data.businessStructure}</p>}
+                {data.tradingAddress && <p><strong>Address:</strong> {data.tradingAddress}</p>}
+                
+                {/* Show switcher statement for quote requests */}
+                {isReferral && data.monthlyCardTurnover && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="font-semibold text-md mb-2">Current Provider</p>
+                    <p><strong>Provider:</strong> {data.currentProvider}</p>
+                    <p><strong>Monthly Turnover:</strong> £{parseFloat(data.monthlyCardTurnover).toFixed(2)}</p>
+                    {data.averageTransactionValue && (
+                      <p><strong>Avg Transaction:</strong> £{parseFloat(data.averageTransactionValue).toFixed(2)}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Contact/Owner Information */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <User className="w-5 h-5" />
+                {isReferral ? 'Contact' : 'Director/Owner'} Details
+              </h3>
+              <div className="space-y-2 text-sm">
+                {isReferral ? (
+                  <>
+                    <p><strong>Name:</strong> {data.contactName}</p>
+                    <p><strong>Email:</strong> {data.contactEmail}</p>
+                    <p><strong>Phone:</strong> {data.contactPhone}</p>
+                  </>
+                ) : (
+                  <>
+                    <p><strong>Name:</strong> {data.ownerFirstName} {data.ownerLastName}</p>
+                    <p><strong>Email:</strong> {data.ownerEmail}</p>
+                    <p><strong>Phone:</strong> {data.ownerPhone}</p>
+                    {data.ownerHomeAddress && (
+                      <p><strong>Home Address:</strong> {data.ownerHomeAddress}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Partner Info & Actions */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Partner & Actions
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p><strong>Partner:</strong> {data.partnerName}</p>
+                <p><strong>Email:</strong> {data.partnerEmail}</p>
+                <p><strong>Submitted:</strong> {new Date(data.createdAt).toLocaleDateString()}</p>
+                
+                {data.estimatedCommission && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-lg font-bold text-green-600">
+                      £{parseFloat(data.estimatedCommission).toFixed(2)} Commission
+                    </p>
+                  </div>
+                )}
+
+                {!isReferral && data.bankSortCode && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p><strong>Sort Code:</strong> {data.bankSortCode}</p>
+                    <p><strong>Account:</strong> {data.bankAccountNumber}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-6 pt-6 border-t">
+            {renderActionButtons(item, isReferral)}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderActionButtons = (item: any, isReferral: boolean) => {
+    if (isReferral) {
+      // Quote Request - Create Quote button
+      return (
+        <Button
+          onClick={() => {
+            setSelectedReferral(item);
+            setShowQuoteModal(true);
+          }}
+          className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto"
+          data-testid={`button-create-quote-${item.id}`}
+        >
+          <Send className="w-4 h-4 mr-2" />
+          Create Quote
+        </Button>
+      );
+    }
+
+    const status = item.customerJourneyStatus;
+
+    if (status === 'review_quote' || status === 'quote_sent') {
+      // Sent Quotes - waiting for customer
+      return (
+        <div className="text-center text-gray-600">
+          <Clock className="w-6 h-6 mx-auto mb-2" />
+          <p className="text-sm">Waiting for customer to approve quote</p>
+        </div>
+      );
+    }
+
+    if (status === 'awaiting_signup' || status === 'agreement_sent') {
+      // Sign Up - Send Docs Out button
+      return (
+        <Button
+          onClick={() => {
+            setSelectedSignupForDocs(item);
+            setShowDocsOutDialog(true);
+          }}
+          className="bg-orange-600 hover:bg-orange-700 w-full md:w-auto"
+          data-testid={`button-docs-out-${item.quoteId}`}
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Docs Out
+        </Button>
+      );
+    }
+
+    if (status === 'docs_out') {
+      // Docs Out - Reminder, Approved, Declined buttons
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Button
+            onClick={() => {
+              setSelectedSignupForDocs(item);
+              setShowAwaitingDocsDialog(true);
+            }}
+            className="bg-amber-600 hover:bg-amber-700"
+            data-testid={`button-reminder-${item.quoteId}`}
+          >
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Reminder for Documents
+          </Button>
+          <Button
+            onClick={() => {
+              setSelectedSignupForDocs(item);
+              setDecision('approved');
+              setDecisionCommission(item.estimatedCommission || '');
+              setShowDecisionDialog(true);
+            }}
+            className="bg-green-600 hover:bg-green-700"
+            data-testid={`button-approve-${item.quoteId}`}
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Approved
+          </Button>
+          <Button
+            onClick={() => {
+              setSelectedSignupForDocs(item);
+              setDecision('declined');
+              setShowDecisionDialog(true);
+            }}
+            variant="destructive"
+            data-testid={`button-decline-${item.quoteId}`}
+          >
+            <XCircle className="w-4 h-4 mr-2" />
+            Declined
+          </Button>
+        </div>
+      );
+    }
+
+    if (status === 'awaiting_docs' || status === 'docs_received') {
+      // Awaiting Docs - Docs In button
+      return (
+        <Button
+          onClick={() => {
+            setSelectedSignupForDocs(item);
+            setReceivedDocuments(['identification', 'proof_of_bank']);
+            setShowDocsInDialog(true);
+          }}
+          className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
+          data-testid={`button-docs-in-${item.quoteId}`}
+        >
+          <CheckCircle className="w-4 h-4 mr-2" />
+          Mark Docs In
+        </Button>
+      );
+    }
+
+    if (status === 'approved' && !item.commissionPaid) {
+      // Approved Deals - Pay Commission button
+      return (
+        <Button
+          onClick={() => {
+            setSelectedSignup(item);
+            setShowCommissionModal(true);
+          }}
+          className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
+          data-testid={`button-pay-commission-${item.quoteId}`}
+        >
+          <DollarSign className="w-4 h-4 mr-2" />
+          Pay Commission
+        </Button>
+      );
+    }
+
+    if (item.commissionPaid) {
+      // Complete - show paid status
+      return (
+        <div className="flex items-center gap-2 text-green-600">
+          <CheckCircle className="w-5 h-5" />
+          <span className="font-medium">Commission Paid</span>
+        </div>
+      );
+    }
+
+    if (status === 'declined') {
+      // Declined - show declined status
+      return (
+        <div className="flex items-center gap-2 text-red-600">
+          <XCircle className="w-5 h-5" />
+          <span className="font-medium">Deal Declined</span>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderTabContent = (items: any[], emptyMessage: string, isReferral: boolean = false) => {
+    if (signupsLoading) {
+      return (
+        <div className="text-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      );
+    }
+
+    if (!items || items.length === 0) {
+      return (
+        <div className="text-center py-12 text-gray-500">
+          <CheckCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+          <p>{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {items.map((item) => renderBusinessCard(item, isReferral))}
+      </div>
+    );
+  };
+
+  return (
+    <Tabs value={signupSubTab} onValueChange={setSignupSubTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1">
+        <TabsTrigger value="quote_request" className="text-xs" data-testid="tab-quote-request">
+          Quote Request
+          <Badge className="ml-1 bg-blue-600">{quoteRequests.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="sent_quotes" className="text-xs" data-testid="tab-sent-quotes">
+          Sent Quotes
+          <Badge className="ml-1 bg-purple-600">{sentQuotes.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="sign_up" className="text-xs" data-testid="tab-sign-up">
+          Sign Up
+          <Badge className="ml-1 bg-indigo-600">{signupStage.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="docs_out" className="text-xs" data-testid="tab-docs-out">
+          Docs Out
+          <Badge className="ml-1 bg-orange-600">{docsOutStage.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="awaiting_docs" className="text-xs" data-testid="tab-awaiting-docs">
+          Awaiting Docs
+          <Badge className="ml-1 bg-amber-600">{awaitingDocsStage.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="approved" className="text-xs" data-testid="tab-approved">
+          Approved
+          <Badge className="ml-1 bg-green-600">{approvedDeals.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="complete" className="text-xs" data-testid="tab-complete">
+          Complete
+          <Badge className="ml-1 bg-gray-600">{completedDeals.length}</Badge>
+        </TabsTrigger>
+        <TabsTrigger value="declined" className="text-xs" data-testid="tab-declined">
+          Declined
+          <Badge className="ml-1 bg-red-600">{declinedDeals.length}</Badge>
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="quote_request" className="mt-6">
+        {renderTabContent(quoteRequests, "No quote requests", true)}
+      </TabsContent>
+
+      <TabsContent value="sent_quotes" className="mt-6">
+        {renderTabContent(sentQuotes, "No sent quotes")}
+      </TabsContent>
+
+      <TabsContent value="sign_up" className="mt-6">
+        {renderTabContent(signupStage, "No signups pending")}
+      </TabsContent>
+
+      <TabsContent value="docs_out" className="mt-6">
+        {renderTabContent(docsOutStage, "No deals in docs out stage")}
+      </TabsContent>
+
+      <TabsContent value="awaiting_docs" className="mt-6">
+        {renderTabContent(awaitingDocsStage, "No deals awaiting documents")}
+      </TabsContent>
+
+      <TabsContent value="approved" className="mt-6">
+        {renderTabContent(approvedDeals, "No approved deals pending commission")}
+      </TabsContent>
+
+      <TabsContent value="complete" className="mt-6">
+        {renderTabContent(completedDeals, "No completed deals")}
+      </TabsContent>
+
+      <TabsContent value="declined" className="mt-6">
+        {renderTabContent(declinedDeals, "No declined deals")}
+      </TabsContent>
+    </Tabs>
+  );
+}
