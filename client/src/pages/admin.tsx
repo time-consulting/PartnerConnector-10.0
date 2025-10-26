@@ -700,7 +700,7 @@ export default function AdminDashboard() {
                     className="flex items-center gap-2 h-auto py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-md"
                   >
                     <FileText className="h-4 w-4" />
-                    <span className="text-sm font-medium">Submissions</span>
+                    <span className="text-sm font-medium">Quote Requests</span>
                     {notificationCounts.submissions > 0 && (
                       <Badge className="ml-1 bg-red-500 text-white text-xs">{notificationCounts.submissions}</Badge>
                     )}
@@ -729,153 +729,20 @@ export default function AdminDashboard() {
                   </TabsTrigger>
                 </TabsList>
 
-                {/* Submissions Tab */}
+                {/* Quote Requests Tab - Only shows submitted (new) requests */}
                 <TabsContent value="submissions">
-                {/* Search and Filter */}
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <div className="flex-1">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                          <Input
-                            placeholder="Search referrals by business name, email, or notes..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-12 h-12 text-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                            data-testid="input-search-admin-referrals"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Filter className="w-5 h-5 text-gray-400" />
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                          <SelectTrigger className="w-48 h-12 border-gray-200" data-testid="select-status-filter">
-                            <SelectValue placeholder="Filter by status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="submitted">Submitted</SelectItem>
-                            <SelectItem value="quote_sent">Quote Sent</SelectItem>
-                            <SelectItem value="quote_approved">Quote Approved</SelectItem>
-                            <SelectItem value="docs_out_confirmation">Docs Out</SelectItem>
-                            <SelectItem value="processing">Processing</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Live (Awaiting Payment) - Approved Deals Ready for Commission Payment */}
-                {referralsData?.referrals && referralsData.referrals.filter((r: any) => r.status === 'approved').length > 0 && (
-                  <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-l-green-500">
-                    <CardHeader className="bg-gradient-to-r from-green-100/50 to-emerald-100/50">
-                      <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                        <DollarSign className="w-6 h-6 text-green-600" />
-                        Live (Awaiting Payment) - ({referralsData.referrals.filter((r: any) => r.status === 'approved').length} ready for commission)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-l-orange-500">
+                  <CardHeader className="bg-gradient-to-r from-orange-100/50 to-amber-100/50">
+                    <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                      <AlertCircle className="w-6 h-6 text-orange-600" />
+                      New Quote Requests ({referralsData?.referrals?.filter((r: any) => r.status === 'submitted').length || 0})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {referralsData?.referrals && referralsData.referrals.filter((r: any) => r.status === 'submitted').length > 0 ? (
                       <div className="space-y-1">
                         {referralsData.referrals
-                          .filter((r: any) => r.status === 'approved')
-                          .map((referral: any, index: number, arr: any[]) => (
-                            <div
-                              key={referral.id}
-                              className={`p-6 hover:bg-white/80 transition-all duration-200 ${
-                                index !== arr.length - 1 ? 'border-b border-green-200' : ''
-                              }`}
-                            >
-                              <div className="flex justify-between items-start">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-3">
-                                    <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
-                                    <Badge className="bg-green-100 text-green-800 border-0 font-medium px-3 py-1">
-                                      READY FOR PAYMENT
-                                    </Badge>
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                      <Mail className="w-4 h-4" />
-                                      <span className="text-sm">{referral.businessEmail}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                      <Phone className="w-4 h-4" />
-                                      <span className="text-sm">{referral.businessPhone || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                      <Calendar className="w-4 h-4" />
-                                      <span className="text-sm">
-                                        Approved {referral.approvalDate ? new Date(referral.approvalDate).toLocaleDateString() : 'Recently'}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-green-700">
-                                      <DollarSign className="w-4 h-4" />
-                                      <span className="text-sm font-bold">
-                                        £{referral.estimatedCommission || '0.00'} Commission
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {referral.referrerId && users && (
-                                    <div className="mt-3 p-3 bg-white/60 border-l-4 border-blue-400 rounded">
-                                      <p className="text-sm text-gray-700">
-                                        <strong>Submitted by:</strong>{' '}
-                                        {(() => {
-                                          const partner = users.find((u: any) => u.id === referral.referrerId);
-                                          return partner ? `${partner.firstName} ${partner.lastName} (${partner.email})` : 'Partner Info Unavailable';
-                                        })()}
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                <div className="ml-6">
-                                  <Button
-                                    size="lg"
-                                    onClick={() => {
-                                      setSelectedReferral(referral);
-                                      setShowConfirmPaymentModal(true);
-                                      setPaymentStep('input');
-                                      confirmPaymentForm.reset({
-                                        actualCommission: referral.estimatedCommission || '',
-                                        paymentReference: '',
-                                        paymentMethod: 'Bank Transfer',
-                                        paymentNotes: ''
-                                      });
-                                    }}
-                                    className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
-                                    data-testid={`button-confirm-payment-quick-${referral.id}`}
-                                  >
-                                    <DollarSign className="w-4 h-4 mr-2" />
-                                    Confirm Payment
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Quote Requests - Referrals Needing Quotes */}
-                {referralsData?.referrals && referralsData.referrals.filter((r: any) => !r.quoteGenerated && r.status !== 'rejected').length > 0 && (
-                  <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-l-orange-500">
-                    <CardHeader className="bg-gradient-to-r from-orange-100/50 to-amber-100/50">
-                      <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                        <AlertCircle className="w-6 h-6 text-orange-600" />
-                        Quote Requests ({referralsData.referrals.filter((r: any) => !r.quoteGenerated && r.status !== 'rejected').length} awaiting quotes)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="space-y-1">
-                        {referralsData.referrals
-                          .filter((r: any) => !r.quoteGenerated && r.status !== 'rejected')
-                          .slice(0, 5)
+                          .filter((r: any) => r.status === 'submitted')
                           .map((referral: any, index: number, arr: any[]) => (
                             <div
                               key={referral.id}
@@ -888,7 +755,7 @@ export default function AdminDashboard() {
                                   <div className="flex items-center gap-3 mb-3">
                                     <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
                                     <Badge className="bg-orange-100 text-orange-800 border-0 font-medium px-3 py-1">
-                                      NEEDS QUOTE
+                                      NEW REQUEST
                                     </Badge>
                                   </div>
                                   
@@ -934,234 +801,20 @@ export default function AdminDashboard() {
                             </div>
                           ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Referrals List */}
-                <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b">
-                    <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                      <Building className="w-6 h-6 text-blue-600" />
-                      Submissions Portal ({referralsData?.total || 0} deals)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {referralsLoading ? (
-                      <div className="space-y-4 p-6">
-                        {[...Array(5)].map((_, i) => (
-                          <div key={i} className="animate-pulse border-b border-gray-100 p-6">
-                            <div className="flex justify-between items-start">
-                              <div className="space-y-2">
-                                <div className="h-6 bg-gray-200 rounded w-64"></div>
-                                <div className="h-4 bg-gray-200 rounded w-48"></div>
-                                <div className="h-4 bg-gray-200 rounded w-32"></div>
-                              </div>
-                              <div className="flex gap-2">
-                                <div className="h-8 bg-gray-200 rounded w-20"></div>
-                                <div className="h-8 bg-gray-200 rounded w-24"></div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : referralsData?.referrals && referralsData.referrals.length > 0 ? (
-                      <div className="space-y-1">
-                        {referralsData.referrals.map((referral: any, index: number) => (
-                          <div
-                            key={referral.id}
-                            className={`p-6 hover:bg-blue-50/50 transition-all duration-200 border-l-4 ${
-                              referral.status === 'completed' ? 'border-l-green-500 bg-green-50/30' :
-                              referral.status === 'processing' ? 'border-l-orange-500 bg-orange-50/30' :
-                              referral.status === 'quote_sent' ? 'border-l-blue-500 bg-blue-50/30' :
-                              'border-l-gray-300'
-                            } ${index !== (referralsData.referrals?.length || 0) - 1 ? 'border-b border-gray-100' : ''}`}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-3">
-                                  <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
-                                  <Badge className={`${getStatusColor(referral.status)} border-0 font-medium px-3 py-1`}>
-                                    {referral.status.replace('_', ' ').toUpperCase()}
-                                  </Badge>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <Mail className="w-4 h-4" />
-                                    <span className="text-sm">{referral.businessEmail}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <Phone className="w-4 h-4" />
-                                    <span className="text-sm">{referral.businessPhone || 'N/A'}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <Calendar className="w-4 h-4" />
-                                    <span className="text-sm">
-                                      {new Date(referral.submittedAt).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <Target className="w-4 h-4" />
-                                    <span className="text-sm font-medium">
-                                      Level {referral.referralLevel || 1} ({referral.commissionPercentage || '60.00'}%)
-                                    </span>
-                                  </div>
-                                </div>
-                                
-                                {/* Partner Attribution */}
-                                {referral.referrerId && users && (
-                                  <div className="mb-3 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                                    <p className="text-sm text-gray-700">
-                                      <strong>Submitted by Partner:</strong>{' '}
-                                      {(() => {
-                                        const partner = users.find((u: any) => u.id === referral.referrerId);
-                                        return partner ? `${partner.firstName} ${partner.lastName} (${partner.email})` : 'Partner Info Unavailable';
-                                      })()}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {referral.estimatedCommission && (
-                                  <div className="flex items-center gap-2 bg-green-100 text-green-700 rounded-lg px-3 py-1 font-medium inline-flex">
-                                    <DollarSign className="w-4 h-4" />
-                                    £{referral.estimatedCommission} Commission
-                                  </div>
-                                )}
-
-                                {referral.adminNotes && (
-                                  <div className="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                                    <p className="text-sm text-gray-700"><strong>Admin Notes:</strong> {referral.adminNotes}</p>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="flex flex-col gap-2 ml-6">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedReferral(referral);
-                                    setShowQuoteModal(true);
-                                  }}
-                                  className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                                  data-testid={`button-send-quote-${referral.id}`}
-                                >
-                                  <Send className="w-4 h-4 mr-2" />
-                                  Send Quote
-                                </Button>
-                                
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => docsOutMutation.mutate(referral.id)}
-                                  disabled={docsOutMutation.isPending}
-                                  className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
-                                  data-testid={`button-docs-out-${referral.id}`}
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Docs Out
-                                </Button>
-                                
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedReferral(referral);
-                                    setShowDocumentsModal(true);
-                                  }}
-                                  className="bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
-                                  data-testid={`button-document-requirements-${referral.id}`}
-                                >
-                                  <FileText className="w-4 h-4 mr-2" />
-                                  Documents
-                                </Button>
-                                
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedReferral(referral);
-                                    setShowStageModal(true);
-                                  }}
-                                  className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                                  data-testid={`button-edit-stage-${referral.id}`}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Stage
-                                </Button>
-                                
-                                {referral.status === 'approved' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedReferral(referral);
-                                      setShowConfirmPaymentModal(true);
-                                      setPaymentStep('input');
-                                      confirmPaymentForm.reset({
-                                        actualCommission: referral.estimatedCommission || '',
-                                        paymentReference: '',
-                                        paymentMethod: 'Bank Transfer',
-                                        paymentNotes: ''
-                                      });
-                                    }}
-                                    className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                                    data-testid={`button-confirm-payment-${referral.id}`}
-                                  >
-                                    <DollarSign className="w-4 h-4 mr-2" />
-                                    Confirm Payment
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
                     ) : (
                       <div className="text-center py-16 px-6">
-                        <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                          <Building className="w-10 h-10 text-blue-600" />
+                        <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                          <CheckCircle className="w-10 h-10 text-orange-600" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-3">No submissions found</h3>
-                        <p className="text-gray-600 text-lg">
-                          {searchTerm || statusFilter !== 'all' 
-                            ? "Try adjusting your search or filter criteria"
-                            : "No referral submissions have been made yet"
-                          }
-                        </p>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">All Caught Up!</h3>
+                        <p className="text-gray-600">No new quote requests at the moment.</p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
-
-                {/* Pagination */}
-                {referralsData?.pagination && referralsData.pagination.totalPages > 1 && (
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentPage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      data-testid="button-previous-page"
-                    >
-                      Previous
-                    </Button>
-                    <span className="flex items-center px-4 py-2 text-sm text-gray-600">
-                      Page {currentPage} of {referralsData.pagination.totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={currentPage === referralsData.pagination.totalPages}
-                      data-testid="button-next-page"
-                    >
-                      Next
-                    </Button>
-                  </div>
-                )}
                 </TabsContent>
 
-                {/* Deal Management Pipeline Tab */}
+                {/* Deal Management Pipeline Tab - Shows quote sent and beyond */}
                 <TabsContent value="pipeline">
                   <Card className="border-0 shadow-lg">
                     <CardHeader>
@@ -1190,7 +843,7 @@ export default function AdminDashboard() {
                         setShowQuoteModal={setShowQuoteModal}
                         setSelectedReferral={setSelectedReferral}
                       />
-                    </CardContent>
+                    </CardContent}
                   </Card>
                 </TabsContent>
 
@@ -1235,6 +888,88 @@ export default function AdminDashboard() {
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between gap-2">
                                         <h3 className="font-semibold text-sm truncate">
+                                          {message.authorType === 'admin' ? 'Admin' : message.authorName || 'Partner'}
+                                        </h3>
+                                        {message.authorType === 'partner' && (
+                                          <Badge className="bg-blue-600 text-xs">New</Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-gray-600 truncate">
+                                        {message.quoteId}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {new Date(message.createdAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="bg-white rounded p-2 border border-gray-200">
+                                    <p className="text-xs text-gray-900 line-clamp-3">{message.message}</p>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full text-xs h-8"
+                                    onClick={() => {
+                                      window.location.href = `/quotes#${message.quoteId}`;
+                                    }}
+                                    data-testid={`button-view-quote-${message.id}`}
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    View
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+
+            {/* Backend Management Section */}
+            <TabsContent value="backend">
+              <Tabs defaultValue="users" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-6 h-auto">
+                  <TabsTrigger 
+                    value="users" 
+                    data-testid="tab-users" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Users className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">User Management</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="mlm" 
+                    data-testid="tab-mlm" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Target className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">MLM Network</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="analytics" 
+                    data-testid="tab-analytics" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <TrendingUp className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Analytics</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="settings" 
+                    data-testid="tab-settings" 
+                    className="flex-col h-auto py-3 px-2 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <Settings className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">Settings</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* User Management Tab */}
+                <TabsContent value="users">
                                           {message.authorType === 'admin' ? 'Admin' : message.authorName || 'Partner'}
                                         </h3>
                                         {message.authorType === 'partner' && (
