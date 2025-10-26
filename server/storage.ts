@@ -192,6 +192,7 @@ export interface IStorage {
   getAllCommissionApprovals(): Promise<CommissionApproval[]>;
   updateCommissionApprovalStatus(approvalId: string, status: string): Promise<CommissionApproval>;
   processCommissionPayment(approvalId: string, paymentReference: string): Promise<void>;
+  distributeUplineCommissions(referralId: string, totalCommission: number, paymentReference: string, paymentMethod: string): Promise<CommissionApproval[]>;
 
   // Audit trail operations
   createAudit(auditData: InsertAudit): Promise<Audit>;
@@ -2805,6 +2806,79 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(commissionApprovals.id, approvalId));
   }
+
+  async distributeUplineCommissions(
+    referralId: string, 
+    totalCommission: number, 
+    paymentReference: string, 
+    paymentMethod: string
+  ): Promise<CommissionApproval[]> {
+    // Get the referral to find the submitter
+    const allReferrals = await this.getAllReferrals();
+    const referral = allReferrals.find((r: any) => r.id === referralId);
+    
+    if (!referral) {
+      throw new Error('Referral not found');
+    }
+
+    const submitterId = referral.referrerId;
+    const businessName = referral.businessName;
+    const createdApprovals: CommissionApproval[] = [];
+
+    // Commission distribution:
+    // - Submitter gets 60%
+    // - Parent (1 level up) gets 20%
+    // - Grandparent (2 levels up) gets 10%
+    // - Great-grandparent (3+ levels up) gets 0%
+
+    const commissionTiers = [
+      { level: 0, percentage: 60, label: 'Direct Commission' },      // Submitter
+      { level: 1, percentage: 20, label: 'Level 1 Override' },        // Parent
+      { level: 2, percentage: 10, label: 'Level 2 Override' },        // Grandparent
+    ];
+
+    // Start with the submitter and walk up the chain
+    let currentUserId = submitterId;
+    
+    for (let i = 0; i < commissionTiers.length; i++) {
+      if (!currentUserId) break; // No more people in the chain
+
+      const tier = commissionTiers[i];
+      const commissionAmount = (totalCommission * tier.percentage) / 100;
+
+      // Create commission approval for this person
+      const approval = await this.createCommissionApproval({
+        referralId: referralId,
+        userId: currentUserId,
+        commissionAmount: commissionAmount.toString(),
+        clientBusinessName: businessName,
+        approvalStatus: 'approved',
+        approvedAt: new Date(),
+        paymentStatus: 'completed',
+        paymentDate: new Date(),
+        paymentReference: `${paymentReference}-L${i}`,
+        adminNotes: `${tier.label} (${tier.percentage}% of £${totalCommission.toFixed(2)})`,
+        ratesData: {
+          baseCommission: totalCommission.toString(),
+          commissionRate: `${tier.percentage}%`,
+          level: i + 1,
+          paymentMethod: paymentMethod,
+          commissionType: i === 0 ? 'direct' : 'override'
+        }
+      });
+
+      createdApprovals.push(approval);
+
+      // Get the next person in the chain (parent)
+      if (i < commissionTiers.length - 1) {
+        const currentUser = await this.getUser(currentUserId);
+        currentUserId = currentUser?.parentPartnerId || null;
+      }
+    }
+
+    return createdApprovals;
+  }
+
   // Audit trail operations
   async createAudit(auditData: InsertAudit): Promise<Audit> {
     const [audit] = await db.insert(audits).values(auditData).returning();
