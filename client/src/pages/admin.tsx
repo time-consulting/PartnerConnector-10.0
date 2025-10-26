@@ -1122,7 +1122,6 @@ export default function AdminDashboard() {
                     </Button>
                   </div>
                 )}
-              </div>
 
                   {/* Deal Management Pipeline Card */}
                   <Card className="border-0 shadow-lg">
