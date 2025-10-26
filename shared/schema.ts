@@ -133,7 +133,7 @@ export const referrals = pgTable("referrals", {
   quoteGenerated: boolean("quote_generated").default(false),
   quoteAmount: decimal("quote_amount", { precision: 10, scale: 2 }),
   clientApproved: boolean("client_approved").default(false),
-  status: varchar("status").notNull().default("pending"), // pending, quoted, approved, rejected, completed
+  status: varchar("status").notNull().default("submitted"), // submitted, pending, quoted, approved, rejected, completed
   estimatedCommission: decimal("estimated_commission", { precision: 10, scale: 2 }),
   actualCommission: decimal("actual_commission", { precision: 10, scale: 2 }),
   notes: text("notes"),
