@@ -691,9 +691,46 @@ export default function AdminDashboard() {
 
             {/* Deals & User Requirements Section */}
             <TabsContent value="deals">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Deal Pipeline - Takes up 2 columns */}
-                <div className="lg:col-span-2 space-y-6">
+              {/* Submenu for Deals Section */}
+              <Tabs defaultValue="submissions" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
+                  <TabsTrigger 
+                    value="submissions" 
+                    data-testid="tab-submissions-submenu"
+                    className="flex items-center gap-2 h-auto py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="text-sm font-medium">Submissions</span>
+                    {notificationCounts.submissions > 0 && (
+                      <Badge className="ml-1 bg-red-500 text-white text-xs">{notificationCounts.submissions}</Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="pipeline" 
+                    data-testid="tab-pipeline-submenu"
+                    className="flex items-center gap-2 h-auto py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Deal Management</span>
+                    {notificationCounts.signups > 0 && (
+                      <Badge className="ml-1 bg-red-500 text-white text-xs">{notificationCounts.signups}</Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="messages" 
+                    data-testid="tab-messages-submenu"
+                    className="flex items-center gap-2 h-auto py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="text-sm font-medium">Messages</span>
+                    {notificationCounts.messages > 0 && (
+                      <Badge className="ml-1 bg-blue-500 text-white text-xs">{notificationCounts.messages}</Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Submissions Tab */}
+                <TabsContent value="submissions">
                 {/* Search and Filter */}
                 <Card className="border-0 shadow-lg">
                   <CardContent className="p-6">
@@ -1122,8 +1159,10 @@ export default function AdminDashboard() {
                     </Button>
                   </div>
                 )}
+                </TabsContent>
 
-                  {/* Deal Management Pipeline Card */}
+                {/* Deal Management Pipeline Tab */}
+                <TabsContent value="pipeline">
                   <Card className="border-0 shadow-lg">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-3">
@@ -1153,10 +1192,11 @@ export default function AdminDashboard() {
                       />
                     </CardContent>
                   </Card>
-                </div>
+                </TabsContent>
 
-                {/* Messages Sidebar - 1 column */}
-                <div className="lg:col-span-1">
+                {/* Messages Tab */}
+                <TabsContent value="messages">
+                  <div className="lg:col-span-1">
                   <Card className="border-0 shadow-lg sticky top-6">
                     <CardHeader className="pb-4">
                       <CardTitle className="flex items-center justify-between text-lg">
@@ -1233,7 +1273,8 @@ export default function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </div>
-              </div>
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             {/* Backend Management Section */}
