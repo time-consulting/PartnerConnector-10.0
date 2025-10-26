@@ -130,7 +130,7 @@ export default function AdminDashboard() {
   const [sentDealsExpanded, setSentDealsExpanded] = useState(true);
   const [userSearchTerm, setUserSearchTerm] = useState("");
   const [searchedUsers, setSearchedUsers] = useState<any[]>([]);
-  const [signupSubTab, setSignupSubTab] = useState("quote_request");
+  const [signupSubTab, setSignupSubTab] = useState("sent_quotes");
   const [sentDealsSearchTerm, setSentDealsSearchTerm] = useState("");
   const [showDocsInDialog, setShowDocsInDialog] = useState(false);
   const [showDecisionDialog, setShowDecisionDialog] = useState(false);
@@ -750,47 +750,130 @@ export default function AdminDashboard() {
                                 index !== arr.length - 1 ? 'border-b border-orange-200' : ''
                               }`}
                             >
-                              <div className="flex justify-between items-start">
+                              <div className="flex justify-between items-start gap-6">
                                 <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-3">
+                                  <div className="flex items-center gap-3 mb-4">
                                     <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
                                     <Badge className="bg-orange-100 text-orange-800 border-0 font-medium px-3 py-1">
                                       NEW REQUEST
                                     </Badge>
+                                    {referral.gdprConsent && (
+                                      <Badge className="bg-green-100 text-green-800 border-0 font-medium px-3 py-1">
+                                        GDPR ✓
+                                      </Badge>
+                                    )}
                                   </div>
                                   
-                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                      <Mail className="w-4 h-4" />
-                                      <span className="text-sm">{referral.businessEmail}</span>
+                                  {/* Contact Information */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                    <div className="flex items-start gap-2 text-gray-700">
+                                      <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                      <div>
+                                        <p className="text-xs text-gray-500 font-medium">Email</p>
+                                        <p className="text-sm">{referral.businessEmail}</p>
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                      <Phone className="w-4 h-4" />
-                                      <span className="text-sm">{referral.businessPhone || 'N/A'}</span>
+                                    <div className="flex items-start gap-2 text-gray-700">
+                                      <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                      <div>
+                                        <p className="text-xs text-gray-500 font-medium">Phone</p>
+                                        <p className="text-sm">{referral.businessPhone || 'Not provided'}</p>
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                      <Calendar className="w-4 h-4" />
-                                      <span className="text-sm">
-                                        Submitted {new Date(referral.submittedAt).toLocaleDateString()}
-                                      </span>
+                                    <div className="flex items-start gap-2 text-gray-700">
+                                      <Calendar className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                      <div>
+                                        <p className="text-xs text-gray-500 font-medium">Submitted</p>
+                                        <p className="text-sm">
+                                          {new Date(referral.submittedAt).toLocaleDateString()}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
 
+                                  {/* Business Details */}
+                                  {(referral.businessAddress || referral.businessTypeId) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-white/60 rounded-lg">
+                                      {referral.businessAddress && (
+                                        <div>
+                                          <p className="text-xs text-gray-500 font-medium mb-1">Business Address</p>
+                                          <p className="text-sm text-gray-700">{referral.businessAddress}</p>
+                                        </div>
+                                      )}
+                                      {referral.businessTypeId && (
+                                        <div>
+                                          <p className="text-xs text-gray-500 font-medium mb-1">Business Type</p>
+                                          <p className="text-sm text-gray-700">{referral.businessTypeId}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Current Processor Information */}
+                                  {(referral.currentProcessor || referral.monthlyVolume || referral.currentRate) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-blue-50/60 rounded-lg border-l-4 border-blue-400">
+                                      <div>
+                                        <p className="text-xs text-gray-500 font-medium mb-1">Current Processor</p>
+                                        <p className="text-sm text-gray-700 font-semibold">{referral.currentProcessor || 'Not specified'}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-gray-500 font-medium mb-1">Monthly Volume</p>
+                                        <p className="text-sm text-gray-700 font-semibold">{referral.monthlyVolume || 'Not specified'}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-gray-500 font-medium mb-1">Current Rate</p>
+                                        <p className="text-sm text-gray-700 font-semibold">{referral.currentRate || 'Not specified'}</p>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Products and Services */}
+                                  {(referral.selectedProducts?.length > 0 || referral.cardMachineQuantity || referral.fundingAmount) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-purple-50/60 rounded-lg">
+                                      {referral.selectedProducts?.length > 0 && (
+                                        <div className="md:col-span-2">
+                                          <p className="text-xs text-gray-500 font-medium mb-1">Selected Products</p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {referral.selectedProducts.map((product: string, idx: number) => (
+                                              <Badge key={idx} className="bg-purple-100 text-purple-800 border-0">
+                                                {product}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {referral.cardMachineQuantity && (
+                                        <div>
+                                          <p className="text-xs text-gray-500 font-medium mb-1">Card Machines</p>
+                                          <p className="text-sm text-gray-700 font-semibold">{referral.cardMachineQuantity}</p>
+                                        </div>
+                                      )}
+                                      {referral.fundingAmount && (
+                                        <div>
+                                          <p className="text-xs text-gray-500 font-medium mb-1">Funding Amount</p>
+                                          <p className="text-sm text-gray-700 font-semibold">£{referral.fundingAmount}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Partner Notes */}
                                   {referral.notes && (
-                                    <div className="mt-3 p-3 bg-white/60 border-l-4 border-blue-400 rounded">
-                                      <p className="text-sm text-gray-700"><strong>Partner Notes:</strong> {referral.notes}</p>
+                                    <div className="mt-3 p-3 bg-amber-50/60 border-l-4 border-amber-400 rounded">
+                                      <p className="text-xs text-gray-500 font-medium mb-1">Partner Notes</p>
+                                      <p className="text-sm text-gray-700">{referral.notes}</p>
                                     </div>
                                   )}
                                 </div>
                                 
-                                <div className="ml-6">
+                                <div className="flex-shrink-0">
                                   <Button
                                     size="lg"
                                     onClick={() => {
                                       setSelectedReferral(referral);
                                       setShowQuoteModal(true);
                                     }}
-                                    className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg"
+                                    className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg whitespace-nowrap"
                                     data-testid={`button-create-quote-${referral.id}`}
                                   >
                                     <Plus className="w-4 h-4 mr-2" />
