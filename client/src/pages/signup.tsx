@@ -29,6 +29,7 @@ const signupSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string().min(1, "Please confirm your password"),
+  referralCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -42,17 +43,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [referralCode, setReferralCode] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const refCode = params.get('ref');
-    if (refCode) {
-      setReferralCode(refCode);
-      console.log('[SIGNUP] Referral code detected:', refCode);
-    }
-  }, []);
 
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
@@ -60,8 +51,18 @@ export default function SignupPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      referralCode: "",
     },
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+      form.setValue('referralCode', refCode);
+      console.log('[SIGNUP] Referral code detected:', refCode);
+    }
+  }, [form]);
 
   const onSubmit = async (data: SignupForm) => {
     setIsLoading(true);
@@ -73,9 +74,9 @@ export default function SignupPage() {
       };
 
       // Include referral code if present
-      if (referralCode) {
-        payload.referralCode = referralCode;
-        console.log('[SIGNUP] Including referral code:', referralCode);
+      if (data.referralCode && data.referralCode.trim()) {
+        payload.referralCode = data.referralCode.trim().toUpperCase();
+        console.log('[SIGNUP] Including referral code:', payload.referralCode);
       }
 
       const response = await apiRequest('POST', '/api/auth/register', payload);
@@ -102,6 +103,8 @@ export default function SignupPage() {
       setIsLoading(false);
     }
   };
+
+  const referralCodeValue = form.watch('referralCode');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -131,7 +134,7 @@ export default function SignupPage() {
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
           <div className="max-w-md w-full">
             <div className="text-center mb-8">
-              {referralCode ? (
+              {referralCodeValue ? (
                 <Badge className="mb-4 bg-gradient-to-r from-teal-600 to-green-600 text-white" data-testid="badge-invited">
                   <Sparkles className="w-3 h-3 mr-1" />
                   You've Been Invited!
@@ -146,17 +149,17 @@ export default function SignupPage() {
                 Create Your Account
               </h1>
               <p className="text-gray-600">
-                {referralCode 
+                {referralCodeValue 
                   ? "Join via referral and start earning commissions"
                   : "Start earning commissions today"
                 }
               </p>
             </div>
 
-            {referralCode && (
+            {referralCodeValue && (
               <div className="mb-6 p-4 bg-teal-50 rounded-lg border-2 border-teal-200" data-testid="referral-code-display">
-                <p className="text-sm text-gray-600 mb-1">Your Referral Code</p>
-                <p className="text-xl font-bold text-teal-600 font-mono" data-testid="text-referral-code">{referralCode}</p>
+                <p className="text-sm text-gray-600 mb-1">Joining with Referral Code</p>
+                <p className="text-xl font-bold text-teal-600 font-mono" data-testid="text-referral-code">{referralCodeValue}</p>
               </div>
             )}
 
@@ -263,6 +266,33 @@ export default function SignupPage() {
                     {form.formState.errors.confirmPassword && (
                       <p className="text-sm text-red-600">{form.formState.errors.confirmPassword.message}</p>
                     )}
+                  </div>
+
+                  {/* Referral Code (Optional) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="referralCode" className="flex items-center gap-2">
+                      Referral Code 
+                      <span className="text-xs text-gray-500 font-normal">(Optional)</span>
+                    </Label>
+                    <Input
+                      id="referralCode"
+                      type="text"
+                      placeholder="e.g., ADMIN001 or PC-001.1"
+                      disabled={isLoading}
+                      className="font-mono uppercase"
+                      data-testid="input-referral-code"
+                      {...form.register("referralCode")}
+                      onChange={(e) => {
+                        const value = e.target.value.toUpperCase();
+                        form.setValue('referralCode', value);
+                      }}
+                    />
+                    {form.formState.errors.referralCode && (
+                      <p className="text-sm text-red-600">{form.formState.errors.referralCode.message}</p>
+                    )}
+                    <p className="text-xs text-gray-500">
+                      Have a referral code? Enter it to join a partner's team
+                    </p>
                   </div>
 
                   {/* Submit Button */}
