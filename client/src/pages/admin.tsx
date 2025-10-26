@@ -379,10 +379,16 @@ export default function AdminDashboard() {
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setShowConfirmPaymentModal(false);
       confirmPaymentForm.reset();
+      
+      // Show breakdown of commission distribution
+      if (data.paymentDetails?.distributionBreakdown) {
+        const breakdown = data.paymentDetails.distributionBreakdown;
+        console.log(`✅ Commission distributed to ${breakdown.length} people:`, breakdown);
+      }
     },
   });
 
