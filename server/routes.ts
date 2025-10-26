@@ -2452,6 +2452,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Preview commission distribution before payment
+  app.post('/api/admin/referrals/:referralId/preview-commission', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { actualCommission } = req.body;
+
+      // Get referral details
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
+      
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      const totalCommission = parseFloat(actualCommission);
+      const submitterId = referral.referrerId;
+      
+      // Calculate commission distribution
+      const distribution: any[] = [];
+      
+      // Commission tiers
+      const tiers = [
+        { percentage: 60, label: 'Direct Commission' },
+        { percentage: 20, label: 'Level 1 Override' },
+        { percentage: 10, label: 'Level 2 Override' },
+      ];
+
+      // Walk up the chain
+      let currentUserId = submitterId;
+      
+      for (let i = 0; i < tiers.length; i++) {
+        if (!currentUserId) break;
+        
+        const tier = tiers[i];
+        const amount = (totalCommission * tier.percentage) / 100;
+        
+        // Get user details
+        const user = await storage.getUser(currentUserId);
+        
+        if (user) {
+          distribution.push({
+            userId: currentUserId,
+            userName: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email,
+            email: user.email,
+            partnerId: user.partnerId,
+            amount: amount,
+            percentage: tier.percentage,
+            label: tier.label,
+            level: i
+          });
+        }
+        
+        // Move to next person in chain
+        if (i < tiers.length - 1) {
+          currentUserId = user?.parentPartnerId || null;
+        }
+      }
+
+      res.json({ 
+        success: true,
+        totalCommission,
+        businessName: referral.businessName,
+        distribution
+      });
+    } catch (error) {
+      console.error("Error previewing commission:", error);
+      res.status(500).json({ message: "Failed to preview commission" });
+    }
+  });
+
   // Confirm payment section for commission amounts
   app.post('/api/admin/referrals/:referralId/confirm-payment', requireAuth, requireAdmin, async (req: any, res) => {
     try {
