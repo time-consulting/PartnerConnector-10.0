@@ -54,14 +54,15 @@ A PostgreSQL database underpins the application, featuring core entities such as
 - **Navigation**: Desktop side navigation (expandable) and mobile hamburger menu.
 - **Quotes Page**: Card-based grid layout with a full-screen detail modal and distinct customer journey stages.
 - **Referral Form Redesign**: Streamlined 3-stage mobile-first flow without an earnings preview sidebar.
-- **Admin Portal**: Comprehensive dashboard with tabs for submissions, users, MLM network, analytics, and settings.
+- **Admin Portal**: Streamlined two-tab structure: (1) Quote Requests showing new submissions with comprehensive details (business info, current processor, products, funding), (2) Deal Management Pipeline with 7 progression stages. Removed duplicate quote request subtab for clarity.
 - **Training System**: Gamified learning hub with progression (Bronze to Platinum Partner), achievement badges, and learning streaks.
+- **Referral Status**: Default status changed from 'pending' to 'submitted' to ensure new referrals appear immediately in Quote Requests tab.
 
 ## Features and Functionality
 - **Quotes Management**: View, approve, question, request rate changes, and send quotes to clients.
 - **Onboarding System**: Mandatory multi-step onboarding for new users.
 - **Team Tracking & MLM**: Referral code generation, hierarchical team linking (L1=60%, L2=20%, L3=10% commissions), and real-time team analytics.
-- **Admin Portal**: Deal management, CSV export, analytics, and system settings.
+- **Admin Portal**: Streamlined dashboard with single Quote Requests tab (status='submitted'), Deal Management Pipeline with 7 subtabs (Sent Quotes, Sign Up, Docs Out, Awaiting Docs, Approved, Complete, Declined), CSV export, analytics, and system settings.
 - **Mobile Engagement**: Real-time notifications via WebSockets, quick add form, push notifications via Web Push API, PWA support with offline mode, and voice input.
 - **Custom Login Page**: Consolidated login page supporting all Replit Auth methods.
 - **Contact Form**: Full-width dialog for enhanced desktop experience.
