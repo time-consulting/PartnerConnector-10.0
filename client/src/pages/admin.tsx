@@ -725,6 +725,100 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
 
+                {/* Live (Awaiting Payment) - Approved Deals Ready for Commission Payment */}
+                {referralsData?.referrals && referralsData.referrals.filter((r: any) => r.status === 'approved').length > 0 && (
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-l-green-500">
+                    <CardHeader className="bg-gradient-to-r from-green-100/50 to-emerald-100/50">
+                      <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <DollarSign className="w-6 h-6 text-green-600" />
+                        Live (Awaiting Payment) - ({referralsData.referrals.filter((r: any) => r.status === 'approved').length} ready for commission)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="space-y-1">
+                        {referralsData.referrals
+                          .filter((r: any) => r.status === 'approved')
+                          .map((referral: any, index: number, arr: any[]) => (
+                            <div
+                              key={referral.id}
+                              className={`p-6 hover:bg-white/80 transition-all duration-200 ${
+                                index !== arr.length - 1 ? 'border-b border-green-200' : ''
+                              }`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
+                                    <Badge className="bg-green-100 text-green-800 border-0 font-medium px-3 py-1">
+                                      READY FOR PAYMENT
+                                    </Badge>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <Mail className="w-4 h-4" />
+                                      <span className="text-sm">{referral.businessEmail}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <Phone className="w-4 h-4" />
+                                      <span className="text-sm">{referral.businessPhone || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <Calendar className="w-4 h-4" />
+                                      <span className="text-sm">
+                                        Approved {referral.approvalDate ? new Date(referral.approvalDate).toLocaleDateString() : 'Recently'}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-green-700">
+                                      <DollarSign className="w-4 h-4" />
+                                      <span className="text-sm font-bold">
+                                        £{referral.estimatedCommission || '0.00'} Commission
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {referral.referrerId && users && (
+                                    <div className="mt-3 p-3 bg-white/60 border-l-4 border-blue-400 rounded">
+                                      <p className="text-sm text-gray-700">
+                                        <strong>Submitted by:</strong>{' '}
+                                        {(() => {
+                                          const partner = users.find((u: any) => u.id === referral.referrerId);
+                                          return partner ? `${partner.firstName} ${partner.lastName} (${partner.email})` : 'Partner Info Unavailable';
+                                        })()}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="ml-6">
+                                  <Button
+                                    size="lg"
+                                    onClick={() => {
+                                      setSelectedReferral(referral);
+                                      setShowConfirmPaymentModal(true);
+                                      setPaymentStep('input');
+                                      confirmPaymentForm.reset({
+                                        actualCommission: referral.estimatedCommission || '',
+                                        paymentReference: '',
+                                        paymentMethod: 'Bank Transfer',
+                                        paymentNotes: ''
+                                      });
+                                    }}
+                                    className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                                    data-testid={`button-confirm-payment-quick-${referral.id}`}
+                                  >
+                                    <DollarSign className="w-4 h-4 mr-2" />
+                                    Confirm Payment
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Quote Requests - Referrals Needing Quotes */}
                 {referralsData?.referrals && referralsData.referrals.filter((r: any) => !r.quoteGenerated && r.status !== 'rejected').length > 0 && (
                   <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-l-orange-500">
