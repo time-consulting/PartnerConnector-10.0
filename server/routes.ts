@@ -2479,62 +2479,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedReferral = await storage.updateReferral(referralId, updateData);
 
-      // Create or update commission approval record
-      const approval = await storage.createCommissionApproval({
-        referralId: referralId,
-        userId: referral.referrerId,
-        commissionAmount: actualCommission.toString(),
-        clientBusinessName: referral.businessName,
-        approvalStatus: 'approved',
-        approvedAt: new Date(),
-        paymentStatus: 'completed',
-        paymentDate: new Date(),
-        paymentReference: paymentReference,
-        adminNotes: paymentNotes,
-        ratesData: {
-          baseCommission: actualCommission,
-          commissionRate: referral.commissionPercentage || '60%',
-          level: referral.referralLevel || 1,
-          paymentMethod: paymentMethod || 'Bank Transfer'
-        }
-      });
+      // Distribute commissions across the upline chain (60%, 20%, 10%)
+      const approvals = await storage.distributeUplineCommissions(
+        referralId,
+        parseFloat(actualCommission),
+        paymentReference,
+        paymentMethod || 'Bank Transfer'
+      );
 
-      // Create notification for user
-      await createNotificationForUser(referral.referrerId, {
-        type: 'commission_paid',
-        title: 'Commission Payment Confirmed',
-        message: `Your commission of £${actualCommission} for ${referral.businessName} has been paid. Reference: ${paymentReference}`,
-        referralId: referralId,
-        businessName: referral.businessName,
-        metadata: {
-          amount: actualCommission,
-          paymentReference: paymentReference,
-          paymentMethod: paymentMethod || 'Bank Transfer'
-        }
-      });
-
-      // Send push notification for commission approval
-      await pushNotificationService.sendCommissionApprovalNotification(
-        referral.referrerId,
-        {
+      // Send notifications to each person in the commission chain
+      for (const approval of approvals) {
+        const commissionPercentage = parseFloat(approval.ratesData?.commissionRate || '0%');
+        const commissionAmount = parseFloat(approval.commissionAmount);
+        const commissionType = approval.ratesData?.commissionType || 'direct';
+        
+        await createNotificationForUser(approval.userId, {
+          type: 'commission_paid',
+          title: commissionType === 'direct' ? 'Commission Payment Confirmed' : 'Override Commission Paid',
+          message: `You earned £${commissionAmount.toFixed(2)} (${commissionPercentage}% ${commissionType} commission) for ${referral.businessName}. Reference: ${approval.paymentReference}`,
           referralId: referralId,
           businessName: referral.businessName,
-          amount: parseFloat(actualCommission),
-          level: referral.referralLevel || 1,
-          percentage: parseFloat(referral.commissionPercentage || '60')
-        }
-      );
+          metadata: {
+            amount: commissionAmount,
+            percentage: commissionPercentage,
+            commissionType: commissionType,
+            paymentReference: approval.paymentReference,
+            paymentMethod: paymentMethod || 'Bank Transfer'
+          }
+        });
+
+        // Send push notification
+        await pushNotificationService.sendCommissionApprovalNotification(
+          approval.userId,
+          {
+            referralId: referralId,
+            businessName: referral.businessName,
+            amount: commissionAmount,
+            level: approval.ratesData?.level || 1,
+            percentage: commissionPercentage
+          }
+        );
+      }
 
       res.json({ 
         success: true, 
-        message: "Payment confirmed and commission processed successfully",
+        message: `Payment confirmed and distributed to ${approvals.length} people in the commission chain`,
         referral: updatedReferral,
-        approval: approval,
+        approvals: approvals,
         paymentDetails: {
-          amount: actualCommission,
+          totalAmount: actualCommission,
           reference: paymentReference,
           method: paymentMethod || 'Bank Transfer',
-          date: new Date()
+          date: new Date(),
+          distributionBreakdown: approvals.map(a => ({
+            userId: a.userId,
+            amount: parseFloat(a.commissionAmount),
+            percentage: a.ratesData?.commissionRate,
+            type: a.ratesData?.commissionType
+          }))
         }
       });
     } catch (error) {
