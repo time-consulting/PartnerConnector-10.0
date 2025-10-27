@@ -125,8 +125,10 @@ const productCategories = [
   "Business Funding",
   "Utilities",
   "Insurance",
-  "Banking",
-  "POS Systems"
+  "POS Systems",
+  "Restaurant Bookings",
+  "Website",
+  "Marketing and AI automation"
 ];
 
 const monthlyVolumeOptions = [
@@ -181,7 +183,7 @@ function ContactForm({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs defaultValue="contact-info" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-gray-100 to-slate-200 dark:from-gray-800 dark:to-gray-700 p-1 rounded-xl shadow-lg">
+          <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-gray-100 to-slate-200 dark:from-gray-800 dark:to-gray-700 p-1 rounded-xl shadow-lg">
             <TabsTrigger 
               value="contact-info" 
               data-testid="tab-contact-info"
@@ -202,13 +204,6 @@ function ContactForm({
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
             >
               Notes
-            </TabsTrigger>
-            <TabsTrigger 
-              value="communication" 
-              data-testid="tab-communication"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
-            >
-              Communication
             </TabsTrigger>
           </TabsList>
 
@@ -287,6 +282,14 @@ function ContactForm({
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Visual separator and Business Info heading */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Building className="w-5 h-5 text-green-600" />
+                Business Information
+              </h3>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -380,13 +383,13 @@ function ContactForm({
               name="addressLine1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address Line 1</FormLabel>
+                  <FormLabel>Business Address Line 1</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       value={field.value || ""}
                       data-testid="input-address-line1"
-                      placeholder="Enter address line 1"
+                      placeholder="Enter business address line 1"
                     />
                   </FormControl>
                   <FormMessage />
@@ -399,13 +402,13 @@ function ContactForm({
               name="addressLine2"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address Line 2</FormLabel>
+                  <FormLabel>Business Address Line 2</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       value={field.value || ""}
                       data-testid="input-address-line2"
-                      placeholder="Enter address line 2"
+                      placeholder="Enter business address line 2 (optional)"
                     />
                   </FormControl>
                   <FormMessage />
