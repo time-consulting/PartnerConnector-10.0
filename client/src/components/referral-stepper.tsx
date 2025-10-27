@@ -76,7 +76,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
   const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Fetch existing referrals for search
-  const { data: existingReferrals = [] } = useQuery({
+  const { data: existingReferrals = [] } = useQuery<any[]>({
     queryKey: ['/api/referrals'],
   });
 
