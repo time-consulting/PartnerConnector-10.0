@@ -223,6 +223,7 @@ export default function AdminDashboard() {
     const counts = {
       submissions: 0,
       signups: 0,
+      pipeline: 0,
       completedDeals: 0,
       messages: 0,
     };
@@ -230,22 +231,24 @@ export default function AdminDashboard() {
     // Count submissions that need review (new or quote_requested status)
     if (referralsData?.referrals) {
       counts.submissions = referralsData.referrals.filter(
-        (r: any) => r.status === 'new' || r.status === 'quote_requested'
+        (r: any) => r.status === 'submitted'
       ).length;
     }
 
-    // Count signups that need action (NOT already actioned with docs_out or awaiting_docs)
+    // Count signups that need action (awaiting_signup or agreement_sent)
     if (signups) {
-      counts.signups = signups.filter((s: any) => {
-        // Exclude deals that have already been actioned
-        if (s.customerJourneyStatus === 'docs_out' || s.customerJourneyStatus === 'awaiting_docs') {
-          return false;
-        }
-        // Need docs out if status is still at agreement_sent
-        if (s.customerJourneyStatus === 'agreement_sent') return true;
-        // Need commission payment if ready
-        if (s.billUploadRequired && s.billUploaded && !s.commissionPaid) return true;
-        if (!s.billUploadRequired && !s.commissionPaid) return true;
+      counts.signups = signups.filter((s: any) => 
+        s.customerJourneyStatus === 'awaiting_signup' || s.customerJourneyStatus === 'agreement_sent'
+      ).length;
+      
+      // Count other pipeline stages that need action
+      counts.pipeline = signups.filter((s: any) => {
+        // All stages except signups
+        const status = s.customerJourneyStatus;
+        if (status === 'awaiting_signup' || status === 'agreement_sent') return false;
+        // Other stages that might need attention
+        if (status === 'docs_out' || status === 'awaiting_docs' || status === 'docs_received') return true;
+        if (status === 'approved' && !s.commissionPaid) return true;
         return false;
       }).length;
     }
@@ -670,9 +673,9 @@ export default function AdminDashboard() {
                   <span className="text-base font-bold">Deals & User Requirements</span>
                 </div>
                 <span className="text-xs text-gray-600">Submissions, Signups, Messages & Completed Deals</span>
-                {(notificationCounts.submissions + notificationCounts.signups + notificationCounts.messages + notificationCounts.completedDeals) > 0 && (
+                {(notificationCounts.submissions + notificationCounts.signups + notificationCounts.pipeline + notificationCounts.messages + notificationCounts.completedDeals) > 0 && (
                   <Badge className="mt-2 bg-red-500 text-white" variant="secondary">
-                    {notificationCounts.submissions + notificationCounts.signups + notificationCounts.messages + notificationCounts.completedDeals}
+                    {notificationCounts.submissions + notificationCounts.signups + notificationCounts.pipeline + notificationCounts.messages + notificationCounts.completedDeals}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -693,7 +696,7 @@ export default function AdminDashboard() {
             <TabsContent value="deals">
               {/* Submenu for Deals Section */}
               <Tabs defaultValue="submissions" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
+                <TabsList className="grid w-full grid-cols-4 mb-6 h-auto">
                   <TabsTrigger 
                     value="submissions" 
                     data-testid="tab-submissions-submenu"
@@ -706,14 +709,25 @@ export default function AdminDashboard() {
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
+                    value="signups" 
+                    data-testid="tab-signups-submenu"
+                    className="flex items-center gap-2 h-auto py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-md"
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="text-sm font-medium">Sign Up</span>
+                    {notificationCounts.signups > 0 && (
+                      <Badge className="ml-1 bg-red-500 text-white text-xs">{notificationCounts.signups}</Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
                     value="pipeline" 
                     data-testid="tab-pipeline-submenu"
                     className="flex items-center gap-2 h-auto py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-md"
                   >
                     <CheckCircle className="h-4 w-4" />
                     <span className="text-sm font-medium">Deal Management</span>
-                    {notificationCounts.signups > 0 && (
-                      <Badge className="ml-1 bg-red-500 text-white text-xs">{notificationCounts.signups}</Badge>
+                    {notificationCounts.pipeline > 0 && (
+                      <Badge className="ml-1 bg-red-500 text-white text-xs">{notificationCounts.pipeline}</Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
@@ -895,6 +909,99 @@ export default function AdminDashboard() {
                     )}
                   </CardContent>
                 </Card>
+                </TabsContent>
+
+                {/* Sign Up Tab - Shows deals awaiting signup or with agreement sent */}
+                <TabsContent value="signups">
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-l-green-500">
+                    <CardHeader className="bg-gradient-to-r from-green-100/50 to-emerald-100/50">
+                      <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <User className="w-6 h-6 text-green-600" />
+                        Sign Up - Ready for Documents ({signups?.filter((s: any) => s.customerJourneyStatus === 'awaiting_signup' || s.customerJourneyStatus === 'agreement_sent').length || 0})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {signupsLoading ? (
+                        <div className="text-center py-16 px-6">
+                          <div className="animate-spin w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full mx-auto"></div>
+                          <p className="mt-4 text-gray-600">Loading signups...</p>
+                        </div>
+                      ) : signups?.filter((s: any) => s.customerJourneyStatus === 'awaiting_signup' || s.customerJourneyStatus === 'agreement_sent').length > 0 ? (
+                        <div className="space-y-1">
+                          {signups
+                            .filter((s: any) => s.customerJourneyStatus === 'awaiting_signup' || s.customerJourneyStatus === 'agreement_sent')
+                            .map((signup: any, index: number, arr: any[]) => (
+                              <div
+                                key={signup.quoteId}
+                                className={`p-6 hover:bg-white/80 transition-all duration-200 ${
+                                  index !== arr.length - 1 ? 'border-b border-green-200' : ''
+                                }`}
+                              >
+                                <div className="flex justify-between items-start gap-6">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-4">
+                                      <h3 className="font-bold text-xl text-gray-900">{signup.businessName}</h3>
+                                      <Badge className="bg-green-100 text-green-800 border-0 font-medium px-3 py-1">
+                                        {signup.customerJourneyStatus === 'agreement_sent' ? 'AGREEMENT SENT' : 'AWAITING SIGNUP'}
+                                      </Badge>
+                                    </div>
+                                    
+                                    {/* Business Details */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                      <div className="space-y-2">
+                                        <p className="text-xs text-gray-500 font-medium">Business Email</p>
+                                        <p className="text-sm text-gray-700">{signup.businessEmail}</p>
+                                      </div>
+                                      {signup.ownerFirstName && (
+                                        <div className="space-y-2">
+                                          <p className="text-xs text-gray-500 font-medium">Owner</p>
+                                          <p className="text-sm text-gray-700">{signup.ownerFirstName} {signup.ownerLastName}</p>
+                                        </div>
+                                      )}
+                                      {signup.estimatedCommission && (
+                                        <div className="space-y-2">
+                                          <p className="text-xs text-gray-500 font-medium">Est. Commission</p>
+                                          <p className="text-sm font-bold text-green-600">£{parseFloat(signup.estimatedCommission).toFixed(2)}</p>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Partner Info */}
+                                    <div className="mt-3 p-3 bg-green-50/60 border-l-4 border-green-400 rounded">
+                                      <p className="text-xs text-gray-500 font-medium mb-1">Referred By</p>
+                                      <p className="text-sm text-gray-700">{signup.partnerName} ({signup.partnerEmail})</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex-shrink-0">
+                                    <Button
+                                      size="lg"
+                                      onClick={() => {
+                                        setSelectedSignupForDocs(signup);
+                                        setShowDocsOutDialog(true);
+                                      }}
+                                      className="bg-green-600 hover:bg-green-700 text-white shadow-lg whitespace-nowrap"
+                                      data-testid={`button-docs-out-${signup.quoteId}`}
+                                    >
+                                      <Send className="w-4 h-4 mr-2" />
+                                      Send Docs Out
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-16 px-6">
+                          <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <CheckCircle className="w-10 h-10 text-green-600" />
+                          </div>
+                          <h3 className="text-xl font-bold text-gray-900 mb-2">All Clear!</h3>
+                          <p className="text-gray-600">No signups waiting for documents at the moment.</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
                 {/* Deal Management Pipeline Tab - Shows quote sent and beyond */}
