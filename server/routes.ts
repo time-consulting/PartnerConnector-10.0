@@ -838,21 +838,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Document upload routes for quotes
-  app.post('/api/quotes/:id/documents', requireAuth, upload.single('document'), async (req: any, res) => {
+  app.post('/api/quotes/:id/documents', requireAuth, (req: any, res, next) => {
+    upload.single('document')(req, res, (err) => {
+      if (err) {
+        console.error("Multer error:", err);
+        if (!res.headersSent) {
+          return res.status(400).json({ message: err.message || "File upload error" });
+        }
+        return;
+      }
+      next();
+    });
+  }, async (req: any, res) => {
     try {
       const file = req.file;
       const { documentType } = req.body;
       
       if (!file || !documentType) {
-        return res.status(400).json({ message: "Missing file or document type" });
+        if (!res.headersSent) {
+          return res.status(400).json({ message: "Missing file or document type" });
+        }
+        return;
       }
 
       const quote = await storage.getQuoteById(req.params.id);
       if (!quote) {
-        return res.status(404).json({ message: "Quote not found" });
+        if (!res.headersSent) {
+          return res.status(404).json({ message: "Quote not found" });
+        }
+        return;
       }
 
-      const upload = await storage.createQuoteBillUpload(
+      const uploadRecord = await storage.createQuoteBillUpload(
         req.params.id,
         quote.referralId,
         file.originalname,
@@ -862,10 +879,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentType
       );
 
-      res.json(upload);
+      if (!res.headersSent) {
+        res.json(uploadRecord);
+      }
     } catch (error) {
       console.error("Error uploading document:", error);
-      res.status(500).json({ message: "Failed to upload document" });
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to upload document" });
+      }
     }
   });
 
