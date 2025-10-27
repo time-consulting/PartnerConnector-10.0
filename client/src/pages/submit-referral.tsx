@@ -37,9 +37,26 @@ export default function SubmitReferral() {
   });
 
   const submitReferralMutation = useMutation({
-    mutationFn: async (referralData: any) => {
+    mutationFn: async ({ referralData, files }: { referralData: any; files: File[] }) => {
+      // First, create the referral
       const response = await apiRequest("POST", "/api/referrals", referralData);
-      return response.json();
+      const referral = await response.json();
+      
+      // Then, upload files if any
+      if (files && files.length > 0) {
+        const formData = new FormData();
+        files.forEach((file) => {
+          formData.append('bills', file);
+        });
+        
+        await fetch(`/api/referrals/${referral.id}/upload-bill`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+      }
+      
+      return referral;
     },
     onSuccess: (data) => {
       setSubmittedReferralId(data.id);
@@ -75,8 +92,8 @@ export default function SubmitReferral() {
     },
   });
 
-  const handleReferralSubmit = (data: any) => {
-    submitReferralMutation.mutate(data);
+  const handleReferralSubmit = (data: any, files: File[]) => {
+    submitReferralMutation.mutate({ referralData: data, files });
   };
 
 

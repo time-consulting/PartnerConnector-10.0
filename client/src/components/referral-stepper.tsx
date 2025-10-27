@@ -40,7 +40,7 @@ type FormData = z.infer<typeof stepperFormSchema>;
 
 interface ReferralStepperProps {
   businessTypes: any[];
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: FormData, files: File[]) => void;
   isSubmitting: boolean;
 }
 
@@ -142,7 +142,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
     const isValid = await form.trigger();
     if (isValid) {
       const data = form.getValues();
-      onSubmit(data);
+      onSubmit(data, uploadedFiles);
     }
   };
 

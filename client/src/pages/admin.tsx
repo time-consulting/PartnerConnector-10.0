@@ -905,21 +905,11 @@ export default function AdminDashboard() {
                                     </div>
                                   )}
 
-                                  {/* Current Processor Information */}
-                                  {(referral.currentProcessor || referral.monthlyVolume || referral.currentRate) && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-blue-50/60 rounded-lg border-l-4 border-blue-400">
-                                      <div>
-                                        <p className="text-xs text-gray-500 font-medium mb-1">Current Processor</p>
-                                        <p className="text-sm text-gray-700 font-semibold">{referral.currentProcessor || 'Not specified'}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs text-gray-500 font-medium mb-1">Monthly Volume</p>
-                                        <p className="text-sm text-gray-700 font-semibold">{referral.monthlyVolume || 'Not specified'}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs text-gray-500 font-medium mb-1">Current Rate</p>
-                                        <p className="text-sm text-gray-700 font-semibold">{referral.currentRate || 'Not specified'}</p>
-                                      </div>
+                                  {/* Monthly Volume Information */}
+                                  {referral.monthlyVolume && (
+                                    <div className="mb-4 p-3 bg-blue-50/60 rounded-lg border-l-4 border-blue-400">
+                                      <p className="text-xs text-gray-500 font-medium mb-1">Monthly Card Volume</p>
+                                      <p className="text-lg text-blue-700 font-bold">£{parseInt(referral.monthlyVolume || '0').toLocaleString()}</p>
                                     </div>
                                   )}
 
