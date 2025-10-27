@@ -935,6 +935,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark quote as New to Card (NTC)
+  app.post('/api/quotes/:id/mark-ntc', requireAuth, async (req: any, res) => {
+    try {
+      const quote = await storage.getQuoteById(req.params.id);
+      
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      // Only the quote owner can mark it as NTC
+      if (quote.createdBy !== req.user.id) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Update the quote to mark it as new_to_card
+      await storage.updateQuote(req.params.id, {
+        businessType: 'new_to_card',
+        estimatedCommission: '280.00', // NTC commission
+      });
+
+      res.json({ message: "Quote marked as New to Card" });
+    } catch (error) {
+      console.error("Error marking quote as NTC:", error);
+      res.status(500).json({ message: "Failed to mark as NTC" });
+    }
+  });
+
   // Legacy bill upload route (keep for backward compatibility)
   app.post('/api/quotes/:id/bill-upload', requireAuth, async (req: any, res) => {
     try {

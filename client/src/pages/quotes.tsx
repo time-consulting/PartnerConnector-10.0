@@ -126,14 +126,14 @@ function QuoteQASection({ quoteId, quote }: { quoteId: string; quote?: any }) {
   );
 }
 
-// Document Upload Section Component
+// Document Upload Section Component - Improved "Almost Done" experience
 function DocumentUploadSection({ quoteId, quote }: { quoteId: string; quote: any }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showDocTypeDialog, setShowDocTypeDialog] = useState(false);
-  const [documentType, setDocumentType] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [showNTCWarning, setShowNTCWarning] = useState(false);
+  const [markingNTC, setMarkingNTC] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch uploaded documents for this quote
@@ -146,28 +146,17 @@ function DocumentUploadSection({ quoteId, quote }: { quoteId: string; quote: any
     },
   });
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Auto-upload when file is selected
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setShowDocTypeDialog(true);
-    }
-  };
+    if (!file) return;
 
-  const handleUpload = async () => {
-    if (!selectedFile || !documentType) {
-      toast({
-        title: "Missing information",
-        description: "Please select both a file and document type",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    setSelectedFile(file);
     setUploading(true);
+
     const formData = new FormData();
-    formData.append('document', selectedFile);
-    formData.append('documentType', documentType);
+    formData.append('document', file);
+    formData.append('documentType', 'switcher_statement'); // Default to switcher statement
 
     try {
       const response = await fetch(`/api/quotes/${quoteId}/documents`, {
@@ -177,12 +166,10 @@ function DocumentUploadSection({ quoteId, quote }: { quoteId: string; quote: any
 
       if (response.ok) {
         toast({
-          title: "Document uploaded",
-          description: "Your document has been submitted successfully",
+          title: "Document uploaded successfully!",
+          description: "Your statement has been submitted for review",
         });
         setSelectedFile(null);
-        setDocumentType("");
-        setShowDocTypeDialog(false);
         refetchDocs();
         queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
         if (fileInputRef.current) {
@@ -199,6 +186,34 @@ function DocumentUploadSection({ quoteId, quote }: { quoteId: string; quote: any
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleMarkAsNTC = async () => {
+    setMarkingNTC(true);
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/mark-ntc`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Marked as New to Card",
+          description: "Your quote will be processed with NTC pricing",
+        });
+        setShowNTCWarning(false);
+        queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+      } else {
+        throw new Error('Failed to mark as NTC');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update quote. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMarkingNTC(false);
     }
   };
 
@@ -225,188 +240,224 @@ function DocumentUploadSection({ quoteId, quote }: { quoteId: string; quote: any
     }
   };
 
-  // Get required documents from quote
-  const requiredDocs = quote?.requiredDocuments || [];
-  
-  // Document type options with display names
-  const docTypes = [
-    { value: 'switcher_statement', label: 'Switcher Statement', description: 'Latest card processing statement' },
-    { value: 'proof_of_bank', label: 'Proof of Bank', description: 'Bank statement or letter' },
-    { value: 'photo_id', label: 'Photo ID', description: 'Driving license or passport' },
-    { value: 'other', label: 'Other', description: 'Other supporting document' },
-  ];
-
-  // Check which required docs have been uploaded
-  const getDocStatus = (docType: string) => {
-    return uploadedDocs.some((doc: any) => doc.documentType === docType);
-  };
+  const hasUploadedStatement = uploadedDocs.some((doc: any) => doc.documentType === 'switcher_statement');
 
   return (
-    <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <Upload className="h-5 w-5" />
-        Upload Documents
-      </h3>
-
-      {/* Required Documents Section */}
-      {requiredDocs.length > 0 && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-          <h4 className="font-semibold text-sm text-blue-900 mb-3 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" />
-            Required Documents
-          </h4>
-          <div className="space-y-2">
-            {docTypes.filter(dt => requiredDocs.includes(dt.value)).map((docType) => {
-              const isUploaded = getDocStatus(docType.value);
-              return (
-                <div
-                  key={docType.value}
-                  className={`flex items-center justify-between p-3 rounded-lg ${
-                    isUploaded ? 'bg-green-100 border border-green-300' : 'bg-white border border-blue-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {isUploaded ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-blue-600" />
-                    )}
-                    <div>
-                      <p className={`font-medium text-sm ${isUploaded ? 'text-green-900' : 'text-blue-900'}`}>
-                        {docType.label}
-                      </p>
-                      <p className={`text-xs ${isUploaded ? 'text-green-700' : 'text-blue-700'}`}>
-                        {docType.description}
-                      </p>
-                    </div>
-                  </div>
-                  {isUploaded && (
-                    <Badge className="bg-green-600 text-white">Uploaded</Badge>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-8 border-2 border-blue-200">
+      {/* Almost Done Header */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+          <CheckCircle2 className="h-8 w-8 text-white" />
         </div>
-      )}
-
-      {/* Uploaded Documents List */}
-      {uploadedDocs.length > 0 && (
-        <div className="mb-6">
-          <h4 className="font-semibold text-sm text-gray-700 mb-3">Your Uploaded Documents</h4>
-          <div className="space-y-2">
-            {uploadedDocs.map((doc: any) => {
-              const docTypeInfo = docTypes.find(dt => dt.value === doc.documentType);
-              return (
-                <div
-                  key={doc.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <FileText className="h-5 w-5 text-gray-600" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
-                      <p className="text-xs text-gray-600">{docTypeInfo?.label || doc.documentType}</p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDownload(doc.id, doc.fileName)}
-                    className="ml-2"
-                    data-testid={`button-download-${doc.id}`}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Upload Button */}
-      <div className="space-y-3">
-        <Input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,.pdf"
-          onChange={handleFileSelect}
-          className="hidden"
-          id="document-upload"
-          data-testid="input-document-file"
-        />
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700"
-          data-testid="button-select-document"
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          Select Document to Upload
-        </Button>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Almost Done! 🎉</h2>
+        <p className="text-lg text-gray-700">
+          Upload a bill from your current payment processor
+        </p>
+        <p className="text-sm text-gray-600 mt-1">
+          (Your highest monthly statement from the last 6 months)
+        </p>
       </div>
 
-      {/* Document Type Selection Dialog */}
-      <Dialog open={showDocTypeDialog} onOpenChange={setShowDocTypeDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>What type of document is this?</DialogTitle>
-            <p className="text-sm text-gray-600 mt-2">
-              Selected file: <span className="font-medium">{selectedFile?.name}</span>
-            </p>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            {docTypes.map((type) => (
-              <button
-                key={type.value}
-                onClick={() => setDocumentType(type.value)}
-                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                  documentType === type.value
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                }`}
-                data-testid={`button-doc-type-${type.value}`}
+      {/* Uploaded Documents Display */}
+      {uploadedDocs.length > 0 && (
+        <div className="mb-6 bg-white rounded-2xl p-6 border-2 border-green-200">
+          <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            Uploaded Documents
+          </h4>
+          <div className="space-y-2">
+            {uploadedDocs.map((doc: any) => (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    documentType === type.value ? 'border-blue-600' : 'border-gray-300'
-                  }`}>
-                    {documentType === type.value && (
-                      <div className="w-3 h-3 rounded-full bg-blue-600" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{type.label}</p>
-                    <p className="text-sm text-gray-600">{type.description}</p>
+                <div className="flex items-center gap-3 flex-1">
+                  <FileText className="h-5 w-5 text-green-600" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
+                    <p className="text-xs text-green-700">Uploaded successfully</p>
                   </div>
                 </div>
-              </button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDownload(doc.id, doc.fileName)}
+                  className="ml-2 border-green-300"
+                  data-testid={`button-download-${doc.id}`}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+              </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Main Action Buttons */}
+      {!hasUploadedStatement && (
+        <div className="space-y-4 mb-6">
+          {/* Upload Document Button */}
+          <div className="bg-white rounded-2xl p-6 border-2 border-blue-300 hover:border-blue-500 transition-all">
+            <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+              <Upload className="h-5 w-5 text-blue-600" />
+              Option 1: Upload Your Statement
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Get the best rates based on your processing history
+            </p>
+            <Input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+              id="document-upload"
+              data-testid="input-document-file"
+              disabled={uploading}
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="w-full h-14 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg font-semibold"
+              data-testid="button-upload-statement"
+            >
+              {uploading ? (
+                <>
+                  <Clock className="mr-2 h-5 w-5 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-5 w-5" />
+                  Upload Statement
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Mark as No Statement Button */}
+          <div className="bg-white rounded-2xl p-6 border-2 border-gray-300 hover:border-orange-400 transition-all">
+            <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              Option 2: I Don't Have a Statement
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              New business or prefer flat rate pricing
+            </p>
+            <Button
+              onClick={() => setShowNTCWarning(true)}
+              variant="outline"
+              className="w-full h-14 rounded-xl border-2 border-orange-400 hover:bg-orange-50 text-lg font-semibold"
+              data-testid="button-mark-no-statement"
+            >
+              <FileText className="mr-2 h-5 w-5" />
+              Mark as No Statement Available
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Skip Button */}
+      {!hasUploadedStatement && quote?.businessType !== 'new_to_card' && (
+        <div className="text-center">
+          <p className="text-sm text-gray-500 bg-yellow-50 border border-yellow-300 rounded-xl p-4">
+            <AlertCircle className="inline h-4 w-4 mr-1" />
+            Your quote cannot be processed until you upload a statement or mark as NTC
+          </p>
+        </div>
+      )}
+
+      {/* Confirmation Message if already uploaded */}
+      {hasUploadedStatement && (
+        <div className="text-center bg-white rounded-2xl p-6 border-2 border-green-300">
+          <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
+          <h3 className="font-bold text-lg text-green-900 mb-2">
+            Thank you! Your statement has been received
+          </h3>
+          <p className="text-gray-700">
+            Our team will review your submission and prepare your custom quote
+          </p>
+        </div>
+      )}
+
+      {/* NTC Warning Dialog */}
+      <Dialog open={showNTCWarning} onOpenChange={setShowNTCWarning}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <AlertCircle className="h-6 w-6 text-orange-600" />
+              New to Card (NTC) Pricing
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4">
+              <p className="font-semibold text-orange-900 mb-2">
+                ⚠️ Without a processing statement, you'll receive our NTC package:
+              </p>
+            </div>
+
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-5 space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-gray-900">Terminal Options</p>
+                  <p className="text-sm text-gray-600">Pay once or monthly - £39</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-gray-900">Processing Rates</p>
+                  <p className="text-sm text-gray-600">Covers up to £4,000 processing volume</p>
+                  <p className="text-sm text-gray-600">1% flat rate surcharge over £4,000</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-gray-900">What's Included</p>
+                  <p className="text-sm text-gray-600">Secure transactions & Dojo plan included</p>
+                </div>
+              </div>
+
+              <div className="border-t-2 border-gray-200 pt-3 mt-3">
+                <div className="flex items-start gap-3">
+                  <DollarSign className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-gray-900">Your Commission</p>
+                    <p className="text-sm text-gray-600">£280 total (60% split = £168 for you)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+              <p className="text-sm text-blue-900">
+                <strong>Perfect for:</strong> New businesses or those who prefer simple, flat-rate pricing
+              </p>
+            </div>
+          </div>
+
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => {
-                setShowDocTypeDialog(false);
-                setSelectedFile(null);
-                setDocumentType("");
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = '';
-                }
-              }}
+              onClick={() => setShowNTCWarning(false)}
               className="flex-1"
-              data-testid="button-cancel-upload"
+              data-testid="button-cancel-ntc"
             >
               Cancel
             </Button>
             <Button
-              onClick={handleUpload}
-              disabled={!documentType || uploading}
-              className="flex-1"
-              data-testid="button-confirm-upload"
+              onClick={handleMarkAsNTC}
+              disabled={markingNTC}
+              className="flex-1 bg-orange-600 hover:bg-orange-700"
+              data-testid="button-confirm-ntc"
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {markingNTC ? 'Processing...' : 'Confirm NTC Pricing'}
             </Button>
           </div>
         </DialogContent>
