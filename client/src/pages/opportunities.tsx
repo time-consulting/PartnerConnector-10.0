@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 // import { useToast } from "@/hooks/use-toast"; // Temporarily disabled due to React hook violations
@@ -160,54 +159,30 @@ function OpportunityForm({
   };
 
   return (
-    <div className="max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 rounded-2xl p-4 sm:p-6 dialog-content-mobile">
-      {/* Modern Dialog Header */}
-      <div className="text-center mb-8 pb-6 border-b border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-xl">
-          <Plus className="w-8 h-8 text-white" />
+    <div className="h-[85vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Building className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {opportunity ? formData.businessName || "Edit Opportunity" : "New Opportunity"}
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {opportunity ? "Update details and track progress" : "Add a new opportunity to your pipeline"}
+            </p>
+          </div>
         </div>
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent mb-2">
-          {opportunity ? "Edit Opportunity" : "Create New Opportunity"}
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">
-          {opportunity ? "Update the details below to modify this opportunity" : "Fill in the details below to create a new sales opportunity"}
-        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <Tabs defaultValue="opportunity-info" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-gray-100 to-slate-200 dark:from-gray-800 dark:to-gray-700 p-1 rounded-xl shadow-lg">
-            <TabsTrigger 
-              value="opportunity-info" 
-              data-testid="tab-opportunity-info"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
-            >
-              Opportunity Info
-            </TabsTrigger>
-            <TabsTrigger 
-              value="contact-details" 
-              data-testid="tab-contact-details"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
-            >
-              Contact Details
-            </TabsTrigger>
-            <TabsTrigger 
-              value="deal-info" 
-              data-testid="tab-deal-info"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
-            >
-              Deal Info
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notes-actions" 
-              data-testid="tab-notes-actions"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-semibold transition-all duration-200"
-            >
-              Notes & Actions
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="opportunity-info" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+        {/* Split Screen Layout */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* LEFT SIDE - 60% width on desktop, full width on mobile */}
+          <div className="w-full lg:w-[60%] overflow-y-auto p-6 space-y-6">
+            {/* Business Name */}
             <div className="space-y-2">
               <Label htmlFor="businessName" className="text-gray-900 dark:text-white font-semibold text-sm">Business Name *</Label>
               <Input
@@ -221,254 +196,260 @@ function OpportunityForm({
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="status" className="text-gray-900 dark:text-white font-semibold text-sm">Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-                >
-                  <SelectTrigger data-testid="select-status" className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg h-11 text-gray-900 dark:text-white bg-white dark:bg-gray-800 shadow-sm transition-all duration-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
-                    {statusOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value} className="hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 cursor-pointer">{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Contact Details Section */}
+            <div className="space-y-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="contactFirstName">First Name</Label>
+                  <Input
+                    id="contactFirstName"
+                    value={formData.contactFirstName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contactFirstName: e.target.value }))}
+                    data-testid="input-contact-first-name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contactLastName">Last Name</Label>
+                  <Input
+                    id="contactLastName"
+                    value={formData.contactLastName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contactLastName: e.target.value }))}
+                    data-testid="input-contact-last-name"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="stage" className="text-gray-900 dark:text-white font-semibold text-sm">Stage</Label>
-                <Select 
-                  value={formData.stage} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, stage: value }))}
-                >
-                  <SelectTrigger data-testid="select-stage" className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg h-11 text-gray-900 dark:text-white bg-white dark:bg-gray-800 shadow-sm transition-all duration-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
-                    {stageOptions.map(stage => (
-                      <SelectItem key={stage} value={stage} className="hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 cursor-pointer">
-                        {stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="priority">Priority</Label>
-                <Select 
-                  value={formData.priority} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
-                >
-                  <SelectTrigger data-testid="select-priority">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorityOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="businessType">Business Type</Label>
-                <Select 
-                  value={formData.businessType} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, businessType: value }))}
-                >
-                  <SelectTrigger data-testid="select-business-type">
-                    <SelectValue placeholder="Select business type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {businessTypes.map(type => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <Label className="text-gray-900 dark:text-white font-semibold text-sm">Product Interests</Label>
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200/50 dark:border-blue-700/50">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {productCategories.map(product => (
-                    <label key={product} className="flex items-center space-x-3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={formData.productInterest.includes(product)}
-                        onChange={() => toggleProductInterest(product)}
-                        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-2 w-4 h-4 transition-all duration-200"
-                        data-testid={`checkbox-product-${product.toLowerCase().replace(/\s+/g, '-')}`}
-                      />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">{product}</span>
-                    </label>
-                  ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="contactEmail">Email</Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={formData.contactEmail}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
+                    data-testid="input-contact-email"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contactPhone">Phone</Label>
+                  <Input
+                    id="contactPhone"
+                    value={formData.contactPhone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
+                    data-testid="input-contact-phone"
+                  />
                 </div>
               </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="contact-details" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="contactFirstName">Contact First Name</Label>
-                <Input
-                  id="contactFirstName"
-                  value={formData.contactFirstName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, contactFirstName: e.target.value }))}
-                  data-testid="input-contact-first-name"
-                />
+            {/* Business Details Section */}
+            <div className="space-y-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Business Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="businessType">Business Type</Label>
+                  <Select 
+                    value={formData.businessType} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, businessType: value }))}
+                  >
+                    <SelectTrigger data-testid="select-business-type">
+                      <SelectValue placeholder="Select business type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {businessTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select 
+                    value={formData.status} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger data-testid="select-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="contactLastName">Contact Last Name</Label>
-                <Input
-                  id="contactLastName"
-                  value={formData.contactLastName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, contactLastName: e.target.value }))}
-                  data-testid="input-contact-last-name"
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="contactEmail">Contact Email</Label>
-                <Input
-                  id="contactEmail"
-                  type="email"
-                  value={formData.contactEmail}
-                  onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
-                  data-testid="input-contact-email"
-                />
-              </div>
-              <div>
-                <Label htmlFor="contactPhone">Contact Phone</Label>
-                <Input
-                  id="contactPhone"
-                  value={formData.contactPhone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
-                  data-testid="input-contact-phone"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="decisionMakers">Decision Makers</Label>
-              <Textarea
-                id="decisionMakers"
-                value={formData.decisionMakers}
-                onChange={(e) => setFormData(prev => ({ ...prev, decisionMakers: e.target.value }))}
-                placeholder="List the key decision makers and their roles..."
-                data-testid="textarea-decision-makers"
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="deal-info" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="estimatedValue">Estimated Value (£)</Label>
-                <Input
-                  id="estimatedValue"
-                  value={formData.estimatedValue}
-                  onChange={(e) => setFormData(prev => ({ ...prev, estimatedValue: e.target.value }))}
-                  placeholder="0"
-                  data-testid="input-estimated-value"
-                />
-              </div>
-              <div>
-                <Label htmlFor="currentMonthlyVolume">Current Monthly Volume (£)</Label>
-                <Input
-                  id="currentMonthlyVolume"
-                  value={formData.currentMonthlyVolume}
-                  onChange={(e) => setFormData(prev => ({ ...prev, currentMonthlyVolume: e.target.value }))}
-                  placeholder="0"
-                  data-testid="input-monthly-volume"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="stage">Stage</Label>
+                  <Select 
+                    value={formData.stage} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, stage: value }))}
+                  >
+                    <SelectTrigger data-testid="select-stage">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stageOptions.map(stage => (
+                        <SelectItem key={stage} value={stage}>
+                          {stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select 
+                    value={formData.priority} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
+                  >
+                    <SelectTrigger data-testid="select-priority">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priorityOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="expectedCloseDate">Expected Close Date</Label>
-                <Input
-                  id="expectedCloseDate"
-                  type="date"
-                  value={formData.expectedCloseDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, expectedCloseDate: e.target.value }))}
-                  data-testid="input-close-date"
-                />
+            {/* Deal Information Section */}
+            <div className="space-y-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Deal Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="estimatedValue">Estimated Value (£)</Label>
+                  <Input
+                    id="estimatedValue"
+                    value={formData.estimatedValue}
+                    onChange={(e) => setFormData(prev => ({ ...prev, estimatedValue: e.target.value }))}
+                    placeholder="0"
+                    data-testid="input-estimated-value"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="currentMonthlyVolume">Monthly Volume (£)</Label>
+                  <Input
+                    id="currentMonthlyVolume"
+                    value={formData.currentMonthlyVolume}
+                    onChange={(e) => setFormData(prev => ({ ...prev, currentMonthlyVolume: e.target.value }))}
+                    placeholder="0"
+                    data-testid="input-monthly-volume"
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="assignedTo">Assigned To</Label>
-                <Input
-                  id="assignedTo"
-                  value={formData.assignedTo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
-                  placeholder="Partner or team member"
-                  data-testid="input-assigned-to"
-                />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="expectedCloseDate">Expected Close Date</Label>
+                  <Input
+                    id="expectedCloseDate"
+                    type="date"
+                    value={formData.expectedCloseDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, expectedCloseDate: e.target.value }))}
+                    data-testid="input-close-date"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="assignedTo">Assigned To</Label>
+                  <Input
+                    id="assignedTo"
+                    value={formData.assignedTo}
+                    onChange={(e) => setFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
+                    placeholder="Partner or team member"
+                    data-testid="input-assigned-to"
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="painPoints">Pain Points & Challenges</Label>
-              <Textarea
-                id="painPoints"
-                value={formData.painPoints}
-                onChange={(e) => setFormData(prev => ({ ...prev, painPoints: e.target.value }))}
-                placeholder="What challenges is the prospect facing that our solution can address?"
-                data-testid="textarea-pain-points"
-              />
+            {/* Product Interests Section */}
+            <div className="space-y-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Product Interests</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {productCategories.map(product => (
+                  <label key={product} className="flex items-center space-x-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={formData.productInterest.includes(product)}
+                      onChange={() => toggleProductInterest(product)}
+                      className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-2 w-4 h-4 transition-all duration-200"
+                      data-testid={`checkbox-product-${product.toLowerCase().replace(/\s+/g, '-')}`}
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">{product}</span>
+                  </label>
+                ))}
+              </div>
             </div>
+          </div>
 
-            <div>
-              <Label htmlFor="competitorInfo">Competitor Information</Label>
-              <Textarea
-                id="competitorInfo"
-                value={formData.competitorInfo}
-                onChange={(e) => setFormData(prev => ({ ...prev, competitorInfo: e.target.value }))}
-                placeholder="Current providers, competitor quotes, market position..."
-                data-testid="textarea-competitor-info"
-              />
-            </div>
-          </TabsContent>
+          {/* VERTICAL BORDER - Hidden on mobile */}
+          <div className="hidden lg:block w-px bg-gradient-to-b from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700"></div>
 
-          <TabsContent value="notes-actions" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <div>
-              <Label htmlFor="notes">Notes</Label>
+          {/* RIGHT SIDE - 40% width on desktop, full width on mobile */}
+          <div className="w-full lg:w-[40%] overflow-y-auto p-6 space-y-6">
+            {/* Notes Section - Large Textarea */}
+            <div className="space-y-2 flex-1">
+              <Label htmlFor="notes" className="text-gray-900 dark:text-white font-semibold text-sm">Notes</Label>
               <Textarea
                 id="notes"
                 value={formData.notes}
                 onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="General notes about this opportunity..."
-                className="min-h-[150px] resize-y"
+                className="min-h-[250px] resize-y border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                 data-testid="textarea-notes"
               />
             </div>
 
-            <div>
-              <Label htmlFor="nextSteps">Next Steps</Label>
+            {/* Next Steps Section */}
+            <div className="space-y-2">
+              <Label htmlFor="nextSteps" className="text-gray-900 dark:text-white font-semibold text-sm">Next Steps</Label>
               <Textarea
                 id="nextSteps"
                 value={formData.nextSteps}
                 onChange={(e) => setFormData(prev => ({ ...prev, nextSteps: e.target.value }))}
                 placeholder="Define next actions and follow-up steps..."
-                className="min-h-[100px] resize-y"
+                className="min-h-[120px] resize-y border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                 data-testid="textarea-next-steps"
               />
             </div>
-          </TabsContent>
-        </Tabs>
 
-        {/* Modern Submit Buttons - Mobile-Responsive */}
-        <div className="pt-8 mt-8 border-t border-gradient-to-r from-gray-200 to-slate-300 dark:from-gray-700 dark:to-gray-600">
+            {/* Pain Points Field */}
+            <div className="space-y-2">
+              <Label htmlFor="painPoints" className="text-gray-900 dark:text-white font-semibold text-sm">Pain Points</Label>
+              <Textarea
+                id="painPoints"
+                value={formData.painPoints}
+                onChange={(e) => setFormData(prev => ({ ...prev, painPoints: e.target.value }))}
+                placeholder="What challenges is the prospect facing?"
+                className="min-h-[100px] resize-y border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                data-testid="textarea-pain-points"
+              />
+            </div>
+
+            {/* Competitor Info Field */}
+            <div className="space-y-2">
+              <Label htmlFor="competitorInfo" className="text-gray-900 dark:text-white font-semibold text-sm">Competitor Info</Label>
+              <Textarea
+                id="competitorInfo"
+                value={formData.competitorInfo}
+                onChange={(e) => setFormData(prev => ({ ...prev, competitorInfo: e.target.value }))}
+                placeholder="Current providers, competitor quotes..."
+                className="min-h-[100px] resize-y border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                data-testid="textarea-competitor-info"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER - Spans Full Width */}
+        <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
           
           {/* Mobile Layout - Stacked buttons */}
           <div className="flex flex-col space-y-4 sm:hidden">
