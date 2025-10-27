@@ -103,7 +103,12 @@ const confirmPaymentSchema = z.object({
 // Component to display referral documents with view/download
 function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
   const { data: documents = [] } = useQuery({
-    queryKey: [`/api/referrals/${referralId}/bills`],
+    queryKey: ['/api/referrals', referralId, 'bills'],
+    queryFn: async () => {
+      const response = await fetch(`/api/referrals/${referralId}/bills`);
+      if (!response.ok) throw new Error('Failed to fetch documents');
+      return response.json();
+    },
     enabled: !!referralId,
   });
 
@@ -126,20 +131,6 @@ function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
     }
   };
 
-  const handleView = async (docId: string, fileName: string) => {
-    try {
-      const response = await fetch(`/api/referrals/${referralId}/bills/${docId}/download`);
-      if (!response.ok) throw new Error('View failed');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => window.URL.revokeObjectURL(url), 100);
-    } catch (error) {
-      console.error('View error:', error);
-    }
-  };
-
   if (!documents || documents.length === 0) {
     return null;
   }
@@ -159,35 +150,31 @@ function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <FileText className="h-4 w-4 text-indigo-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
+                <a
+                  href={`/api/referrals/${referralId}/bills/${doc.id}/download`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline truncate block"
+                  data-testid={`link-document-${doc.id}`}
+                >
+                  {doc.fileName}
+                </a>
                 <p className="text-xs text-gray-500">
-                  {new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString()} at{' '}
-                  {new Date(doc.uploadedAt || doc.createdAt).toLocaleTimeString()}
+                  Uploaded {new Date(doc.uploadedAt).toLocaleDateString()} at{' '}
+                  {new Date(doc.uploadedAt).toLocaleTimeString()}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2 ml-2 flex-shrink-0">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleView(doc.id, doc.fileName)}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                data-testid={`button-view-${doc.id}`}
-              >
-                <Eye className="h-3 w-3 mr-1" />
-                View
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleDownload(doc.id, doc.fileName)}
-                className="border-green-300 text-green-700 hover:bg-green-50"
-                data-testid={`button-download-${doc.id}`}
-              >
-                <Download className="h-3 w-3 mr-1" />
-                Download
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleDownload(doc.id, doc.fileName)}
+              className="border-green-300 text-green-700 hover:bg-green-50 ml-2 flex-shrink-0"
+              data-testid={`button-download-${doc.id}`}
+            >
+              <Download className="h-3 w-3 mr-1" />
+              Download
+            </Button>
           </div>
         ))}
       </div>
