@@ -804,7 +804,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
 
       {/* NTC Pricing Dialog */}
       <Dialog open={showNTCDialog} onOpenChange={setShowNTCDialog}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-blue-600" />
@@ -815,110 +815,117 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6 py-4">
-            {/* Terminal Options */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-              <h4 className="font-semibold text-gray-900 mb-3">Terminal Payment Options:</h4>
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-all">
-                  <input
-                    type="radio"
-                    name="terminal-option"
-                    value="once"
-                    checked={ntcTerminalOption === 'once'}
-                    onChange={() => setNtcTerminalOption('once')}
-                    className="w-4 h-4 text-blue-600"
-                  />
-                  <div>
-                    <p className="font-semibold text-gray-900">Pay Once - £79</p>
-                    <p className="text-sm text-gray-600">One-time payment for terminal</p>
-                  </div>
-                </label>
-                
-                <label className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-all">
-                  <input
-                    type="radio"
-                    name="terminal-option"
-                    value="monthly"
-                    checked={ntcTerminalOption === 'monthly'}
-                    onChange={() => setNtcTerminalOption('monthly')}
-                    className="w-4 h-4 text-blue-600"
-                  />
-                  <div>
-                    <p className="font-semibold text-gray-900">Monthly - £15/month</p>
-                    <p className="text-sm text-gray-600">Spread the cost over time</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Rates Package */}
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-              <h4 className="font-semibold text-gray-900 mb-3">Rates Package - £39</h4>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600">✓</span>
-                  <span>Includes Dojo plan</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600">✓</span>
-                  <span>Covers up to £4,000 monthly processing</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600">✓</span>
-                  <span>1% surcharge on amounts over £4k</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Optional Add-ons */}
-            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-              <h4 className="font-semibold text-gray-900 mb-3">Optional Add-ons:</h4>
-              <div className="space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <Checkbox
-                    checked={ntcHardwareCare}
-                    onCheckedChange={(checked) => setNtcHardwareCare(checked as boolean)}
-                    className="mt-1"
-                  />
-                  <div>
-                    <p className="font-medium text-gray-900">Hardware Care</p>
-                    <p className="text-sm text-gray-600">Extended warranty and support</p>
-                  </div>
-                </label>
-                
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <Checkbox
-                    checked={ntcSevenDaySettlement}
-                    onCheckedChange={(checked) => setNtcSevenDaySettlement(checked as boolean)}
-                    className="mt-1"
-                  />
-                  <div>
-                    <p className="font-medium text-gray-900">7-Day Settlement Upgrade</p>
-                    <p className="text-sm text-gray-600">Faster access to your funds</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Commission Info */}
-            <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-              <div className="flex items-start gap-2 mb-2">
-                <DollarSign className="h-5 w-5 text-amber-600 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-gray-900">Your Commission</p>
-                  <p className="text-sm text-gray-700 mt-1">
-                    <strong>Total:</strong> £280 | <strong>Your Share (60%):</strong> £168
-                  </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            {/* Left Column */}
+            <div className="space-y-4">
+              {/* Terminal Options */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                <h4 className="font-semibold text-gray-900 mb-3">Terminal Payment Options:</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-all">
+                    <input
+                      type="radio"
+                      name="terminal-option"
+                      value="once"
+                      checked={ntcTerminalOption === 'once'}
+                      onChange={() => setNtcTerminalOption('once')}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-900">Pay Once - £79</p>
+                      <p className="text-sm text-gray-600">One-time payment</p>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-all">
+                    <input
+                      type="radio"
+                      name="terminal-option"
+                      value="monthly"
+                      checked={ntcTerminalOption === 'monthly'}
+                      onChange={() => setNtcTerminalOption('monthly')}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-900">Monthly - £15/month</p>
+                      <p className="text-sm text-gray-600">Spread the cost</p>
+                    </div>
+                  </label>
                 </div>
               </div>
+
+              {/* Rates Package */}
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <h4 className="font-semibold text-gray-900 mb-3">Rates Package - £39</h4>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>Includes Dojo plan</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>Covers up to £4,000 monthly processing</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>1% surcharge on amounts over £4k</span>
+                  </li>
+                </ul>
+              </div>
             </div>
 
-            <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> Without processing statements, we cannot calculate exact savings. 
-                NTC pricing is a flat-rate option for new businesses.
-              </p>
+            {/* Right Column */}
+            <div className="space-y-4">
+              {/* Optional Add-ons */}
+              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <h4 className="font-semibold text-gray-900 mb-3">Optional Add-ons:</h4>
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <Checkbox
+                      checked={ntcHardwareCare}
+                      onCheckedChange={(checked) => setNtcHardwareCare(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <div>
+                      <p className="font-medium text-gray-900">Hardware Care</p>
+                      <p className="text-sm text-gray-600">Extended warranty and support</p>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <Checkbox
+                      checked={ntcSevenDaySettlement}
+                      onCheckedChange={(checked) => setNtcSevenDaySettlement(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <div>
+                      <p className="font-medium text-gray-900">7-Day Settlement Upgrade</p>
+                      <p className="text-sm text-gray-600">Faster access to your funds</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Commission Info */}
+              <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                <div className="flex items-start gap-2 mb-2">
+                  <DollarSign className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-gray-900">Your Commission</p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      <strong>Total:</strong> £280 | <strong>Your Share (60%):</strong> £168
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Note */}
+              <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> Without processing statements, we cannot calculate exact savings. 
+                  NTC pricing is a flat-rate option for new businesses.
+                </p>
+              </div>
             </div>
           </div>
 
