@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { CheckCircle, ChevronLeft, ChevronRight, AlertCircle, DollarSign, Building, User, CreditCard, TrendingUp } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, AlertCircle, DollarSign, Building, User, CreditCard, TrendingUp, Upload } from "lucide-react";
 
 // Form schema for the complete stepper
 const stepperFormSchema = insertReferralSchema
@@ -53,6 +53,9 @@ const productOptions = [
 
 export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting }: ReferralStepperProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useState<HTMLInputElement | null>(null)[0];
 
   const form = useForm<FormData>({
     resolver: zodResolver(stepperFormSchema),
@@ -497,12 +500,159 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
               />
             </div>
 
+            {/* Document Upload Section - NEW! */}
+            <div className="bg-white rounded-2xl p-8 border-2 border-gray-200">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Upload Current Payment Processing Bills
+                  <span className="text-sm font-normal text-gray-500">(Optional)</span>
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Upload your current payment processing statements to help us create a more accurate competitive quote. 
+                  This helps ensure better savings for your client.
+                </p>
+              </div>
+
+              {/* Drag and Drop Area */}
+              <div
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragActive(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragActive(false);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragActive(true);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragActive(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    const newFiles = Array.from(e.dataTransfer.files);
+                    setUploadedFiles(prev => [...prev, ...newFiles]);
+                  }
+                }}
+                className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all ${
+                  dragActive 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 flex items-center justify-center">
+                    <Upload className="h-12 w-12 text-gray-400" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-base font-medium text-gray-900">
+                      Drag and drop files here, or click to select
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Supported formats: PDF, JPEG, PNG (Max 10MB each)
+                    </p>
+                  </div>
+
+                  <Input
+                    type="file"
+                    accept="image/*,.pdf"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        const newFiles = Array.from(e.target.files);
+                        setUploadedFiles(prev => [...prev, ...newFiles]);
+                      }
+                    }}
+                    className="hidden"
+                    id="document-upload-stepper"
+                    data-testid="input-document-file"
+                  />
+                  
+                  <Button
+                    type="button"
+                    onClick={() => document.getElementById('document-upload-stepper')?.click()}
+                    variant="outline"
+                    className="mt-2"
+                    data-testid="button-select-files"
+                  >
+                    Select Files
+                  </Button>
+                </div>
+              </div>
+
+              {/* Upload Counter and Files List */}
+              <div className="mt-6">
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                  <CheckCircle className="h-4 w-4" />
+                  Upload Bills ({uploadedFiles.length})
+                </div>
+                
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-3 flex-1">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-gray-900 truncate">{file.name}</p>
+                            <p className="text-xs text-green-700">Ready to upload</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                          className="ml-2"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Why Upload Bills Section */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h4 className="font-semibold text-gray-900 mb-3">Why upload bills?</h4>
+                <p className="text-sm text-gray-600 mb-2">Your current payment processing statements help us:</p>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>Calculate exact savings potential</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>Create more competitive quotes</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>Identify hidden fees in current setup</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>Ensure accurate commission calculations</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
             {/* Ready Banner */}
             <div className="bg-gradient-to-r from-teal-500 to-green-600 rounded-2xl p-6 text-white text-center">
               <div className="text-4xl mb-3">🎯</div>
               <h4 className="text-xl font-bold mb-2">Ready to Submit!</h4>
               <p className="text-teal-50">
-                Your referral will be processed within 24 hours. You'll be able to upload bills after submission.
+                {uploadedFiles.length > 0 
+                  ? `Your referral and ${uploadedFiles.length} file${uploadedFiles.length > 1 ? 's' : ''} will be submitted together.`
+                  : 'Your referral will be processed within 24 hours. You can skip uploading bills for now.'}
               </p>
             </div>
           </div>
