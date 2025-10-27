@@ -100,6 +100,101 @@ const confirmPaymentSchema = z.object({
   paymentNotes: z.string().optional(),
 });
 
+// Component to display referral documents with view/download
+function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
+  const { data: documents = [] } = useQuery({
+    queryKey: ['/api/referrals', referralId, 'bills'],
+    enabled: !!referralId,
+  });
+
+  const handleDownload = async (docId: string, fileName: string) => {
+    try {
+      const response = await fetch(`/api/referrals/${referralId}/bills/${docId}/download`);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download error:', error);
+    }
+  };
+
+  const handleView = async (docId: string, fileName: string) => {
+    try {
+      const response = await fetch(`/api/referrals/${referralId}/bills/${docId}/download`);
+      if (!response.ok) throw new Error('View failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (error) {
+      console.error('View error:', error);
+    }
+  };
+
+  if (!documents || documents.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 p-4 bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg">
+      <div className="flex items-center gap-2 mb-3">
+        <FileText className="w-5 h-5 text-indigo-600" />
+        <p className="text-sm font-semibold text-gray-900">Uploaded Documents ({documents.length})</p>
+      </div>
+      <div className="space-y-2">
+        {documents.map((doc: any) => (
+          <div
+            key={doc.id}
+            className="flex items-center justify-between p-3 bg-white border border-indigo-200 rounded-lg hover:shadow-md transition-all"
+          >
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <FileText className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
+                <p className="text-xs text-gray-500">
+                  {new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString()} at{' '}
+                  {new Date(doc.uploadedAt || doc.createdAt).toLocaleTimeString()}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 ml-2 flex-shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleView(doc.id, doc.fileName)}
+                className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                data-testid={`button-view-${doc.id}`}
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                View
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleDownload(doc.id, doc.fileName)}
+                className="border-green-300 text-green-700 hover:bg-green-50"
+                data-testid={`button-download-${doc.id}`}
+              >
+                <Download className="h-3 w-3 mr-1" />
+                Download
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -806,7 +901,7 @@ export default function AdminDashboard() {
                                   </div>
 
                                   {/* Business Details */}
-                                  {(referral.businessAddress || referral.businessTypeId) && (
+                                  {(referral.businessAddress || referral.businessTypeName) && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-white/60 rounded-lg">
                                       {referral.businessAddress && (
                                         <div>
@@ -814,10 +909,10 @@ export default function AdminDashboard() {
                                           <p className="text-sm text-gray-700">{referral.businessAddress}</p>
                                         </div>
                                       )}
-                                      {referral.businessTypeId && (
+                                      {referral.businessTypeName && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Business Type</p>
-                                          <p className="text-sm text-gray-700">{referral.businessTypeId}</p>
+                                          <p className="text-sm text-gray-700">{referral.businessTypeName}</p>
                                         </div>
                                       )}
                                     </div>
@@ -876,6 +971,19 @@ export default function AdminDashboard() {
                                     <div className="mt-3 p-3 bg-amber-50/60 border-l-4 border-amber-400 rounded">
                                       <p className="text-xs text-gray-500 font-medium mb-1">Partner Notes</p>
                                       <p className="text-sm text-gray-700">{referral.notes}</p>
+                                    </div>
+                                  )}
+
+                                  {/* Uploaded Documents Section */}
+                                  <ReferralDocumentsDisplay referralId={referral.id} />
+
+                                  {/* Partner Information */}
+                                  {(referral.partnerName || referral.partnerEmail) && (
+                                    <div className="mt-3 p-3 bg-teal-50/60 border-l-4 border-teal-400 rounded">
+                                      <p className="text-xs text-gray-500 font-medium mb-1">Referred By</p>
+                                      <p className="text-sm text-gray-700">
+                                        {referral.partnerName} {referral.partnerEmail && `(${referral.partnerEmail})`}
+                                      </p>
                                     </div>
                                   )}
                                 </div>
