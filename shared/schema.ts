@@ -112,6 +112,7 @@ export const products = pgTable("products", {
 
 export const referrals = pgTable("referrals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dealId: varchar("deal_id"), // Deal ID from opportunity pipeline
   referrerId: varchar("referrer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   businessName: varchar("business_name").notNull(),
   businessEmail: varchar("business_email").notNull(),

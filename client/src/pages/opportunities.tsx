@@ -720,6 +720,7 @@ export default function OpportunitiesPage() {
       // Then navigate to submit-referral page with pre-populated data
       const params = new URLSearchParams({
         opportunityId: opportunity.id,
+        dealId: opportunity.dealId || "",
         businessName: opportunity.businessName || "",
         contactFirstName: opportunity.contactFirstName || "",
         contactLastName: opportunity.contactLastName || "",

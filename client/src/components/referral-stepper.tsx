@@ -76,6 +76,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
   const fileInputRef = useState<HTMLInputElement | null>(null)[0];
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [dealId, setDealId] = useState<string | null>(null);
 
   // Fetch existing referrals for search
   const { data: existingReferrals = [] } = useQuery<any[]>({
@@ -121,6 +122,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
     
     if (opportunityId) {
       // Get all parameters from URL
+      const dealIdParam = params.get('dealId');
       const businessName = params.get('businessName');
       const contactFirstName = params.get('contactFirstName');
       const contactLastName = params.get('contactLastName');
@@ -130,6 +132,9 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
       const currentMonthlyVolume = params.get('currentMonthlyVolume');
       const productInterest = params.get('productInterest');
       const notes = params.get('notes');
+      
+      // Store Deal ID
+      if (dealIdParam) setDealId(dealIdParam);
 
       // Populate form fields
       if (businessName) form.setValue('businessName', businessName);
@@ -257,7 +262,9 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
     const isValid = await form.trigger();
     if (isValid) {
       const data = form.getValues();
-      onSubmit(data, uploadedFiles);
+      // Include dealId if it was passed from the opportunity pipeline
+      const submissionData = dealId ? { ...data, dealId } : data;
+      onSubmit(submissionData as FormData, uploadedFiles);
     }
   };
 
