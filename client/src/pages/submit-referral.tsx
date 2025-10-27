@@ -14,7 +14,6 @@ export default function SubmitReferral() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const [submittedReferralId, setSubmittedReferralId] = useState<string | null>(null);
-  const [showBillUpload, setShowBillUpload] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
   // Redirect to login if not authenticated
@@ -45,16 +44,16 @@ export default function SubmitReferral() {
     onSuccess: (data) => {
       setSubmittedReferralId(data.id);
       setShowConfetti(true);
-      setTimeout(() => {
-        setShowBillUpload(true);
-        setShowConfetti(false);
-      }, 2000);
       toast({
         title: "🎉 Referral Submitted Successfully!",
         description: "Your referral has been submitted and will be processed within 24 hours.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/referrals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      // Redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -80,13 +79,6 @@ export default function SubmitReferral() {
     submitReferralMutation.mutate(data);
   };
 
-  const handleBillUploadComplete = () => {
-    setShowBillUpload(false);
-    toast({
-      title: "🎉 Process Complete!",
-      description: "Your referral and bills have been submitted. We'll be in touch with a competitive quote soon.",
-    });
-  };
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -99,67 +91,6 @@ export default function SubmitReferral() {
     );
   }
 
-  // Success screen with confetti animation
-  if (showBillUpload && submittedReferralId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-        <SideNavigation />
-        <div className="lg:ml-16">
-          <Navigation />
-          
-          {/* Confetti Animation Overlay */}
-          {showConfetti && (
-            <div className="fixed inset-0 z-50 pointer-events-none">
-              <div className="absolute inset-0 bg-black/10">
-                <div className="animate-fadeIn">
-                  <Sparkles className="absolute top-1/4 left-1/4 w-8 h-8 text-yellow-500 animate-bounce" />
-                  <Sparkles className="absolute top-1/3 right-1/3 w-6 h-6 text-blue-500 animate-pulse" />
-                  <Sparkles className="absolute bottom-1/3 left-1/3 w-10 h-10 text-green-500 animate-spin" />
-                  <Sparkles className="absolute top-2/3 right-1/4 w-7 h-7 text-purple-500 animate-bounce" />
-                </div>
-              </div>
-            </div>
-          )}
-        
-          {/* Success Hero Section */}
-          <section className="relative overflow-hidden bg-gradient-to-br from-green-50 via-white to-blue-50 py-16">
-            <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <div className="animate-fadeIn">
-                <div className="mb-6">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-2xl mb-4">
-                    <CheckCircleIcon className="w-10 h-10 text-green-600" />
-                  </div>
-                </div>
-                
-                <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
-                  Referral{" "}
-                  <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                    Submitted!
-                  </span>
-                </h1>
-                
-                <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                  🎉 Great! Your referral is now in our system. Upload current payment processing bills 
-                  below to help us create the most competitive quote possible.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Bill Upload Section */}
-          <section className="py-12 bg-white">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-              <BillUpload
-                referralId={submittedReferralId}
-                onComplete={handleBillUploadComplete}
-                isOptional={true}
-              />
-            </div>
-          </section>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">

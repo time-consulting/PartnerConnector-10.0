@@ -11,7 +11,15 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { CheckCircle, ChevronLeft, ChevronRight, AlertCircle, DollarSign, Building, User, CreditCard, TrendingUp, Upload } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, AlertCircle, DollarSign, Building, User, CreditCard, TrendingUp, Upload, FileX } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Form schema for the complete stepper
 const stepperFormSchema = insertReferralSchema
@@ -55,6 +63,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [showNTCDialog, setShowNTCDialog] = useState(false);
   const fileInputRef = useState<HTMLInputElement | null>(null)[0];
 
   const form = useForm<FormData>({
@@ -611,6 +620,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
                           variant="ghost"
                           onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
                           className="ml-2"
+                          data-testid={`button-remove-file-${index}`}
                         >
                           ✕
                         </Button>
@@ -618,6 +628,20 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Mark as No Statement Button */}
+              <div className="mt-6 flex items-center justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNTCDialog(true)}
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                  data-testid="button-mark-no-statement"
+                >
+                  <FileX className="h-4 w-4 mr-2" />
+                  Mark as No Statement (NTC Pricing)
+                </Button>
               </div>
 
               {/* Why Upload Bills Section */}
@@ -696,6 +720,78 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
           )}
         </div>
       </div>
+
+      {/* NTC Pricing Dialog */}
+      <Dialog open={showNTCDialog} onOpenChange={setShowNTCDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-blue-600" />
+              NTC (New to Card) Pricing
+            </DialogTitle>
+            <DialogDescription>
+              For businesses without current processing statements, we offer our NTC pricing structure.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <h4 className="font-semibold text-gray-900 mb-3">NTC Package Details:</h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Terminal Cost:</strong> £39</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Coverage:</strong> Up to £4,000 monthly processing</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Over Limit:</strong> 1% surcharge on amounts over £4k</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Your Commission:</strong> £280 total</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Your Share (60%):</strong> £168</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+              <p className="text-sm text-amber-800">
+                <strong>Note:</strong> Without processing statements, we cannot calculate exact savings. 
+                NTC pricing is a flat-rate option for new businesses or those without documentation.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowNTCDialog(false)}
+              data-testid="button-ntc-cancel"
+            >
+              Back to Upload
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setShowNTCDialog(false);
+                // Mark as NTC (no files needed)
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-ntc-confirm"
+            >
+              Confirm NTC Pricing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Form>
   );
 }
