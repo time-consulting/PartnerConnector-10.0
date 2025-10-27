@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { CheckCircle, ChevronLeft, ChevronRight, AlertCircle, DollarSign, Building, User, CreditCard, TrendingUp, Upload, FileX } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, AlertCircle, DollarSign, Building, User, CreditCard, TrendingUp, Upload, FileX, Search, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
 
 // Form schema for the complete stepper
 const stepperFormSchema = insertReferralSchema
@@ -70,6 +72,13 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
   const [ntcHardwareCare, setNtcHardwareCare] = useState(false);
   const [ntcSevenDaySettlement, setNtcSevenDaySettlement] = useState(false);
   const fileInputRef = useState<HTMLInputElement | null>(null)[0];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Fetch existing referrals for search
+  const { data: existingReferrals = [] } = useQuery({
+    queryKey: ['/api/referrals'],
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(stepperFormSchema),
