@@ -66,6 +66,12 @@ const KANBAN_COLUMNS = [
     id: "submit_lead", 
     title: "Submit Lead", 
     count: 0,
+    color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
+  },
+  { 
+    id: "quote_received", 
+    title: "Quote Received", 
+    count: 0,
     color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
   }
 ];

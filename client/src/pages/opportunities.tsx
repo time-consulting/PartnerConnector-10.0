@@ -69,7 +69,8 @@ const statusOptions = [
   { value: "qualified", label: "Qualified", color: "bg-yellow-100 text-yellow-800" },
   { value: "needs_analysis", label: "Needs Analysis", color: "bg-purple-100 text-purple-800" },
   { value: "solution_proposed", label: "Solution Proposed", color: "bg-orange-100 text-orange-800" },
-  { value: "submit_lead", label: "Submit Lead", color: "bg-green-100 text-green-800" },
+  { value: "submit_lead", label: "Submit Lead", color: "bg-indigo-100 text-indigo-800" },
+  { value: "quote_received", label: "Quote Received", color: "bg-green-100 text-green-800" },
 ];
 
 const stageOptions = [
@@ -78,6 +79,7 @@ const stageOptions = [
   "needs_analysis",
   "solution_proposed",
   "submit_lead",
+  "quote_received",
 ];
 
 const priorityOptions = [
@@ -697,9 +699,15 @@ export default function OpportunitiesPage() {
     const opportunity = opportunities.find((opp: Opportunity) => opp.id === opportunityId);
     if (!opportunity || opportunity.status === newStatus) return;
     
-    // Special handling for "Submit Lead" stage - convert to referral
+    // Special handling for "Submit Lead" stage - navigate to referral form but keep in pipeline
     if (newStatus === "submit_lead") {
-      // Navigate to submit-referral page with pre-populated data
+      // First update the status to "submit_lead"
+      updateOpportunityStatusMutation.mutate({ 
+        id: opportunityId, 
+        status: newStatus 
+      });
+      
+      // Then navigate to submit-referral page with pre-populated data
       const params = new URLSearchParams({
         opportunityId: opportunity.id,
         businessName: opportunity.businessName || "",
@@ -999,6 +1007,7 @@ export default function OpportunitiesPage() {
             </DialogHeader>
             {selectedOpportunity && (
               <OpportunityForm 
+                key={selectedOpportunity.id}
                 opportunity={selectedOpportunity}
                 onClose={() => setSelectedOpportunity(null)}
                 onSave={handleUpdateOpportunity}
