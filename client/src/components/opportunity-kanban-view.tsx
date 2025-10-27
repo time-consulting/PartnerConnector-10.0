@@ -171,6 +171,14 @@ function OpportunityCard({
                 <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                   Active Deal
                 </span>
+                {opportunity.dealId && (
+                  <>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                      {opportunity.dealId}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             {opportunity.priority && (

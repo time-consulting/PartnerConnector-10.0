@@ -668,9 +668,35 @@ export class DatabaseStorage implements IStorage {
 
   // Opportunities operations
   async createOpportunity(opportunityData: InsertOpportunity): Promise<Opportunity> {
+    // Generate a unique Deal ID if not provided
+    let dealId = opportunityData.dealId;
+    if (!dealId) {
+      // Generate a unique Deal ID in format DEAL-12345
+      const timestamp = Date.now().toString().slice(-5);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      dealId = `DEAL-${timestamp}${random}`;
+      
+      // Check for uniqueness and regenerate if needed
+      let attempts = 0;
+      while (attempts < 5) {
+        const existing = await db
+          .select()
+          .from(opportunities)
+          .where(eq(opportunities.dealId, dealId))
+          .limit(1);
+        
+        if (existing.length === 0) break;
+        
+        // Regenerate if duplicate
+        const newRandom = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        dealId = `DEAL-${Date.now().toString().slice(-4)}${newRandom}`;
+        attempts++;
+      }
+    }
+    
     const [opportunity] = await db
       .insert(opportunities)
-      .values(opportunityData)
+      .values({ ...opportunityData, dealId })
       .returning();
     return opportunity;
   }
