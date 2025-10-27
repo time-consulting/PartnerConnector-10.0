@@ -265,8 +265,9 @@ export interface IStorage {
   getAllQuoteMessages(): Promise<any[]>;
   
   // Quote bill upload operations
-  createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string): Promise<any>;
+  createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string): Promise<any>;
   getQuoteBillUploads(quoteId: string): Promise<any[]>;
+  getQuoteBillUploadById(billId: string): Promise<any | undefined>;
   approveQuoteBill(billId: string, adminNotes?: string): Promise<void>;
   rejectQuoteBill(billId: string, adminNotes: string): Promise<void>;
 
@@ -2475,7 +2476,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string): Promise<any> {
+  async createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string): Promise<any> {
     const { quoteBillUploads } = await import("@shared/schema");
     const [upload] = await db
       .insert(quoteBillUploads)
@@ -2486,6 +2487,7 @@ export class DatabaseStorage implements IStorage {
         fileSize,
         fileType,
         uploadedBy,
+        documentType: documentType || 'switcher_statement',
         status: 'pending'
       })
       .returning();
@@ -2509,6 +2511,17 @@ export class DatabaseStorage implements IStorage {
       .from(quoteBillUploads)
       .where(eq(quoteBillUploads.quoteId, quoteId))
       .orderBy(desc(quoteBillUploads.createdAt));
+
+    return result;
+  }
+
+  async getQuoteBillUploadById(billId: string): Promise<any | undefined> {
+    const { quoteBillUploads } = await import("@shared/schema");
+    const [result] = await db
+      .select()
+      .from(quoteBillUploads)
+      .where(eq(quoteBillUploads.id, billId))
+      .limit(1);
 
     return result;
   }
