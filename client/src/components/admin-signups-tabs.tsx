@@ -87,7 +87,75 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     s.customerJourneyStatus === 'declined'
   ) || [];
 
-  // Component to display uploaded documents
+  // Component to display referral or quote documents
+  const ReferralDocumentsSection = ({ referralId, quoteId }: { referralId?: string | null, quoteId?: string | null }) => {
+    const { data: documents = [] } = useQuery({
+      queryKey: referralId ? ['/api/referrals', referralId, 'bills'] : ['/api/quotes', quoteId, 'documents'],
+      enabled: !!(referralId || quoteId),
+    });
+
+    const handleDownload = async (docId: string, fileName: string) => {
+      try {
+        const url = referralId 
+          ? `/api/referrals/${referralId}/bills/${docId}/download`
+          : `/api/quotes/${quoteId}/documents/${docId}/download`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Download failed');
+        
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Download error:', error);
+      }
+    };
+
+    if (!documents || documents.length === 0) {
+      return (
+        <div className="text-sm text-gray-500 italic">
+          No documents uploaded yet
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {documents.map((doc: any) => (
+          <div
+            key={doc.id}
+            className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <FileText className="h-4 w-4 text-gray-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
+                <p className="text-xs text-gray-600">{new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString()}</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleDownload(doc.id, doc.fileName)}
+              className="ml-2 flex-shrink-0"
+              data-testid={`button-admin-download-${doc.id}`}
+            >
+              <Download className="h-3 w-3 mr-1" />
+              Download
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Component to display uploaded documents (legacy, keeping for compatibility)
   const DocumentsSection = ({ quoteId }: { quoteId: string }) => {
     const { data: documents = [] } = useQuery({
       queryKey: ['/api/quotes', quoteId, 'documents'],
@@ -175,11 +243,27 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
                 <p><strong>Business Name:</strong> {data.businessName}</p>
                 {data.tradingName && <p><strong>Trading Name:</strong> {data.tradingName}</p>}
                 <p><strong>Email:</strong> {data.businessEmail}</p>
+                {isReferral && data.businessPhone && <p><strong>Phone:</strong> {data.businessPhone}</p>}
+                {data.businessAddress && <p><strong>Address:</strong> {data.businessAddress}</p>}
                 {data.businessStructure && <p><strong>Structure:</strong> {data.businessStructure}</p>}
-                {data.tradingAddress && <p><strong>Address:</strong> {data.tradingAddress}</p>}
+                {data.tradingAddress && <p><strong>Trading Address:</strong> {data.tradingAddress}</p>}
                 
-                {/* Show switcher statement for quote requests */}
-                {isReferral && data.monthlyCardTurnover && (
+                {/* Show processing info for referrals */}
+                {isReferral && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="font-semibold text-md mb-2">Processing Details</p>
+                    {data.currentProcessor && <p><strong>Current Processor:</strong> {data.currentProcessor}</p>}
+                    {data.monthlyVolume && <p><strong>Monthly Volume:</strong> £{parseFloat(data.monthlyVolume).toLocaleString()}</p>}
+                    {data.currentRate && <p><strong>Current Rate:</strong> {data.currentRate}%</p>}
+                    {data.cardMachineQuantity && <p><strong>Card Machines:</strong> {data.cardMachineQuantity}</p>}
+                    {data.selectedProducts && data.selectedProducts.length > 0 && (
+                      <p><strong>Products:</strong> {data.selectedProducts.join(', ')}</p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Show switcher statement for quotes */}
+                {!isReferral && data.monthlyCardTurnover && (
                   <div className="mt-4 pt-4 border-t">
                     <p className="font-semibold text-md mb-2">Current Provider</p>
                     <p><strong>Provider:</strong> {data.currentProvider}</p>
@@ -202,8 +286,12 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
                 {isReferral ? (
                   <>
                     <p><strong>Name:</strong> {data.contactName}</p>
-                    <p><strong>Email:</strong> {data.contactEmail}</p>
-                    <p><strong>Phone:</strong> {data.contactPhone}</p>
+                    {data.notes && (
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="font-semibold mb-1">Additional Notes:</p>
+                        <p className="text-gray-700 italic">{data.notes}</p>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -247,16 +335,16 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
             </div>
           </div>
 
-          {/* Uploaded Documents Section - only show if there's a quote */}
-          {!isReferral && item.quoteId && (
+          {/* Uploaded Documents Section - show for both referrals and quotes */}
+          {(isReferral && item.id) || (!isReferral && item.quoteId) ? (
             <div className="mt-6 pt-6 border-t">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                 <Upload className="w-5 h-5" />
                 Uploaded Documents
               </h3>
-              <DocumentsSection quoteId={item.quoteId} />
+              <ReferralDocumentsSection referralId={isReferral ? item.id : null} quoteId={!isReferral ? item.quoteId : null} />
             </div>
-          )}
+          ) : null}
 
           {/* Action Buttons */}
           <div className="mt-6 pt-6 border-t">
