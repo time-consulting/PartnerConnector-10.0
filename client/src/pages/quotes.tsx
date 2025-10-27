@@ -1065,15 +1065,15 @@ export default function Quotes() {
                     </div>
                   )}
 
+                  {/* Document Upload Section - Moved higher for prominence */}
+                  <DocumentUploadSection quoteId={selectedQuote.id} quote={selectedQuote} />
+
                   {selectedQuote.adminNotes && (
                     <div className="bg-yellow-50 rounded-2xl p-6 border-2 border-yellow-200">
                       <h4 className="font-semibold text-gray-900 mb-2">Notes from Dojo</h4>
                       <p className="text-gray-700" data-testid="text-admin-notes">{selectedQuote.adminNotes}</p>
                     </div>
                   )}
-
-                  {/* Document Upload Section */}
-                  <DocumentUploadSection quoteId={selectedQuote.id} quote={selectedQuote} />
 
                   {/* Q&A Thread Section */}
                   <QuoteQASection quoteId={selectedQuote.id} quote={selectedQuote} />
