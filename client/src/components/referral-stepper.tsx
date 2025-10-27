@@ -112,6 +112,41 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
     }
   }, []);
 
+  // Filter referrals based on search term
+  const filteredReferrals = existingReferrals.filter((ref: any) => {
+    if (!searchTerm) return false;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      ref.businessName?.toLowerCase().includes(searchLower) ||
+      ref.contactName?.toLowerCase().includes(searchLower) ||
+      ref.businessEmail?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Auto-populate form with selected referral data
+  const handleSelectReferral = (referral: any) => {
+    form.setValue('businessName', referral.businessName || '');
+    form.setValue('contactName', referral.contactName || '');
+    form.setValue('businessEmail', referral.businessEmail || '');
+    form.setValue('businessPhone', referral.businessPhone || '');
+    form.setValue('businessAddress', referral.businessAddress || '');
+    form.setValue('businessTypeId', referral.businessTypeId || '');
+    form.setValue('currentProcessor', referral.currentProcessor || '');
+    form.setValue('monthlyVolume', referral.monthlyVolume || '50000');
+    form.setValue('currentRate', referral.currentRate || '');
+    form.setValue('cardMachineQuantity', referral.cardMachineQuantity || 1);
+    form.setValue('cardMachineProvider', referral.cardMachineProvider || '');
+    
+    // Update monthly volume slider
+    if (referral.monthlyVolume) {
+      setMonthlyVolume([parseInt(referral.monthlyVolume)]);
+    }
+
+    // Close search results
+    setSearchTerm('');
+    setShowSearchResults(false);
+  };
+
   const validateCurrentStep = async () => {
     const values = form.getValues();
     
@@ -176,6 +211,59 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
   return (
     <Form {...form}>
       <div className="w-full">
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search for existing client to auto-fill..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setShowSearchResults(e.target.value.length > 0);
+              }}
+              className="pl-12 pr-10 h-14 text-base rounded-xl border-2 border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+              data-testid="input-search-referral"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setShowSearchResults(false);
+                }}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2"
+              >
+                <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              </button>
+            )}
+          </div>
+
+          {/* Search Results */}
+          {showSearchResults && filteredReferrals.length > 0 && (
+            <Card className="mt-2 p-2 max-h-64 overflow-y-auto border-2 border-teal-200 rounded-xl shadow-lg">
+              {filteredReferrals.map((referral: any) => (
+                <button
+                  key={referral.id}
+                  onClick={() => handleSelectReferral(referral)}
+                  className="w-full text-left p-3 hover:bg-teal-50 rounded-lg transition-colors"
+                  data-testid={`button-select-referral-${referral.id}`}
+                >
+                  <div className="font-semibold text-gray-900">{referral.businessName}</div>
+                  <div className="text-sm text-gray-600">{referral.contactName}</div>
+                  <div className="text-sm text-gray-500">{referral.businessEmail}</div>
+                </button>
+              ))}
+            </Card>
+          )}
+
+          {showSearchResults && searchTerm && filteredReferrals.length === 0 && (
+            <Card className="mt-2 p-4 border-2 border-gray-200 rounded-xl">
+              <p className="text-sm text-gray-500 text-center">No matching clients found</p>
+            </Card>
+          )}
+        </div>
+
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
