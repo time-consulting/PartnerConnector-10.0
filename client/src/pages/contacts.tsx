@@ -1,6 +1,6 @@
 import { useState, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Search, Filter, ArrowUpDown, Mail, Phone, Building, User, Edit3, MoreHorizontal, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpDown, Mail, Phone, Building, User, Edit3, MoreHorizontal, Trash2, ExternalLink, CheckCircle, CreditCard, DollarSign, Zap, Shield, Monitor, Calendar, Globe, Sparkles } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,14 +121,14 @@ const businessTypes = [
 ];
 
 const productCategories = [
-  "Card Machines",
-  "Business Funding",
-  "Utilities",
-  "Insurance",
-  "POS Systems",
-  "Restaurant Bookings",
-  "Website",
-  "Marketing and AI automation"
+  { id: 'card-machines', name: 'Card Machines', icon: CreditCard },
+  { id: 'business-funding', name: 'Business Funding', icon: DollarSign },
+  { id: 'utilities', name: 'Utilities', icon: Zap },
+  { id: 'insurance', name: 'Insurance', icon: Shield },
+  { id: 'pos-systems', name: 'POS Systems', icon: Monitor },
+  { id: 'restaurant-bookings', name: 'Restaurant Bookings', icon: Calendar },
+  { id: 'website', name: 'Website', icon: Globe },
+  { id: 'marketing-ai', name: 'Marketing and AI automation', icon: Sparkles }
 ];
 
 const monthlyVolumeOptions = [
@@ -479,23 +479,35 @@ function ContactForm({
             </div>
           </TabsContent>
 
-          <TabsContent value="product-interest" className="space-y-4 mt-6">
+          <TabsContent value="product-interest" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
             <div>
-              <Label>Product Interests</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
+              <Label className="text-lg font-semibold text-gray-900 dark:text-white mb-4 block">Product Interests</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {productCategories.map(product => {
                   const currentValues = form.watch("interestedProducts") || [];
+                  const isSelected = currentValues.includes(product.name);
+                  const IconComponent = product.icon;
                   return (
-                    <label key={product} className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={currentValues.includes(product)}
-                        onChange={() => toggleProductInterest(product)}
-                        className="rounded border-gray-300"
-                        data-testid={`checkbox-product-${product.toLowerCase().replace(/\s+/g, '-')}`}
-                      />
-                      <span className="text-sm">{product}</span>
-                    </label>
+                    <div
+                      key={product.id}
+                      onClick={() => toggleProductInterest(product.name)}
+                      className={`relative cursor-pointer rounded-2xl border-2 p-5 transition-all ${
+                        isSelected
+                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
+                          : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500'
+                      }`}
+                      data-testid={`product-card-${product.id}`}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-3 right-3">
+                          <CheckCircle className="w-6 h-6 text-teal-600" />
+                        </div>
+                      )}
+                      <div className="mb-3">
+                        <IconComponent className="w-8 h-8 text-teal-600" />
+                      </div>
+                      <h5 className="font-semibold text-gray-900 dark:text-white text-sm">{product.name}</h5>
+                    </div>
                   );
                 })}
               </div>
@@ -548,13 +560,13 @@ function ContactForm({
             />
           </TabsContent>
 
-          <TabsContent value="notes" className="space-y-4 mt-6">
+          <TabsContent value="notes" className="space-y-6 mt-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
             <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                  <FormLabel className="text-lg font-semibold text-gray-900 dark:text-white">Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
@@ -568,14 +580,6 @@ function ContactForm({
                 </FormItem>
               )}
             />
-          </TabsContent>
-
-          <TabsContent value="communication" className="space-y-4 mt-6">
-            <div className="text-center py-8 text-gray-500">
-              <Mail className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p>Email communication history will appear here</p>
-              <p className="text-sm mt-2">Connect your email to see 2-way communication sync</p>
-            </div>
           </TabsContent>
         </Tabs>
 
