@@ -326,6 +326,7 @@ export const contacts = pgTable("contacts", {
 // Opportunities management (renamed from leads)
 export const opportunities = pgTable("opportunities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dealId: varchar("deal_id").unique(), // User-friendly Deal ID (e.g., "DEAL-12345")
   partnerId: varchar("partner_id").notNull().references(() => users.id, { onDelete: "cascade" }), // User who owns this opportunity
   contactId: varchar("contact_id").references(() => contacts.id, { onDelete: "set null" }), // Link to contact (can be null for legacy data)
   businessName: varchar("business_name").notNull(),

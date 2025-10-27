@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertReferralSchema } from "@shared/schema";
 import { z } from "zod";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,6 +64,7 @@ const productOptions = [
 ];
 
 export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting }: ReferralStepperProps) {
+  const [location] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -111,6 +113,75 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
       form.setValue('monthlyVolume', "50000");
     }
   }, []);
+
+  // Auto-populate from URL parameters (when coming from opportunities pipeline)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const opportunityId = params.get('opportunityId');
+    
+    if (opportunityId) {
+      // Get all parameters from URL
+      const businessName = params.get('businessName');
+      const contactFirstName = params.get('contactFirstName');
+      const contactLastName = params.get('contactLastName');
+      const contactEmail = params.get('contactEmail');
+      const contactPhone = params.get('contactPhone');
+      const businessType = params.get('businessType');
+      const currentMonthlyVolume = params.get('currentMonthlyVolume');
+      const productInterest = params.get('productInterest');
+      const notes = params.get('notes');
+
+      // Populate form fields
+      if (businessName) form.setValue('businessName', businessName);
+      if (contactFirstName && contactLastName) {
+        form.setValue('contactName', `${contactFirstName} ${contactLastName}`.trim());
+      }
+      if (contactEmail) form.setValue('businessEmail', contactEmail);
+      if (contactPhone) form.setValue('businessPhone', contactPhone);
+      if (notes) form.setValue('notes', notes);
+      
+      // Find matching business type
+      if (businessType && businessTypes.length > 0) {
+        const matchingType = businessTypes.find((bt: any) => 
+          bt.type?.toLowerCase() === businessType.toLowerCase()
+        );
+        if (matchingType) {
+          form.setValue('businessTypeId', matchingType.id);
+        }
+      }
+
+      // Set monthly volume
+      if (currentMonthlyVolume) {
+        const volumeNum = parseInt(currentMonthlyVolume);
+        if (!isNaN(volumeNum)) {
+          form.setValue('monthlyVolume', currentMonthlyVolume);
+          setMonthlyVolume([volumeNum]);
+        }
+      }
+
+      // Set product interests
+      if (productInterest) {
+        try {
+          const products = JSON.parse(productInterest);
+          if (Array.isArray(products)) {
+            // Map product categories to product IDs
+            const mappedProducts: string[] = [];
+            products.forEach((cat: string) => {
+              if (cat.toLowerCase().includes('card')) mappedProducts.push('card-payments');
+              if (cat.toLowerCase().includes('fund')) mappedProducts.push('business-funding');
+              if (cat.toLowerCase().includes('bank')) mappedProducts.push('open-banking');
+              if (cat.toLowerCase().includes('pos') || cat.toLowerCase().includes('epos')) mappedProducts.push('epos-systems');
+            });
+            if (mappedProducts.length > 0) {
+              form.setValue('selectedProducts', mappedProducts);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to parse product interests:', e);
+        }
+      }
+    }
+  }, [businessTypes]);
 
   // Filter referrals based on search term
   const filteredReferrals = existingReferrals.filter((ref: any) => {
