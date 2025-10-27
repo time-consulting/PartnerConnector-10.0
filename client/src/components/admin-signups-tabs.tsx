@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Building, 
   User, 
@@ -11,7 +12,9 @@ import {
   Clock,
   Send,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Upload
 } from "lucide-react";
 
 interface AdminSignupsTabsProps {
@@ -83,6 +86,77 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   const declinedDeals = signups?.filter((s: any) => 
     s.customerJourneyStatus === 'declined'
   ) || [];
+
+  // Component to display uploaded documents
+  const DocumentsSection = ({ quoteId }: { quoteId: string }) => {
+    const { data: documents = [] } = useQuery({
+      queryKey: ['/api/quotes', quoteId, 'documents'],
+      enabled: !!quoteId,
+    });
+
+    const handleDownload = async (docId: string, fileName: string) => {
+      try {
+        const response = await fetch(`/api/quotes/${quoteId}/documents/${docId}/download`);
+        if (!response.ok) throw new Error('Download failed');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Download error:', error);
+      }
+    };
+
+    const docTypeLabels: Record<string, string> = {
+      'switcher_statement': 'Switcher Statement',
+      'proof_of_bank': 'Proof of Bank',
+      'photo_id': 'Photo ID',
+      'other': 'Other'
+    };
+
+    if (!documents || documents.length === 0) {
+      return (
+        <div className="text-sm text-gray-500 italic">
+          No documents uploaded yet
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {documents.map((doc: any) => (
+          <div
+            key={doc.id}
+            className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <FileText className="h-4 w-4 text-gray-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
+                <p className="text-xs text-gray-600">{docTypeLabels[doc.documentType] || doc.documentType}</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleDownload(doc.id, doc.fileName)}
+              className="ml-2 flex-shrink-0"
+              data-testid={`button-admin-download-${doc.id}`}
+            >
+              <Download className="h-3 w-3 mr-1" />
+              Download
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const renderBusinessCard = (item: any, isReferral: boolean = false) => {
     const data = isReferral ? item : item;
@@ -172,6 +246,17 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
               </div>
             </div>
           </div>
+
+          {/* Uploaded Documents Section - only show if there's a quote */}
+          {!isReferral && item.quoteId && (
+            <div className="mt-6 pt-6 border-t">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                Uploaded Documents
+              </h3>
+              <DocumentsSection quoteId={item.quoteId} />
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="mt-6 pt-6 border-t">
