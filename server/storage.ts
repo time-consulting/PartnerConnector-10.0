@@ -1259,8 +1259,18 @@ export class DatabaseStorage implements IStorage {
     businessType?: string;
     dateFrom?: Date;
     dateTo?: Date;
-  }): Promise<Referral[]> {
-    let query = db.select().from(referrals);
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        ...referrals,
+        businessTypeName: businessTypes.name,
+        partnerName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        partnerEmail: users.email,
+        partnerId: users.partnerId,
+      })
+      .from(referrals)
+      .leftJoin(businessTypes, eq(referrals.businessTypeId, businessTypes.id))
+      .leftJoin(users, eq(referrals.referrerId, users.id));
     
     if (filters?.status) {
       query = query.where(eq(referrals.status, filters.status));
