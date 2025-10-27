@@ -663,13 +663,14 @@ export const quoteBillUploads = pgTable("quote_bill_uploads", {
   fileSize: integer("file_size"),
   fileType: varchar("file_type"),
   uploadedBy: varchar("uploaded_by").notNull().references(() => users.id, { onDelete: "cascade" }),
-  uploadType: varchar("upload_type").notNull().default("switcher_bill"), // switcher_bill, bank_statement, etc.
+  documentType: varchar("document_type").notNull().default("other"), // switcher_statement, proof_of_bank, photo_id, other
   status: varchar("status").notNull().default("pending"), // pending, approved, rejected
   adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("quote_bill_uploads_quote_id_idx").on(table.quoteId),
   index("quote_bill_uploads_referral_id_idx").on(table.referralId),
+  index("quote_bill_uploads_document_type_idx").on(table.documentType),
 ]);
 
 // Notifications for user activity

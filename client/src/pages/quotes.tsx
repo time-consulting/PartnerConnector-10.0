@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User, Upload, AlertCircle, Clock, DollarSign } from "lucide-react";
+import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User, Upload, AlertCircle, Clock, DollarSign, Circle, Download } from "lucide-react";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -127,28 +127,38 @@ function QuoteQASection({ quoteId, quote }: { quoteId: string; quote?: any }) {
 }
 
 // Document Upload Section Component
-function DocumentUploadSection({ quoteId }: { quoteId: string }) {
+function DocumentUploadSection({ quoteId, quote }: { quoteId: string; quote: any }) {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [switcherStatement, setSwitcherStatement] = useState<File | null>(null);
-  const [photoId, setPhotoId] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showDocTypeDialog, setShowDocTypeDialog] = useState(false);
+  const [documentType, setDocumentType] = useState("");
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'statement' | 'id') => {
+  // Fetch uploaded documents for this quote
+  const { data: uploadedDocs = [], refetch: refetchDocs } = useQuery({
+    queryKey: ['/api/quotes', quoteId, 'documents'],
+    queryFn: async () => {
+      const response = await fetch(`/api/quotes/${quoteId}/documents`);
+      if (!response.ok) throw new Error('Failed to fetch documents');
+      return response.json();
+    },
+  });
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (type === 'statement') {
-        setSwitcherStatement(file);
-      } else {
-        setPhotoId(file);
-      }
+      setSelectedFile(file);
+      setShowDocTypeDialog(true);
     }
   };
 
   const handleUpload = async () => {
-    if (!switcherStatement && !photoId) {
+    if (!selectedFile || !documentType) {
       toast({
-        title: "No files selected",
-        description: "Please select at least one document to upload",
+        title: "Missing information",
+        description: "Please select both a file and document type",
         variant: "destructive",
       });
       return;
@@ -156,8 +166,8 @@ function DocumentUploadSection({ quoteId }: { quoteId: string }) {
 
     setUploading(true);
     const formData = new FormData();
-    if (switcherStatement) formData.append('switcherStatement', switcherStatement);
-    if (photoId) formData.append('photoId', photoId);
+    formData.append('document', selectedFile);
+    formData.append('documentType', documentType);
 
     try {
       const response = await fetch(`/api/quotes/${quoteId}/documents`, {
@@ -167,23 +177,68 @@ function DocumentUploadSection({ quoteId }: { quoteId: string }) {
 
       if (response.ok) {
         toast({
-          title: "Documents uploaded",
-          description: "Your documents have been submitted successfully",
+          title: "Document uploaded",
+          description: "Your document has been submitted successfully",
         });
-        setSwitcherStatement(null);
-        setPhotoId(null);
+        setSelectedFile(null);
+        setDocumentType("");
+        setShowDocTypeDialog(false);
+        refetchDocs();
+        queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       } else {
         throw new Error('Upload failed');
       }
     } catch (error) {
       toast({
         title: "Upload failed",
-        description: "There was an error uploading your documents. Please try again.",
+        description: "There was an error uploading your document. Please try again.",
         variant: "destructive",
       });
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleDownload = async (docId: string, fileName: string) => {
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/documents/${docId}/download`);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Could not download the document",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Get required documents from quote
+  const requiredDocs = quote?.requiredDocuments || [];
+  
+  // Document type options with display names
+  const docTypes = [
+    { value: 'switcher_statement', label: 'Switcher Statement', description: 'Latest card processing statement' },
+    { value: 'proof_of_bank', label: 'Proof of Bank', description: 'Bank statement or letter' },
+    { value: 'photo_id', label: 'Photo ID', description: 'Driving license or passport' },
+    { value: 'other', label: 'Other', description: 'Other supporting document' },
+  ];
+
+  // Check which required docs have been uploaded
+  const getDocStatus = (docType: string) => {
+    return uploadedDocs.some((doc: any) => doc.documentType === docType);
   };
 
   return (
@@ -192,78 +247,170 @@ function DocumentUploadSection({ quoteId }: { quoteId: string }) {
         <Upload className="h-5 w-5" />
         Upload Documents
       </h3>
-      
-      <div className="space-y-4">
-        {/* Switcher Statement Upload */}
-        <div>
-          <Label htmlFor="switcherStatement" className="text-sm font-medium mb-2 block">
-            Switcher Statement
-            <span className="text-gray-500 font-normal ml-2">(Highest dated within 6 months)</span>
-          </Label>
-          <div className="flex items-center gap-3">
-            <Input
-              id="switcherStatement"
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => handleFileChange(e, 'statement')}
-              className="flex-1"
-              data-testid="input-switcher-statement"
-            />
-            {switcherStatement && (
-              <span className="text-sm text-green-600 flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4" />
-                {switcherStatement.name}
-              </span>
-            )}
+
+      {/* Required Documents Section */}
+      {requiredDocs.length > 0 && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <h4 className="font-semibold text-sm text-blue-900 mb-3 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            Required Documents
+          </h4>
+          <div className="space-y-2">
+            {docTypes.filter(dt => requiredDocs.includes(dt.value)).map((docType) => {
+              const isUploaded = getDocStatus(docType.value);
+              return (
+                <div
+                  key={docType.value}
+                  className={`flex items-center justify-between p-3 rounded-lg ${
+                    isUploaded ? 'bg-green-100 border border-green-300' : 'bg-white border border-blue-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {isUploaded ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-blue-600" />
+                    )}
+                    <div>
+                      <p className={`font-medium text-sm ${isUploaded ? 'text-green-900' : 'text-blue-900'}`}>
+                        {docType.label}
+                      </p>
+                      <p className={`text-xs ${isUploaded ? 'text-green-700' : 'text-blue-700'}`}>
+                        {docType.description}
+                      </p>
+                    </div>
+                  </div>
+                  {isUploaded && (
+                    <Badge className="bg-green-600 text-white">Uploaded</Badge>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {/* Photo ID Upload */}
-        <div>
-          <Label htmlFor="photoId" className="text-sm font-medium mb-2 block">
-            Photo ID
-            <span className="text-gray-500 font-normal ml-2">(Driving License or Passport only)</span>
-          </Label>
-          <div className="flex items-center gap-3">
-            <Input
-              id="photoId"
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileChange(e, 'id')}
-              className="flex-1"
-              data-testid="input-photo-id"
-            />
-            {photoId && (
-              <span className="text-sm text-green-600 flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4" />
-                {photoId.name}
-              </span>
-            )}
-          </div>
-          
-          {/* ID Upload Note */}
-          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-900">
-                <p className="font-medium mb-1">Important: ID Photo Requirements</p>
-                <p>Please ensure your ID image is clear and all text is readable. After uploading, you will still need to complete a selfie verification using the Onfido link sent to you.</p>
-              </div>
-            </div>
+      {/* Uploaded Documents List */}
+      {uploadedDocs.length > 0 && (
+        <div className="mb-6">
+          <h4 className="font-semibold text-sm text-gray-700 mb-3">Your Uploaded Documents</h4>
+          <div className="space-y-2">
+            {uploadedDocs.map((doc: any) => {
+              const docTypeInfo = docTypes.find(dt => dt.value === doc.documentType);
+              return (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <FileText className="h-5 w-5 text-gray-600" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
+                      <p className="text-xs text-gray-600">{docTypeInfo?.label || doc.documentType}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownload(doc.id, doc.fileName)}
+                    className="ml-2"
+                    data-testid={`button-download-${doc.id}`}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Download
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {/* Upload Button */}
+      {/* Upload Button */}
+      <div className="space-y-3">
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,.pdf"
+          onChange={handleFileSelect}
+          className="hidden"
+          id="document-upload"
+          data-testid="input-document-file"
+        />
         <Button
-          onClick={handleUpload}
-          disabled={uploading || (!switcherStatement && !photoId)}
-          className="w-full h-12 rounded-xl"
-          data-testid="button-upload-documents"
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700"
+          data-testid="button-select-document"
         >
           <Upload className="mr-2 h-4 w-4" />
-          {uploading ? 'Uploading...' : 'Upload Documents'}
+          Select Document to Upload
         </Button>
       </div>
+
+      {/* Document Type Selection Dialog */}
+      <Dialog open={showDocTypeDialog} onOpenChange={setShowDocTypeDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>What type of document is this?</DialogTitle>
+            <p className="text-sm text-gray-600 mt-2">
+              Selected file: <span className="font-medium">{selectedFile?.name}</span>
+            </p>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {docTypes.map((type) => (
+              <button
+                key={type.value}
+                onClick={() => setDocumentType(type.value)}
+                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                  documentType === type.value
+                    ? 'border-blue-600 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                }`}
+                data-testid={`button-doc-type-${type.value}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    documentType === type.value ? 'border-blue-600' : 'border-gray-300'
+                  }`}>
+                    {documentType === type.value && (
+                      <div className="w-3 h-3 rounded-full bg-blue-600" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{type.label}</p>
+                    <p className="text-sm text-gray-600">{type.description}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDocTypeDialog(false);
+                setSelectedFile(null);
+                setDocumentType("");
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
+              }}
+              className="flex-1"
+              data-testid="button-cancel-upload"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpload}
+              disabled={!documentType || uploading}
+              className="flex-1"
+              data-testid="button-confirm-upload"
+            >
+              {uploading ? 'Uploading...' : 'Upload'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -857,7 +1004,7 @@ export default function Quotes() {
                   )}
 
                   {/* Document Upload Section */}
-                  <DocumentUploadSection quoteId={selectedQuote.id} />
+                  <DocumentUploadSection quoteId={selectedQuote.id} quote={selectedQuote} />
 
                   {/* Q&A Thread Section */}
                   <QuoteQASection quoteId={selectedQuote.id} quote={selectedQuote} />

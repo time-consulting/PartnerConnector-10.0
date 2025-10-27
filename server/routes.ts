@@ -837,7 +837,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bill upload routes for quotes
+  // Document upload routes for quotes
+  app.post('/api/quotes/:id/documents', requireAuth, upload.single('document'), async (req: any, res) => {
+    try {
+      const file = req.file;
+      const { documentType } = req.body;
+      
+      if (!file || !documentType) {
+        return res.status(400).json({ message: "Missing file or document type" });
+      }
+
+      const quote = await storage.getQuoteById(req.params.id);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      const upload = await storage.createQuoteBillUpload(
+        req.params.id,
+        quote.referralId,
+        file.originalname,
+        file.size,
+        file.mimetype,
+        req.user.id,
+        documentType
+      );
+
+      res.json(upload);
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
+  app.get('/api/quotes/:id/documents', requireAuth, async (req: any, res) => {
+    try {
+      const documents = await storage.getQuoteBillUploads(req.params.id);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  app.get('/api/quotes/:quoteId/documents/:docId/download', requireAuth, async (req: any, res) => {
+    try {
+      const document = await storage.getQuoteBillUploadById(req.params.docId);
+      
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Simple authorization: user must own the quote or be admin
+      const quote = await storage.getQuoteById(req.params.quoteId);
+      if (!quote || (quote.createdBy !== req.user.id && !req.user.isAdmin)) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // In a real implementation, you'd fetch the file from storage
+      // For now, return a placeholder response
+      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+      res.setHeader('Content-Type', document.fileType || 'application/octet-stream');
+      res.send(Buffer.from('Document download would happen here in production'));
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      res.status(500).json({ message: "Failed to download document" });
+    }
+  });
+
+  // Legacy bill upload route (keep for backward compatibility)
   app.post('/api/quotes/:id/bill-upload', requireAuth, async (req: any, res) => {
     try {
       const { fileName, fileSize, fileType } = req.body;
@@ -853,7 +920,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileName,
         fileSize,
         fileType,
-        req.user.id
+        req.user.id,
+        'switcher_statement' // Default to switcher statement for legacy
       );
 
       res.json(upload);
