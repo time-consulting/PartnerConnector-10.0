@@ -36,11 +36,11 @@ import {
 } from "lucide-react";
 import type { Opportunity } from "@shared/schema";
 
-// Opportunity Kanban columns configuration - matching opportunity statuses
+// Opportunity Kanban columns configuration - custom lead progression stages
 const KANBAN_COLUMNS = [
   { 
-    id: "prospect", 
-    title: "Prospects", 
+    id: "new_contact", 
+    title: "New Contact", 
     count: 0,
     color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
   },
@@ -51,28 +51,22 @@ const KANBAN_COLUMNS = [
     color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
   },
   { 
-    id: "proposal", 
-    title: "Proposal Sent", 
+    id: "needs_analysis", 
+    title: "Needs Analysis", 
     count: 0,
     color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
   },
   { 
-    id: "negotiation", 
-    title: "Negotiation", 
+    id: "solution_proposed", 
+    title: "Solution Proposed", 
     count: 0,
     color: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
   },
   { 
-    id: "closed_won", 
-    title: "Closed Won", 
+    id: "submit_lead", 
+    title: "Submit Lead", 
     count: 0,
     color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-  },
-  { 
-    id: "closed_lost", 
-    title: "Closed Lost", 
-    count: 0,
-    color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
   }
 ];
 

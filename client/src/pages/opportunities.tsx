@@ -2,6 +2,7 @@ import { useState, Suspense, lazy } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Search, Filter, ArrowUpDown, Mail, Phone, Building, User, Edit3, MoreHorizontal, TrendingUp, DollarSign, Calendar, Target, Grid3X3, List, Layers, Trash2 } from "lucide-react";
 import { DragEndEvent } from '@dnd-kit/core';
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,8 +51,8 @@ const initialFormData: OpportunityFormData = {
   contactPhone: "",
   estimatedValue: "",
   currentMonthlyVolume: "",
-  status: "prospect",
-  stage: "initial_contact",
+  status: "new_contact",
+  stage: "new_contact",
   priority: "medium",
   assignedTo: "",
   expectedCloseDate: "",
@@ -65,24 +66,19 @@ const initialFormData: OpportunityFormData = {
 };
 
 const statusOptions = [
-  { value: "prospect", label: "Prospect", color: "bg-blue-100 text-blue-800" },
+  { value: "new_contact", label: "New Contact", color: "bg-blue-100 text-blue-800" },
   { value: "qualified", label: "Qualified", color: "bg-yellow-100 text-yellow-800" },
-  { value: "proposal", label: "Proposal Sent", color: "bg-purple-100 text-purple-800" },
-  { value: "negotiation", label: "Negotiation", color: "bg-orange-100 text-orange-800" },
-  { value: "closed_won", label: "Closed Won", color: "bg-green-100 text-green-800" },
-  { value: "closed_lost", label: "Closed Lost", color: "bg-red-100 text-red-800" },
-  { value: "on_hold", label: "On Hold", color: "bg-gray-100 text-gray-800" },
+  { value: "needs_analysis", label: "Needs Analysis", color: "bg-purple-100 text-purple-800" },
+  { value: "solution_proposed", label: "Solution Proposed", color: "bg-orange-100 text-orange-800" },
+  { value: "submit_lead", label: "Submit Lead", color: "bg-green-100 text-green-800" },
 ];
 
 const stageOptions = [
-  "initial_contact",
-  "qualified_lead",
+  "new_contact",
+  "qualified",
   "needs_analysis",
-  "proposal_development",
-  "proposal_review",
-  "decision_pending",
-  "contract_negotiation",
-  "closed",
+  "solution_proposed",
+  "submit_lead",
 ];
 
 const priorityOptions = [
@@ -561,6 +557,7 @@ function OpportunityForm({
 
 export default function OpportunitiesPage() {
   // const { toast } = useToast(); // Temporarily disabled due to React hook violations
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<string>("business");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -718,6 +715,25 @@ export default function OpportunitiesPage() {
     // Find the opportunity being dragged
     const opportunity = opportunities.find((opp: Opportunity) => opp.id === opportunityId);
     if (!opportunity || opportunity.status === newStatus) return;
+    
+    // Special handling for "Submit Lead" stage - convert to referral
+    if (newStatus === "submit_lead") {
+      // Navigate to submit-referral page with pre-populated data
+      const params = new URLSearchParams({
+        opportunityId: opportunity.id,
+        businessName: opportunity.businessName || "",
+        contactFirstName: opportunity.contactFirstName || "",
+        contactLastName: opportunity.contactLastName || "",
+        contactEmail: opportunity.contactEmail || "",
+        contactPhone: opportunity.contactPhone || "",
+        businessType: opportunity.businessType || "",
+        currentMonthlyVolume: opportunity.currentMonthlyVolume || "",
+        productInterest: JSON.stringify(opportunity.productInterest || []),
+        notes: opportunity.notes || "",
+      });
+      setLocation(`/submit-referral?${params.toString()}`);
+      return;
+    }
     
     // Optimistically update the UI
     queryClient.setQueryData(['/api/opportunities'], (old: Opportunity[] = []) => 
