@@ -117,18 +117,30 @@ function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
       const response = await fetch(`/api/referrals/${referralId}/bills/${docId}/download`);
       if (!response.ok) throw new Error('Download failed');
       
+      // Get the blob from response
       const blob = await response.blob();
+      
+      // Create object URL from blob
       const url = window.URL.createObjectURL(blob);
+      
+      // Create temporary anchor element for download
       const a = document.createElement('a');
       a.href = url;
       a.download = fileName;
       document.body.appendChild(a);
       a.click();
+      
+      // Cleanup
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error('Download error:', error);
     }
+  };
+
+  const handleView = (docId: string) => {
+    // Open in new tab for viewing
+    window.open(`/api/referrals/${referralId}/bills/${docId}/view`, '_blank');
   };
 
   if (!documents || documents.length === 0) {
@@ -150,31 +162,37 @@ function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <FileText className="h-4 w-4 text-indigo-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <a
-                  href={`/api/referrals/${referralId}/bills/${doc.id}/download`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline truncate block"
-                  data-testid={`link-document-${doc.id}`}
-                >
+                <p className="font-medium text-sm text-gray-900 truncate" data-testid={`text-document-${doc.id}`}>
                   {doc.fileName}
-                </a>
+                </p>
                 <p className="text-xs text-gray-500">
                   Uploaded {new Date(doc.uploadedAt).toLocaleDateString()} at{' '}
                   {new Date(doc.uploadedAt).toLocaleTimeString()}
                 </p>
               </div>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleDownload(doc.id, doc.fileName)}
-              className="border-green-300 text-green-700 hover:bg-green-50 ml-2 flex-shrink-0"
-              data-testid={`button-download-${doc.id}`}
-            >
-              <Download className="h-3 w-3 mr-1" />
-              Download
-            </Button>
+            <div className="flex gap-2 ml-2 flex-shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleView(doc.id)}
+                className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                data-testid={`button-view-${doc.id}`}
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                View
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleDownload(doc.id, doc.fileName)}
+                className="border-green-300 text-green-700 hover:bg-green-50"
+                data-testid={`button-download-${doc.id}`}
+              >
+                <Download className="h-3 w-3 mr-1" />
+                Download
+              </Button>
+            </div>
           </div>
         ))}
       </div>
