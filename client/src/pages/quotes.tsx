@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,11 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User, Upload, AlertCircle, Clock, DollarSign, Circle, Download } from "lucide-react";
+import { CheckCircle2, MessageSquare, TrendingUp, Send, Eye, FileText, X, User, Upload, AlertCircle, Clock, DollarSign, Circle, Download, Search } from "lucide-react";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import { useToast } from "@/hooks/use-toast";
 import AdditionalDetailsForm from "@/components/additional-details-form";
+import { useLocation } from "wouter";
 
 // Q&A Section Component
 function QuoteQASection({ quoteId, quote }: { quoteId: string; quote?: any }) {
@@ -549,6 +550,7 @@ const QUOTE_STAGES = [
 export default function Quotes() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [location] = useLocation();
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [showRateRequestModal, setShowRateRequestModal] = useState(false);
@@ -556,10 +558,39 @@ export default function Quotes() {
   const [questionText, setQuestionText] = useState("");
   const [rateRequestText, setRateRequestText] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ['/api/quotes'],
     enabled: isAuthenticated,
+  });
+
+  // Auto-open quote if referralId is in URL
+  useEffect(() => {
+    if (quotes.length > 0 && !selectedQuote) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const referralId = urlParams.get('referralId');
+      
+      if (referralId) {
+        const quoteToOpen = quotes.find((q: any) => q.referralId === referralId);
+        if (quoteToOpen) {
+          setSelectedQuote(quoteToOpen);
+          // Clear URL parameter after opening
+          window.history.replaceState({}, '', '/quotes');
+        }
+      }
+    }
+  }, [quotes, selectedQuote]);
+
+  // Filter quotes by search term
+  const filteredQuotesBySearch = quotes.filter((quote: any) => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      quote.businessName?.toLowerCase().includes(searchLower) ||
+      quote.contactName?.toLowerCase().includes(searchLower) ||
+      quote.businessEmail?.toLowerCase().includes(searchLower)
+    );
   });
 
   const updateStatusMutation = useMutation({
@@ -686,9 +717,24 @@ export default function Quotes() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="page-title-quotes">
             Your Quotes
           </h1>
-          <p className="text-gray-600" data-testid="text-quotes-description">
+          <p className="text-gray-600 mb-4" data-testid="text-quotes-description">
             Review and manage quotes from Dojo for your client referrals
           </p>
+          
+          {/* Search bar */}
+          {quotes.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search by business name, contact, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 py-2"
+                data-testid="input-search-quotes"
+              />
+            </div>
+          )}
         </div>
 
         {/* Empty state */}
@@ -708,8 +754,8 @@ export default function Quotes() {
               {QUOTE_STAGES.map((stage) => {
                 const StageIcon = stage.icon;
                 const stageQuotes = stage.value === 'all' 
-                  ? quotes 
-                  : quotes.filter((q: any) => {
+                  ? filteredQuotesBySearch 
+                  : filteredQuotesBySearch.filter((q: any) => {
                       const config = STATUS_CONFIG[q.customerJourneyStatus as keyof typeof STATUS_CONFIG];
                       return config?.stage === stage.value;
                     });
@@ -735,8 +781,8 @@ export default function Quotes() {
 
             {QUOTE_STAGES.map((stage) => {
               const filteredQuotes = stage.value === 'all' 
-                ? quotes 
-                : quotes.filter((q: any) => {
+                ? filteredQuotesBySearch 
+                : filteredQuotesBySearch.filter((q: any) => {
                     const config = STATUS_CONFIG[q.customerJourneyStatus as keyof typeof STATUS_CONFIG];
                     return config?.stage === stage.value;
                   });
