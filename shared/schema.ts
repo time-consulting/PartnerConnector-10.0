@@ -662,6 +662,7 @@ export const quoteBillUploads = pgTable("quote_bill_uploads", {
   fileName: varchar("file_name").notNull(),
   fileSize: integer("file_size"),
   fileType: varchar("file_type"),
+  fileData: text("file_data"), // Base64 encoded file data
   uploadedBy: varchar("uploaded_by").notNull().references(() => users.id, { onDelete: "cascade" }),
   documentType: varchar("document_type").notNull().default("other"), // switcher_statement, proof_of_bank, photo_id, other
   status: varchar("status").notNull().default("pending"), // pending, approved, rejected

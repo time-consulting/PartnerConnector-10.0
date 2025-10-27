@@ -265,7 +265,7 @@ export interface IStorage {
   getAllQuoteMessages(): Promise<any[]>;
   
   // Quote bill upload operations
-  createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string): Promise<any>;
+  createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string, fileData?: string): Promise<any>;
   getQuoteBillUploads(quoteId: string): Promise<any[]>;
   getQuoteBillUploadById(billId: string): Promise<any | undefined>;
   approveQuoteBill(billId: string, adminNotes?: string): Promise<void>;
@@ -2476,7 +2476,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string): Promise<any> {
+  async createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string, fileData?: string): Promise<any> {
     const { quoteBillUploads } = await import("@shared/schema");
     const [upload] = await db
       .insert(quoteBillUploads)
@@ -2486,6 +2486,7 @@ export class DatabaseStorage implements IStorage {
         fileName,
         fileSize,
         fileType,
+        fileData,
         uploadedBy,
         documentType: documentType || 'switcher_statement',
         status: 'pending'
@@ -2501,13 +2502,27 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(quotes.id, quoteId));
 
-    return upload;
+    // Return upload without fileData to reduce payload
+    const { fileData: _, ...uploadWithoutData } = upload;
+    return uploadWithoutData;
   }
 
   async getQuoteBillUploads(quoteId: string): Promise<any[]> {
     const { quoteBillUploads } = await import("@shared/schema");
     const result = await db
-      .select()
+      .select({
+        id: quoteBillUploads.id,
+        quoteId: quoteBillUploads.quoteId,
+        referralId: quoteBillUploads.referralId,
+        fileName: quoteBillUploads.fileName,
+        fileSize: quoteBillUploads.fileSize,
+        fileType: quoteBillUploads.fileType,
+        uploadedBy: quoteBillUploads.uploadedBy,
+        documentType: quoteBillUploads.documentType,
+        status: quoteBillUploads.status,
+        adminNotes: quoteBillUploads.adminNotes,
+        createdAt: quoteBillUploads.createdAt,
+      })
       .from(quoteBillUploads)
       .where(eq(quoteBillUploads.quoteId, quoteId))
       .orderBy(desc(quoteBillUploads.createdAt));

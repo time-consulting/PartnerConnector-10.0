@@ -869,6 +869,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
 
+      // Convert file buffer to base64
+      const fileData = file.buffer.toString('base64');
+
       const uploadRecord = await storage.createQuoteBillUpload(
         req.params.id,
         quote.referralId,
@@ -876,7 +879,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         file.size,
         file.mimetype,
         req.user.id,
-        documentType
+        documentType,
+        fileData
       );
 
       if (!res.headersSent) {
@@ -914,11 +918,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized" });
       }
 
-      // In a real implementation, you'd fetch the file from storage
-      // For now, return a placeholder response
+      // Convert base64 back to buffer
+      if (!document.fileData) {
+        return res.status(404).json({ message: "File data not found" });
+      }
+
+      const fileBuffer = Buffer.from(document.fileData, 'base64');
+
       res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
       res.setHeader('Content-Type', document.fileType || 'application/octet-stream');
-      res.send(Buffer.from('Document download would happen here in production'));
+      res.setHeader('Content-Length', fileBuffer.length);
+      res.send(fileBuffer);
     } catch (error) {
       console.error("Error downloading document:", error);
       res.status(500).json({ message: "Failed to download document" });
@@ -942,7 +952,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileSize,
         fileType,
         req.user.id,
-        'switcher_statement' // Default to switcher statement for legacy
+        'switcher_statement', // Default to switcher statement for legacy
+        undefined // No file data for legacy route
       );
 
       res.json(upload);
