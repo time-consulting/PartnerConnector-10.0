@@ -44,11 +44,12 @@ interface ReferralStepperProps {
   isSubmitting: boolean;
 }
 
-// Step configuration - New 3-stage flow
+// Step configuration - 4-stage flow
 const steps = [
   { id: 1, title: "Client Info", icon: User },
   { id: 2, title: "Services", icon: CreditCard },
-  { id: 3, title: "Upload & Submit", icon: TrendingUp },
+  { id: 3, title: "Documents", icon: Upload },
+  { id: 4, title: "Review & Submit", icon: TrendingUp },
 ];
 
 // Product options
@@ -64,6 +65,10 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [showNTCDialog, setShowNTCDialog] = useState(false);
+  const [isNTC, setIsNTC] = useState(false);
+  const [ntcTerminalOption, setNtcTerminalOption] = useState<'once' | 'monthly'>('once');
+  const [ntcHardwareCare, setNtcHardwareCare] = useState(false);
+  const [ntcSevenDaySettlement, setNtcSevenDaySettlement] = useState(false);
   const fileInputRef = useState<HTMLInputElement | null>(null)[0];
 
   const form = useForm<FormData>({
@@ -106,6 +111,8 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
       case 2:
         return !!(values.selectedProducts.length > 0 && values.businessTypeId && values.monthlyVolume);
       case 3:
+        return true; // Documents are optional
+      case 4:
         return values.gdprConsent;
       default:
         return false;
@@ -436,80 +443,15 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
           </div>
         )}
 
-        {/* Step 3: Upload & Submit */}
+        {/* Step 3: Documents Upload */}
         {currentStep === 3 && (
           <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Review & Submit</h3>
-              <p className="text-gray-600">Review your details and submit</p>
+            <div className="text-center mb-8">
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Upload Documents</h3>
+              <p className="text-gray-600">Help us create the best quote by uploading current payment statements</p>
             </div>
 
-            {/* Summary Card */}
-            <div className="bg-gradient-to-br from-teal-50 to-green-50 rounded-2xl p-6 border-2 border-teal-100 shadow-sm">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-teal-600" />
-                Referral Summary
-              </h4>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-teal-100">
-                  <span className="text-gray-600">Business:</span>
-                  <span className="font-semibold text-gray-900">{form.watch('businessName') || '-'}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-teal-100">
-                  <span className="text-gray-600">Contact:</span>
-                  <span className="font-semibold text-gray-900">{form.watch('contactName') || '-'}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-teal-100">
-                  <span className="text-gray-600">Email:</span>
-                  <span className="font-semibold text-gray-900">{form.watch('businessEmail') || '-'}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-teal-100">
-                  <span className="text-gray-600">Services:</span>
-                  <span className="font-semibold text-gray-900">
-                    {selectedProducts.length > 0 ? selectedProducts.join(', ') : '-'}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Monthly Volume:</span>
-                  <span className="font-semibold text-teal-600">
-                    {formatCurrency(parseInt(form.watch('monthlyVolume') || '0'))}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* GDPR Consent */}
-            <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-sm">
-              <FormField
-                control={form.control}
-                name="gdprConsent"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="mt-1 h-6 w-6"
-                        data-testid="checkbox-gdpr-consent"
-                      />
-                    </FormControl>
-                    <div className="space-y-2 leading-none flex-1">
-                      <FormLabel className="text-base font-semibold text-gray-900 cursor-pointer">
-                        I have client permission to share their details *
-                      </FormLabel>
-                      <p className="text-sm text-gray-600">
-                        By checking this box, you confirm that you have the client's explicit consent 
-                        to share their business information for the purpose of obtaining competitive quotes.
-                      </p>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Document Upload Section - NEW! */}
+            {/* Document Upload Section */}
             <div className="bg-white rounded-2xl p-8 border-2 border-gray-200">
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
@@ -630,20 +572,6 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
                 )}
               </div>
 
-              {/* Mark as No Statement Button */}
-              <div className="mt-6 flex items-center justify-center">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowNTCDialog(true)}
-                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                  data-testid="button-mark-no-statement"
-                >
-                  <FileX className="h-4 w-4 mr-2" />
-                  Mark as No Statement (NTC Pricing)
-                </Button>
-              </div>
-
               {/* Why Upload Bills Section */}
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <h4 className="font-semibold text-gray-900 mb-3">Why upload bills?</h4>
@@ -669,14 +597,167 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
               </div>
             </div>
 
+            {/* Action Buttons - Branded Colors */}
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <Button
+                type="button"
+                onClick={() => setShowNTCDialog(true)}
+                className="flex-1 h-14 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold text-lg shadow-lg"
+                data-testid="button-mark-ntc"
+              >
+                <FileX className="h-5 w-5 mr-2" />
+                Mark as NTC
+              </Button>
+              
+              <Button
+                type="button"
+                onClick={handleNext}
+                variant="outline"
+                className="flex-1 h-14 border-2 border-teal-600 text-teal-700 hover:bg-teal-50 font-semibold text-lg"
+                data-testid="button-skip-upload"
+              >
+                Skip Upload
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Review & Submit */}
+        {currentStep === 4 && (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Review Your Quote Request</h3>
+              <p className="text-gray-600">Please review all details before submitting</p>
+            </div>
+
+            {/* Beautiful Summary Cards */}
+            <div className="grid gap-6">
+              {/* Business Information Card */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-100 shadow-sm">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Building className="w-5 h-5 text-blue-600" />
+                  Business Information
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Business Name</p>
+                    <p className="font-semibold text-gray-900">{form.watch('businessName') || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Contact Name</p>
+                    <p className="font-semibold text-gray-900">{form.watch('contactName') || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Email</p>
+                    <p className="font-semibold text-gray-900">{form.watch('businessEmail') || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Phone</p>
+                    <p className="font-semibold text-gray-900">{form.watch('businessPhone') || '-'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Services & Volume Card */}
+              <div className="bg-gradient-to-br from-teal-50 to-green-50 rounded-2xl p-6 border-2 border-teal-100 shadow-sm">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-teal-600" />
+                  Services & Processing
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Services Required</p>
+                    <p className="font-semibold text-gray-900">
+                      {selectedProducts.length > 0 ? selectedProducts.join(', ') : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Monthly Volume</p>
+                    <p className="font-semibold text-teal-600 text-lg">
+                      {formatCurrency(parseInt(form.watch('monthlyVolume') || '0'))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Current Processor</p>
+                    <p className="font-semibold text-gray-900">{form.watch('currentProcessor') || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Card Machines</p>
+                    <p className="font-semibold text-gray-900">{form.watch('cardMachineQuantity') || '-'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Documents & NTC Status */}
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-100 shadow-sm">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-purple-600" />
+                  Documents & Pricing
+                </h4>
+                {isNTC ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-blue-700 bg-blue-100 px-4 py-2 rounded-lg">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="font-semibold">NTC (New to Card) Pricing Selected</span>
+                    </div>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p>Terminal: {ntcTerminalOption === 'once' ? '£79 (one-time)' : '£15/month'}</p>
+                      {ntcHardwareCare && <p>✓ Hardware Care included</p>}
+                      {ntcSevenDaySettlement && <p>✓ 7-day settlement upgrade</p>}
+                    </div>
+                  </div>
+                ) : uploadedFiles.length > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-700 bg-green-100 px-4 py-2 rounded-lg">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="font-semibold">{uploadedFiles.length} document{uploadedFiles.length > 1 ? 's' : ''} uploaded</span>
+                    </div>
+                    {uploadedFiles.map((file, idx) => (
+                      <p key={idx} className="text-sm text-gray-600 ml-4">• {file.name}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-600">No documents uploaded</p>
+                )}
+              </div>
+            </div>
+
+            {/* GDPR Consent */}
+            <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-sm">
+              <FormField
+                control={form.control}
+                name="gdprConsent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="mt-1 h-6 w-6"
+                        data-testid="checkbox-gdpr-consent"
+                      />
+                    </FormControl>
+                    <div className="space-y-2 leading-none flex-1">
+                      <FormLabel className="text-base font-semibold text-gray-900 cursor-pointer">
+                        I have client permission to share their details *
+                      </FormLabel>
+                      <p className="text-sm text-gray-600">
+                        By checking this box, you confirm that you have the client's explicit consent 
+                        to share their business information for the purpose of obtaining competitive quotes.
+                      </p>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Ready Banner */}
-            <div className="bg-gradient-to-r from-teal-500 to-green-600 rounded-2xl p-6 text-white text-center">
-              <div className="text-4xl mb-3">🎯</div>
-              <h4 className="text-xl font-bold mb-2">Ready to Submit!</h4>
-              <p className="text-teal-50">
-                {uploadedFiles.length > 0 
-                  ? `Your referral and ${uploadedFiles.length} file${uploadedFiles.length > 1 ? 's' : ''} will be submitted together.`
-                  : 'Your referral will be processed within 24 hours. You can skip uploading bills for now.'}
+            <div className="bg-gradient-to-r from-teal-500 to-green-600 rounded-2xl p-8 text-white text-center shadow-xl">
+              <div className="text-5xl mb-4">🎯</div>
+              <h4 className="text-2xl font-bold mb-3">Ready to Submit!</h4>
+              <p className="text-teal-50 text-lg">
+                Your quote request will be reviewed within 24 hours and you'll receive a competitive offer.
               </p>
             </div>
           </div>
@@ -723,7 +804,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
 
       {/* NTC Pricing Dialog */}
       <Dialog open={showNTCDialog} onOpenChange={setShowNTCDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-blue-600" />
@@ -734,42 +815,114 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <h4 className="font-semibold text-gray-900 mb-3">NTC Package Details:</h4>
+          <div className="space-y-6 py-4">
+            {/* Terminal Options */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+              <h4 className="font-semibold text-gray-900 mb-3">Terminal Payment Options:</h4>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-all">
+                  <input
+                    type="radio"
+                    name="terminal-option"
+                    value="once"
+                    checked={ntcTerminalOption === 'once'}
+                    onChange={() => setNtcTerminalOption('once')}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <div>
+                    <p className="font-semibold text-gray-900">Pay Once - £79</p>
+                    <p className="text-sm text-gray-600">One-time payment for terminal</p>
+                  </div>
+                </label>
+                
+                <label className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-all">
+                  <input
+                    type="radio"
+                    name="terminal-option"
+                    value="monthly"
+                    checked={ntcTerminalOption === 'monthly'}
+                    onChange={() => setNtcTerminalOption('monthly')}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <div>
+                    <p className="font-semibold text-gray-900">Monthly - £15/month</p>
+                    <p className="text-sm text-gray-600">Spread the cost over time</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Rates Package */}
+            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              <h4 className="font-semibold text-gray-900 mb-3">Rates Package - £39</h4>
               <ul className="space-y-2 text-sm text-gray-700">
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  <span><strong>Terminal Cost:</strong> £39</span>
+                  <span className="text-green-600">✓</span>
+                  <span>Includes Dojo plan</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  <span><strong>Coverage:</strong> Up to £4,000 monthly processing</span>
+                  <span className="text-green-600">✓</span>
+                  <span>Covers up to £4,000 monthly processing</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  <span><strong>Over Limit:</strong> 1% surcharge on amounts over £4k</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  <span><strong>Your Commission:</strong> £280 total</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  <span><strong>Your Share (60%):</strong> £168</span>
+                  <span className="text-green-600">✓</span>
+                  <span>1% surcharge on amounts over £4k</span>
                 </li>
               </ul>
             </div>
 
+            {/* Optional Add-ons */}
+            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+              <h4 className="font-semibold text-gray-900 mb-3">Optional Add-ons:</h4>
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={ntcHardwareCare}
+                    onCheckedChange={(checked) => setNtcHardwareCare(checked as boolean)}
+                    className="mt-1"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">Hardware Care</p>
+                    <p className="text-sm text-gray-600">Extended warranty and support</p>
+                  </div>
+                </label>
+                
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={ntcSevenDaySettlement}
+                    onCheckedChange={(checked) => setNtcSevenDaySettlement(checked as boolean)}
+                    className="mt-1"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">7-Day Settlement Upgrade</p>
+                    <p className="text-sm text-gray-600">Faster access to your funds</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Commission Info */}
             <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-              <p className="text-sm text-amber-800">
+              <div className="flex items-start gap-2 mb-2">
+                <DollarSign className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-gray-900">Your Commission</p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    <strong>Total:</strong> £280 | <strong>Your Share (60%):</strong> £168
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+              <p className="text-sm text-blue-800">
                 <strong>Note:</strong> Without processing statements, we cannot calculate exact savings. 
-                NTC pricing is a flat-rate option for new businesses or those without documentation.
+                NTC pricing is a flat-rate option for new businesses.
               </p>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               type="button"
               variant="outline"
@@ -781,10 +934,11 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
             <Button
               type="button"
               onClick={() => {
+                setIsNTC(true);
                 setShowNTCDialog(false);
-                // Mark as NTC (no files needed)
+                handleNext(); // Move to review step
               }}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               data-testid="button-ntc-confirm"
             >
               Confirm NTC Pricing
