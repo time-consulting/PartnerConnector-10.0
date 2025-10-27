@@ -1795,6 +1795,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Download bill file for a specific referral
+  app.get('/api/referrals/:id/bills/:billId/download', async (req: any, res) => {
+    try {
+      const { billId } = req.params;
+      const bill = await storage.getBillUploadById(billId);
+
+      if (!bill || !bill.fileContent) {
+        return res.status(404).json({ message: "Bill not found" });
+      }
+
+      // Set appropriate headers for file download
+      res.setHeader('Content-Disposition', `attachment; filename="${bill.fileName}"`);
+      res.setHeader('Content-Type', bill.mimeType || 'application/octet-stream');
+      if (bill.fileSize) {
+        res.setHeader('Content-Length', bill.fileSize.toString());
+      }
+
+      // Send the file content (decode from base64)
+      const fileBuffer = Buffer.from(bill.fileContent, 'base64');
+      res.send(fileBuffer);
+    } catch (error) {
+      console.error("Error downloading bill:", error);
+      res.status(500).json({ message: "Failed to download bill" });
+    }
+  });
+
+  // View bill file in browser for a specific referral
+  app.get('/api/referrals/:id/bills/:billId/view', async (req: any, res) => {
+    try {
+      const { billId } = req.params;
+      const bill = await storage.getBillUploadById(billId);
+
+      if (!bill || !bill.fileContent) {
+        return res.status(404).json({ message: "Bill not found" });
+      }
+
+      // Set headers for inline viewing (not download)
+      res.setHeader('Content-Disposition', `inline; filename="${bill.fileName}"`);
+      res.setHeader('Content-Type', bill.mimeType || 'application/pdf');
+      if (bill.fileSize) {
+        res.setHeader('Content-Length', bill.fileSize.toString());
+      }
+
+      // Send the file content (decode from base64)
+      const fileBuffer = Buffer.from(bill.fileContent, 'base64');
+      res.send(fileBuffer);
+    } catch (error) {
+      console.error("Error viewing bill:", error);
+      res.status(500).json({ message: "Failed to view bill" });
+    }
+  });
+
   // Submit additional details after quote approval
   app.post('/api/referrals/:id/additional-details', async (req: any, res) => {
     try {
