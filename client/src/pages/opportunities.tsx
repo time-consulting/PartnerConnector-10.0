@@ -172,9 +172,19 @@ function OpportunityForm({
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {opportunity ? formData.businessName || "Edit Opportunity" : "New Opportunity"}
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {opportunity ? "Update details and track progress" : "Add a new opportunity to your pipeline"}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {opportunity ? "Update details and track progress" : "Add a new opportunity to your pipeline"}
+              </p>
+              {opportunity?.dealId && (
+                <>
+                  <span className="text-sm text-gray-400 dark:text-gray-500">•</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                    {opportunity.dealId}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
