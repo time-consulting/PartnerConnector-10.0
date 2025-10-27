@@ -84,6 +84,7 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
       monthlyVolume: "50000",
       currentRate: "",
       cardMachineQuantity: 1,
+      cardMachineProvider: "",
       selectedProducts: [],
       notes: "",
       gdprConsent: false,
@@ -425,6 +426,45 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
               />
             </div>
 
+            {/* Conditional Card Machine Fields - Only show if Card Payments is selected */}
+            {selectedProducts.includes('card-payments') && (
+              <>
+                {/* Number of Card Machines */}
+                <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
+                  <Label htmlFor="cardMachineQuantity" className="text-lg font-semibold text-gray-900 mb-3 block flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-teal-600" />
+                    Number of Card Machines
+                  </Label>
+                  <Input
+                    id="cardMachineQuantity"
+                    type="number"
+                    min="1"
+                    {...form.register("cardMachineQuantity", { valueAsNumber: true })}
+                    placeholder="Enter number of card machines needed"
+                    className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+                    data-testid="input-card-machine-quantity"
+                    autoComplete="off"
+                  />
+                </div>
+
+                {/* Current Card Machine Provider */}
+                <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
+                  <Label htmlFor="cardMachineProvider" className="text-lg font-semibold text-gray-900 mb-3 block flex items-center gap-2">
+                    <Building className="w-5 h-5 text-teal-600" />
+                    Current Card Machine Provider <span className="text-sm font-normal text-gray-500">(Optional)</span>
+                  </Label>
+                  <Input
+                    id="cardMachineProvider"
+                    {...form.register("cardMachineProvider")}
+                    placeholder="Enter current card machine provider (e.g., Worldpay, Barclaycard)"
+                    className="h-14 text-base rounded-xl border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+                    data-testid="input-card-machine-provider"
+                    autoComplete="off"
+                  />
+                </div>
+              </>
+            )}
+
             {/* Optional Notes */}
             <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm">
               <Label htmlFor="notes" className="text-lg font-semibold text-gray-900 mb-3 block">
@@ -681,10 +721,20 @@ export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting 
                     <p className="text-sm text-gray-600 mb-1">Current Processor</p>
                     <p className="font-semibold text-gray-900">{form.watch('currentProcessor') || '-'}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Card Machines</p>
-                    <p className="font-semibold text-gray-900">{form.watch('cardMachineQuantity') || '-'}</p>
-                  </div>
+                  {selectedProducts.includes('card-payments') && (
+                    <>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Card Machines</p>
+                        <p className="font-semibold text-gray-900">{form.watch('cardMachineQuantity') || '-'}</p>
+                      </div>
+                      {form.watch('cardMachineProvider') && (
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Card Machine Provider</p>
+                          <p className="font-semibold text-gray-900">{form.watch('cardMachineProvider')}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 

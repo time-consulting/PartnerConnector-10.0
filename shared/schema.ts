@@ -125,6 +125,7 @@ export const referrals = pgTable("referrals", {
   // Product selection and card machine requirements
   selectedProducts: text("selected_products").array(), // Array of product IDs
   cardMachineQuantity: integer("card_machine_quantity").default(1),
+  cardMachineProvider: varchar("card_machine_provider"), // Current card machine provider (if applicable)
   // MLM level tracking
   referralLevel: integer("referral_level").notNull().default(1), // 1 = direct (60%), 2 = level 2 (20%), 3 = level 3 (10%)
   parentReferrerId: varchar("parent_referrer_id").references(() => users.id, { onDelete: "set null" }), // Who in the chain gets the commission

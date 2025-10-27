@@ -103,7 +103,7 @@ const confirmPaymentSchema = z.object({
 // Component to display referral documents with view/download
 function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
   const { data: documents = [] } = useQuery({
-    queryKey: ['/api/referrals', referralId, 'bills'],
+    queryKey: [`/api/referrals/${referralId}/bills`],
     enabled: !!referralId,
   });
 
@@ -955,6 +955,12 @@ export default function AdminDashboard() {
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Card Machines</p>
                                           <p className="text-sm text-gray-700 font-semibold">{referral.cardMachineQuantity}</p>
+                                        </div>
+                                      )}
+                                      {referral.cardMachineProvider && (
+                                        <div>
+                                          <p className="text-xs text-gray-500 font-medium mb-1">Current Card Machine Provider</p>
+                                          <p className="text-sm text-gray-700 font-semibold">{referral.cardMachineProvider}</p>
                                         </div>
                                       )}
                                       {referral.fundingAmount && (
