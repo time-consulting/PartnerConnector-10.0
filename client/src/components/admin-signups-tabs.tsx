@@ -17,7 +17,8 @@ import {
   AlertCircle,
   Download,
   Upload,
-  Zap
+  Zap,
+  Loader2
 } from "lucide-react";
 
 interface AdminSignupsTabsProps {
@@ -67,20 +68,26 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   // Mark as Live mutation
   const markAsLiveMutation = useMutation({
     mutationFn: async (quoteId: string) => {
-      const response = await apiRequest('POST', `/api/admin/mark-as-live/${quoteId}`);
-      return await response.json();
+      try {
+        const response = await apiRequest('POST', `/api/admin/mark-as-live/${quoteId}`);
+        return await response.json();
+      } catch (err: any) {
+        // Ensure error message is properly extracted
+        throw new Error(err.message || 'Failed to mark deal as live');
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/payments/live-accounts'] });
       toast({
-        title: "Deal Marked as Live",
+        title: "✅ Deal Marked as Live",
         description: data.message || "Deal has been moved to the Payments Portal",
       });
     },
     onError: (error: any) => {
+      console.error('Mark as Live error:', error);
       toast({
-        title: "Failed to Mark as Live",
+        title: "⚠️ Cannot Mark as Live",
         description: error.message || "Could not mark deal as live",
         variant: "destructive",
       });
@@ -536,15 +543,25 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
 
     if (status === 'approved' && !item.commissionPaid) {
       // Approved Deals - Mark as Live button
+      const isMarkingLive = markAsLiveMutation.isPending;
       return (
         <Button
           onClick={() => markAsLiveMutation.mutate(item.quoteId)}
-          disabled={markAsLiveMutation.isPending}
+          disabled={isMarkingLive}
           className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
           data-testid={`button-mark-as-live-${item.quoteId}`}
         >
-          <Zap className="w-4 h-4 mr-2" />
-          Mark as Live
+          {isMarkingLive ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <Zap className="w-4 h-4 mr-2" />
+              Mark as Live
+            </>
+          )}
         </Button>
       );
     }
