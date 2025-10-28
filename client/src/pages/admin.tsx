@@ -21,6 +21,7 @@ import Navigation from "@/components/navigation";
 import MlmVisualization from "@/components/mlm-visualization";
 import QuoteBuilder from "@/components/quote-builder";
 import { AdminSignupsTabs } from "@/components/admin-signups-tabs";
+import { AdminPaymentsPortal } from "@/components/admin-payments-portal";
 import {
   Search,
   Filter,
@@ -787,7 +788,7 @@ export default function AdminDashboard() {
 
           {/* Main Section Tabs */}
           <Tabs defaultValue="deals" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 h-auto bg-white shadow-md rounded-xl">
+            <TabsList className="grid w-full grid-cols-3 mb-8 h-auto bg-white shadow-md rounded-xl">
               <TabsTrigger 
                 value="deals" 
                 data-testid="tab-deals-section"
@@ -803,6 +804,17 @@ export default function AdminDashboard() {
                     {notificationCounts.submissions + notificationCounts.signups + notificationCounts.pipeline + notificationCounts.messages + notificationCounts.completedDeals}
                   </Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="payments" 
+                data-testid="tab-payments-section"
+                className="flex-col h-auto py-4 px-6 data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-50 data-[state=active]:to-emerald-50 data-[state=active]:shadow-lg rounded-xl"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <DollarSign className="h-5 w-5" />
+                  <span className="text-base font-bold">Payments</span>
+                </div>
+                <span className="text-xs text-gray-600">Commission Payments & MLM Distribution</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="backend" 
@@ -1254,6 +1266,11 @@ export default function AdminDashboard() {
                 </div>
                 </TabsContent>
               </Tabs>
+            </TabsContent>
+
+            {/* Payments Section */}
+            <TabsContent value="payments">
+              <AdminPaymentsPortal />
             </TabsContent>
 
             {/* Backend Management Section */}

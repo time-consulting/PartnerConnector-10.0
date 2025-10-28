@@ -2883,6 +2883,31 @@ export class DatabaseStorage implements IStorage {
     return approval;
   }
 
+  async createCommissionPayment(paymentData: {
+    referralId: string;
+    recipientId: string;
+    level: number;
+    amount: string;
+    percentage: string;
+    status?: string;
+    paymentDate?: Date;
+    transferReference?: string;
+    notes?: string;
+  }): Promise<any> {
+    const [payment] = await db.insert(commissionPayments).values({
+      referralId: paymentData.referralId,
+      recipientId: paymentData.recipientId,
+      level: paymentData.level,
+      amount: paymentData.amount,
+      percentage: paymentData.percentage,
+      status: paymentData.status || 'pending',
+      paymentDate: paymentData.paymentDate || null,
+      transferReference: paymentData.transferReference || null,
+      notes: paymentData.notes || null,
+    }).returning();
+    return payment;
+  }
+
   async processCommissionPayment(approvalId: string, paymentReference: string): Promise<void> {
     await db
       .update(commissionApprovals)
