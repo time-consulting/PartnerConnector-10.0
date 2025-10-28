@@ -2,7 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Building, 
   User, 
@@ -14,7 +16,8 @@ import {
   XCircle,
   AlertCircle,
   Download,
-  Upload
+  Upload,
+  Zap
 } from "lucide-react";
 
 interface AdminSignupsTabsProps {
@@ -61,6 +64,31 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     setShowCancelQuoteDialog,
     setSelectedQuoteToCancel
   } = props;
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Mark as Live mutation
+  const markAsLiveMutation = useMutation({
+    mutationFn: async (quoteId: string) => {
+      const response = await apiRequest('POST', `/api/admin/mark-as-live/${quoteId}`);
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      toast({
+        title: "Deal Marked as Live",
+        description: data.message || "Deal has been moved to the Payments Portal",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Mark as Live",
+        description: error.message || "Could not mark deal as live",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Filter functions for each tab
   const sentQuotes = signups?.filter((s: any) => 
@@ -510,18 +538,16 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     }
 
     if (status === 'approved' && !item.commissionPaid) {
-      // Approved Deals - Pay Commission button
+      // Approved Deals - Mark as Live button
       return (
         <Button
-          onClick={() => {
-            setSelectedSignup(item);
-            setShowCommissionModal(true);
-          }}
+          onClick={() => markAsLiveMutation.mutate(item.id)}
+          disabled={markAsLiveMutation.isPending}
           className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
-          data-testid={`button-pay-commission-${item.quoteId}`}
+          data-testid={`button-mark-as-live-${item.quoteId}`}
         >
-          <DollarSign className="w-4 h-4 mr-2" />
-          Pay Commission
+          <Zap className="w-4 h-4 mr-2" />
+          Mark as Live
         </Button>
       );
     }
