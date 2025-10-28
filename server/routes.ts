@@ -1244,6 +1244,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Only approved deals can be marked as live" });
       }
 
+      // Require estimated commission to be set
+      if (!quote.estimatedCommission || parseFloat(quote.estimatedCommission) <= 0) {
+        return res.status(400).json({ 
+          message: "Please set an estimated commission before marking this deal as live" 
+        });
+      }
+
       // Update quote journey status to "live"
       await storage.updateQuoteJourneyStatus(quoteId, 'live');
 

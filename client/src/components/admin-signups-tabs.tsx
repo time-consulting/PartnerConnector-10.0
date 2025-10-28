@@ -72,6 +72,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/payments/live-accounts'] });
       toast({
         title: "Deal Marked as Live",
         description: data.message || "Deal has been moved to the Payments Portal",
