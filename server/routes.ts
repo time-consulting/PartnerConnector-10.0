@@ -1245,12 +1245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update quote journey status to "live"
-      await storage.db.update(storage.schema.quotes)
-        .set({
-          customerJourneyStatus: 'live',
-          updatedAt: new Date()
-        })
-        .where(storage.eq(storage.schema.quotes.id, quoteId));
+      await storage.updateQuoteJourneyStatus(quoteId, 'live');
 
       console.log(`Quote ${quoteId} marked as live by admin ${req.user.email}`);
 
