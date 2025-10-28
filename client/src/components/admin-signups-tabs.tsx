@@ -68,13 +68,8 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   // Mark as Live mutation
   const markAsLiveMutation = useMutation({
     mutationFn: async (quoteId: string) => {
-      try {
-        const response = await apiRequest('POST', `/api/admin/mark-as-live/${quoteId}`);
-        return await response.json();
-      } catch (err: any) {
-        // Ensure error message is properly extracted
-        throw new Error(err.message || 'Failed to mark deal as live');
-      }
+      const response = await apiRequest('POST', `/api/admin/mark-as-live/${quoteId}`);
+      return await response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
@@ -84,8 +79,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
         description: data.message || "Deal has been moved to the Payments Portal",
       });
     },
-    onError: (error: any) => {
-      console.error('Mark as Live error:', error);
+    onError: (error: Error) => {
       toast({
         title: "⚠️ Cannot Mark as Live",
         description: error.message || "Could not mark deal as live",
