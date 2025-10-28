@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ImpersonationBanner() {
   const [isMounted, setIsMounted] = useState(false);
@@ -24,16 +25,34 @@ function ImpersonationBannerContent() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
 
   const exitImpersonation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/admin/exit-impersonation', {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', '/api/admin/exit-impersonation');
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate auth cache
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      navigate('/admin');
+      
+      // Show toast notification
+      toast({
+        title: "Exited Impersonation",
+        description: data.message || "You're back in admin mode",
+      });
+      
+      // Redirect to admin page after a brief delay to ensure session is updated
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 300);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Exit",
+        description: error.message || "Could not exit impersonation mode",
+        variant: "destructive",
+      });
     },
   });
 
