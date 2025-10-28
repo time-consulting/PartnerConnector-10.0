@@ -2396,9 +2396,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const quotes = await storage.getAllQuotesForAdmin();
       
-      // Filter for completed quotes that haven't been paid
+      // Filter for live quotes that haven't been paid
       const liveAccounts = quotes.filter((q: any) => 
-        q.customerJourneyStatus === 'complete' && 
+        q.customerJourneyStatus === 'live' && 
         !q.commissionPaid &&
         q.estimatedCommission && 
         parseFloat(q.estimatedCommission) > 0
