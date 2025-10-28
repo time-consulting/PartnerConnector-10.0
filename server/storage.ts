@@ -81,6 +81,7 @@ export interface IStorage {
   
   // Referral operations
   createReferral(referral: InsertReferral): Promise<Referral>;
+  getReferralById(id: string): Promise<Referral | undefined>;
   getReferralsByUserId(userId: string): Promise<Referral[]>;
   updateReferralStatus(id: string, status: string): Promise<void>;
   searchBusinessNames(userId: string, query: string): Promise<Array<{ 
@@ -980,6 +981,15 @@ export class DatabaseStorage implements IStorage {
     }
     
     return referral;
+  }
+
+  async getReferralById(id: string): Promise<Referral | undefined> {
+    const result = await db
+      .select()
+      .from(referrals)
+      .where(eq(referrals.id, id))
+      .limit(1);
+    return result[0];
   }
 
   async getReferralsByUserId(userId: string): Promise<Referral[]> {
