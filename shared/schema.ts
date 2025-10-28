@@ -568,6 +568,7 @@ export const documentRequirements = pgTable("document_requirements", {
 // Enhanced quote management
 export const quotes = pgTable("quotes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quoteId: varchar("quote_id").unique(), // Quote ID in format QUOTE-XXXXX (linked to dealId)
   referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
   version: integer("version").notNull().default(1), // For quote versioning
   

@@ -335,14 +335,14 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
             </div>
           </div>
 
-          {/* Uploaded Documents Section - show for both referrals and quotes */}
-          {(isReferral && item.id) || (!isReferral && item.quoteId) ? (
+          {/* Uploaded Documents Section - show user-uploaded bills only */}
+          {((isReferral && item.id) || (!isReferral && item.referralId)) ? (
             <div className="mt-6 pt-6 border-t">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                 <Upload className="w-5 h-5" />
-                Uploaded Documents
+                Client Uploaded Documents
               </h3>
-              <ReferralDocumentsSection referralId={isReferral ? item.id : null} quoteId={!isReferral ? item.quoteId : null} />
+              <ReferralDocumentsSection referralId={isReferral ? item.id : item.referralId} quoteId={null} />
             </div>
           ) : null}
 
@@ -376,11 +376,44 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     const status = item.customerJourneyStatus;
 
     if (status === 'review_quote' || status === 'quote_sent') {
-      // Sent Quotes - waiting for customer
+      // Sent Quotes - Edit, Cancel, Switch to NTC buttons
       return (
-        <div className="text-center text-gray-600">
-          <Clock className="w-6 h-6 mx-auto mb-2" />
-          <p className="text-sm">Waiting for customer to approve quote</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Button
+            onClick={() => {
+              setSelectedReferral(item);
+              setShowQuoteModal(true);
+            }}
+            variant="outline"
+            className="border-blue-500 text-blue-700 hover:bg-blue-50"
+            data-testid={`button-edit-quote-${item.quoteId}`}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Edit Quote
+          </Button>
+          <Button
+            onClick={() => {
+              // TODO: Add cancel quote dialog
+              console.log('Cancel quote:', item.quoteId);
+            }}
+            variant="outline"
+            className="border-red-500 text-red-700 hover:bg-red-50"
+            data-testid={`button-cancel-quote-${item.quoteId}`}
+          >
+            <XCircle className="w-4 h-4 mr-2" />
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              // TODO: Switch to NTC
+              console.log('Switch to NTC:', item.quoteId);
+            }}
+            className="bg-purple-600 hover:bg-purple-700"
+            data-testid={`button-switch-ntc-${item.quoteId}`}
+          >
+            <Send className="w-4 h-4 mr-2" />
+            Switch to NTC
+          </Button>
         </div>
       );
     }
