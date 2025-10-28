@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -204,6 +205,7 @@ function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
 export default function AdminDashboard() {
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedReferral, setSelectedReferral] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -582,13 +584,30 @@ export default function AdminDashboard() {
   // Impersonate user mutation
   const impersonateMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return await apiRequest(`/api/admin/impersonate/${userId}`, {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', `/api/admin/impersonate/${userId}`);
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate auth cache
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      window.location.href = '/dashboard';
+      
+      // Show toast notification
+      toast({
+        title: "Impersonation Active",
+        description: data.message || "You are now viewing as another user",
+      });
+      
+      // Redirect to dashboard after a brief delay to ensure session is updated
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 300);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Impersonation Failed",
+        description: error.message || "Failed to impersonate user",
+        variant: "destructive",
+      });
     },
   });
 
