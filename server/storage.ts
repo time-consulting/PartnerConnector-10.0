@@ -2132,9 +2132,34 @@ export class DatabaseStorage implements IStorage {
 
   // Quotes operations
   async createQuote(quoteData: any): Promise<any> {
+    // Generate a unique Quote ID if not provided
+    let quoteId = quoteData.quoteId;
+    if (!quoteId) {
+      // Generate a unique Quote ID in format QUOTE-12345
+      const timestamp = Date.now().toString().slice(-5);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      quoteId = `QUOTE-${timestamp}${random}`;
+      
+      // Check for uniqueness and regenerate if needed
+      let attempts = 0;
+      while (attempts < 5) {
+        const existing = await db
+          .select()
+          .from(quotes)
+          .where(eq(quotes.quoteId, quoteId))
+          .limit(1);
+        
+        if (existing.length === 0) break;
+        
+        const newRandom = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        quoteId = `QUOTE-${timestamp}${newRandom}`;
+        attempts++;
+      }
+    }
+
     const [quote] = await db
       .insert(quotes)
-      .values(quoteData)
+      .values({ ...quoteData, quoteId })
       .returning();
     return quote;
   }

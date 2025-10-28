@@ -240,6 +240,10 @@ export default function AdminDashboard() {
   const [decision, setDecision] = useState<'approved' | 'declined'>('approved');
   const [decisionNotes, setDecisionNotes] = useState("");
   const [decisionCommission, setDecisionCommission] = useState("");
+  const [showCancelQuoteDialog, setShowCancelQuoteDialog] = useState(false);
+  const [selectedQuoteToCancel, setSelectedQuoteToCancel] = useState<any>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [customCancelReason, setCustomCancelReason] = useState("");
 
   // Check if user is admin
   if (authLoading) {
@@ -712,6 +716,27 @@ export default function AdminDashboard() {
     },
   });
 
+  // Cancel quote mutation
+  const cancelQuoteMutation = useMutation({
+    mutationFn: async (data: { quoteId: string; reason: string }) => {
+      const response = await fetch(`/api/quotes/${selectedQuoteToCancel.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: data.reason }),
+      });
+      if (!response.ok) throw new Error('Failed to cancel quote');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+      setShowCancelQuoteDialog(false);
+      setCancelReason("");
+      setCustomCancelReason("");
+      setSelectedQuoteToCancel(null);
+    },
+  });
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'quote_sent': return 'bg-blue-100 text-blue-800';
@@ -1141,6 +1166,8 @@ export default function AdminDashboard() {
                         setShowCommissionModal={setShowCommissionModal}
                         setShowQuoteModal={setShowQuoteModal}
                         setSelectedReferral={setSelectedReferral}
+                        setShowCancelQuoteDialog={setShowCancelQuoteDialog}
+                        setSelectedQuoteToCancel={setSelectedQuoteToCancel}
                       />
                     </CardContent>
                   </Card>
@@ -2171,6 +2198,94 @@ export default function AdminDashboard() {
                   >
                     <Clock className="w-4 h-4 mr-2" />
                     {signupAwaitingDocsMutation.isPending ? 'Updating...' : 'Request Documents'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Cancel Quote Dialog */}
+        <Dialog open={showCancelQuoteDialog} onOpenChange={setShowCancelQuoteDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <XCircle className="w-6 h-6 text-red-600" />
+                Cancel Quote
+              </DialogTitle>
+            </DialogHeader>
+            {selectedQuoteToCancel && (
+              <div className="space-y-4">
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                  <p className="text-sm font-medium text-yellow-800">
+                    Are you sure you want to cancel this quote?
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    Quote ID: {selectedQuoteToCancel.quoteId || 'N/A'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Cancellation Reason <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    data-testid="select-cancel-reason"
+                  >
+                    <option value="">Select a reason...</option>
+                    <option value="live_account">Client now has live account</option>
+                    <option value="time_delay">Time delay - no longer interested</option>
+                    <option value="did_not_proceed">Client did not proceed</option>
+                    <option value="custom">Other (specify below)</option>
+                  </select>
+                </div>
+
+                {cancelReason === 'custom' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Custom Reason
+                    </label>
+                    <Textarea
+                      value={customCancelReason}
+                      onChange={(e) => setCustomCancelReason(e.target.value)}
+                      placeholder="Please specify the reason..."
+                      rows={3}
+                      className="w-full"
+                      data-testid="textarea-custom-cancel-reason"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowCancelQuoteDialog(false);
+                      setCancelReason("");
+                      setCustomCancelReason("");
+                      setSelectedQuoteToCancel(null);
+                    }}
+                    data-testid="button-cancel-dialog"
+                  >
+                    Keep Quote
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const finalReason = cancelReason === 'custom' ? customCancelReason : cancelReason;
+                      cancelQuoteMutation.mutate({
+                        quoteId: selectedQuoteToCancel.quoteId,
+                        reason: finalReason
+                      });
+                    }}
+                    disabled={!cancelReason || (cancelReason === 'custom' && !customCancelReason) || cancelQuoteMutation.isPending}
+                    className="bg-red-600 hover:bg-red-700"
+                    data-testid="button-confirm-cancel"
+                  >
+                    {cancelQuoteMutation.isPending ? 'Canceling...' : 'Cancel Quote'}
                   </Button>
                 </div>
               </div>

@@ -936,17 +936,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark quote as New to Card (NTC)
-  app.post('/api/quotes/:id/mark-ntc', requireAuth, async (req: any, res) => {
+  app.post('/api/quotes/:id/mark-ntc', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const quote = await storage.getQuoteById(req.params.id);
       
       if (!quote) {
         return res.status(404).json({ message: "Quote not found" });
-      }
-
-      // Only the quote owner can mark it as NTC
-      if (quote.createdBy !== req.user.id) {
-        return res.status(403).json({ message: "Not authorized" });
       }
 
       // Update the quote to mark it as new_to_card
@@ -959,6 +954,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking quote as NTC:", error);
       res.status(500).json({ message: "Failed to mark as NTC" });
+    }
+  });
+
+  // Cancel quote
+  app.post('/api/quotes/:id/cancel', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { reason } = req.body;
+      const quote = await storage.getQuoteById(req.params.id);
+      
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      // Update quote status to cancelled
+      await storage.updateQuote(req.params.id, {
+        customerJourneyStatus: 'declined',
+        status: 'cancelled',
+        adminNotes: `Quote cancelled. Reason: ${reason}`,
+        updatedAt: new Date()
+      });
+
+      // Post cancellation message to quote Q&A
+      await fetch(`${req.protocol}://${req.get('host')}/api/quotes/${req.params.id}/qa`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cookie': req.headers.cookie || ''
+        },
+        body: JSON.stringify({ 
+          message: `❌ **Quote Cancelled**\n\nThis quote has been cancelled.\n\n**Reason:** ${reason}` 
+        }),
+      });
+
+      res.json({ message: "Quote cancelled successfully" });
+    } catch (error) {
+      console.error("Error cancelling quote:", error);
+      res.status(500).json({ message: "Failed to cancel quote" });
     }
   });
 

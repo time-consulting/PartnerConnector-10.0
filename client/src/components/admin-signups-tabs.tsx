@@ -35,6 +35,8 @@ interface AdminSignupsTabsProps {
   setShowCommissionModal: (show: boolean) => void;
   setShowQuoteModal: (show: boolean) => void;
   setSelectedReferral: (referral: any) => void;
+  setShowCancelQuoteDialog: (show: boolean) => void;
+  setSelectedQuoteToCancel: (quote: any) => void;
 }
 
 export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
@@ -55,7 +57,9 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     setSelectedSignup,
     setShowCommissionModal,
     setShowQuoteModal,
-    setSelectedReferral
+    setSelectedReferral,
+    setShowCancelQuoteDialog,
+    setSelectedQuoteToCancel
   } = props;
 
   // Filter functions for each tab
@@ -393,8 +397,8 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
           </Button>
           <Button
             onClick={() => {
-              // TODO: Add cancel quote dialog
-              console.log('Cancel quote:', item.quoteId);
+              setSelectedQuoteToCancel(item);
+              setShowCancelQuoteDialog(true);
             }}
             variant="outline"
             className="border-red-500 text-red-700 hover:bg-red-50"
@@ -404,9 +408,17 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              // TODO: Switch to NTC
-              console.log('Switch to NTC:', item.quoteId);
+            onClick={async () => {
+              // Switch to NTC directly
+              try {
+                await fetch(`/api/quotes/${item.id}/mark-ntc`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                window.location.reload();
+              } catch (error) {
+                console.error('Failed to switch to NTC:', error);
+              }
             }}
             className="bg-purple-600 hover:bg-purple-700"
             data-testid={`button-switch-ntc-${item.quoteId}`}
