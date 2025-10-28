@@ -619,7 +619,7 @@ export const quotes = pgTable("quotes", {
   approvedAt: timestamp("approved_at"),
   rejectedAt: timestamp("rejected_at"),
   status: varchar("status").notNull().default("draft"), // draft, sent, viewed, approved, rejected, expired
-  customerJourneyStatus: varchar("customer_journey_status").notNull().default("review_quote"), // review_quote, sent_to_client, awaiting_signup, agreement_sent, docs_out, awaiting_documents, docs_received, approved, declined, complete
+  customerJourneyStatus: varchar("customer_journey_status").notNull().default("review_quote"), // review_quote, sent_to_client, awaiting_signup, agreement_sent, docs_out, awaiting_documents, docs_received, approved, live, declined, complete
   // Audit trail for status changes
   docsOutDate: timestamp("docs_out_date"),
   docsOutNotes: text("docs_out_notes"),
