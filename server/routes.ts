@@ -2355,6 +2355,279 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Payment portal routes
+  // Get live accounts (completed quotes) needing payment
+  app.get('/api/admin/payments/live-accounts', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const quotes = await storage.getAllQuotes();
+      
+      // Filter for completed quotes that haven't been paid
+      const liveAccounts = quotes.filter((q: any) => 
+        q.customerJourneyStatus === 'complete' && 
+        !q.commissionPaid &&
+        q.estimatedCommission && 
+        parseFloat(q.estimatedCommission) > 0
+      );
+
+      // Enhance with referral and user data
+      const enhancedAccounts = await Promise.all(
+        liveAccounts.map(async (quote: any) => {
+          const referral = await storage.getReferralById(quote.referralId);
+          const user = referral ? await storage.getUser(referral.referrerId) : null;
+          
+          // Get upline structure
+          const upline = user ? await storage.getMlmHierarchy(user.id) : { parents: [] };
+          
+          return {
+            ...quote,
+            referral,
+            user,
+            uplineUsers: upline.parents || [],
+          };
+        })
+      );
+
+      res.json(enhancedAccounts);
+    } catch (error) {
+      console.error("Error fetching live accounts:", error);
+      res.status(500).json({ message: "Failed to fetch live accounts" });
+    }
+  });
+
+  // Get upline structure for a specific user
+  app.get('/api/admin/payments/upline/:userId', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const hierarchy = await storage.getMlmHierarchy(userId);
+      
+      res.json({
+        parents: hierarchy.parents,
+        level: hierarchy.level
+      });
+    } catch (error) {
+      console.error("Error fetching upline:", error);
+      res.status(500).json({ message: "Failed to fetch upline structure" });
+    }
+  });
+
+  // Calculate commission breakdown for a payment
+  app.post('/api/admin/payments/calculate', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { quoteId, totalAmount } = req.body;
+      
+      if (!quoteId || !totalAmount) {
+        return res.status(400).json({ message: "Quote ID and total amount are required" });
+      }
+
+      const quote = await storage.getQuoteById(quoteId);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      const referral = await storage.getReferralById(quote.referralId);
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      const level1User = await storage.getUser(referral.referrerId);
+      if (!level1User) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Calculate breakdown
+      const amount = parseFloat(totalAmount);
+      const breakdown = [
+        {
+          level: 1,
+          userId: level1User.id,
+          userName: `${level1User.firstName} ${level1User.lastName}`,
+          userEmail: level1User.email,
+          percentage: 60,
+          amount: (amount * 0.60).toFixed(2),
+          role: 'Direct Commission'
+        }
+      ];
+
+      // Level 2 (parent)
+      if (level1User.parentPartnerId) {
+        const level2User = await storage.getUser(level1User.parentPartnerId);
+        if (level2User) {
+          breakdown.push({
+            level: 2,
+            userId: level2User.id,
+            userName: `${level2User.firstName} ${level2User.lastName}`,
+            userEmail: level2User.email,
+            percentage: 20,
+            amount: (amount * 0.20).toFixed(2),
+            role: 'Level 1 Override'
+          });
+
+          // Level 3 (grandparent)
+          if (level2User.parentPartnerId) {
+            const level3User = await storage.getUser(level2User.parentPartnerId);
+            if (level3User) {
+              breakdown.push({
+                level: 3,
+                userId: level3User.id,
+                userName: `${level3User.firstName} ${level3User.lastName}`,
+                userEmail: level3User.email,
+                percentage: 10,
+                amount: (amount * 0.10).toFixed(2),
+                role: 'Level 2 Override'
+              });
+            }
+          }
+        }
+      }
+
+      const totalDistributed = breakdown.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+      const remainingPercentage = 100 - breakdown.reduce((sum, item) => sum + item.percentage, 0);
+
+      res.json({
+        quoteId,
+        totalAmount: amount.toFixed(2),
+        breakdown,
+        totalDistributed: totalDistributed.toFixed(2),
+        remainingPercentage,
+        summary: {
+          level1: breakdown.find(b => b.level === 1),
+          level2: breakdown.find(b => b.level === 2),
+          level3: breakdown.find(b => b.level === 3)
+        }
+      });
+    } catch (error) {
+      console.error("Error calculating commission breakdown:", error);
+      res.status(500).json({ message: "Failed to calculate commission breakdown" });
+    }
+  });
+
+  // Process Stripe payouts
+  app.post('/api/admin/payments/process', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { quoteId, totalAmount, paymentReference, breakdown } = req.body;
+      
+      if (!quoteId || !totalAmount || !breakdown) {
+        return res.status(400).json({ message: "Missing required payment data" });
+      }
+
+      // Check if Stripe is configured
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2024-11-20.acacia',
+      });
+
+      const quote = await storage.getQuoteById(quoteId);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      // Check if already paid
+      if (quote.commissionPaid) {
+        return res.status(400).json({ message: "Commission already paid for this quote" });
+      }
+
+      const paymentResults = [];
+      const failedPayments = [];
+
+      // Process each payment in the breakdown
+      for (const payment of breakdown) {
+        try {
+          const user = await storage.getUser(payment.userId);
+          
+          if (!user) {
+            failedPayments.push({
+              ...payment,
+              error: 'User not found'
+            });
+            continue;
+          }
+
+          // Check if user has Stripe account ID
+          if (!user.stripeAccountId) {
+            failedPayments.push({
+              ...payment,
+              error: 'User has no Stripe account connected'
+            });
+            continue;
+          }
+
+          // Create a transfer to the connected account
+          const transfer = await stripe.transfers.create({
+            amount: Math.round(parseFloat(payment.amount) * 100), // Convert to pence
+            currency: 'gbp',
+            destination: user.stripeAccountId,
+            description: `Commission payment for ${quote.quoteId || quote.id} - ${payment.role}`,
+            metadata: {
+              quoteId: quote.id,
+              quoteNumber: quote.quoteId || 'N/A',
+              level: payment.level.toString(),
+              percentage: payment.percentage.toString(),
+              role: payment.role,
+              referralId: quote.referralId,
+              userId: user.id
+            }
+          });
+
+          // Create commission payment record
+          await storage.createCommissionPayment({
+            referralId: quote.referralId,
+            recipientId: user.id,
+            level: payment.level,
+            amount: payment.amount,
+            percentage: (payment.percentage / 100).toString(),
+            status: 'paid',
+            paymentDate: new Date(),
+            transferReference: transfer.id,
+            notes: `Stripe transfer ${transfer.id} - ${payment.role}`
+          });
+
+          paymentResults.push({
+            ...payment,
+            transferId: transfer.id,
+            status: 'success'
+          });
+
+        } catch (error: any) {
+          console.error(`Failed to process payment for user ${payment.userId}:`, error);
+          failedPayments.push({
+            ...payment,
+            error: error.message
+          });
+        }
+      }
+
+      // If at least one payment succeeded, mark quote as paid
+      if (paymentResults.length > 0) {
+        await storage.updateQuote(quoteId, {
+          commissionPaid: true,
+          commissionPaidDate: new Date(),
+          stripePaymentId: paymentResults[0].transferId
+        });
+      }
+
+      res.json({
+        success: paymentResults.length > 0,
+        totalProcessed: paymentResults.length,
+        totalFailed: failedPayments.length,
+        successfulPayments: paymentResults,
+        failedPayments,
+        message: paymentResults.length === breakdown.length
+          ? 'All payments processed successfully'
+          : `${paymentResults.length} of ${breakdown.length} payments successful`
+      });
+
+    } catch (error: any) {
+      console.error("Error processing payments:", error);
+      res.status(500).json({ 
+        message: "Failed to process payments",
+        error: error.message 
+      });
+    }
+  });
+
   // Admin impersonate user endpoint
   app.post('/api/admin/impersonate/:userId', requireAuth, requireAdmin, auditAdminAction('impersonate_user', 'admin'), async (req: any, res) => {
     try {
