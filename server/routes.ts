@@ -2359,7 +2359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get live accounts (completed quotes) needing payment
   app.get('/api/admin/payments/live-accounts', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const quotes = await storage.getAllQuotes();
+      const quotes = await storage.getAllQuotesForAdmin();
       
       // Filter for completed quotes that haven't been paid
       const liveAccounts = quotes.filter((q: any) => 

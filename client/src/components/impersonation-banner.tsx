@@ -4,8 +4,23 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
 
 export default function ImpersonationBanner() {
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  if (!isMounted) {
+    return null;
+  }
+  
+  return <ImpersonationBannerContent />;
+}
+
+function ImpersonationBannerContent() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
@@ -58,3 +73,4 @@ export default function ImpersonationBanner() {
     </div>
   );
 }
+
