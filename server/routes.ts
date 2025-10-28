@@ -1209,20 +1209,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mark deal as complete (after payment processing)
-  app.post('/api/admin/signups/:quoteId/mark-complete', requireAuth, requireAdmin, async (req: any, res) => {
+  // Mark deal as complete (manually, after payment processing)
+  app.post('/api/admin/signups/:quoteId/mark-complete', requireAuth, requireAdmin, auditAdminAction('mark_complete', 'admin'), async (req: any, res) => {
     try {
       const { quoteId } = req.params;
 
-      // Update quote journey status to "Complete"
-      await storage.db.update(storage.schema.quotes)
-        .set({
-          customerJourneyStatus: 'complete',
-          updatedAt: new Date()
-        })
-        .where(storage.eq(storage.schema.quotes.id, quoteId));
+      // Update quote journey status to "complete" (installed and paid)
+      await storage.updateQuoteJourneyStatus(quoteId, 'complete');
 
-      res.json({ success: true, message: "Deal marked as complete" });
+      console.log(`Quote ${quoteId} marked as complete by admin ${req.user.email}`);
+
+      res.json({ success: true, message: "Deal marked as complete (installed and paid)" });
     } catch (error) {
       console.error("Error marking deal as complete:", error);
       res.status(500).json({ message: "Failed to mark deal as complete" });
@@ -2636,13 +2633,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // If at least one payment succeeded, mark quote as paid
+      // If at least one payment succeeded, mark quote as paid and complete
       if (paymentResults.length > 0) {
         await storage.updateQuote(quoteId, {
           commissionPaid: true,
           commissionPaidDate: new Date(),
           stripePaymentId: paymentResults[0].transferId
         });
+        
+        // Move to "complete" status (installed and paid)
+        await storage.updateQuoteJourneyStatus(quoteId, 'complete');
       }
 
       res.json({
