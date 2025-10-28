@@ -65,24 +65,31 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Mark as Live mutation
-  const markAsLiveMutation = useMutation({
+  // Move to Pending Payments mutation
+  const moveToPendingPaymentsMutation = useMutation({
     mutationFn: async (quoteId: string) => {
-      const response = await apiRequest('POST', `/api/admin/mark-as-live/${quoteId}`);
-      return await response.json();
+      const res = await fetch(`/api/admin/move-to-payments/${quoteId}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to move deal');
+      }
+      return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/payments/live-accounts'] });
       toast({
-        title: "✅ Deal Marked as Live",
-        description: data.message || "Deal has been moved to the Payments Portal",
+        title: "Success",
+        description: "Deal moved to Pending Payments",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "⚠️ Cannot Mark as Live",
-        description: error.message || "Could not mark deal as live",
+        title: "Error",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -536,24 +543,23 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     }
 
     if (status === 'approved' && !item.commissionPaid) {
-      // Approved Deals - Mark as Live button
-      const isMarkingLive = markAsLiveMutation.isPending;
+      // Approved Deals - Move to Pending Payments button
       return (
         <Button
-          onClick={() => markAsLiveMutation.mutate(item.quoteId)}
-          disabled={isMarkingLive}
-          className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
-          data-testid={`button-mark-as-live-${item.quoteId}`}
+          onClick={() => moveToPendingPaymentsMutation.mutate(item.quoteId)}
+          disabled={moveToPendingPaymentsMutation.isPending}
+          className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto"
+          data-testid={`button-move-to-payments-${item.quoteId}`}
         >
-          {isMarkingLive ? (
+          {moveToPendingPaymentsMutation.isPending ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing...
+              Moving...
             </>
           ) : (
             <>
-              <Zap className="w-4 h-4 mr-2" />
-              Mark as Live
+              <DollarSign className="w-4 h-4 mr-2" />
+              Move to Pending Payments
             </>
           )}
         </Button>
