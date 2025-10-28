@@ -1342,20 +1342,50 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Search Results or All Users */}
-                  {userSearchTerm.length >= 2 ? (
+                  {usersLoading ? (
                     <div className="space-y-4">
-                      <p className="text-sm text-gray-600 mb-3">
-                        Found {searchedUsers.length} user{searchedUsers.length !== 1 ? 's' : ''}
-                      </p>
-                      {searchedUsers.map((user: any) => (
-                        <div key={user.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="animate-pulse border rounded-lg p-4">
+                          <div className="flex justify-between items-center">
+                            <div className="space-y-2">
+                              <div className="h-4 bg-gray-200 rounded w-48"></div>
+                              <div className="h-3 bg-gray-200 rounded w-32"></div>
+                            </div>
+                            <div className="h-6 bg-gray-200 rounded w-20"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {userSearchTerm.length >= 2 && (
+                        <p className="text-sm text-gray-600 mb-3">
+                          Found {searchedUsers.length} user{searchedUsers.length !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                      {userSearchTerm.length === 0 && users && users.length > 0 && (
+                        <p className="text-sm text-gray-600 mb-3">
+                          Showing all {users.length} user{users.length !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                      {(userSearchTerm.length >= 2 ? searchedUsers : users || []).map((user: any) => (
+                        <div key={user.id} className="border rounded-lg p-4 hover:bg-gray-50" data-testid={`user-card-${user.id}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex-1">
-                              <h3 className="font-semibold">{user.firstName} {user.lastName}</h3>
-                              <p className="text-sm text-gray-600">{user.email}</p>
+                              <h3 className="font-semibold" data-testid={`text-user-name-${user.id}`}>
+                                {user.firstName} {user.lastName}
+                              </h3>
+                              <p className="text-sm text-gray-600" data-testid={`text-user-email-${user.id}`}>
+                                {user.email}
+                              </p>
                               <p className="text-xs text-gray-500">
                                 Partner ID: {user.partnerId || 'Not assigned'}
                               </p>
+                              {user.referralCode && (
+                                <p className="text-xs text-gray-500">
+                                  Referral Code: {user.referralCode}
+                                </p>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
                               {user.isAdmin && (
@@ -1374,41 +1404,26 @@ export default function AdminDashboard() {
                                 variant="outline"
                                 size="sm"
                                 className="ml-2"
-                                data-testid={`button-impersonate-${user.id}`}
+                                data-testid={`button-view-as-user-${user.id}`}
                               >
                                 <Eye className="h-4 w-4 mr-1" />
-                                View As User
+                                View In Their Account
                               </Button>
                             </div>
                           </div>
                         </div>
                       ))}
-                      {searchedUsers.length === 0 && (
+                      {userSearchTerm.length >= 2 && searchedUsers.length === 0 && (
                         <p className="text-center text-gray-500 py-8">No users found matching "{userSearchTerm}"</p>
                       )}
+                      {userSearchTerm.length === 0 && (!users || users.length === 0) && (
+                        <div className="text-center text-gray-500 py-8">
+                          <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                          <p className="text-lg font-medium">No Users Yet</p>
+                          <p className="text-sm">Users will appear here once they sign up</p>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    usersLoading ? (
-                      <div className="space-y-4">
-                        {[...Array(5)].map((_, i) => (
-                          <div key={i} className="animate-pulse border rounded-lg p-4">
-                            <div className="flex justify-between items-center">
-                              <div className="space-y-2">
-                                <div className="h-4 bg-gray-200 rounded w-48"></div>
-                                <div className="h-3 bg-gray-200 rounded w-32"></div>
-                              </div>
-                              <div className="h-6 bg-gray-200 rounded w-20"></div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center text-gray-500 py-8">
-                        <Search className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                        <p className="text-lg font-medium">Search for users</p>
-                        <p className="text-sm">Enter a name, email, or partner ID to find and view user accounts</p>
-                      </div>
-                    )
                   )}
                 </CardContent>
               </Card>
