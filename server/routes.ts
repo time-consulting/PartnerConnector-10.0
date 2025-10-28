@@ -1229,6 +1229,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark deal as live (moves to Payments Portal)
+  app.post('/api/admin/mark-as-live/:quoteId', requireAuth, requireAdmin, auditAdminAction('mark_as_live', 'admin'), async (req: any, res) => {
+    try {
+      const { quoteId } = req.params;
+
+      // Verify the quote exists and is in approved status
+      const quote = await storage.getQuoteById(quoteId);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      if (quote.customerJourneyStatus !== 'approved') {
+        return res.status(400).json({ message: "Only approved deals can be marked as live" });
+      }
+
+      // Update quote journey status to "live"
+      await storage.db.update(storage.schema.quotes)
+        .set({
+          customerJourneyStatus: 'live',
+          updatedAt: new Date()
+        })
+        .where(storage.eq(storage.schema.quotes.id, quoteId));
+
+      console.log(`Quote ${quoteId} marked as live by admin ${req.user.email}`);
+
+      res.json({ 
+        success: true, 
+        message: "Deal marked as live and moved to Payments Portal" 
+      });
+    } catch (error) {
+      console.error("Error marking deal as live:", error);
+      res.status(500).json({ message: "Failed to mark deal as live" });
+    }
+  });
+
   app.get('/api/admin/quotes', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const quotes = await storage.getAllQuotesForAdmin();
