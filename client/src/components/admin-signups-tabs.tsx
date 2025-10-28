@@ -537,7 +537,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
       // Approved Deals - Mark as Live button
       return (
         <Button
-          onClick={() => markAsLiveMutation.mutate(item.id)}
+          onClick={() => markAsLiveMutation.mutate(item.quoteId)}
           disabled={markAsLiveMutation.isPending}
           className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
           data-testid={`button-mark-as-live-${item.quoteId}`}
