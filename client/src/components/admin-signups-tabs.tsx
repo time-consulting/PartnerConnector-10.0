@@ -34,8 +34,6 @@ interface AdminSignupsTabsProps {
   setShowDecisionDialog: (show: boolean) => void;
   setDecision: (decision: 'approved' | 'declined') => void;
   setDecisionCommission: (commission: string) => void;
-  setSelectedSignup: (signup: any) => void;
-  setShowCommissionModal: (show: boolean) => void;
   setShowQuoteModal: (show: boolean) => void;
   setSelectedReferral: (referral: any) => void;
   setShowCancelQuoteDialog: (show: boolean) => void;
@@ -57,8 +55,6 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     setShowDecisionDialog,
     setDecision,
     setDecisionCommission,
-    setSelectedSignup,
-    setShowCommissionModal,
     setShowQuoteModal,
     setSelectedReferral,
     setShowCancelQuoteDialog,

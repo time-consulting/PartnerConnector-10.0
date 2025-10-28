@@ -1193,8 +1193,6 @@ export default function AdminDashboard() {
                         setShowDecisionDialog={setShowDecisionDialog}
                         setDecision={setDecision}
                         setDecisionCommission={setDecisionCommission}
-                        setSelectedSignup={setSelectedSignup}
-                        setShowCommissionModal={setShowCommissionModal}
                         setShowQuoteModal={setShowQuoteModal}
                         setSelectedReferral={setSelectedReferral}
                         setShowCancelQuoteDialog={setShowCancelQuoteDialog}
