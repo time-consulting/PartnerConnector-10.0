@@ -1178,48 +1178,36 @@ export class DatabaseStorage implements IStorage {
   }
   
   async generatePartnerId(userId: string, parentPartnerId?: string): Promise<string> {
-    // Generate hierarchical partner ID based on chain position
+    // Generate simple referral code based on first + last name initials
     const user = await this.getUser(userId);
     if (!user) throw new Error('User not found');
     
-    let partnerId: string;
+    // Extract initials from first and last name
+    const firstInitial = (user.firstName?.[0] || 'x').toLowerCase();
+    const lastInitial = (user.lastName?.[0] || 'x').toLowerCase();
+    const prefix = `${firstInitial}${lastInitial}`;
     
-    if (!parentPartnerId) {
-      // Root partner: Generate PC-001, PC-002, etc.
-      // Count existing root partners (those without a dot in their partnerId)
-      const rootPartnersCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(users)
-        .where(sql`partner_id IS NOT NULL AND partner_id NOT LIKE '%.%'`);
-      
-      const nextNumber = (rootPartnersCount[0]?.count || 0) + 1;
-      partnerId = `PC-${String(nextNumber).padStart(3, '0')}`;
-    } else {
-      // Child partner: Append to parent's code (e.g., PC-001.1, PC-001.1.2)
-      const parent = await this.getUserByPartnerId(parentPartnerId);
-      if (!parent) throw new Error('Parent partner not found');
-      
-      // Count existing children under this parent
-      const childrenCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(users)
-        .where(eq(users.parentPartnerId, parent.id));
-      
-      const nextChildNumber = (childrenCount[0]?.count || 0) + 1;
-      partnerId = `${parentPartnerId}.${nextChildNumber}`;
-    }
+    // Count existing codes with this prefix to get next sequential number
+    const existingCodesCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(sql`partner_id LIKE ${prefix + '%'}`);
+    
+    const nextNumber = (existingCodesCount[0]?.count || 0) + 1;
+    const partnerId = `${prefix}${String(nextNumber).padStart(3, '0')}`;
     
     // Update user with partner ID and use it as referral code
+    // Note: The hierarchy is tracked separately in partner_hierarchy table
     await db
       .update(users)
       .set({ 
         partnerId, 
-        referralCode: partnerId, // Use partnerId as referralCode
+        referralCode: partnerId, // Simple code like "ds001"
         updatedAt: new Date() 
       })
       .where(eq(users.id, userId));
     
-    console.log(`[PARTNER_ID] Generated ${partnerId} for user ${userId}${parentPartnerId ? ` (parent: ${parentPartnerId})` : ' (root)'}`);
+    console.log(`[PARTNER_ID] Generated ${partnerId} for user ${userId} (${user.firstName} ${user.lastName})${parentPartnerId ? ` - parent: ${parentPartnerId}` : ' (root)'}`);
     
     return partnerId;
   }
