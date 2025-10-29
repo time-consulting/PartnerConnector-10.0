@@ -125,10 +125,11 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   ) || [];
 
   // Component to display referral documents (same as Quote Request section)
-  const ReferralDocumentsSection = ({ referralId, quoteId }: { referralId?: string | null, quoteId?: string | null }) => {
+  const ReferralDocumentsSection = ({ referralId, quoteId, parentId }: { referralId?: string | null, quoteId?: string | null, parentId?: string }) => {
     const { data: documents = [] } = useQuery({
       queryKey: ['/api/referrals', referralId, 'bills'],
       queryFn: async () => {
+        if (!referralId) return [];
         const response = await fetch(`/api/referrals/${referralId}/bills`);
         if (!response.ok) throw new Error('Failed to fetch documents');
         return response.json();
@@ -138,6 +139,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
 
     const handleDownload = async (docId: string, fileName: string) => {
       try {
+        if (!referralId) return;
         const response = await fetch(`/api/referrals/${referralId}/bills/${docId}/download`);
         if (!response.ok) throw new Error('Download failed');
         
@@ -156,6 +158,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     };
 
     const handleView = (docId: string) => {
+      if (!referralId) return;
       window.open(`/api/referrals/${referralId}/bills/${docId}/view`, '_blank');
     };
 
@@ -169,15 +172,15 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
 
     return (
       <div className="space-y-2">
-        {documents.map((doc: any) => (
+        {documents.map((doc: any, index: number) => (
           <div
-            key={doc.id}
+            key={`${parentId || referralId}-${doc.id}-${index}`}
             className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <FileText className="h-5 w-5 text-indigo-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
+                <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName || 'Unnamed document'}</p>
                 <p className="text-xs text-gray-600">
                   {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'Date unknown'}
                 </p>
@@ -398,7 +401,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
                 <Upload className="w-5 h-5" />
                 Client Uploaded Documents
               </h3>
-              <ReferralDocumentsSection referralId={isReferral ? item.id : item.referralId} quoteId={null} />
+              <ReferralDocumentsSection referralId={isReferral ? item.id : item.referralId} quoteId={null} parentId={item.id || item.quoteId} />
             </div>
           ) : null}
 
