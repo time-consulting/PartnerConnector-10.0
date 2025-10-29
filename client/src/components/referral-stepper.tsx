@@ -66,14 +66,13 @@ const productOptions = [
 export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting }: ReferralStepperProps) {
   const [location] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [dragActive, setDragActive] = useState(false);
+  const [documentLinks, setDocumentLinks] = useState<string[]>([]);
+  const [currentLinkInput, setCurrentLinkInput] = useState("");
   const [showNTCDialog, setShowNTCDialog] = useState(false);
   const [isNTC, setIsNTC] = useState(false);
   const [ntcTerminalOption, setNtcTerminalOption] = useState<'once' | 'monthly'>('once');
   const [ntcHardwareCare, setNtcHardwareCare] = useState(false);
   const [ntcSevenDaySettlement, setNtcSevenDaySettlement] = useState(false);
-  const fileInputRef = useState<HTMLInputElement | null>(null)[0];
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [dealId, setDealId] = useState<string | null>(null);
