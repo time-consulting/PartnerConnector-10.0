@@ -148,6 +148,7 @@ export const referrals = pgTable("referrals", {
   docsOutConfirmedAt: timestamp("docs_out_confirmed_at"),
   requiredDocuments: text("required_documents").array().default(sql`ARRAY['identification', 'proof_of_bank']::text[]`), // Default required docs
   receivedDocuments: text("received_documents").array().default(sql`ARRAY[]::text[]`), // Docs that have been received
+  documentLinks: text("document_links").array().default(sql`ARRAY[]::text[]`), // Simple hyperlinks to documents
   submittedAt: timestamp("submitted_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [

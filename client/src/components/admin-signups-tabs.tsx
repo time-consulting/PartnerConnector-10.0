@@ -126,70 +126,42 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
 
   // Component to display referral or quote documents
   const ReferralDocumentsSection = ({ referralId, quoteId }: { referralId?: string | null, quoteId?: string | null }) => {
-    const { data: documents = [] } = useQuery({
-      queryKey: referralId ? ['/api/referrals', referralId, 'bills'] : ['/api/quotes', quoteId, 'documents'],
-      enabled: !!(referralId || quoteId),
+    const { data: referralData } = useQuery({
+      queryKey: ['/api/admin/referrals'],
+      select: (data: any) => {
+        const allReferrals = data.referrals || [];
+        return allReferrals.find((r: any) => r.id === referralId);
+      },
+      enabled: !!referralId,
     });
 
-    const handleDownload = async (docId: string, fileName: string) => {
-      try {
-        const url = referralId 
-          ? `/api/referrals/${referralId}/bills/${docId}/download`
-          : `/api/quotes/${quoteId}/documents/${docId}/download`;
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Download failed');
-        
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(downloadUrl);
-        document.body.removeChild(a);
-      } catch (error) {
-        console.error('Download error:', error);
-      }
-    };
+    const documentLinks = referralData?.documentLinks || [];
 
-    if (!documents || documents.length === 0) {
+    if (!documentLinks || documentLinks.length === 0) {
       return (
         <div className="text-sm text-gray-500 italic">
-          No documents uploaded yet
+          No document links provided yet
         </div>
       );
     }
 
     return (
       <div className="space-y-2">
-        {documents.map((doc: any) => (
+        {documentLinks.map((link: string, index: number) => (
           <div
-            key={doc.id}
-            className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+            key={index}
+            className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <FileText className="h-4 w-4 text-gray-600 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
-                <p className="text-xs text-gray-600">
-                  {doc.uploadedAt || doc.createdAt 
-                    ? new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString() 
-                    : 'Date unknown'}
-                </p>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleDownload(doc.id, doc.fileName)}
-              className="ml-2 flex-shrink-0"
-              data-testid={`button-admin-download-${doc.id}`}
+            <FileText className="h-4 w-4 text-blue-600 flex-shrink-0" />
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 text-sm text-blue-600 hover:text-blue-800 hover:underline truncate"
+              data-testid={`link-document-${index}`}
             >
-              <Download className="h-3 w-3 mr-1" />
-              Download
-            </Button>
+              {link}
+            </a>
           </div>
         ))}
       </div>
