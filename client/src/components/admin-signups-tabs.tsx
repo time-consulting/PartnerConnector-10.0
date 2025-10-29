@@ -173,7 +173,11 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
               <FileText className="h-4 w-4 text-gray-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName}</p>
-                <p className="text-xs text-gray-600">{new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString()}</p>
+                <p className="text-xs text-gray-600">
+                  {doc.uploadedAt || doc.createdAt 
+                    ? new Date(doc.uploadedAt || doc.createdAt).toLocaleDateString() 
+                    : 'Date unknown'}
+                </p>
               </div>
             </div>
             <Button

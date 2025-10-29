@@ -1129,37 +1129,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Confirm "Docs In" (documents received from customer)
+  // Confirm "Docs In" (documents received from customer) - moves to Approved
   app.post('/api/admin/signups/:quoteId/docs-in', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { quoteId } = req.params;
       const { receivedDocuments, outstandingDocuments, notes } = req.body;
 
-      // Update quote journey status to "Docs Received"
-      await storage.updateQuoteJourneyStatus(quoteId, 'docs_received');
-
-      // Update quote with document tracking
-      await storage.db.update(storage.schema.quotes)
-        .set({
-          customerJourneyStatus: 'docs_received',
-          docsReceivedDate: new Date(),
-          outstandingDocuments: outstandingDocuments || [],
-          updatedAt: new Date()
-        })
-        .where(storage.eq(storage.schema.quotes.id, quoteId));
+      // Update quote journey status to "Approved" (documents received means ready to go live)
+      await storage.updateQuoteJourneyStatus(quoteId, 'approved');
 
       // Get the quote to find the associated referral
       const quote = await storage.getQuoteById(quoteId);
       if (quote && quote.referralId) {
-        const noteText = `\n[${new Date().toLocaleString()}] Documents Received - ${notes || 'All required documents received'}`;
+        const noteText = `\n[${new Date().toLocaleString()}] Documents Received - Deal Approved - ${notes || 'All required documents received, ready to go live'}`;
         await storage.updateReferral(quote.referralId, {
+          status: 'approved',
           adminNotes: (quote.adminNotes || '') + noteText,
           receivedDocuments: receivedDocuments || [],
           updatedAt: new Date()
         });
       }
 
-      res.json({ success: true, message: "Status updated to Docs Received" });
+      res.json({ success: true, message: "Documents received - Deal approved and ready to go live" });
     } catch (error) {
       console.error("Error updating to docs received:", error);
       res.status(500).json({ message: "Failed to update status" });
