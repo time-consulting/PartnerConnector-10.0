@@ -46,6 +46,7 @@ export function AdminPaymentsPortal() {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [calculatedBreakdown, setCalculatedBreakdown] = useState<any>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [manualOverrides, setManualOverrides] = useState<{ [key: number]: string }>({});
 
   // Fetch live accounts
   const { data: liveAccounts = [], isLoading } = useQuery({
@@ -63,6 +64,7 @@ export function AdminPaymentsPortal() {
     },
     onSuccess: (data) => {
       setCalculatedBreakdown(data);
+      setManualOverrides({}); // Reset overrides on new calculation
       toast({
         title: "Calculation Complete",
         description: "Commission breakdown has been calculated successfully.",
@@ -89,6 +91,7 @@ export function AdminPaymentsPortal() {
       setPaymentAmount("");
       setCalculatedBreakdown(null);
       setShowConfirmation(false);
+      setManualOverrides({});
       
       toast({
         title: data.success ? "Payments Processed" : "Partial Success",
@@ -135,12 +138,46 @@ export function AdminPaymentsPortal() {
   };
 
   const confirmPayment = () => {
+    // Apply manual overrides to breakdown
+    const finalBreakdown = calculatedBreakdown.breakdown.map((item: any, index: number) => {
+      if (manualOverrides[index]) {
+        return {
+          ...item,
+          amount: parseFloat(manualOverrides[index]).toFixed(2),
+          manualOverride: true
+        };
+      }
+      return item;
+    });
+
     processPaymentMutation.mutate({
       quoteId: selectedQuote.id,
       totalAmount: paymentAmount,
       paymentReference: `PAY-${selectedQuote.quoteId || selectedQuote.id}`,
-      breakdown: calculatedBreakdown.breakdown
+      breakdown: finalBreakdown
     });
+  };
+
+  const handleOverrideChange = (index: number, value: string) => {
+    setManualOverrides(prev => ({
+      ...prev,
+      [index]: value
+    }));
+  };
+
+  const getDisplayAmount = (item: any, index: number) => {
+    return manualOverrides[index] || item.amount;
+  };
+
+  const getTotalDistributed = () => {
+    if (!calculatedBreakdown) return "0.00";
+    
+    let total = 0;
+    calculatedBreakdown.breakdown.forEach((item: any, index: number) => {
+      const amount = manualOverrides[index] ? parseFloat(manualOverrides[index]) : parseFloat(item.amount);
+      total += amount;
+    });
+    return total.toFixed(2);
   };
 
   if (isLoading) {
@@ -350,26 +387,53 @@ export function AdminPaymentsPortal() {
                 {calculatedBreakdown.breakdown.map((item: any, index: number) => (
                   <Card key={index} className="bg-white">
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Badge className={
-                            item.level === 1 ? "bg-blue-500" :
-                            item.level === 2 ? "bg-purple-500" :
-                            "bg-indigo-500"
-                          }>
-                            Level {item.level}
-                          </Badge>
-                          <div>
-                            <div className="font-medium text-sm">{item.userName}</div>
-                            <div className="text-xs text-gray-500">{item.userEmail}</div>
-                            <div className="text-xs text-gray-600 mt-1">{item.role}</div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Badge className={
+                              item.level === 1 ? "bg-blue-500" :
+                              item.level === 2 ? "bg-purple-500" :
+                              "bg-indigo-500"
+                            }>
+                              Level {item.level}
+                            </Badge>
+                            <div>
+                              <div className="font-medium text-sm">{item.userName}</div>
+                              <div className="text-xs text-gray-500">{item.userEmail}</div>
+                              <div className="text-xs text-gray-600 mt-1">{item.role}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-gray-500 mb-1">
+                              Auto: £{parseFloat(item.amount).toFixed(2)} ({item.percentage}%)
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600">
-                            £{parseFloat(item.amount).toFixed(2)}
+                        
+                        {/* Manual Override Input */}
+                        <div>
+                          <Label htmlFor={`override-${index}`} className="text-xs text-gray-600">
+                            Manual Override / Bonus
+                          </Label>
+                          <div className="relative mt-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">£</span>
+                            <Input
+                              id={`override-${index}`}
+                              type="number"
+                              step="0.01"
+                              value={getDisplayAmount(item, index)}
+                              onChange={(e) => handleOverrideChange(index, e.target.value)}
+                              className="pl-7"
+                              placeholder={parseFloat(item.amount).toFixed(2)}
+                              data-testid={`input-override-${index}`}
+                            />
                           </div>
-                          <div className="text-xs text-gray-500">{item.percentage}%</div>
+                          {manualOverrides[index] && (
+                            <div className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              Manual override applied
+                            </div>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -380,12 +444,13 @@ export function AdminPaymentsPortal() {
                   <div className="flex items-center justify-between font-bold">
                     <span>Total Distribution:</span>
                     <span className="text-green-600">
-                      £{parseFloat(calculatedBreakdown.totalDistributed).toFixed(2)}
+                      £{getTotalDistributed()}
                     </span>
                   </div>
-                  {calculatedBreakdown.remainingPercentage > 0 && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {calculatedBreakdown.remainingPercentage}% unallocated (no upline)
+                  {Object.keys(manualOverrides).length > 0 && (
+                    <div className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Manual overrides applied
                     </div>
                   )}
                 </div>
@@ -400,6 +465,7 @@ export function AdminPaymentsPortal() {
                 setSelectedQuote(null);
                 setPaymentAmount("");
                 setCalculatedBreakdown(null);
+                setManualOverrides({});
               }}
               data-testid="button-cancel-payment"
             >
@@ -431,8 +497,16 @@ export function AdminPaymentsPortal() {
               Confirm Stripe Payment
             </AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to process <strong>£{paymentAmount}</strong> in commission payments
+              You are about to process <strong>£{getTotalDistributed()}</strong> in commission payments
               through Stripe to <strong>{calculatedBreakdown?.breakdown.length}</strong> recipients.
+              {Object.keys(manualOverrides).length > 0 && (
+                <>
+                  <br/><br/>
+                  <span className="text-amber-600 font-semibold">
+                    ⚠️ Manual overrides have been applied to {Object.keys(manualOverrides).length} payment(s)
+                  </span>
+                </>
+              )}
               <br/><br/>
               This action cannot be undone. The funds will be transferred to the recipients'
               connected Stripe accounts.
