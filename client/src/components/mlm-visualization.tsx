@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Network, 
   Users, 
@@ -18,7 +19,9 @@ import {
   Eye,
   ChevronDown,
   ChevronRight,
-  Building
+  Building,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 
 interface MlmNode {
@@ -41,6 +44,7 @@ interface MlmVisualizationProps {
 export default function MlmVisualization({ userId, showFullTree = false }: MlmVisualizationProps) {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [focusedUserId, setFocusedUserId] = useState<string | null>(null);
 
   // Fetch MLM hierarchy data
   const { data: hierarchyData, isLoading } = useQuery<{
@@ -53,6 +57,21 @@ export default function MlmVisualization({ userId, showFullTree = false }: MlmVi
   }>({
     queryKey: ['/api/admin/mlm-hierarchy', userId],
     enabled: !!userId,
+  });
+
+  // Fetch all users for the selector
+  const { data: allUsers = [] } = useQuery<Array<{id: string, name: string, partnerId: string}>>({
+    queryKey: ['/api/admin/users/list'],
+  });
+
+  // Fetch personal tree for focused user (upline + downline)
+  const { data: personalTree, isLoading: isLoadingPersonal } = useQuery<{
+    upline: Array<{id: string, name: string, partnerId: string, level: number}>;
+    user: {id: string, name: string, partnerId: string, email: string};
+    downline: MlmNode;
+  }>({
+    queryKey: ['/api/admin/mlm-personal-tree', focusedUserId],
+    enabled: !!focusedUserId,
   });
 
   const { data: userDetails } = useQuery<any>({
@@ -268,22 +287,124 @@ export default function MlmVisualization({ userId, showFullTree = false }: MlmVi
   return (
     <Card className="border-0 shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-3">
-          <Network className="w-6 h-6 text-purple-600" />
-          MLM Network Structure
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-3">
+            <Network className="w-6 h-6 text-purple-600" />
+            MLM Network Structure
+          </CardTitle>
+          
+          {/* User Selector */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">View Personal Tree:</label>
+            <Select value={focusedUserId || ""} onValueChange={(val) => setFocusedUserId(val || null)}>
+              <SelectTrigger className="w-[250px]" data-testid="select-user-tree">
+                <SelectValue placeholder="Select a partner..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Full Network Tree</SelectItem>
+                {allUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name} ({user.partnerId})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="tree" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="tree" data-testid="tab-tree-view">Tree View</TabsTrigger>
+            <TabsTrigger value="tree" data-testid="tab-tree-view">
+              {focusedUserId ? 'Personal Tree' : 'Full Tree View'}
+            </TabsTrigger>
             <TabsTrigger value="stats" data-testid="tab-stats-view">Statistics</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tree" className="mt-6">
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {hierarchyData.tree && renderNode(hierarchyData.tree)}
-            </div>
+            {focusedUserId && personalTree ? (
+              <div className="space-y-6">
+                {/* Upline Section */}
+                {personalTree.upline.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <ArrowUp className="w-5 h-5 text-blue-600" />
+                      Upline (Who Referred Them)
+                    </h3>
+                    <div className="space-y-2 pl-4 border-l-4 border-blue-300">
+                      {personalTree.upline.map((parent, index) => (
+                        <Card key={parent.id} className="bg-blue-50 border-blue-200">
+                          <CardContent className="p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-blue-500">
+                                  Level {parent.level}
+                                </Badge>
+                                <div>
+                                  <div className="font-medium text-sm">{parent.name}</div>
+                                  <div className="text-xs text-gray-500">{parent.partnerId}</div>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setFocusedUserId(parent.id)}
+                                data-testid={`button-view-upline-${parent.id}`}
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                View Tree
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Current User */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <User className="w-5 h-5 text-purple-600" />
+                    Current Partner
+                  </h3>
+                  <Card className="bg-purple-50 border-purple-300 border-2">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Crown className="w-6 h-6 text-purple-600" />
+                        <div>
+                          <div className="font-bold text-lg">{personalTree.user.name}</div>
+                          <div className="text-sm text-gray-600">{personalTree.user.partnerId}</div>
+                          <div className="text-xs text-gray-500">{personalTree.user.email}</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Downline Section */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <ArrowDown className="w-5 h-5 text-green-600" />
+                    Downline (People They Referred)
+                  </h3>
+                  {personalTree.downline && personalTree.downline.children && personalTree.downline.children.length > 0 ? (
+                    <div className="space-y-2 pl-4 border-l-4 border-green-300 max-h-96 overflow-y-auto">
+                      {personalTree.downline.children.map(child => renderNode(child))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                      <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500">No downline yet</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {hierarchyData?.tree && renderNode(hierarchyData.tree)}
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="stats" className="mt-6">

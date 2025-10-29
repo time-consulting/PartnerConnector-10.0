@@ -2309,6 +2309,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all users list for selector
+  app.get('/api/admin/users/list', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      
+      const userList = users
+        .filter((u: any) => u.firstName && u.lastName && u.partnerId)
+        .map((u: any) => ({
+          id: u.id,
+          name: `${u.firstName} ${u.lastName}`,
+          partnerId: u.partnerId
+        }));
+      
+      res.json(userList);
+    } catch (error) {
+      console.error("Error fetching user list:", error);
+      res.status(500).json({ message: "Failed to fetch user list" });
+    }
+  });
+
+  // Get personal MLM tree for a specific user (upline + downline)
+  app.get('/api/admin/mlm-personal-tree/:userId', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const allUsers = await storage.getAllUsers();
+      
+      // Build upline (all parents going up)
+      const upline: Array<{id: string, name: string, partnerId: string, level: number}> = [];
+      let currentParentId = user.parentPartnerId;
+      let level = 1;
+      
+      while (currentParentId && level <= 10) { // Max 10 levels to prevent infinite loops
+        const parent = allUsers.find((u: any) => u.id === currentParentId);
+        if (!parent) break;
+        
+        upline.push({
+          id: parent.id,
+          name: `${parent.firstName || ''} ${parent.lastName || ''}`.trim() || 'Unknown',
+          partnerId: parent.partnerId || '',
+          level
+        });
+        
+        currentParentId = parent.parentPartnerId;
+        level++;
+      }
+      
+      // Build downline tree (all children going down)
+      const buildDownlineTree = async (rootId: string): Promise<any> => {
+        const children = allUsers.filter((u: any) => u.parentPartnerId === rootId);
+        const userReferrals = await storage.getReferralsByUserId(rootId);
+        
+        const childNodes = [];
+        for (const child of children) {
+          const childNode = await buildDownlineTree(child.id);
+          if (childNode) childNodes.push(childNode);
+        }
+        
+        return {
+          id: user.id,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
+          email: user.email || '',
+          partnerId: user.partnerId || '',
+          level: 0,
+          children: childNodes,
+          totalReferrals: userReferrals.length,
+          totalCommissions: userReferrals.reduce((sum: number, ref: any) => sum + parseFloat(ref.actualCommission || '0'), 0)
+        };
+      };
+      
+      const downline = await buildDownlineTree(userId);
+      
+      res.json({
+        upline,
+        user: {
+          id: user.id,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
+          partnerId: user.partnerId || '',
+          email: user.email || ''
+        },
+        downline
+      });
+    } catch (error) {
+      console.error("Error fetching personal tree:", error);
+      res.status(500).json({ message: "Failed to fetch personal tree" });
+    }
+  });
+
   app.get('/api/admin/user-details/:userId', requireAuth, requireAdmin, auditAdminAction('view_user_details', 'admin'), async (req: any, res) => {
     try {
       const { userId } = req.params;
