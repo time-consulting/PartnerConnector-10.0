@@ -2309,6 +2309,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get MLM tree data for visualization
+  app.get('/api/admin/mlm-tree-data', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      
+      const treeData = await Promise.all(
+        allUsers
+          .filter((u: any) => u.firstName && u.lastName && u.partnerId) // Only users with complete data
+          .map(async (u: any) => {
+            // Count direct recruits
+            const directRecruits = allUsers.filter((child: any) => child.parentPartnerId === u.id).length;
+            
+            // Get total downline count (recursive)
+            const countDownline = (userId: string): number => {
+              const children = allUsers.filter((child: any) => child.parentPartnerId === userId);
+              return children.reduce((sum, child) => sum + 1 + countDownline(child.id), 0);
+            };
+            
+            // Get user's referrals for commission data
+            const referrals = await storage.getReferralsByUserId(u.id);
+            const totalCommissions = referrals.reduce((sum: number, ref: any) => 
+              sum + parseFloat(ref.actualCommission || '0'), 0
+            );
+            
+            return {
+              id: u.id,
+              name: `${u.firstName} ${u.lastName}`,
+              email: u.email || '',
+              partnerId: u.partnerId,
+              parentPartnerId: u.parentPartnerId || null,
+              directRecruits,
+              totalDownline: countDownline(u.id),
+              totalReferrals: referrals.length,
+              totalCommissions
+            };
+          })
+      );
+      
+      res.json(treeData);
+    } catch (error) {
+      console.error("Error fetching MLM tree data:", error);
+      res.status(500).json({ message: "Failed to fetch MLM tree data" });
+    }
+  });
+
   // Get all users list for selector
   app.get('/api/admin/users/list', requireAuth, requireAdmin, async (req: any, res) => {
     try {
