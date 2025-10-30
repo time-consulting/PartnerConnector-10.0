@@ -290,44 +290,58 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
               
               {documents.length > 0 ? (
                 <div className="space-y-2">
-                  {documents.map((doc: any) => (
+                  {documents.map((doc: any, index: number) => (
                     <div
-                      key={doc.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      key={`${referral.id}-${doc.id}-${index}`}
+                      className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg hover:shadow-md transition-all"
                       data-testid={`document-${doc.id}`}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{doc.fileName}</p>
-                          <p className="text-xs text-gray-500">
-                            {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'Unknown date'}
+                        <FileText className="h-5 w-5 text-indigo-600 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-gray-900 truncate">{doc.fileName || 'Unnamed document'}</p>
+                          <p className="text-xs text-gray-600">
+                            {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'Date unknown'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
+                      <div className="flex gap-2 ml-2 flex-shrink-0">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.open(`/api/view-bill/${doc.id}`, '_blank')}
-                          data-testid={`button-view-${doc.id}`}
+                          onClick={() => window.open(`/api/referrals/${referral.id}/bills/${doc.id}/view`, '_blank')}
+                          className="border-indigo-300 text-indigo-700 hover:bg-indigo-100"
+                          data-testid={`button-view-doc-${doc.id}`}
                         >
-                          <Eye className="w-4 h-4" />
+                          <FileText className="h-3 w-3 mr-1" />
+                          View
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = `/api/download-bill/${doc.id}`;
-                            link.download = doc.fileName;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/referrals/${referral.id}/bills/${doc.id}/download`);
+                              if (!response.ok) throw new Error('Download failed');
+                              
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = doc.fileName;
+                              document.body.appendChild(a);
+                              a.click();
+                              window.URL.revokeObjectURL(url);
+                              document.body.removeChild(a);
+                            } catch (error) {
+                              console.error('Download error:', error);
+                            }
                           }}
-                          data-testid={`button-download-${doc.id}`}
+                          className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                          data-testid={`button-download-doc-${doc.id}`}
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="h-3 w-3 mr-1" />
+                          Download
                         </Button>
                       </div>
                     </div>
