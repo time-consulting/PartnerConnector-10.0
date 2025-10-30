@@ -172,7 +172,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
       <div className="space-y-2">
         {documents.map((doc: any, index: number) => (
           <div
-            key={`${parentId || referralId}-${doc.id}-${index}`}
+            key={`${parentId}-${doc.id}-${index}`}
             className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 flex-1 min-w-0">

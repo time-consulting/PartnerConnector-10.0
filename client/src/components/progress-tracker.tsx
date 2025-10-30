@@ -276,16 +276,7 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
                   <Upload className="w-5 h-5" />
                   Documents
                 </h3>
-                <label htmlFor="document-upload">
-                  <Button
-                    as="span"
-                    disabled={uploading}
-                    className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                    data-testid="button-upload-document"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {uploading ? "Uploading..." : "Upload Document"}
-                  </Button>
+                <div>
                   <input
                     id="document-upload"
                     type="file"
@@ -295,7 +286,15 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
                     disabled={uploading}
                     accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   />
-                </label>
+                  <label
+                    htmlFor="document-upload"
+                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                    data-testid="button-upload-document"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {uploading ? "Uploading..." : "Upload Document"}
+                  </label>
+                </div>
               </div>
               
               {documents.length > 0 ? (
