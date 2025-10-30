@@ -1834,11 +1834,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get bills for a referral
+  // Get bills for a referral or quote
   app.get('/api/referrals/:id/bills', async (req: any, res) => {
     try {
       const referralId = req.params.id;
-      const bills = await storage.getBillUploadsByReferralId(referralId);
+      const quoteId = req.query.quoteId as string | undefined;
+      
+      // If quoteId is provided, fetch bills specific to that quote/deal
+      // Otherwise fetch bills linked to the referral submission
+      const bills = quoteId 
+        ? await storage.getBillUploadsByQuoteId(quoteId)
+        : await storage.getBillUploadsByReferralId(referralId);
+      
       res.json(bills);
     } catch (error) {
       console.error("Error fetching bills:", error);

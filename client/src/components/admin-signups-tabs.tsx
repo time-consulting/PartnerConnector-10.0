@@ -127,10 +127,15 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   // Component to display referral documents (same as Quote Request section)
   const ReferralDocumentsSection = ({ referralId, quoteId, parentId }: { referralId?: string | null, quoteId?: string | null, parentId?: string }) => {
     const { data: documents = [] } = useQuery({
-      queryKey: ['/api/referrals', referralId, 'bills'],
+      queryKey: ['/api/referrals', referralId, 'bills', quoteId],
       queryFn: async () => {
         if (!referralId) return [];
-        const response = await fetch(`/api/referrals/${referralId}/bills`);
+        // If quoteId exists, fetch documents for this specific deal/quote
+        // Otherwise fetch documents for the original referral submission
+        const url = quoteId 
+          ? `/api/referrals/${referralId}/bills?quoteId=${quoteId}`
+          : `/api/referrals/${referralId}/bills`;
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch documents');
         return response.json();
       },
@@ -401,7 +406,11 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
                 <Upload className="w-5 h-5" />
                 Client Uploaded Documents
               </h3>
-              <ReferralDocumentsSection referralId={isReferral ? item.id : item.referralId} quoteId={null} parentId={item.id || item.quoteId} />
+              <ReferralDocumentsSection 
+                referralId={isReferral ? item.id : item.referralId} 
+                quoteId={isReferral ? null : item.quoteId} 
+                parentId={item.id || item.quoteId} 
+              />
             </div>
           ) : null}
 
