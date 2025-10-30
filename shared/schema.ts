@@ -164,6 +164,7 @@ export const referrals = pgTable("referrals", {
 export const billUploads = pgTable("bill_uploads", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
+  quoteId: varchar("quote_id").references(() => quotes.id, { onDelete: "cascade" }), // Link to specific deal/quote
   fileName: varchar("file_name").notNull(),
   fileSize: integer("file_size"),
   mimeType: varchar("mime_type"),
@@ -171,6 +172,7 @@ export const billUploads = pgTable("bill_uploads", {
   uploadedAt: timestamp("uploaded_at").defaultNow(),
 }, (table) => [
   index("bill_uploads_referral_id_idx").on(table.referralId),
+  index("bill_uploads_quote_id_idx").on(table.quoteId),
 ]);
 
 // Teams table for multi-user account management
