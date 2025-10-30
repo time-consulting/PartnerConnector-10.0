@@ -27,7 +27,7 @@ The backend is a RESTful API developed with Express.js and TypeScript, designed 
 
 ## Database Design
 A PostgreSQL database underpins the application, featuring core entities such as:
-- **Users**: User profiles, including onboarding status and GDPR/marketing consent.
+- **Users**: User profiles, including onboarding status, GDPR/marketing consent, and authentication security fields (emailVerified, verificationToken, passwordResetToken, passwordResetExpires, loginAttempts, lockoutUntil, lastLogin).
 - **Referrals**: Tracks submitted referrals, their status, and associated information.
 - **Quotes**: Manages quotes sent from Dojo, including customer journey status.
 - **Business Types**: Categorization of businesses for commission calculations.
@@ -37,10 +37,17 @@ A PostgreSQL database underpins the application, featuring core entities such as
 - **Partner Hierarchy**: Tracks multi-level marketing (MLM) relationships and commission structures.
 
 ## Authentication & Authorization
-- **Provider**: Replit Auth using OpenID Connect, supporting multiple login methods (Google, Email/password, GitHub, Apple, X).
-- **Session Storage**: PostgreSQL-backed sessions.
+- **Provider**: Custom email/password authentication with GoHighLevel email integration.
+- **Session Storage**: PostgreSQL-backed sessions using connect-pg-simple.
 - **Route Protection**: Middleware-based checks for secure access.
 - **User Management**: Automatic user creation and updates upon successful authentication, with a mandatory 3-step onboarding flow for new users.
+- **Security Features**:
+  - Email verification required for all new accounts
+  - Password strength requirements (min 8 chars, at least 1 letter + 1 number)
+  - Rate limiting: 5 failed login attempts trigger 15-minute account lockout
+  - Secure password reset with token expiration (1 hour)
+  - Password hashing with bcrypt (12 rounds)
+  - Verification email resend capability
 
 ## File Upload System
 - **Storage**: In-memory with Multer (10MB limit).
@@ -64,7 +71,12 @@ A PostgreSQL database underpins the application, featuring core entities such as
 - **Team Tracking & MLM**: Referral code generation, hierarchical team linking (L1=60%, L2=20%, L3=10% commissions), and real-time team analytics.
 - **Admin Portal**: Streamlined dashboard with single Quote Requests tab (status='submitted'), Deal Management Pipeline with 7 subtabs (Sent Quotes, Sign Up, Docs Out, Awaiting Docs, Approved, Complete, Declined), CSV export, analytics, and system settings.
 - **Mobile Engagement**: Real-time notifications via WebSockets, quick add form, push notifications via Web Push API, PWA support with offline mode, and voice input.
-- **Custom Login Page**: Consolidated login page supporting all Replit Auth methods.
+- **Authentication System**: 
+  - Custom login/signup with email verification
+  - Password reset flow with secure tokens
+  - Rate limiting and account lockout protection
+  - Resend verification email capability
+  - Password strength validation
 - **Contact Form**: Full-width dialog for enhanced desktop experience.
 
 # External Dependencies
