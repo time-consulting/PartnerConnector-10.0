@@ -399,17 +399,17 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
             </div>
           </div>
 
-          {/* Uploaded Documents Section - show user-uploaded bills only */}
-          {((isReferral && item.id) || (!isReferral && item.referralId)) ? (
+          {/* Uploaded Documents Section - ONLY show in Quote Requests tab, NOT in Deal Management pipeline */}
+          {isReferral && item.id ? (
             <div className="mt-6 pt-6 border-t">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                 <Upload className="w-5 h-5" />
                 Client Uploaded Documents
               </h3>
               <ReferralDocumentsSection 
-                referralId={isReferral ? item.id : item.referralId} 
-                quoteId={isReferral ? null : item.quoteId} 
-                parentId={item.id || item.quoteId} 
+                referralId={item.id} 
+                quoteId={null} 
+                parentId={item.id} 
               />
             </div>
           ) : null}

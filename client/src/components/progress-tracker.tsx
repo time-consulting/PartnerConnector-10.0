@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
   Dialog, 
   DialogContent, 
@@ -16,9 +17,14 @@ import {
   Building, 
   Calendar,
   FileText,
-  CreditCard
+  CreditCard,
+  Upload,
+  Download,
+  Eye
 } from "lucide-react";
 import ContractPreview from "./contract-preview";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface ProgressStep {
   id: string;
@@ -44,6 +50,52 @@ interface ProgressTrackerProps {
 
 export default function ProgressTracker({ isOpen, onClose, referral }: ProgressTrackerProps) {
   const [showContractPreview, setShowContractPreview] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  // Fetch documents for this referral
+  const { data: documents = [], refetch: refetchDocuments } = useQuery({
+    queryKey: ['/api/referrals', referral.id, 'bills'],
+    enabled: !!referral.id,
+  });
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('referralId', referral.id);
+
+    try {
+      const response = await fetch('/api/upload-bill', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Document Uploaded",
+          description: "Your document has been uploaded successfully.",
+        });
+        refetchDocuments();
+        queryClient.invalidateQueries({ queryKey: ['/api/referrals'] });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "There was an error uploading your document. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  };
 
   const getProgressSteps = (): ProgressStep[] => {
     const baseSteps: ProgressStep[] = [
@@ -202,6 +254,90 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
                       £{referral.estimatedCommission}
                     </span>
                   </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Documents Section */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Documents
+                </h3>
+                <label htmlFor="document-upload">
+                  <Button
+                    as="span"
+                    disabled={uploading}
+                    className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                    data-testid="button-upload-document"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploading ? "Uploading..." : "Upload Document"}
+                  </Button>
+                  <input
+                    id="document-upload"
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  />
+                </label>
+              </div>
+              
+              {documents.length > 0 ? (
+                <div className="space-y-2">
+                  {documents.map((doc: any) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      data-testid={`document-${doc.id}`}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{doc.fileName}</p>
+                          <p className="text-xs text-gray-500">
+                            {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'Unknown date'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(`/api/view-bill/${doc.id}`, '_blank')}
+                          data-testid={`button-view-${doc.id}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = `/api/download-bill/${doc.id}`;
+                            link.download = doc.fileName;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          }}
+                          data-testid={`button-download-${doc.id}`}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Upload className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">No documents uploaded yet</p>
+                  <p className="text-xs mt-1">Upload payment processing bills or other relevant documents</p>
                 </div>
               )}
             </CardContent>
