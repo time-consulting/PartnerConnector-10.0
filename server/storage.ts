@@ -100,9 +100,10 @@ export interface IStorage {
   }>;
   
   // Bill upload operations
-  createBillUpload(referralId: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string): Promise<BillUpload>;
+  createBillUpload(referralId: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string, quoteId?: string | null): Promise<BillUpload>;
   getBillUploadById(billId: string): Promise<BillUpload | undefined>;
   getBillUploadsByReferralId(referralId: string): Promise<BillUpload[]>;
+  getBillUploadsByQuoteId(quoteId: string): Promise<BillUpload[]>;
   
   // Partner ID operations
   generatePartnerId(userId: string, parentPartnerId?: string): Promise<string>;
@@ -1163,11 +1164,12 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createBillUpload(referralId: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string): Promise<BillUpload> {
+  async createBillUpload(referralId: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string, quoteId?: string | null): Promise<BillUpload> {
     const [upload] = await db
       .insert(billUploads)
       .values({
         referralId,
+        quoteId: quoteId || null,
         fileName,
         fileSize,
         mimeType,
@@ -1224,6 +1226,10 @@ export class DatabaseStorage implements IStorage {
   
   async getBillUploadsByReferralId(referralId: string): Promise<BillUpload[]> {
     return await db.select().from(billUploads).where(eq(billUploads.referralId, referralId));
+  }
+
+  async getBillUploadsByQuoteId(quoteId: string): Promise<BillUpload[]> {
+    return await db.select().from(billUploads).where(eq(billUploads.quoteId, quoteId));
   }
   
   // Admin operations

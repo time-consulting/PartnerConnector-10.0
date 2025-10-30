@@ -1775,6 +1775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/referrals/:id/upload-bill', upload.array('bills', 5), async (req: any, res) => {
     try {
       const referralId = req.params.id;
+      const quoteId = req.body.quoteId || null; // Accept quoteId from request body
       const files = req.files;
       
       if (!files || !Array.isArray(files) || files.length === 0) {
@@ -1789,7 +1790,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           file.originalname,
           file.size,
           file.mimetype,
-          fileContent
+          fileContent,
+          quoteId // Pass quoteId to storage layer
         );
       });
 
