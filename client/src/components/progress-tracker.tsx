@@ -289,6 +289,7 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
                   <input
                     id="document-upload"
                     type="file"
+                    multiple
                     className="hidden"
                     onChange={handleFileUpload}
                     disabled={uploading}
