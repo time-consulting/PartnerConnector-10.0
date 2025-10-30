@@ -53,24 +53,33 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  // Fetch documents for this referral
+  // Fetch documents for this business
   const { data: documents = [], refetch: refetchDocuments } = useQuery({
-    queryKey: ['/api/referrals', referral.id, 'bills'],
-    enabled: !!referral.id,
+    queryKey: ['/api/bills', referral.businessName],
+    queryFn: async () => {
+      const response = await fetch(`/api/bills?businessName=${encodeURIComponent(referral.businessName)}`);
+      if (!response.ok) throw new Error('Failed to fetch documents');
+      return response.json();
+    },
+    enabled: !!referral.businessName,
   });
 
   // Handle file upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('referralId', referral.id);
+    
+    // Append all selected files
+    Array.from(files).forEach(file => {
+      formData.append('bills', file);
+    });
+    formData.append('businessName', referral.businessName);
 
     try {
-      const response = await fetch('/api/upload-bill', {
+      const response = await fetch('/api/bills/upload', {
         method: 'POST',
         body: formData,
       });
@@ -81,7 +90,7 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
           description: "Your document has been uploaded successfully.",
         });
         refetchDocuments();
-        queryClient.invalidateQueries({ queryKey: ['/api/referrals'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/bills'] });
       } else {
         throw new Error('Upload failed');
       }
@@ -309,7 +318,7 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.open(`/api/referrals/${referral.id}/bills/${doc.id}/view`, '_blank')}
+                          onClick={() => window.open(`/api/bills/${doc.id}/view`, '_blank')}
                           className="border-indigo-300 text-indigo-700 hover:bg-indigo-100"
                           data-testid={`button-view-doc-${doc.id}`}
                         >
@@ -321,7 +330,7 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
                           variant="outline"
                           onClick={async () => {
                             try {
-                              const response = await fetch(`/api/referrals/${referral.id}/bills/${doc.id}/download`);
+                              const response = await fetch(`/api/bills/${doc.id}/download`);
                               if (!response.ok) throw new Error('Download failed');
                               
                               const blob = await response.blob();
