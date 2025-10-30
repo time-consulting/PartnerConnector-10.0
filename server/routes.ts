@@ -1771,12 +1771,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bill upload
-  app.post('/api/referrals/:id/upload-bill', upload.array('bills', 5), async (req: any, res) => {
+  // Bill upload - now uses business name instead of referralId/quoteId
+  app.post('/api/bills/upload', upload.array('bills', 5), async (req: any, res) => {
     try {
-      const referralId = req.params.id;
-      const quoteId = req.body.quoteId || null; // Accept quoteId from request body
+      const businessName = req.body.businessName;
       const files = req.files;
+      
+      if (!businessName) {
+        return res.status(400).json({ message: "Business name is required" });
+      }
       
       if (!files || !Array.isArray(files) || files.length === 0) {
         return res.status(400).json({ message: "No files uploaded" });
@@ -1786,12 +1789,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const uploadPromises = files.map(async (file: any) => {
         const fileContent = file.buffer.toString('base64');
         return storage.createBillUpload(
-          referralId,
+          businessName,
           file.originalname,
           file.size,
           file.mimetype,
-          fileContent,
-          quoteId // Pass quoteId to storage layer
+          fileContent
         );
       });
 
@@ -1834,17 +1836,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get bills for a referral or quote
-  app.get('/api/referrals/:id/bills', async (req: any, res) => {
+  // Get bills for a business name
+  app.get('/api/bills', async (req: any, res) => {
     try {
-      const referralId = req.params.id;
-      const quoteId = req.query.quoteId as string | undefined;
+      const businessName = req.query.businessName as string | undefined;
       
-      // If quoteId is provided, fetch bills specific to that quote/deal
-      // Otherwise fetch bills linked to the referral submission
-      const bills = quoteId 
-        ? await storage.getBillUploadsByQuoteId(quoteId)
-        : await storage.getBillUploadsByReferralId(referralId);
+      if (!businessName) {
+        return res.status(400).json({ message: "Business name is required" });
+      }
+      
+      const bills = await storage.getBillUploadsByBusinessName(businessName);
       
       res.json(bills);
     } catch (error) {
@@ -1853,34 +1854,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Download bill file for a specific referral
-  app.get('/api/referrals/:id/bills/:billId/download', async (req: any, res) => {
-    try {
-      const { billId } = req.params;
-      const bill = await storage.getBillUploadById(billId);
-
-      if (!bill || !bill.fileContent) {
-        return res.status(404).json({ message: "Bill not found" });
-      }
-
-      // Set appropriate headers for file download
-      res.setHeader('Content-Disposition', `attachment; filename="${bill.fileName}"`);
-      res.setHeader('Content-Type', bill.mimeType || 'application/octet-stream');
-      if (bill.fileSize) {
-        res.setHeader('Content-Length', bill.fileSize.toString());
-      }
-
-      // Send the file content (decode from base64)
-      const fileBuffer = Buffer.from(bill.fileContent, 'base64');
-      res.send(fileBuffer);
-    } catch (error) {
-      console.error("Error downloading bill:", error);
-      res.status(500).json({ message: "Failed to download bill" });
-    }
-  });
-
-  // View bill file in browser for a specific referral
-  app.get('/api/referrals/:id/bills/:billId/view', async (req: any, res) => {
+  // View bill file in browser
+  app.get('/api/bills/:billId/view', async (req: any, res) => {
     try {
       const { billId } = req.params;
       const bill = await storage.getBillUploadById(billId);
