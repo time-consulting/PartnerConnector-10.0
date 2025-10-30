@@ -64,13 +64,42 @@ export default function Login() {
         }
       }
     } catch (error: any) {
-      // Show clear error message
+      // Show clear error message with helpful actions
       const errorMessage = error.message || "Invalid email or password";
-      toast({
-        title: "Login failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      
+      // Check if email verification is required
+      if (error.message && error.message.includes('verify your email')) {
+        toast({
+          title: "Email Verification Required",
+          description: (
+            <div className="space-y-2">
+              <p>{errorMessage}</p>
+              <Button
+                variant="link"
+                className="p-0 h-auto text-white hover:text-white/80"
+                onClick={() => setLocation('/resend-verification')}
+              >
+                Resend verification email
+              </Button>
+            </div>
+          ),
+          variant: "destructive",
+        });
+      } else if (error.message && error.message.includes('locked')) {
+        // Account is locked
+        toast({
+          title: "Account Locked",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        // Generic error
+        toast({
+          title: "Login failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -145,13 +174,15 @@ export default function Login() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password">Password</Label>
-                      <a 
-                        href="mailto:support@partnerconnector.co.uk?subject=Password Reset Request"
-                        className="text-sm text-blue-600 hover:text-blue-500 underline"
-                        data-testid="link-forgot-password"
-                      >
-                        Forgot password?
-                      </a>
+                      <Link href="/forgot-password">
+                        <button
+                          type="button"
+                          className="text-sm text-blue-600 hover:text-blue-500 underline"
+                          data-testid="link-forgot-password"
+                        >
+                          Forgot password?
+                        </button>
+                      </Link>
                     </div>
                     <div className="relative">
                       <Input

@@ -37,6 +37,10 @@ const OnboardingPage = lazy(() => import("@/pages/onboarding"));
 const QuickAddReferral = lazy(() => import("@/pages/quick-add-referral"));
 const OfflinePage = lazy(() => import("@/pages/offline"));
 const QuotesPage = lazy(() => import("@/pages/quotes"));
+const VerifyEmailPage = lazy(() => import("@/pages/verify-email"));
+const ResendVerificationPage = lazy(() => import("@/pages/resend-verification"));
+const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
+const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component with app branding
@@ -113,6 +117,10 @@ function AppRoutes() {
       {/* Public routes available to everyone */}
       <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/verify-email" component={VerifyEmailPage} />
+      <Route path="/resend-verification" component={ResendVerificationPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/onboarding" component={() => <PrivateRoute bypassOnboarding={true}><OnboardingPage /></PrivateRoute>} />
       <Route path="/waitlist" component={WaitlistPage} />
       <Route path="/offline" component={OfflinePage} />
