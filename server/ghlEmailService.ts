@@ -6,6 +6,7 @@ class GHLEmailService {
   private apiToken: string = '';
   private locationId: string = '';
   private fromEmail: string = '';
+  private webhookUrl: string = '';
   private baseUrl: string = 'https://services.leadconnectorhq.com';
 
   constructor() {
@@ -14,10 +15,44 @@ class GHLEmailService {
       this.apiToken = process.env.GHL_API_TOKEN;
       this.locationId = process.env.GHL_LOCATION_ID;
       this.fromEmail = process.env.GHL_FROM_EMAIL;
+      this.webhookUrl = process.env.GHL_WEBHOOK_URL || 'https://services.leadconnectorhq.com/hooks/CKsHxXXkohjNVVgYzMoG/webhook-trigger/d30b9f55-149f-4e5d-8b9a-9116b0d82415';
       this.isConfigured = true;
-      console.log('GoHighLevel email service configured');
+      console.log('GoHighLevel email service configured with webhook:', this.webhookUrl);
     } else {
       console.log('GoHighLevel credentials not found - email functionality will be disabled');
+    }
+  }
+
+  /**
+   * Trigger GHL automation via webhook
+   */
+  private async triggerWebhook(eventType: string, data: any): Promise<boolean> {
+    if (!this.isConfigured || !this.webhookUrl) {
+      console.log(`GHL webhook not triggered (no config): ${eventType}`);
+      return false;
+    }
+
+    try {
+      const payload = {
+        eventType,
+        timestamp: new Date().toISOString(),
+        locationId: this.locationId,
+        ...data
+      };
+
+      console.log('[GHL] Triggering webhook:', eventType, JSON.stringify(payload, null, 2));
+
+      await axios.post(this.webhookUrl, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      console.log(`[GHL] Webhook triggered successfully: ${eventType}`);
+      return true;
+    } catch (error: any) {
+      console.error('[GHL] Webhook trigger error:', error.response?.data || error.message);
+      return false;
     }
   }
 
@@ -138,258 +173,56 @@ class GHLEmailService {
   async sendPasswordResetEmail(email: string, resetToken: string, firstName?: string, lastName?: string): Promise<boolean> {
     const resetUrl = `${process.env.REPLIT_DEPLOYMENT ? 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co' : 'http://localhost:5000'}/reset-password?token=${resetToken}`;
     
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { padding: 30px 20px; background: #f9f9f9; }
-            .button { display: inline-block; padding: 14px 32px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9f9f9; border-radius: 0 0 8px 8px; }
-            .warning { background: #fef3c7; padding: 12px; border-left: 4px solid #f59e0b; margin: 16px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🔐 Password Reset Request</h1>
-            </div>
-            <div class="content">
-              <p>Hello${firstName ? ' ' + firstName : ''},</p>
-              <p>We received a request to reset your password for your PartnerConnector account.</p>
-              <p>Click the button below to create a new password:</p>
-              <div style="text-align: center;">
-                <a href="${resetUrl}" class="button">Reset Password</a>
-              </div>
-              <div class="warning">
-                <strong>⚠️ Security Notice:</strong><br>
-                If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.
-              </div>
-              <p><strong>This link will expire in 1 hour</strong> for your security.</p>
-              <p>Best regards,<br><strong>The PartnerConnector Team</strong></p>
-            </div>
-            <div class="footer">
-              <p>If the button doesn't work, copy and paste this link:</p>
-              <p style="word-break: break-all; color: #2563eb;">${resetUrl}</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    return this.sendEmail({
-      to: email,
-      subject: '🔐 Reset your PartnerConnector password',
-      html,
-      firstName,
-      lastName
+    return this.triggerWebhook('password_reset', {
+      email,
+      firstName: firstName || '',
+      lastName: lastName || '',
+      resetUrl,
+      resetToken,
+      expiresIn: '1 hour'
     });
   }
 
   async sendWelcomeEmail(email: string, firstName?: string, lastName?: string): Promise<boolean> {
-    const name = firstName ? firstName : 'there';
+    const dashboardUrl = `${process.env.REPLIT_DEPLOYMENT ? 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co' : 'http://localhost:5000'}/dashboard`;
     
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { padding: 30px 20px; background: white; border: 1px solid #e5e7eb; }
-            .feature-list { background: #f0f9ff; padding: 20px; border-radius: 6px; margin: 20px 0; }
-            .feature-list li { margin: 10px 0; }
-            .button { display: inline-block; padding: 14px 32px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9f9f9; border-radius: 0 0 8px 8px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🎉 Welcome to PartnerConnector!</h1>
-            </div>
-            <div class="content">
-              <p><strong>Hello ${name},</strong></p>
-              <p>Welcome to PartnerConnector! We're excited to have you join our community of business partners earning commissions through payment processing referrals.</p>
-              
-              <div class="feature-list">
-                <h3>🚀 What You Can Do:</h3>
-                <ul>
-                  <li>✅ Submit referrals and track their progress in real-time</li>
-                  <li>💰 Earn commissions on successful conversions</li>
-                  <li>👥 Build your team and earn multi-level commissions</li>
-                  <li>📊 Access comprehensive reporting and analytics</li>
-                  <li>🎓 Complete training modules to maximize your earnings</li>
-                </ul>
-              </div>
-
-              <div style="text-align: center;">
-                <a href="${process.env.REPLIT_DEPLOYMENT ? 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co' : 'http://localhost:5000'}/dashboard" class="button">Go to Dashboard</a>
-              </div>
-
-              <p style="margin-top: 30px;">If you have any questions, our support team is here to help!</p>
-              <p>Best regards,<br><strong>The PartnerConnector Team</strong></p>
-            </div>
-            <div class="footer">
-              <p>You're receiving this email because you signed up for PartnerConnector.</p>
-              <p style="color: #9ca3af; font-size: 12px; margin-top: 10px;">partnerships@partnerconnector.co.uk</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    return this.sendEmail({
-      to: email,
-      subject: '🎉 Welcome to PartnerConnector - Start Earning Today!',
-      html,
-      firstName,
-      lastName
+    return this.triggerWebhook('welcome_email', {
+      email,
+      firstName: firstName || '',
+      lastName: lastName || '',
+      dashboardUrl
     });
   }
 
   async sendEmailVerification(email: string, verificationToken: string, firstName?: string, lastName?: string): Promise<boolean> {
     const verifyUrl = `${process.env.REPLIT_DEPLOYMENT ? 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co' : 'http://localhost:5000'}/verify-email?token=${verificationToken}`;
     
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { padding: 30px 20px; background: #f9f9f9; }
-            .button { display: inline-block; padding: 14px 32px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>✉️ Verify Your Email</h1>
-            </div>
-            <div class="content">
-              <p>Hello${firstName ? ' ' + firstName : ''},</p>
-              <p>Thank you for signing up for PartnerConnector! Please verify your email address to activate your account.</p>
-              <div style="text-align: center;">
-                <a href="${verifyUrl}" class="button">Verify Email Address</a>
-              </div>
-              <p>Once verified, you'll have full access to submit referrals and start earning commissions.</p>
-              <p>Best regards,<br><strong>The PartnerConnector Team</strong></p>
-            </div>
-            <div class="footer">
-              <p>If the button doesn't work, copy and paste this link:</p>
-              <p style="word-break: break-all; color: #10b981;">${verifyUrl}</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    return this.sendEmail({
-      to: email,
-      subject: '✉️ Verify your PartnerConnector email',
-      html,
-      firstName,
-      lastName
+    return this.triggerWebhook('email_verification', {
+      email,
+      firstName: firstName || '',
+      lastName: lastName || '',
+      verifyUrl,
+      verificationToken
     });
   }
 
   async sendQuoteNotification(email: string, businessName: string, quoteAmount?: number, firstName?: string, lastName?: string): Promise<boolean> {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #10b981; color: white; padding: 20px; text-align: center; }
-            .content { padding: 30px 20px; background: #f9f9f9; }
-            .highlight { background: #e5f7f0; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>📋 Quote Ready!</h1>
-            </div>
-            <div class="content">
-              <p>Great news!</p>
-              <p>A quote has been prepared for your referral: <strong>${businessName}</strong></p>
-              ${quoteAmount ? `<div class="highlight">
-                <h3>Quote Amount: £${quoteAmount.toLocaleString()}</h3>
-              </div>` : ''}
-              <p>The quote has been sent to the client for review. You'll be notified once they respond.</p>
-              <p>Keep up the great work!</p>
-              <p>Best regards,<br>The PartnerConnector Team</p>
-            </div>
-            <div class="footer">
-              <p>Track all your referrals in your dashboard</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    return this.sendEmail({
-      to: email,
-      subject: `📋 Quote ready for ${businessName}`,
-      html,
-      firstName,
-      lastName
+    return this.triggerWebhook('quote_notification', {
+      email,
+      firstName: firstName || '',
+      lastName: lastName || '',
+      businessName,
+      quoteAmount: quoteAmount || 0
     });
   }
 
   async sendCommissionNotification(email: string, businessName: string, amount: number, firstName?: string, lastName?: string): Promise<boolean> {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #10b981; color: white; padding: 20px; text-align: center; }
-            .content { padding: 30px 20px; background: #f9f9f9; }
-            .highlight { background: #e5f7f0; padding: 20px; border-left: 4px solid #10b981; margin: 20px 0; text-align: center; }
-            .amount { font-size: 2em; font-weight: bold; color: #10b981; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>💰 Commission Paid!</h1>
-            </div>
-            <div class="content">
-              <p>Congratulations!</p>
-              <p>Your commission has been processed for the referral: <strong>${businessName}</strong></p>
-              <div class="highlight">
-                <div class="amount">£${amount.toLocaleString()}</div>
-                <p>has been paid to your account</p>
-              </div>
-              <p>Thank you for your continued partnership. Keep referring and earning!</p>
-              <p>Best regards,<br>The PartnerConnector Team</p>
-            </div>
-            <div class="footer">
-              <p>View your commission history in your dashboard</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    return this.sendEmail({
-      to: email,
-      subject: `💰 Commission paid: £${amount.toLocaleString()}`,
-      html,
-      firstName,
-      lastName
+    return this.triggerWebhook('commission_paid', {
+      email,
+      firstName: firstName || '',
+      lastName: lastName || '',
+      businessName,
+      amount
     });
   }
 }
