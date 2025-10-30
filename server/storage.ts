@@ -100,10 +100,9 @@ export interface IStorage {
   }>;
   
   // Bill upload operations
-  createBillUpload(referralId: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string, quoteId?: string | null): Promise<BillUpload>;
+  createBillUpload(businessName: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string): Promise<BillUpload>;
   getBillUploadById(billId: string): Promise<BillUpload | undefined>;
-  getBillUploadsByReferralId(referralId: string): Promise<BillUpload[]>;
-  getBillUploadsByQuoteId(quoteId: string): Promise<BillUpload[]>;
+  getBillUploadsByBusinessName(businessName: string): Promise<BillUpload[]>;
   
   // Partner ID operations
   generatePartnerId(userId: string, parentPartnerId?: string): Promise<string>;
@@ -1164,12 +1163,11 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createBillUpload(referralId: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string, quoteId?: string | null): Promise<BillUpload> {
+  async createBillUpload(businessName: string, fileName: string, fileSize: number, mimeType?: string, fileContent?: string): Promise<BillUpload> {
     const [upload] = await db
       .insert(billUploads)
       .values({
-        referralId,
-        quoteId: quoteId || null,
+        businessName,
         fileName,
         fileSize,
         mimeType,
@@ -1224,18 +1222,10 @@ export class DatabaseStorage implements IStorage {
     return bill;
   }
   
-  async getBillUploadsByReferralId(referralId: string): Promise<BillUpload[]> {
-    // Only return documents uploaded directly to the referral (quoteId IS NULL)
-    // Documents attached to specific quotes are fetched separately via getBillUploadsByQuoteId
+  async getBillUploadsByBusinessName(businessName: string): Promise<BillUpload[]> {
+    // Fetch all documents for a specific business name
     return await db.select().from(billUploads)
-      .where(and(
-        eq(billUploads.referralId, referralId),
-        isNull(billUploads.quoteId)
-      ));
-  }
-
-  async getBillUploadsByQuoteId(quoteId: string): Promise<BillUpload[]> {
-    return await db.select().from(billUploads).where(eq(billUploads.quoteId, quoteId));
+      .where(eq(billUploads.businessName, businessName));
   }
   
   // Admin operations
