@@ -5,7 +5,10 @@ import { setupAuth, requireAuth } from "./auth";
 import { insertReferralSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
+import { ghlEmailService } from "./ghlEmailService";
 import multer from "multer";
+import { z } from "zod";
+import crypto from "crypto";
 import { requestIdMiddleware, loggingMiddleware, errorHandlingMiddleware } from "./middleware/requestId";
 import { requireAdmin, auditAdminAction } from "./middleware/adminAuth";
 import { healthzHandler, readyzHandler, metricsHandler } from "./health";
@@ -278,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Login endpoint
+  // Login endpoint with rate limiting
   app.post('/api/auth/login', async (req: any, res) => {
     try {
       const schema = z.object({
@@ -291,10 +294,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('[AUTH] Login attempt:', email);
 
+      // Check if user exists first
+      const existingUser = await storage.getUserByEmail(email);
+      
+      // Check for account lockout
+      if (existingUser && existingUser.lockoutUntil && existingUser.lockoutUntil > new Date()) {
+        const lockoutMinutes = Math.ceil((existingUser.lockoutUntil.getTime() - Date.now()) / 60000);
+        return res.status(429).json({ 
+          message: `Account locked due to too many failed login attempts. Try again in ${lockoutMinutes} minute(s).`,
+          lockoutUntil: existingUser.lockoutUntil
+        });
+      }
+
       const user = await storage.verifyLogin(email, password);
+      
       if (!user) {
+        // Increment login attempts for failed login
+        if (existingUser) {
+          const attempts = (existingUser.loginAttempts || 0) + 1;
+          const updates: any = { loginAttempts: attempts };
+          
+          // Lock account after 5 failed attempts for 15 minutes
+          if (attempts >= 5) {
+            updates.lockoutUntil = new Date(Date.now() + 15 * 60 * 1000);
+            await storage.updateUser(existingUser.id, updates);
+            return res.status(429).json({ 
+              message: 'Account locked due to too many failed login attempts. Try again in 15 minutes.',
+              lockoutUntil: updates.lockoutUntil
+            });
+          }
+          
+          await storage.updateUser(existingUser.id, updates);
+        }
+        
         return res.status(401).json({ message: 'Invalid email or password' });
       }
+
+      // Check if email is verified
+      if (!user.emailVerified) {
+        return res.status(403).json({ 
+          message: 'Please verify your email before logging in. Check your inbox for the verification link.',
+          emailVerified: false
+        });
+      }
+
+      // Reset login attempts on successful login
+      await storage.updateUser(user.id, {
+        loginAttempts: 0,
+        lockoutUntil: null,
+        lastLogin: new Date(),
+      });
 
       // Set session
       req.session.userId = user.id;
@@ -330,6 +379,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ success: true });
     });
+  });
+
+  // Request password reset
+  app.post('/api/auth/request-password-reset', async (req: any, res) => {
+    try {
+      const schema = z.object({
+        email: z.string().email(),
+      });
+
+      const { email } = schema.parse(req.body);
+      
+      const user = await storage.getUserByEmail(email);
+      
+      // Always return success even if user doesn't exist (security best practice)
+      if (!user) {
+        return res.json({ success: true, message: 'If an account exists, a reset link has been sent' });
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetExpires = new Date(Date.now() + 3600000); // 1 hour from now
+
+      // Save token to database
+      await storage.updateUser(user.id, {
+        passwordResetToken: resetToken,
+        passwordResetExpires: resetExpires,
+      });
+
+      // Send reset email via GHL
+      await ghlEmailService.sendPasswordResetEmail(
+        user.email!,
+        resetToken,
+        user.firstName || undefined,
+        user.lastName || undefined
+      );
+
+      res.json({ success: true, message: 'If an account exists, a reset link has been sent' });
+    } catch (error: any) {
+      console.error('[AUTH] Password reset request error:', error);
+      if (error.issues) {
+        res.status(400).json({ message: fromZodError(error).message });
+      } else {
+        res.status(500).json({ message: 'Failed to process request' });
+      }
+    }
+  });
+
+  // Reset password with token
+  app.post('/api/auth/reset-password', async (req: any, res) => {
+    try {
+      const schema = z.object({
+        token: z.string(),
+        password: z.string().min(8).regex(/^(?=.*[A-Za-z])(?=.*\d)/, 'Password must contain at least one letter and one number'),
+      });
+
+      const { token, password } = schema.parse(req.body);
+
+      const user = await storage.getUserByResetToken(token);
+      
+      if (!user || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+      }
+
+      // Hash new password
+      const bcrypt = await import('bcrypt');
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      // Update password and clear reset token
+      await storage.updateUser(user.id, {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        loginAttempts: 0,
+        lockoutUntil: null,
+      });
+
+      res.json({ success: true, message: 'Password reset successful' });
+    } catch (error: any) {
+      console.error('[AUTH] Password reset error:', error);
+      if (error.issues) {
+        res.status(400).json({ message: fromZodError(error).message });
+      } else {
+        res.status(500).json({ message: 'Failed to reset password' });
+      }
+    }
+  });
+
+  // Verify email
+  app.post('/api/auth/verify-email', async (req: any, res) => {
+    try {
+      const schema = z.object({
+        token: z.string(),
+      });
+
+      const { token } = schema.parse(req.body);
+
+      const user = await storage.getUserByVerificationToken(token);
+      
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid verification token' });
+      }
+
+      // Mark email as verified
+      await storage.updateUser(user.id, {
+        emailVerified: true,
+        verificationToken: null,
+      });
+
+      // Send welcome email via GHL
+      await ghlEmailService.sendWelcomeEmail(
+        user.email!,
+        user.firstName || undefined,
+        user.lastName || undefined
+      );
+
+      res.json({ success: true, message: 'Email verified successfully' });
+    } catch (error: any) {
+      console.error('[AUTH] Email verification error:', error);
+      if (error.issues) {
+        res.status(400).json({ message: fromZodError(error).message });
+      } else {
+        res.status(500).json({ message: 'Failed to verify email' });
+      }
+    }
+  });
+
+  // Resend verification email
+  app.post('/api/auth/resend-verification', async (req: any, res) => {
+    try {
+      const schema = z.object({
+        email: z.string().email(),
+      });
+
+      const { email } = schema.parse(req.body);
+      
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user || user.emailVerified) {
+        return res.json({ success: true, message: 'If an account exists and is unverified, a verification email has been sent' });
+      }
+
+      // Generate new verification token
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+
+      // Save token to database
+      await storage.updateUser(user.id, {
+        verificationToken,
+      });
+
+      // Send verification email via GHL
+      await ghlEmailService.sendEmailVerification(
+        user.email!,
+        verificationToken,
+        user.firstName || undefined,
+        user.lastName || undefined
+      );
+
+      res.json({ success: true, message: 'If an account exists and is unverified, a verification email has been sent' });
+    } catch (error: any) {
+      console.error('[AUTH] Resend verification error:', error);
+      if (error.issues) {
+        res.status(400).json({ message: fromZodError(error).message });
+      } else {
+        res.status(500).json({ message: 'Failed to process request' });
+      }
+    }
   });
 
   // GHL Webhook for team member invites

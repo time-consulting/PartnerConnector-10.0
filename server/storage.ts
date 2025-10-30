@@ -69,6 +69,8 @@ export interface IStorage {
   // User operations - Auth
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
+  getUserByVerificationToken(token: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser, referralCode?: string): Promise<User>;
   createUserWithCredentials(email: string, password: string, userData: Partial<UpsertUser>, referralCode?: string): Promise<User>;
   verifyLogin(email: string, password: string): Promise<User | null>;
@@ -287,6 +289,16 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.passwordResetToken, token));
+    return user;
+  }
+
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.verificationToken, token));
+    return user;
+  }
+
   async createUserWithCredentials(
     email: string, 
     password: string, 
@@ -294,6 +306,7 @@ export class DatabaseStorage implements IStorage {
     referralCode?: string
   ): Promise<User> {
     const bcrypt = await import('bcrypt');
+    const crypto = await import('crypto');
     
     // Check if email already exists
     const existing = await this.getUserByEmail(email);
@@ -301,14 +314,26 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Email already registered');
     }
 
+    // Validate password strength (min 8 chars, at least 1 letter and 1 number)
+    if (password.length < 8) {
+      throw new Error('Password must be at least 8 characters long');
+    }
+    if (!/^(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
+      throw new Error('Password must contain at least one letter and one number');
+    }
+
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
+    
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
     
     // Create user
     const [user] = await db.insert(users).values({
       email,
       passwordHash,
-      emailVerified: false, // Will verify later via Go High Level
+      emailVerified: false,
+      verificationToken,
       ...userData,
     }).returning();
 
@@ -334,6 +359,15 @@ export class DatabaseStorage implements IStorage {
     if (!user.partnerId || !user.referralCode) {
       await this.generatePartnerId(user.id, referrerPartnerId);
     }
+
+    // Send verification email via GHL
+    const { ghlEmailService } = await import('./ghlEmailService');
+    await ghlEmailService.sendEmailVerification(
+      user.email!,
+      verificationToken,
+      userData.firstName || undefined,
+      userData.lastName || undefined
+    );
 
     return await this.getUser(user.id) as User;
   }
