@@ -77,6 +77,10 @@ export const users: any = pgTable("users", {
   passwordHash: varchar("password_hash"), // bcrypt hash - nullable for legacy OAuth users
   emailVerified: boolean("email_verified").default(false),
   verificationToken: varchar("verification_token"),
+  passwordResetToken: varchar("password_reset_token"),
+  passwordResetExpires: timestamp("password_reset_expires"),
+  loginAttempts: integer("login_attempts").default(0),
+  lockoutUntil: timestamp("lockout_until"),
   lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
