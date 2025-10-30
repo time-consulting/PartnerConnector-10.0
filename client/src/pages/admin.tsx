@@ -103,20 +103,21 @@ const confirmPaymentSchema = z.object({
 });
 
 // Component to display referral documents with view/download
-function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
+function ReferralDocumentsDisplay({ businessName }: { businessName: string }) {
   const { data: documents = [] } = useQuery({
-    queryKey: ['/api/referrals', referralId, 'bills'],
+    queryKey: ['/api/bills', businessName],
     queryFn: async () => {
-      const response = await fetch(`/api/referrals/${referralId}/bills`);
+      if (!businessName) return [];
+      const response = await fetch(`/api/bills?businessName=${encodeURIComponent(businessName)}`);
       if (!response.ok) throw new Error('Failed to fetch documents');
       return response.json();
     },
-    enabled: !!referralId,
+    enabled: !!businessName,
   });
 
   const handleDownload = async (docId: string, fileName: string) => {
     try {
-      const response = await fetch(`/api/referrals/${referralId}/bills/${docId}/download`);
+      const response = await fetch(`/api/bills/${docId}/download`);
       if (!response.ok) throw new Error('Download failed');
       
       // Get the blob from response
@@ -142,7 +143,7 @@ function ReferralDocumentsDisplay({ referralId }: { referralId: string }) {
 
   const handleView = (docId: string) => {
     // Open in new tab for viewing
-    window.open(`/api/referrals/${referralId}/bills/${docId}/view`, '_blank');
+    window.open(`/api/bills/${docId}/view`, '_blank');
   };
 
   if (!documents || documents.length === 0) {
@@ -1032,7 +1033,7 @@ export default function AdminDashboard() {
                                   )}
 
                                   {/* Uploaded Documents Section */}
-                                  <ReferralDocumentsDisplay referralId={referral.id} />
+                                  <ReferralDocumentsDisplay businessName={referral.businessName} />
 
                                   {/* Partner Information */}
                                   {(referral.partnerName || referral.partnerEmail) && (
