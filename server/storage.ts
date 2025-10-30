@@ -63,7 +63,7 @@ import {
 } from "@shared/schema";
 import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
-import { eq, desc, and, sql, gte } from "drizzle-orm";
+import { eq, desc, and, sql, gte, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - Auth
@@ -1225,7 +1225,13 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getBillUploadsByReferralId(referralId: string): Promise<BillUpload[]> {
-    return await db.select().from(billUploads).where(eq(billUploads.referralId, referralId));
+    // Only return documents uploaded directly to the referral (quoteId IS NULL)
+    // Documents attached to specific quotes are fetched separately via getBillUploadsByQuoteId
+    return await db.select().from(billUploads)
+      .where(and(
+        eq(billUploads.referralId, referralId),
+        isNull(billUploads.quoteId)
+      ));
   }
 
   async getBillUploadsByQuoteId(quoteId: string): Promise<BillUpload[]> {
