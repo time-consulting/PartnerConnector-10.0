@@ -125,27 +125,21 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   ) || [];
 
   // Component to display referral documents (same as Quote Request section)
-  const ReferralDocumentsSection = ({ referralId, quoteId, parentId }: { referralId?: string | null, quoteId?: string | null, parentId?: string }) => {
+  const ReferralDocumentsSection = ({ businessName, parentId }: { businessName?: string | null, parentId?: string }) => {
     const { data: documents = [] } = useQuery({
-      queryKey: ['/api/referrals', referralId, 'bills', quoteId],
+      queryKey: ['/api/bills', businessName],
       queryFn: async () => {
-        if (!referralId) return [];
-        // If quoteId exists, fetch documents for this specific deal/quote
-        // Otherwise fetch documents for the original referral submission
-        const url = quoteId 
-          ? `/api/referrals/${referralId}/bills?quoteId=${quoteId}`
-          : `/api/referrals/${referralId}/bills`;
-        const response = await fetch(url);
+        if (!businessName) return [];
+        const response = await fetch(`/api/bills?businessName=${encodeURIComponent(businessName)}`);
         if (!response.ok) throw new Error('Failed to fetch documents');
         return response.json();
       },
-      enabled: !!referralId,
+      enabled: !!businessName,
     });
 
     const handleDownload = async (docId: string, fileName: string) => {
       try {
-        if (!referralId) return;
-        const response = await fetch(`/api/referrals/${referralId}/bills/${docId}/download`);
+        const response = await fetch(`/api/bills/${docId}/download`);
         if (!response.ok) throw new Error('Download failed');
         
         const blob = await response.blob();
@@ -163,8 +157,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     };
 
     const handleView = (docId: string) => {
-      if (!referralId) return;
-      window.open(`/api/referrals/${referralId}/bills/${docId}/view`, '_blank');
+      window.open(`/api/bills/${docId}/view`, '_blank');
     };
 
     if (!documents || documents.length === 0) {
@@ -407,8 +400,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
                 Client Uploaded Documents
               </h3>
               <ReferralDocumentsSection 
-                referralId={item.id} 
-                quoteId={null} 
+                businessName={item.clientBusinessName || item.businessName} 
                 parentId={item.id} 
               />
             </div>
