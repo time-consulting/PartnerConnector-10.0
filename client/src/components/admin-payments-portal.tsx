@@ -490,13 +490,13 @@ export function AdminPaymentsPortal() {
 
       {/* Confirmation Dialog */}
       <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-amber-500" />
               Confirm Stripe Payment
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-gray-700">
               You are about to process <strong>£{getTotalDistributed()}</strong> in commission payments
               through Stripe to <strong>{calculatedBreakdown?.breakdown.length}</strong> recipients.
               {Object.keys(manualOverrides).length > 0 && (
