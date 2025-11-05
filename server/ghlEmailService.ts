@@ -171,7 +171,10 @@ class GHLEmailService {
   }
 
   async sendPasswordResetEmail(email: string, resetToken: string, firstName?: string, lastName?: string): Promise<boolean> {
-    const resetUrl = `${process.env.REPLIT_DEPLOYMENT ? 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co' : 'http://localhost:5000'}/reset-password?token=${resetToken}`;
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+      : 'http://localhost:5000';
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
     
     return this.triggerWebhook('password_reset', {
       email,
@@ -184,7 +187,10 @@ class GHLEmailService {
   }
 
   async sendWelcomeEmail(email: string, firstName?: string, lastName?: string): Promise<boolean> {
-    const dashboardUrl = `${process.env.REPLIT_DEPLOYMENT ? 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co' : 'http://localhost:5000'}/dashboard`;
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+      : 'http://localhost:5000';
+    const dashboardUrl = `${baseUrl}/dashboard`;
     
     return this.triggerWebhook('welcome_email', {
       email,
@@ -195,7 +201,10 @@ class GHLEmailService {
   }
 
   async sendEmailVerification(email: string, verificationToken: string, firstName?: string, lastName?: string): Promise<boolean> {
-    const verifyUrl = `${process.env.REPLIT_DEPLOYMENT ? 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co' : 'http://localhost:5000'}/verify-email?token=${verificationToken}`;
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+      : 'http://localhost:5000';
+    const verifyUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
     
     return this.triggerWebhook('email_verification', {
       email,
