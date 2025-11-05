@@ -547,6 +547,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test webhook endpoint - triggers all webhook types for testing
+  app.post('/api/test/webhooks', async (req: any, res) => {
+    try {
+      console.log('🧪 Testing webhooks...');
+      
+      const results = [];
+      
+      // Test email verification webhook
+      const emailVerificationResult = await ghlEmailService.sendEmailVerification(
+        'test@example.com',
+        'test-token-123',
+        'Test',
+        'User'
+      );
+      results.push({ event: 'email_verification', success: emailVerificationResult });
+      
+      // Test welcome email webhook
+      const welcomeResult = await ghlEmailService.sendWelcomeEmail(
+        'test@example.com',
+        'Test',
+        'User'
+      );
+      results.push({ event: 'welcome_email', success: welcomeResult });
+      
+      // Test password reset webhook
+      const passwordResetResult = await ghlEmailService.sendPasswordResetEmail(
+        'test@example.com',
+        'reset-token-456',
+        'Test',
+        'User'
+      );
+      results.push({ event: 'password_reset', success: passwordResetResult });
+      
+      // Test quote notification webhook
+      const quoteResult = await ghlEmailService.sendQuoteNotification(
+        'test@example.com',
+        'Test Business Ltd',
+        5000,
+        'Test',
+        'User'
+      );
+      results.push({ event: 'quote_notification', success: quoteResult });
+      
+      // Test commission notification webhook
+      const commissionResult = await ghlEmailService.sendCommissionNotification(
+        'test@example.com',
+        'Test Business Ltd',
+        250.50,
+        'Test',
+        'User'
+      );
+      results.push({ event: 'commission_paid', success: commissionResult });
+      
+      console.log('✅ Webhook test results:', results);
+      
+      res.json({ 
+        success: true, 
+        message: 'All test webhooks triggered. Check your GHL webhook logs.',
+        results 
+      });
+    } catch (error: any) {
+      console.error('[TEST] Webhook test error:', error);
+      res.status(500).json({ message: 'Failed to test webhooks', error: error.message });
+    }
+  });
+
   // GHL Webhook for team member invites
   app.post('/api/webhooks/ghl/team-invite', async (req: any, res) => {
     try {
