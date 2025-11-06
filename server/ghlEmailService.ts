@@ -170,10 +170,32 @@ class GHLEmailService {
     }
   }
 
+  /**
+   * Get the base URL for email links
+   * Priority: Custom domain > Replit domains > localhost
+   */
+  private getBaseUrl(): string {
+    // Production custom domain
+    const customDomain = 'www.partnerconnector.co.uk';
+    
+    // Check if we're in production by looking at REPLIT_DOMAINS
+    const replitDomains = process.env.REPLIT_DOMAINS;
+    if (replitDomains) {
+      // If REPLIT_DOMAINS exists, we're in production - use custom domain
+      return `https://${customDomain}`;
+    }
+    
+    // Development: use REPLIT_DEV_DOMAIN if available
+    if (process.env.REPLIT_DEV_DOMAIN) {
+      return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    }
+    
+    // Fallback to localhost for local development
+    return 'http://localhost:5000';
+  }
+
   async sendPasswordResetEmail(email: string, resetToken: string, firstName?: string, lastName?: string): Promise<boolean> {
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-      : 'http://localhost:5000';
+    const baseUrl = this.getBaseUrl();
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
     
     return this.triggerWebhook('password_reset', {
@@ -187,9 +209,7 @@ class GHLEmailService {
   }
 
   async sendWelcomeEmail(email: string, firstName?: string, lastName?: string): Promise<boolean> {
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-      : 'http://localhost:5000';
+    const baseUrl = this.getBaseUrl();
     const dashboardUrl = `${baseUrl}/dashboard`;
     
     return this.triggerWebhook('welcome_email', {
@@ -201,9 +221,7 @@ class GHLEmailService {
   }
 
   async sendEmailVerification(email: string, verificationToken: string, firstName?: string, lastName?: string): Promise<boolean> {
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-      : 'http://localhost:5000';
+    const baseUrl = this.getBaseUrl();
     const verifyUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
     
     return this.triggerWebhook('email_verification', {
