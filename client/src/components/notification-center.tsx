@@ -34,14 +34,13 @@ export default function NotificationCenter({ onQuoteClick }: NotificationCenterP
   const unreadCount = typeof data?.unreadCount === 'number' ? data.unreadCount : 0;
 
   // Connect to WebSocket for real-time notifications
-  // DISABLED: WebSocket notifications temporarily disabled to fix flickering issue
-  // const { isConnected, connectionState } = useWebSocket({
-  //   onNotification: (notification) => {
-  //     // Refetch notifications when a new one arrives
-  //     refetchNotifications();
-  //   },
-  //   showToastNotifications: true
-  // });
+  const { isConnected, connectionState } = useWebSocket({
+    onNotification: (notification) => {
+      // Refetch notifications when a new one arrives
+      refetchNotifications();
+    },
+    showToastNotifications: true
+  });
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {

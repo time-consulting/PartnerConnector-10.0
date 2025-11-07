@@ -143,8 +143,7 @@ app.use((req, res, next) => {
   }
 
   // Initialize WebSocket server with the HTTP server
-  // DISABLED: WebSocket notifications temporarily disabled to fix flickering issue
-  // wsManager.initialize(server);
+  wsManager.initialize(server);
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
