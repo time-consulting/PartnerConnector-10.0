@@ -175,8 +175,8 @@ class GHLEmailService {
    * Priority: Custom domain > Replit domains > localhost
    */
   private getBaseUrl(): string {
-    // Production custom domain
-    const customDomain = 'www.partnerconnector.co.uk';
+    // Production custom domain (without www since that's what's configured)
+    const customDomain = 'partnerconnector.co.uk';
     
     // Check if we're in production by looking at REPLIT_DOMAINS
     const replitDomains = process.env.REPLIT_DOMAINS;
