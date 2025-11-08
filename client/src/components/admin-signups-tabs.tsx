@@ -2,9 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { 
   Building, 
   User, 
@@ -65,6 +69,12 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Invoice state
+  const [showRaiseInvoiceDialog, setShowRaiseInvoiceDialog] = useState(false);
+  const [showQueryInvoiceDialog, setShowQueryInvoiceDialog] = useState(false);
+  const [selectedQuoteForInvoice, setSelectedQuoteForInvoice] = useState<any>(null);
+  const [invoiceQueryNotes, setInvoiceQueryNotes] = useState('');
+
   // Move to Pending Payments mutation
   const moveToPendingPaymentsMutation = useMutation({
     mutationFn: async (quoteId: string) => {
@@ -85,6 +95,61 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
         title: "Success",
         description: "Deal moved to Pending Payments",
       });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Raise Invoice mutation
+  const raiseInvoiceMutation = useMutation({
+    mutationFn: async ({ quoteId, amount }: { quoteId: string; amount: number }) => {
+      return await apiRequest('/api/invoices/raise', {
+        method: 'POST',
+        body: JSON.stringify({ quoteId, amount }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({
+        title: "Success",
+        description: "Invoice raised successfully",
+      });
+      setShowRaiseInvoiceDialog(false);
+      setSelectedQuoteForInvoice(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Query Invoice mutation
+  const queryInvoiceMutation = useMutation({
+    mutationFn: async ({ quoteId, queryNotes }: { quoteId: string; queryNotes: string }) => {
+      // For now, we don't have an invoice ID yet, so we'll add this to the quote Q&A instead
+      return await apiRequest(`/api/quotes/${quoteId}/qa`, {
+        method: 'POST',
+        body: JSON.stringify({ message: `Payment Query: ${queryNotes}` }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/signups'] });
+      toast({
+        title: "Success",
+        description: "Query submitted successfully",
+      });
+      setShowQueryInvoiceDialog(false);
+      setSelectedQuoteForInvoice(null);
+      setInvoiceQueryNotes('');
     },
     onError: (error: Error) => {
       toast({
@@ -605,11 +670,8 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => {
-                // TODO: Open raise invoice dialog
-                toast({
-                  title: "Raise Invoice",
-                  description: "Invoice functionality coming soon"
-                });
+                setSelectedQuoteForInvoice(item);
+                setShowRaiseInvoiceDialog(true);
               }}
               className="bg-blue-600 hover:bg-blue-700"
               data-testid={`button-raise-invoice-${item.quoteId}`}
@@ -619,11 +681,8 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
             </Button>
             <Button
               onClick={() => {
-                // TODO: Open query dialog
-                toast({
-                  title: "Query Invoice",
-                  description: "Query functionality coming soon"
-                });
+                setSelectedQuoteForInvoice(item);
+                setShowQueryInvoiceDialog(true);
               }}
               variant="outline"
               className="border-orange-500 text-orange-700 hover:bg-orange-50"
@@ -736,6 +795,139 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
       <TabsContent value="declined" className="mt-6">
         {renderTabContent(declinedDeals, "No declined deals")}
       </TabsContent>
+
+      {/* Raise Invoice Dialog */}
+      <Dialog open={showRaiseInvoiceDialog} onOpenChange={setShowRaiseInvoiceDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Raise Invoice</DialogTitle>
+          </DialogHeader>
+          
+          {selectedQuoteForInvoice && (
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Business:</strong> {selectedQuoteForInvoice.businessName}
+                </p>
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Deal ID:</strong> {selectedQuoteForInvoice.dealId || selectedQuoteForInvoice.quoteId}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Commission Amount:</strong> £{parseFloat(selectedQuoteForInvoice.estimatedCommission || 0).toFixed(2)}
+                </p>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                You're about to raise an invoice for this completed deal. Once submitted, the admin will be notified and can process the payment.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRaiseInvoiceDialog(false);
+                setSelectedQuoteForInvoice(null);
+              }}
+              data-testid="button-cancel-raise-invoice"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedQuoteForInvoice) {
+                  raiseInvoiceMutation.mutate({
+                    quoteId: selectedQuoteForInvoice.id,
+                    amount: parseFloat(selectedQuoteForInvoice.estimatedCommission || 0),
+                  });
+                }
+              }}
+              disabled={raiseInvoiceMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-confirm-raise-invoice"
+            >
+              {raiseInvoiceMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Raising Invoice...
+                </>
+              ) : (
+                'Raise Invoice'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Query Invoice Dialog */}
+      <Dialog open={showQueryInvoiceDialog} onOpenChange={setShowQueryInvoiceDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Query Payment</DialogTitle>
+          </DialogHeader>
+          
+          {selectedQuoteForInvoice && (
+            <div className="space-y-4">
+              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Business:</strong> {selectedQuoteForInvoice.businessName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Deal ID:</strong> {selectedQuoteForInvoice.dealId || selectedQuoteForInvoice.quoteId}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Query Details</label>
+                <Textarea
+                  value={invoiceQueryNotes}
+                  onChange={(e) => setInvoiceQueryNotes(e.target.value)}
+                  placeholder="Describe your query or concern about the payment..."
+                  rows={4}
+                  data-testid="textarea-invoice-query"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowQueryInvoiceDialog(false);
+                setSelectedQuoteForInvoice(null);
+                setInvoiceQueryNotes('');
+              }}
+              data-testid="button-cancel-query"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedQuoteForInvoice && invoiceQueryNotes.trim()) {
+                  queryInvoiceMutation.mutate({
+                    quoteId: selectedQuoteForInvoice.id,
+                    queryNotes: invoiceQueryNotes,
+                  });
+                }
+              }}
+              disabled={queryInvoiceMutation.isPending || !invoiceQueryNotes.trim()}
+              className="bg-orange-600 hover:bg-orange-700"
+              data-testid="button-submit-query"
+            >
+              {queryInvoiceMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Query'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Tabs>
   );
 }
