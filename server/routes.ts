@@ -3049,6 +3049,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invoice routes
+  // Partner raises invoice for completed deal
+  app.post('/api/invoices/raise', requireAuth, async (req: any, res) => {
+    try {
+      const { quoteId, amount } = req.body;
+      const userId = req.user.id;
+
+      if (!quoteId || !amount) {
+        return res.status(400).json({ message: "Quote ID and amount are required" });
+      }
+
+      // Get quote details
+      const quote = await storage.getQuoteById(quoteId);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      // Verify the quote belongs to this user
+      if (quote.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Create the invoice
+      const invoice = await storage.createInvoice(
+        quoteId,
+        userId,
+        parseFloat(amount),
+        quote.businessName,
+        quote.dealId
+      );
+
+      res.json({ 
+        success: true, 
+        message: "Invoice raised successfully",
+        invoice 
+      });
+    } catch (error: any) {
+      console.error("Error raising invoice:", error);
+      res.status(500).json({ 
+        message: "Failed to raise invoice",
+        error: error.message 
+      });
+    }
+  });
+
+  // Partner queries an invoice
+  app.post('/api/invoices/:id/query', requireAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { queryNotes } = req.body;
+      const userId = req.user.id;
+
+      if (!queryNotes) {
+        return res.status(400).json({ message: "Query notes are required" });
+      }
+
+      const invoice = await storage.getInvoiceById(id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+
+      // Verify the invoice belongs to this user
+      if (invoice.partnerId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      await storage.addInvoiceQuery(id, queryNotes);
+
+      // Also add to quote Q&A for communication tracking
+      await storage.addQuoteQAMessage(invoice.quoteId, 'partner', userId, `Invoice Query: ${queryNotes}`);
+
+      res.json({ success: true, message: "Query submitted successfully" });
+    } catch (error: any) {
+      console.error("Error submitting invoice query:", error);
+      res.status(500).json({ 
+        message: "Failed to submit query",
+        error: error.message 
+      });
+    }
+  });
+
+  // Get invoices for current partner
+  app.get('/api/invoices', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const invoices = await storage.getInvoicesByPartnerId(userId);
+      res.json(invoices);
+    } catch (error: any) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  // Admin: Get all invoices
+  app.get('/api/admin/invoices', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const invoices = await storage.getAllInvoices();
+      res.json(invoices);
+    } catch (error: any) {
+      console.error("Error fetching all invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  // Admin: Mark invoice as paid
+  app.post('/api/admin/invoices/:id/mark-paid', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { paymentReference, adminNotes } = req.body;
+
+      if (!paymentReference) {
+        return res.status(400).json({ message: "Payment reference is required" });
+      }
+
+      const invoice = await storage.getInvoiceById(id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+
+      await storage.markInvoiceAsPaid(id, paymentReference, adminNotes);
+
+      res.json({ success: true, message: "Invoice marked as paid" });
+    } catch (error: any) {
+      console.error("Error marking invoice as paid:", error);
+      res.status(500).json({ 
+        message: "Failed to mark invoice as paid",
+        error: error.message 
+      });
+    }
+  });
+
   // Admin impersonate user endpoint
   app.post('/api/admin/impersonate/:userId', requireAuth, requireAdmin, auditAdminAction('impersonate_user', 'admin'), async (req: any, res) => {
     try {

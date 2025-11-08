@@ -16,6 +16,7 @@ import {
   notifications,
   rates,
   commissionApprovals,
+  invoices,
   audits,
   requestLogs,
   webhookLogs,
@@ -54,6 +55,8 @@ import {
   type Rate,
   type InsertCommissionApproval,
   type CommissionApproval,
+  type InsertInvoice,
+  type Invoice,
   type InsertAdminAuditLog,
   type AdminAuditLog,
   type Waitlist,
@@ -273,6 +276,15 @@ export interface IStorage {
   getQuoteBillUploadById(billId: string): Promise<any | undefined>;
   approveQuoteBill(billId: string, adminNotes?: string): Promise<void>;
   rejectQuoteBill(billId: string, adminNotes: string): Promise<void>;
+
+  // Invoice operations
+  createInvoice(quoteId: string, partnerId: string, amount: number, businessName?: string, dealId?: string): Promise<any>;
+  getInvoicesByPartnerId(partnerId: string): Promise<any[]>;
+  getAllInvoices(): Promise<any[]>;
+  getInvoiceById(invoiceId: string): Promise<any | undefined>;
+  addInvoiceQuery(invoiceId: string, queryNotes: string): Promise<void>;
+  markInvoiceAsPaid(invoiceId: string, paymentReference: string, adminNotes?: string): Promise<void>;
+  updateInvoiceStatus(invoiceId: string, status: string): Promise<void>;
 
   // Test data seeding
   seedTestReferrals(): Promise<void>;
@@ -3317,6 +3329,86 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(pushSubscriptions)
       .where(eq(pushSubscriptions.id, id));
+  }
+
+  // Invoice operations
+  async createInvoice(quoteId: string, partnerId: string, amount: number, businessName?: string, dealId?: string): Promise<Invoice> {
+    // Generate invoice number in format INV-YYYY-NNNN
+    const year = new Date().getFullYear();
+    const count = await db.select({ count: sql<number>`count(*)` }).from(invoices);
+    const nextNumber = (parseInt(count[0]?.count?.toString() || '0') + 1).toString().padStart(4, '0');
+    const invoiceNumber = `INV-${year}-${nextNumber}`;
+
+    const [invoice] = await db
+      .insert(invoices)
+      .values({
+        invoiceNumber,
+        quoteId,
+        partnerId,
+        amount: amount.toString(),
+        businessName,
+        dealId,
+        status: 'pending',
+      })
+      .returning();
+    return invoice;
+  }
+
+  async getInvoicesByPartnerId(partnerId: string): Promise<Invoice[]> {
+    return await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.partnerId, partnerId))
+      .orderBy(desc(invoices.createdAt));
+  }
+
+  async getAllInvoices(): Promise<Invoice[]> {
+    return await db
+      .select()
+      .from(invoices)
+      .orderBy(desc(invoices.createdAt));
+  }
+
+  async getInvoiceById(invoiceId: string): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.id, invoiceId));
+    return invoice;
+  }
+
+  async addInvoiceQuery(invoiceId: string, queryNotes: string): Promise<void> {
+    await db
+      .update(invoices)
+      .set({ 
+        queryNotes, 
+        hasQuery: true,
+        updatedAt: new Date() 
+      })
+      .where(eq(invoices.id, invoiceId));
+  }
+
+  async markInvoiceAsPaid(invoiceId: string, paymentReference: string, adminNotes?: string): Promise<void> {
+    await db
+      .update(invoices)
+      .set({ 
+        status: 'paid',
+        paymentReference,
+        adminNotes,
+        paidAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(invoices.id, invoiceId));
+  }
+
+  async updateInvoiceStatus(invoiceId: string, status: string): Promise<void> {
+    await db
+      .update(invoices)
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(invoices.id, invoiceId));
   }
 }
 

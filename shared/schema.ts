@@ -247,6 +247,30 @@ export const commissionApprovals = pgTable("commission_approvals", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Partner invoices - for manual invoice-based commission payment workflow
+export const invoices = pgTable("invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceNumber: varchar("invoice_number").notNull().unique(),
+  quoteId: varchar("quote_id").notNull(), // Links to quotes table
+  dealId: varchar("deal_id"), // Optional deal ID for reference
+  partnerId: varchar("partner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  businessName: varchar("business_name"),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status").notNull().default("pending"), // pending, approved, paid
+  queryNotes: text("query_notes"), // Notes if partner queried the invoice
+  hasQuery: boolean("has_query").default(false),
+  adminNotes: text("admin_notes"),
+  paymentReference: varchar("payment_reference"),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("invoices_partner_id_idx").on(table.partnerId),
+  index("invoices_quote_id_idx").on(table.quoteId),
+  index("invoices_status_idx").on(table.status),
+  index("invoices_invoice_number_idx").on(table.invoiceNumber),
+]);
+
 // Team invitations
 export const teamInvitations = pgTable("team_invitations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1138,6 +1162,16 @@ export type Rate = typeof rates.$inferSelect;
 export const insertCommissionApprovalSchema = createInsertSchema(commissionApprovals);
 export type InsertCommissionApproval = z.infer<typeof insertCommissionApprovalSchema>;
 export type CommissionApproval = typeof commissionApprovals.$inferSelect;
+
+// Invoice types and schemas
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 export type Referral = typeof referrals.$inferSelect;
