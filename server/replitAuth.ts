@@ -191,8 +191,8 @@ export async function setupAuth(app: Express) {
           secure: true,
           httpOnly: true
         });
-        // Redirect to landing page instead of OIDC provider
-        res.redirect('/');
+        // Redirect to login page after logout
+        res.redirect('/login');
       });
     });
   });
