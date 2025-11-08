@@ -590,11 +590,49 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     }
 
     if (item.commissionPaid) {
-      // Complete - show paid status
+      // Complete - show invoice options
+      const dealValue = item.estimatedCommission ? parseFloat(item.estimatedCommission) : 0;
+      
       return (
-        <div className="flex items-center gap-2 text-green-600">
-          <CheckCircle className="w-5 h-5" />
-          <span className="font-medium">Commission Paid</span>
+        <div className="space-y-4">
+          <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+            <p className="text-sm text-green-700 font-medium mb-1">Deal Value</p>
+            <p className="text-2xl font-bold text-green-600">
+              £{dealValue.toFixed(2)}
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              onClick={() => {
+                // TODO: Open raise invoice dialog
+                toast({
+                  title: "Raise Invoice",
+                  description: "Invoice functionality coming soon"
+                });
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid={`button-raise-invoice-${item.quoteId}`}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Raise Invoice
+            </Button>
+            <Button
+              onClick={() => {
+                // TODO: Open query dialog
+                toast({
+                  title: "Query Invoice",
+                  description: "Query functionality coming soon"
+                });
+              }}
+              variant="outline"
+              className="border-orange-500 text-orange-700 hover:bg-orange-50"
+              data-testid={`button-query-invoice-${item.quoteId}`}
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Query
+            </Button>
+          </div>
         </div>
       );
     }
