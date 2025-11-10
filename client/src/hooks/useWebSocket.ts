@@ -18,8 +18,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     onMessage, 
     onConnect, 
     onDisconnect,
-    autoConnect = true,
-    showToastNotifications = true
+    autoConnect = false,
+    showToastNotifications = false
   } = options;
 
   const { user } = useAuth();
