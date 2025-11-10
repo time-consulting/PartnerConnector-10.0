@@ -39,7 +39,7 @@ export default function NotificationCenter({ onQuoteClick }: NotificationCenterP
       // Refetch notifications when a new one arrives
       refetchNotifications();
     },
-    showToastNotifications: true
+    showToastNotifications: false
   });
 
   const markAsReadMutation = useMutation({
