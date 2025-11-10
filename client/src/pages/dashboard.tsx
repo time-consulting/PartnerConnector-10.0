@@ -11,7 +11,6 @@ import SideNavigation from "@/components/side-navigation";
 import StatsCard from "@/components/stats-card";
 import ReferralProgress from "@/components/referral-progress";
 import ProgressTracker from "@/components/progress-tracker";
-import NotificationCenter from "@/components/notification-center";
 import QuoteSystem from "@/components/quote-system";
 import AdditionalDetailsForm from "@/components/additional-details-form";
 import Recommendations from "@/components/recommendations";
@@ -232,7 +231,6 @@ export default function Dashboard() {
           )}
           <div className="flex items-center space-x-3 ml-auto">
             <SyncStatus compact />
-            <NotificationCenter onQuoteClick={handleQuoteClick} />
           </div>
         </div>
       
