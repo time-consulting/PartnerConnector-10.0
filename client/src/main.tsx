@@ -2,6 +2,7 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -9,28 +10,6 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>
 );
 
-// Register service worker for PWA support
-// DISABLED: Service worker causing infinite reload loop in development
-// TODO: Re-enable with proper production-only logic
-/*
-if (process.env.NODE_ENV === 'production') {
-  serviceWorkerRegistration.register({
-    onUpdate: (registration) => {
-      // Notify user when a new version is available
-      const shouldUpdate = window.confirm(
-        'A new version is available! Would you like to refresh?'
-      );
-      if (shouldUpdate && registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-        window.location.reload();
-      }
-    },
-    onSuccess: (registration) => {
-      console.log('Content is cached for offline use.');
-    }
-  });
-} else {
-  // Unregister service worker in development to avoid caching issues
-  serviceWorkerRegistration.unregister();
-}
-*/
+// CRITICAL: Unregister service worker to clear cache and stop flickering
+// The service worker was causing infinite reload loops and serving stale cached bundles
+serviceWorkerRegistration.unregister();

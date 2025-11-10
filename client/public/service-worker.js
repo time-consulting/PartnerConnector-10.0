@@ -1,4 +1,4 @@
-const CACHE_NAME = 'partner-connector-v1';
+const CACHE_NAME = 'partner-connector-v2';
 const urlsToCache = [
   '/',
   '/offline',

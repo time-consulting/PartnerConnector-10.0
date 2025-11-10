@@ -1,4 +1,5 @@
 // Offline sync manager for handling network state and data synchronization
+import { useEffect, useState } from 'react';
 import { offlineDB, STORES, SyncQueueItem, OfflineReferral, OfflineNotification } from './offline-db';
 import { apiRequest } from './queryClient';
 import { queryClient } from './queryClient';
@@ -415,8 +416,6 @@ class OfflineSyncManager {
 export const syncManager = new OfflineSyncManager();
 
 // React hook for using sync manager
-import { useEffect, useState } from 'react';
-
 export function useOfflineSync() {
   const [status, setStatus] = useState<SyncStatus>({
     isOnline: navigator.onLine,

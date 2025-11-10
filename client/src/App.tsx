@@ -5,7 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 // import { Toaster } from "@/components/ui/toaster"; // Temporarily disabled due to React hook violation
 // import { TooltipProvider } from "@/components/ui/tooltip"; // Temporarily disabled due to React hook violation
 import { useAuth } from "@/hooks/useAuth";
-import ImpersonationBanner from "@/components/impersonation-banner";
+// import ImpersonationBanner from "@/components/impersonation-banner"; - Temporarily disabled due to React hook violation
 // import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
 // Lazy load all pages for optimal bundle splitting
@@ -165,7 +165,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       {/* <TooltipProvider> - Temporarily disabled due to React hook violation */}
         <Router>
-          <ImpersonationBanner />
+          {/* <ImpersonationBanner /> - Temporarily disabled due to React hook violation */}
           <Suspense fallback={<LoadingFallback />}>
             <AppRoutes />
             {/* <PWAInstallPrompt /> */}
