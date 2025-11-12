@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 // import ImpersonationBanner from "@/components/impersonation-banner"; - Temporarily disabled due to React hook violation
 // import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
-// Lazy load all pages for optimal bundle splitting
+// Lazy load all pages for optimal bundle splitting - Updated 2025-11-12
 const Landing = lazy(() => import("@/pages/landing"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const SubmitReferral = lazy(() => import("@/pages/submit-referral"));
