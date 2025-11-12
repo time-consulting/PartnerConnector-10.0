@@ -15,6 +15,10 @@ const SubmitReferral = lazy(() => import("@/pages/submit-referral"));
 const UploadBills = lazy(() => import("@/pages/upload-bills"));
 const AdminPortal = lazy(() => import("@/pages/admin"));
 const AdminDiagnostics = lazy(() => import("@/pages/admin-diagnostics"));
+const AdminPayments = lazy(() => import("@/pages/admin-payments"));
+const AdminInvoices = lazy(() => import("@/pages/admin-invoices"));
+const AdminMessages = lazy(() => import("@/pages/admin-messages"));
+const AdminBackend = lazy(() => import("@/pages/admin-backend"));
 const TrackReferrals = lazy(() => import("@/pages/track-referrals"));
 const TeamManagement = lazy(() => import("@/pages/team-management"));
 const Training = lazy(() => import("@/pages/training"));
@@ -153,6 +157,10 @@ function AppRoutes() {
       <Route path="/account/feedback" component={() => <PrivateRoute><FeedbackPage /></PrivateRoute>} />
       <Route path="/admin" component={() => <PrivateRoute><AdminPortal /></PrivateRoute>} />
       <Route path="/admin/diagnostics" component={() => <PrivateRoute><AdminDiagnostics /></PrivateRoute>} />
+      <Route path="/admin/payments" component={() => <PrivateRoute><AdminPayments /></PrivateRoute>} />
+      <Route path="/admin/invoices" component={() => <PrivateRoute><AdminInvoices /></PrivateRoute>} />
+      <Route path="/admin/messages" component={() => <PrivateRoute><AdminMessages /></PrivateRoute>} />
+      <Route path="/admin/backend" component={() => <PrivateRoute><AdminBackend /></PrivateRoute>} />
       
       {/* Catch-all for unknown routes */}
       <Route component={NotFound} />
