@@ -152,9 +152,11 @@ export function AdminDealsPipeline() {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
 
   // Fetch all deals
-  const { data: deals = [], isLoading } = useQuery<Deal[]>({
+  const { data, isLoading } = useQuery<{ referrals: Deal[] }>({
     queryKey: ["/api/admin/referrals"],
   });
+  
+  const deals = data?.referrals || [];
 
   // Move deal to next stage mutation
   const moveToStageMutation = useMutation({
