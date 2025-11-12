@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Render app immediately
+// Cache buster v2025-11-12-1652
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
