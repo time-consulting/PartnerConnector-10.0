@@ -136,7 +136,7 @@ interface Deal {
   currentProcessor: string | null;
   fundingAmount: string | null;
   selectedProducts: string[] | null;
-  referrer: {
+  referrer?: {
     firstName: string;
     lastName: string;
     email: string;
@@ -293,9 +293,11 @@ export function AdminDealsPipeline() {
                             <div className="flex items-start justify-between">
                               <div>
                                 <h4 className="text-xl font-bold text-gray-900">{deal.businessName}</h4>
-                                <p className="text-sm text-gray-600">
-                                  Partner: {deal.referrer.firstName} {deal.referrer.lastName}
-                                </p>
+                                {deal.referrer && (
+                                  <p className="text-sm text-gray-600">
+                                    Partner: {deal.referrer.firstName} {deal.referrer.lastName}
+                                  </p>
+                                )}
                               </div>
                               {deal.dealId && (
                                 <Badge variant="outline" className="font-mono">
