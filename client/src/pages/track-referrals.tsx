@@ -30,7 +30,7 @@ import {
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import ProgressTracker from "@/components/progress-tracker";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { format } from "date-fns";
 
 // Define pipeline stages for user view
@@ -114,9 +114,9 @@ interface Referral {
   status: string;
 }
 
+// Track referrals page - Last updated: 2025-11-12
 export default function TrackReferrals() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReferral, setSelectedReferral] = useState<any>(null);
   const [showProgressTracker, setShowProgressTracker] = useState(false);
@@ -427,14 +427,15 @@ export default function TrackReferrals() {
                                     View Details
                                   </Button>
                                   {['quote_sent', 'quote_approved'].includes(stage.id) && (
-                                    <Button
-                                      size="sm"
-                                      onClick={() => setLocation(`/quotes?referralId=${referral.id}`)}
-                                      data-testid={`button-view-quote-${referral.id}`}
-                                    >
-                                      <FileText className="h-4 w-4 mr-2" />
-                                      View Quote
-                                    </Button>
+                                    <Link href={`/quotes?referralId=${referral.id}`}>
+                                      <Button
+                                        size="sm"
+                                        data-testid={`button-view-quote-${referral.id}`}
+                                      >
+                                        <FileText className="h-4 w-4 mr-2" />
+                                        View Quote
+                                      </Button>
+                                    </Link>
                                   )}
                                 </div>
                               </div>
