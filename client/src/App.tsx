@@ -77,15 +77,15 @@ function LoadingFallback() {
 // Private route wrapper that redirects to login if not authenticated or to onboarding if not completed
 function PrivateRoute({ children, bypassOnboarding = false }: { children: React.ReactNode; bypassOnboarding?: boolean }) {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      window.location.href = '/login';
+      setLocation('/login');
     } else if (!isLoading && isAuthenticated && !bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
-      window.location.href = '/onboarding';
+      setLocation('/onboarding');
     }
-  }, [isAuthenticated, isLoading, user, location, bypassOnboarding]);
+  }, [isAuthenticated, isLoading, user, location, bypassOnboarding, setLocation]);
 
   if (isLoading) {
     return (
