@@ -36,7 +36,7 @@ import { format } from "date-fns";
 // Define pipeline stages for user view
 const PIPELINE_STAGES = [
   {
-    id: "quote_request",
+    id: "quote_request_received",
     label: "Quote Requested",
     description: "Your referral is being reviewed",
     icon: FileText,

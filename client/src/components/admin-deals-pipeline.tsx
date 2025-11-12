@@ -41,7 +41,7 @@ import { format } from "date-fns";
 // Define pipeline stages with metadata
 const PIPELINE_STAGES = [
   {
-    id: "quote_request",
+    id: "quote_request_received",
     label: "Quote Requests",
     description: "New submissions requiring review",
     icon: FileText,
