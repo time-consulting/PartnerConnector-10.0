@@ -85,7 +85,7 @@ function PrivateRoute({ children, bypassOnboarding = false }: { children: React.
     } else if (!isLoading && isAuthenticated && !bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
       setLocation('/onboarding');
     }
-  }, [isAuthenticated, isLoading, user, location, bypassOnboarding, setLocation]);
+  }, [isAuthenticated, isLoading, user, bypassOnboarding, setLocation]);
 
   if (isLoading) {
     return (
