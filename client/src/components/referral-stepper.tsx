@@ -59,7 +59,7 @@ const steps = [
 const productOptions = [
   { id: 'card-payments', name: 'Card Payments', icon: '💳', description: 'Accept card payments with competitive rates' },
   { id: 'business-funding', name: 'Business Funding', icon: '💰', description: 'Access flexible funding solutions' },
-  { id: 'open-banking', name: 'Open Banking', icon: '🏦', description: 'Modern payment solutions' },
+  { id: 'restaurant-bookings', name: 'Restaurant Bookings', icon: '🍽️', description: 'Online table reservation system' },
   { id: 'epos-systems', name: 'EPOS Systems', icon: '📱', description: 'Point of sale technology' },
 ];
 
