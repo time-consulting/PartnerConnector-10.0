@@ -149,7 +149,7 @@ export default function AdminDashboard() {
 
       {/* Payments Dialog */}
       <Dialog open={paymentsDialogOpen} onOpenChange={setPaymentsDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-screen h-screen max-w-none m-0 rounded-none overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Commission Payments</DialogTitle>
           </DialogHeader>
@@ -159,7 +159,7 @@ export default function AdminDashboard() {
 
       {/* Invoices Dialog */}
       <Dialog open={invoicesDialogOpen} onOpenChange={setInvoicesDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-screen h-screen max-w-none m-0 rounded-none overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Partner Invoices</DialogTitle>
           </DialogHeader>
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
 
       {/* Messages Dialog */}
       <Dialog open={messagesDialogOpen} onOpenChange={setMessagesDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-screen h-screen max-w-none m-0 rounded-none overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Partner Messages & Queries</DialogTitle>
           </DialogHeader>
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
 
       {/* Backend Management Dialog */}
       <Dialog open={backendDialogOpen} onOpenChange={setBackendDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-screen h-screen max-w-none m-0 rounded-none overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Backend Management</DialogTitle>
           </DialogHeader>
