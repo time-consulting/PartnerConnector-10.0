@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
   Search,
   Filter,
@@ -16,18 +17,107 @@ import {
   Calendar,
   PoundSterling,
   ArrowLeft,
-  FileText
+  FileText,
+  Mail,
+  Phone,
+  Banknote,
+  FileCheck,
+  FileUp,
+  CreditCard,
+  XCircle,
+  AlertCircle
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import ProgressTracker from "@/components/progress-tracker";
 import { Link, useLocation } from "wouter";
+import { format } from "date-fns";
+
+// Define pipeline stages for user view
+const PIPELINE_STAGES = [
+  {
+    id: "quote_request",
+    label: "Quote Requested",
+    description: "Your referral is being reviewed",
+    icon: FileText,
+    color: "bg-blue-50 border-blue-200",
+    badgeColor: "bg-blue-500",
+  },
+  {
+    id: "quote_sent",
+    label: "Quote Received",
+    description: "Quote has been prepared",
+    icon: Mail,
+    color: "bg-purple-50 border-purple-200",
+    badgeColor: "bg-purple-500",
+  },
+  {
+    id: "quote_approved",
+    label: "Quote Approved - Awaiting Sign Up Form",
+    description: "Client is ready to proceed",
+    icon: CheckCircle,
+    color: "bg-green-50 border-green-200",
+    badgeColor: "bg-green-500",
+  },
+  {
+    id: "agreement_sent",
+    label: "Agreement Sent (Docs Out) - Awaiting Signature",
+    description: "Contract sent to client",
+    icon: FileCheck,
+    color: "bg-yellow-50 border-yellow-200",
+    badgeColor: "bg-yellow-500",
+  },
+  {
+    id: "signed_awaiting_docs",
+    label: "Documents Required",
+    description: "Waiting for additional documents",
+    icon: FileUp,
+    color: "bg-orange-50 border-orange-200",
+    badgeColor: "bg-orange-500",
+  },
+  {
+    id: "approved",
+    label: "Approved",
+    description: "Everything approved",
+    icon: CheckCircle,
+    color: "bg-teal-50 border-teal-200",
+    badgeColor: "bg-teal-500",
+  },
+  {
+    id: "live_confirm_ltr",
+    label: "Live (Confirm Invoice)",
+    description: "Deal is live",
+    icon: CreditCard,
+    color: "bg-indigo-50 border-indigo-200",
+    badgeColor: "bg-indigo-500",
+  },
+  {
+    id: "declined",
+    label: "Declined",
+    description: "Deal did not proceed",
+    icon: XCircle,
+    color: "bg-gray-50 border-gray-200",
+    badgeColor: "bg-gray-500",
+  },
+];
+
+interface Referral {
+  id: string;
+  businessName: string;
+  businessEmail: string;
+  businessPhone: string | null;
+  dealStage: string;
+  submittedAt: string;
+  estimatedCommission: string | null;
+  monthlyVolume: string | null;
+  currentProcessor: string | null;
+  status: string;
+}
 
 export default function TrackReferrals() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedReferral, setSelectedReferral] = useState<any>(null);
   const [showProgressTracker, setShowProgressTracker] = useState(false);
 
@@ -37,27 +127,19 @@ export default function TrackReferrals() {
     retry: false,
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'submitted': return 'bg-blue-100 text-blue-800';
-      case 'in_review': return 'bg-yellow-100 text-yellow-800';
-      case 'quote_sent': return 'bg-purple-100 text-purple-800';
-      case 'quote_approved': return 'bg-green-100 text-green-800';
-      case 'contract_review': return 'bg-indigo-100 text-indigo-800';
-      case 'processing': return 'bg-orange-100 text-orange-800';
-      case 'approved': return 'bg-emerald-100 text-emerald-800';
-      case 'paid': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const referralsList = Array.isArray(referrals) ? referrals : [];
 
-
-  const filteredReferrals = Array.isArray(referrals) ? referrals.filter((referral: any) => {
+  const filteredReferrals = referralsList.filter((referral: any) => {
     const matchesSearch = referral.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          referral.businessEmail.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || referral.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }) : [];
+    return matchesSearch;
+  });
+
+  // Group referrals by deal stage
+  const referralsByStage = PIPELINE_STAGES.reduce((acc, stage) => {
+    acc[stage.id] = filteredReferrals.filter((referral: any) => referral.dealStage === stage.id);
+    return acc;
+  }, {} as Record<string, Referral[]>);
 
   const handleViewProgress = (referral: any) => {
     setSelectedReferral(referral);
@@ -109,7 +191,7 @@ export default function TrackReferrals() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Referrals</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{Array.isArray(referrals) ? referrals.length : 0}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{referralsList.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Building className="w-6 h-6 text-blue-600" />
@@ -128,7 +210,7 @@ export default function TrackReferrals() {
                 <div>
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">In Progress</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">
-                    {filteredReferrals.filter((r: any) => !['paid', 'rejected'].includes(r.status)).length}
+                    {referralsList.filter((r: any) => !['live_confirm_ltr', 'declined'].includes(r.dealStage)).length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -145,9 +227,9 @@ export default function TrackReferrals() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Completed</p>
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Live Deals</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">
-                    {filteredReferrals.filter((r: any) => r.status === 'paid').length}
+                    {referralsList.filter((r: any) => r.dealStage === 'live_confirm_ltr').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -156,7 +238,7 @@ export default function TrackReferrals() {
               </div>
               <p className="text-sm text-green-600 mt-3 flex items-center">
                 <CheckCircle className="w-4 h-4 mr-1" />
-                Success rate
+                Successfully live
               </p>
             </CardContent>
           </Card>
@@ -165,10 +247,9 @@ export default function TrackReferrals() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Earned</p>
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Est. Commission</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">
-                    £{filteredReferrals
-                      .filter((r: any) => r.status === 'paid')
+                    £{referralsList
                       .reduce((sum: number, r: any) => sum + (parseFloat(r.estimatedCommission) || 0), 0)
                       .toLocaleString()}
                   </p>
@@ -178,17 +259,17 @@ export default function TrackReferrals() {
                 </div>
               </div>
               <p className="text-sm text-purple-600 mt-3">
-                Commission earned
+                Total potential
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Search and Filter */}
+        {/* Search */}
         <Card className="mb-8 border-0 shadow-lg">
           <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="flex-1 w-full">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <Input
@@ -200,160 +281,48 @@ export default function TrackReferrals() {
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-3 min-w-fit">
-                <Filter className="w-5 h-5 text-gray-400" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-3 h-12 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900"
-                  data-testid="select-status-filter"
-                >
-                  <option value="all">All Status</option>
-                  <option value="submitted">Submitted</option>
-                  <option value="in_review">Under Review</option>
-                  <option value="quote_sent">Quote Sent</option>
-                  <option value="quote_approved">Quote Approved</option>
-                  <option value="contract_review">Contract Review</option>
-                  <option value="processing">Processing</option>
-                  <option value="approved">Approved</option>
-                  <option value="paid">Paid</option>
-                </select>
-              </div>
-              {(searchTerm || statusFilter !== 'all') && (
+              {searchTerm && (
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setStatusFilter("all");
-                  }}
+                  onClick={() => setSearchTerm("")}
                   className="h-12 px-6 border-gray-200 hover:bg-gray-50"
-                  data-testid="button-clear-filters"
+                  data-testid="button-clear-search"
                 >
-                  Clear Filters
+                  Clear Search
                 </Button>
               )}
             </div>
-            {(searchTerm || statusFilter !== 'all') && (
+            {searchTerm && (
               <div className="mt-4 text-sm text-gray-600 bg-blue-50 rounded-lg p-3">
-                Showing <span className="font-semibold">{filteredReferrals.length}</span> of <span className="font-semibold">{Array.isArray(referrals) ? referrals.length : 0}</span> referrals
+                Showing <span className="font-semibold">{filteredReferrals.length}</span> of <span className="font-semibold">{referralsList.length}</span> referrals
                 {searchTerm && (
                   <span> matching "<span className="font-medium text-blue-600">{searchTerm}</span>"</span>
-                )}
-                {statusFilter !== 'all' && (
-                  <span> with status "<span className="font-medium text-blue-600">{statusFilter.replace('_', ' ').toUpperCase()}</span>"</span>
                 )}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Referrals List */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b">
-            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              <Building className="w-6 h-6 text-blue-600" />
-              Your Referrals
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {referralsLoading ? (
-              <div className="space-y-4 p-6">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="animate-pulse border rounded-xl p-6">
-                    <div className="flex justify-between items-center">
-                      <div className="space-y-2">
-                        <div className="h-5 bg-gray-200 rounded w-48"></div>
-                        <div className="h-4 bg-gray-200 rounded w-32"></div>
-                      </div>
-                      <div className="h-6 bg-gray-200 rounded w-20"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredReferrals.length > 0 ? (
-              <div className="space-y-1">
-                {filteredReferrals.map((referral: any, index: number) => (
-                  <div
-                    key={referral.id}
-                    className={`p-6 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer border-l-4 ${
-                      referral.status === 'paid' ? 'border-l-green-500 bg-green-50/30' :
-                      referral.status === 'processing' ? 'border-l-orange-500 bg-orange-50/30' :
-                      referral.status === 'submitted' ? 'border-l-blue-500 bg-blue-50/30' :
-                      'border-l-gray-300'
-                    } ${index !== filteredReferrals.length - 1 ? 'border-b border-gray-100' : ''}`}
-                    onClick={() => handleViewProgress(referral)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
-                          <Badge className={`${getStatusColor(referral.status)} border-0 font-medium px-3 py-1`}>
-                            {referral.status.replace('_', ' ').toUpperCase()}
-                          </Badge>
-                        </div>
-                        <p className="text-gray-600 text-base mb-3">{referral.businessEmail}</p>
-                        
-                        <div className="flex items-center gap-6 text-sm text-gray-500">
-                          <span className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1">
-                            <Calendar className="w-4 h-4" />
-                            Submitted {new Date(referral.submittedAt).toLocaleDateString()}
-                          </span>
-                          {referral.estimatedCommission && (
-                            <span className="flex items-center gap-2 bg-green-100 text-green-700 rounded-lg px-3 py-1 font-medium">
-                              <PoundSterling className="w-4 h-4" />
-                              £{referral.estimatedCommission} Commission
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        {['quote_sent', 'quote_approved'].includes(referral.status) && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setLocation(`/quotes?referralId=${referral.id}`);
-                            }}
-                            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                            data-testid={`button-view-quote-${referral.id}`}
-                          >
-                            <FileText className="w-4 h-4" />
-                            View Quote
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewProgress(referral);
-                          }}
-                          className="flex items-center gap-2 bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-gray-700 hover:text-blue-700"
-                          data-testid={`button-view-details-${referral.id}`}
-                        >
-                          <Eye className="w-4 h-4" />
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
+        {/* Pipeline Accordion */}
+        {referralsLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : filteredReferrals.length === 0 ? (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-0">
               <div className="text-center py-16 px-6">
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Building className="w-10 h-10 text-blue-600" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">No referrals found</h3>
                 <p className="text-gray-600 text-lg mb-8 max-w-md mx-auto">
-                  {searchTerm || statusFilter !== 'all' 
-                    ? "Try adjusting your search or filter criteria to find what you're looking for"
+                  {searchTerm 
+                    ? "Try adjusting your search criteria to find what you're looking for"
                     : "Ready to start earning? Submit your first referral and begin building your commission income"
                   }
                 </p>
-                {!searchTerm && statusFilter === 'all' && (
+                {!searchTerm && (
                   <Link href="/submit-referral">
                     <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold rounded-xl shadow-lg">
                       Submit Your First Referral
@@ -361,9 +330,125 @@ export default function TrackReferrals() {
                   </Link>
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <Accordion type="multiple" className="w-full space-y-3">
+            {PIPELINE_STAGES.map((stage) => {
+              const stageReferrals = referralsByStage[stage.id] || [];
+              const Icon = stage.icon;
+
+              return (
+                <AccordionItem
+                  key={stage.id}
+                  value={stage.id}
+                  className={`border-2 rounded-lg ${stage.color} transition-all hover:shadow-md`}
+                >
+                  <AccordionTrigger className="px-6 py-4 hover:no-underline" data-testid={`accordion-${stage.id}`}>
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <div className="flex items-center gap-4">
+                        <Icon className="h-6 w-6 text-gray-700" />
+                        <div className="text-left">
+                          <h3 className="text-lg font-bold text-gray-900">{stage.label}</h3>
+                          <p className="text-sm text-gray-600">{stage.description}</p>
+                        </div>
+                      </div>
+                      <Badge className={`${stage.badgeColor} text-white text-sm px-3 py-1`}>
+                        {stageReferrals.length}
+                      </Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-6">
+                    {stageReferrals.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No referrals in this stage</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {stageReferrals.map((referral: any) => (
+                          <Card key={referral.id} className="border-2 hover:shadow-lg transition-shadow">
+                            <CardContent className="p-6">
+                              <div className="space-y-4">
+                                {/* Header */}
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h4 className="text-xl font-bold text-gray-900">{referral.businessName}</h4>
+                                  </div>
+                                </div>
+
+                                {/* Referral Details */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <Mail className="h-4 w-4 text-gray-400" />
+                                    <span className="text-gray-600">{referral.businessEmail}</span>
+                                  </div>
+                                  {referral.businessPhone && (
+                                    <div className="flex items-center gap-2">
+                                      <Phone className="h-4 w-4 text-gray-400" />
+                                      <span className="text-gray-600">{referral.businessPhone}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-gray-400" />
+                                    <span className="text-gray-600">
+                                      {format(new Date(referral.submittedAt), "MMM dd, yyyy")}
+                                    </span>
+                                  </div>
+                                  {referral.monthlyVolume && (
+                                    <div className="flex items-center gap-2">
+                                      <Banknote className="h-4 w-4 text-gray-400" />
+                                      <span className="text-gray-600">Vol: {referral.monthlyVolume}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Commission Display */}
+                                {referral.estimatedCommission && (
+                                  <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm font-medium text-gray-700">Estimated Commission</span>
+                                      <span className="text-2xl font-bold text-green-700">
+                                        £{referral.estimatedCommission}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Actions */}
+                                <div className="flex gap-2 pt-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleViewProgress(referral)}
+                                    data-testid={`button-view-details-${referral.id}`}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </Button>
+                                  {['quote_sent', 'quote_approved'].includes(stage.id) && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => setLocation(`/quotes?referralId=${referral.id}`)}
+                                      data-testid={`button-view-quote-${referral.id}`}
+                                    >
+                                      <FileText className="h-4 w-4 mr-2" />
+                                      View Quote
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        )}
         </div>
       </div>
 
