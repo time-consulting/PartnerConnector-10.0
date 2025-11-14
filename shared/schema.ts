@@ -129,6 +129,8 @@ export const referrals = pgTable("referrals", {
   fundingAmount: varchar("funding_amount"), // Required funding amount for business funding
   // Product selection and card machine requirements
   selectedProducts: text("selected_products").array(), // Array of product IDs
+  productType: varchar("product_type").default("card_payments"), // card_payments, business_funding, utilities, insurance, custom
+  quoteDeliveryMethod: varchar("quote_delivery_method").default("system"), // system (built-in quote builder) or email (manual custom quote)
   cardMachineQuantity: integer("card_machine_quantity").default(1),
   cardMachineProvider: varchar("card_machine_provider"), // Current card machine provider (if applicable)
   // MLM level tracking
@@ -163,6 +165,7 @@ export const referrals = pgTable("referrals", {
   index("referrals_referrer_status_idx").on(table.referrerId, table.status),
   index("referrals_level_idx").on(table.referralLevel),
   index("referrals_parent_referrer_id_idx").on(table.parentReferrerId),
+  index("referrals_product_type_idx").on(table.productType),
 ]);
 
 export const billUploads = pgTable("bill_uploads", {

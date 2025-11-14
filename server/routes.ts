@@ -4198,39 +4198,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/referrals/:referralId/stage', requireAuth, requireAdmin, auditAdminAction('update_stage', 'referral'), async (req: any, res) => {
     try {
       const { referralId } = req.params;
-      const { stage, notes } = req.body;
+      const { dealStage, productType, quoteDeliveryMethod, notes } = req.body;
 
       // Valid stages for admin override
       const validStages = [
         'quote_request_received',
         'quote_sent', 
         'quote_approved',
-        'docs_out_confirmation',
-        'docs_received',
-        'processing',
+        'agreement_sent',
+        'signed_awaiting_docs',
+        'approved',
+        'live_confirm_ltr',
+        'invoice_received',
         'completed',
-        'rejected'
+        'declined'
       ];
 
-      if (!validStages.includes(stage)) {
+      if (dealStage && !validStages.includes(dealStage)) {
         return res.status(400).json({ 
           message: "Invalid stage",
           validStages 
         });
       }
 
-      const adminNoteEntry = `Stage changed to ${stage} by admin on ${new Date().toLocaleDateString()}. ${notes || ''}`;
+      const adminNoteEntry = `Stage changed to ${dealStage} by admin on ${new Date().toLocaleDateString()}. ${notes || ''}${productType ? ` Product type: ${productType}.` : ''}${quoteDeliveryMethod ? ` Quote delivery: ${quoteDeliveryMethod}.` : ''}`;
       
-      await storage.updateReferral(referralId, {
-        status: stage,
+      const updateData: any = {
         adminNotes: adminNoteEntry,
         updatedAt: new Date()
-      });
+      };
+
+      if (dealStage) {
+        updateData.dealStage = dealStage;
+      }
+
+      if (productType) {
+        updateData.productType = productType;
+      }
+
+      if (quoteDeliveryMethod) {
+        updateData.quoteDeliveryMethod = quoteDeliveryMethod;
+      }
+
+      await storage.updateReferral(referralId, updateData);
 
       res.json({ 
         success: true,
-        message: `Deal stage updated to ${stage}`,
-        stage,
+        message: `Deal updated successfully`,
+        dealStage,
+        productType,
+        quoteDeliveryMethod,
         updatedAt: new Date()
       });
     } catch (error) {

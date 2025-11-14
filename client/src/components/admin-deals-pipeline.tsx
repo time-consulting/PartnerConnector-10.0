@@ -16,6 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   FileText,
   ChevronRight,
@@ -130,6 +131,8 @@ interface Deal {
   businessEmail: string;
   businessPhone: string | null;
   dealStage: string;
+  productType?: string; // card_payments, business_funding, utilities, insurance, custom
+  quoteDeliveryMethod?: string; // system or email
   submittedAt: string;
   actualCommission: string | null;
   estimatedCommission: string | null;
@@ -152,6 +155,9 @@ export function AdminDealsPipeline() {
   const [moveToStage, setMoveToStage] = useState("");
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  // Product tagging state
+  const [selectedProductType, setSelectedProductType] = useState("card_payments");
+  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState("system");
 
   // Fetch all deals
   const { data, isLoading } = useQuery<{ referrals: Deal[] } | Deal[]>({
@@ -165,9 +171,16 @@ export function AdminDealsPipeline() {
 
   // Move deal to next stage mutation
   const moveToStageMutation = useMutation({
-    mutationFn: async ({ dealId, stage }: { dealId: string; stage: string }) => {
+    mutationFn: async ({ dealId, stage, productType, quoteDeliveryMethod }: { 
+      dealId: string; 
+      stage: string;
+      productType?: string;
+      quoteDeliveryMethod?: string;
+    }) => {
       return await apiRequest("PATCH", `/api/admin/referrals/${dealId}/stage`, {
         dealStage: stage,
+        productType,
+        quoteDeliveryMethod,
       });
     },
     onSuccess: () => {
@@ -222,6 +235,9 @@ export function AdminDealsPipeline() {
   const handleMoveToStage = (deal: Deal, targetStage: string) => {
     setSelectedDeal(deal);
     setMoveToStage(targetStage);
+    // Initialize with current values or defaults
+    setSelectedProductType(deal.productType || "card_payments");
+    setSelectedDeliveryMethod(deal.quoteDeliveryMethod || "system");
     setMoveDialogOpen(true);
   };
 
@@ -230,6 +246,8 @@ export function AdminDealsPipeline() {
       moveToStageMutation.mutate({
         dealId: selectedDeal.id,
         stage: moveToStage,
+        productType: selectedProductType,
+        quoteDeliveryMethod: selectedDeliveryMethod,
       });
     }
   };
@@ -293,8 +311,34 @@ export function AdminDealsPipeline() {
                           <div className="space-y-4">
                             {/* Header */}
                             <div className="flex items-start justify-between">
-                              <div>
-                                <h4 className="text-xl font-bold text-gray-900">{deal.businessName}</h4>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="text-xl font-bold text-gray-900">{deal.businessName}</h4>
+                                  {/* Product Type Badge */}
+                                  <Badge 
+                                    variant="secondary"
+                                    className={`
+                                      ${deal.productType === 'card_payments' ? 'bg-blue-100 text-blue-700 border-blue-300' : ''}
+                                      ${deal.productType === 'business_funding' ? 'bg-green-100 text-green-700 border-green-300' : ''}
+                                      ${deal.productType === 'utilities' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : ''}
+                                      ${deal.productType === 'insurance' ? 'bg-purple-100 text-purple-700 border-purple-300' : ''}
+                                      ${deal.productType === 'custom' ? 'bg-gray-100 text-gray-700 border-gray-300' : ''}
+                                    `}
+                                  >
+                                    {deal.productType === 'card_payments' && '💳 Card Payments'}
+                                    {deal.productType === 'business_funding' && '💰 Funding'}
+                                    {deal.productType === 'utilities' && '⚡ Utilities'}
+                                    {deal.productType === 'insurance' && '🛡️ Insurance'}
+                                    {deal.productType === 'custom' && '📋 Custom'}
+                                    {!deal.productType && '💳 Card Payments'}
+                                  </Badge>
+                                  {/* Quote Delivery Method Indicator */}
+                                  {deal.quoteDeliveryMethod === 'email' && (
+                                    <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-300">
+                                      📧 Email Quote
+                                    </Badge>
+                                  )}
+                                </div>
                                 {deal.referrer && (
                                   <p className="text-sm text-gray-600">
                                     Partner: {deal.referrer.firstName} {deal.referrer.lastName}
@@ -521,8 +565,55 @@ export function AdminDealsPipeline() {
               Move {selectedDeal?.businessName} to {PIPELINE_STAGES.find((s) => s.id === moveToStage)?.label}?
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 p-6">
-            <p className="text-gray-600">This will update the deal stage in the pipeline.</p>
+          <div className="flex-1 p-6 space-y-6">
+            <p className="text-gray-600">This will update the deal stage in the pipeline and allows you to tag the product type.</p>
+            
+            {/* Product Type Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="product-type">Product Type</Label>
+              <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                <SelectTrigger id="product-type" data-testid="select-product-type">
+                  <SelectValue placeholder="Select product type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="card_payments">💳 Card Payments</SelectItem>
+                  <SelectItem value="business_funding">💰 Business Funding</SelectItem>
+                  <SelectItem value="utilities">⚡ Utilities</SelectItem>
+                  <SelectItem value="insurance">🛡️ Insurance</SelectItem>
+                  <SelectItem value="custom">📋 Custom</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-gray-500">This helps categorize the deal and determine how the quote will be delivered.</p>
+            </div>
+
+            {/* Quote Delivery Method */}
+            <div className="space-y-2">
+              <Label htmlFor="delivery-method">Quote Delivery Method</Label>
+              <Select value={selectedDeliveryMethod} onValueChange={setSelectedDeliveryMethod}>
+                <SelectTrigger id="delivery-method" data-testid="select-delivery-method">
+                  <SelectValue placeholder="Select delivery method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">🔧 System (Built-in Quote Builder)</SelectItem>
+                  <SelectItem value="email">📧 Email (Manual Custom Quote)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-gray-500">
+                {selectedDeliveryMethod === 'system' 
+                  ? 'Quote will be generated using the built-in quote builder system.'
+                  : 'Quote will be sent manually via email for custom requirements.'}
+              </p>
+            </div>
+
+            {/* Notification Preview */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-2">Partner Notification</h4>
+              <p className="text-sm text-blue-700">
+                The partner will be notified that their {selectedProductType === 'card_payments' ? 'card payments' : 
+                selectedProductType === 'business_funding' ? 'funding' : selectedProductType} quote will be 
+                {selectedDeliveryMethod === 'system' ? ' generated through the system' : ' sent via email'}.
+              </p>
+            </div>
           </div>
           <DialogFooter className="px-6 py-4 border-t bg-gray-50">
             <Button variant="outline" onClick={() => setMoveDialogOpen(false)}>
