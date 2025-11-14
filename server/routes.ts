@@ -16,6 +16,8 @@ import { logAudit } from "./logger";
 import { wsManager } from "./websocket";
 import { pushNotificationService } from "./push-notifications";
 import Stripe from 'stripe';
+import { eq, desc } from "drizzle-orm";
+import { db } from "./db";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -3312,12 +3314,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let referrals = await storage.getAllReferrals();
       
-      // Fetch and attach billUploads for each referral
+      // Fetch and attach billUploads and quote data for each referral
       referrals = await Promise.all(referrals.map(async (referral: any) => {
         const billUploads = await storage.getBillUploadsByBusinessName(referral.businessName);
+        
+        // Get the most recent quote for this referral
+        const { quotes } = await import("@shared/schema");
+        const [quoteData] = await db.select()
+          .from(quotes)
+          .where(eq(quotes.referralId, referral.id))
+          .orderBy(desc(quotes.createdAt))
+          .limit(1);
+        
         return {
           ...referral,
           billUploads,
+          quote: quoteData || null,
           referrer: {
             firstName: referral.partnerName?.split(' ')[0] || '',
             lastName: referral.partnerName?.split(' ')[1] || '',

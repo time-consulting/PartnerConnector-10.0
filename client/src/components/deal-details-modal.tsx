@@ -53,9 +53,14 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
   const handleMoveForward = async () => {
     try {
       setIsMovingForward(true);
-      await apiRequest(`/api/admin/referrals/${deal.id}/move-to-agreement-sent`, {
+      const response = await fetch(`/api/admin/referrals/${deal.id}/move-to-agreement-sent`, {
         method: 'PATCH',
+        credentials: 'include',
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to move deal forward');
+      }
       
       queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       queryClient.invalidateQueries({ queryKey: ['/api/referrals'] });
