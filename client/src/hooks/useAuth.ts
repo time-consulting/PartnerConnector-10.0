@@ -29,7 +29,7 @@ export function useAuth() {
     // Clear all cached data
     queryClient.clear();
     // Redirect to logout endpoint
-    window.location.href = "/api/logout";
+    window.location.href = "/api/auth/logout";
   };
 
   return {

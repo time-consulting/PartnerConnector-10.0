@@ -377,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('[AUTH] Logout error:', err);
         return res.status(500).json({ message: 'Logout failed' });
       }
-      res.json({ success: true });
+      res.redirect('/');
     });
   });
 
