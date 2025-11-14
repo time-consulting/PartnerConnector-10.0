@@ -3312,6 +3312,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let referrals = await storage.getAllReferrals();
       
+      // Fetch and attach billUploads for each referral
+      referrals = await Promise.all(referrals.map(async (referral: any) => {
+        const billUploads = await storage.getBillUploadsByBusinessName(referral.businessName);
+        return {
+          ...referral,
+          billUploads,
+          referrer: {
+            firstName: referral.partnerName?.split(' ')[0] || '',
+            lastName: referral.partnerName?.split(' ')[1] || '',
+            email: referral.partnerEmail || '',
+            partnerId: referral.partnerId || ''
+          },
+          businessType: {
+            name: referral.businessTypeName || 'N/A'
+          }
+        };
+      }));
+      
       // Apply search filter
       if (search) {
         const searchTerm = search.toString().toLowerCase();
