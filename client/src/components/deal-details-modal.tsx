@@ -91,8 +91,8 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
   if (showSignUpForm) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -109,7 +109,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
             </div>
           </DialogHeader>
 
-          <div className="space-y-6 mt-4">
+          <div className="space-y-6 p-6 overflow-y-auto flex-1">
             {/* Quote Details Section */}
             <Card>
               <CardHeader>
@@ -251,8 +251,8 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
   if (showQuoteBuilder) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -268,13 +268,15 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
               </DialogTitle>
             </div>
           </DialogHeader>
-          <QuoteBuilder
-            referralId={deal.id}
-            businessName={deal.businessName}
-            onQuoteCreated={handleQuoteCreated}
-            onCancel={() => setShowQuoteBuilder(false)}
-            apiEndpoint={`/api/admin/referrals/${deal.id}/generate-quote`}
-          />
+          <div className="flex-1 overflow-y-auto p-6">
+            <QuoteBuilder
+              referralId={deal.id}
+              businessName={deal.businessName}
+              onQuoteCreated={handleQuoteCreated}
+              onCancel={() => setShowQuoteBuilder(false)}
+              apiEndpoint={`/api/admin/referrals/${deal.id}/generate-quote`}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     );
@@ -282,8 +284,8 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <FileText className="h-6 w-6" />
             Deal Details: {deal.businessName}
@@ -293,7 +295,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-6 p-6 overflow-y-auto flex-1">
           {/* Business Information Card */}
           <Card>
             <CardHeader>

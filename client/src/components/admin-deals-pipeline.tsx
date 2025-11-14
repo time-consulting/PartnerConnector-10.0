@@ -471,14 +471,14 @@ export function AdminDealsPipeline() {
 
       {/* Query Dialog */}
       <Dialog open={queryDialogOpen} onOpenChange={setQueryDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle>Send Query to Partner</DialogTitle>
             <DialogDescription>
               Send a message to the partner regarding {selectedDeal?.businessName}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 p-6 flex-1 overflow-y-auto">
             <div>
               <Label htmlFor="query-message">Message</Label>
               <Textarea
@@ -491,7 +491,7 @@ export function AdminDealsPipeline() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-gray-50">
             <Button
               variant="outline"
               onClick={() => {
@@ -514,14 +514,17 @@ export function AdminDealsPipeline() {
 
       {/* Move to Stage Confirmation Dialog */}
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle>Move Deal Forward</DialogTitle>
             <DialogDescription>
               Move {selectedDeal?.businessName} to {PIPELINE_STAGES.find((s) => s.id === moveToStage)?.label}?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <div className="flex-1 p-6">
+            <p className="text-gray-600">This will update the deal stage in the pipeline.</p>
+          </div>
+          <DialogFooter className="px-6 py-4 border-t bg-gray-50">
             <Button variant="outline" onClick={() => setMoveDialogOpen(false)}>
               Cancel
             </Button>
