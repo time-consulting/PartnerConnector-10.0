@@ -84,6 +84,9 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
 
   if (!deal) return null;
 
+  // Debug: Log the dealStage to verify what we're getting
+  console.log('Deal Details Modal - dealStage:', deal.dealStage, 'Deal:', deal);
+
   // If showing sign up form viewer, render it
   if (showSignUpForm) {
     return (
@@ -555,6 +558,13 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
                   {isMovingForward ? 'Moving...' : 'Move Forward'}
                 </Button>
               </>
+            )}
+
+            {/* Fallback for other stages - show basic view */}
+            {deal.dealStage !== 'quote_request_received' && deal.dealStage !== 'quote_approved' && (
+              <div className="flex-1 p-4 bg-gray-50 rounded text-center text-gray-600">
+                Stage: {deal.dealStage} - Actions for this stage coming soon
+              </div>
             )}
             
             <Button
