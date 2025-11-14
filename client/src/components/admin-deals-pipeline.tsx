@@ -37,6 +37,7 @@ import {
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import DealDetailsModal from "./deal-details-modal";
 
 // Define pipeline stages with metadata
 const PIPELINE_STAGES = [
@@ -150,6 +151,7 @@ export function AdminDealsPipeline() {
   const [queryMessage, setQueryMessage] = useState("");
   const [moveToStage, setMoveToStage] = useState("");
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   // Fetch all deals
   const { data, isLoading } = useQuery<{ referrals: Deal[] } | Deal[]>({
@@ -349,7 +351,10 @@ export function AdminDealsPipeline() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => window.open(`/quotes#${deal.id}`, "_blank")}
+                                onClick={() => {
+                                  setSelectedDeal(deal);
+                                  setDetailsModalOpen(true);
+                                }}
                                 data-testid={`button-view-deal-${deal.id}`}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
@@ -462,6 +467,16 @@ export function AdminDealsPipeline() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Deal Details Modal */}
+      <DealDetailsModal
+        isOpen={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedDeal(null);
+        }}
+        deal={selectedDeal}
+      />
     </div>
   );
 }
