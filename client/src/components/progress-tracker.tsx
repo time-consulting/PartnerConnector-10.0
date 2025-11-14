@@ -60,8 +60,8 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  // Always fetch latest documents for this business from the API
-  const { data: documents = [], refetch: refetchDocuments } = useQuery({
+  // Fetch latest documents for this business from the API
+  const { data: fetchedDocuments = [], refetch: refetchDocuments } = useQuery({
     queryKey: ['/api/bills', referral.businessName],
     queryFn: async () => {
       const response = await fetch(`/api/bills?businessName=${encodeURIComponent(referral.businessName)}`);
@@ -70,6 +70,9 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
     },
     enabled: !!referral.businessName,
   });
+
+  // Use billUploads from referral if available (includes initial uploads), otherwise use fetched documents
+  const documents = referral.billUploads && referral.billUploads.length > 0 ? referral.billUploads : fetchedDocuments;
 
   // Handle file upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

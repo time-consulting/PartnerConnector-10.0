@@ -975,6 +975,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload bills for a specific referral
+  app.post('/api/referrals/:id/upload-bill', upload.array('bills', 5), async (req: any, res) => {
+    try {
+      const referralId = req.params.id;
+      const files = req.files;
+      
+      // Get the referral to get the businessName
+      const referral = await storage.getReferralById(referralId);
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+      
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      // Process each uploaded file and link to businessName
+      const uploadPromises = files.map(async (file: any) => {
+        const fileContent = file.buffer.toString('base64');
+        return storage.createBillUpload(
+          referral.businessName,
+          file.originalname,
+          file.size,
+          file.mimetype,
+          fileContent
+        );
+      });
+
+      const billUploads = await Promise.all(uploadPromises);
+
+      res.json({ 
+        success: true, 
+        message: `${files.length} file(s) uploaded successfully`,
+        uploads: billUploads
+      });
+    } catch (error) {
+      console.error("Error uploading bills for referral:", error);
+      res.status(500).json({ message: "Failed to upload bills" });
+    }
+  });
+
   // Quotes endpoints
   app.get('/api/quotes', requireAuth, async (req: any, res) => {
     try {
