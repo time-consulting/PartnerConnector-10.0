@@ -4088,6 +4088,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Move deal from quote_approved to agreement_sent
+  app.patch('/api/admin/referrals/:id/move-to-agreement-sent', requireAuth, requireAdmin, auditAdminAction('move_to_agreement_sent', 'referral'), async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get referral
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === id);
+
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Verify it's in quote_approved stage
+      if (referral.dealStage !== 'quote_approved') {
+        return res.status(400).json({ 
+          message: "Can only move deals from 'Quote Approved' stage to 'Agreement Sent'" 
+        });
+      }
+
+      // Update referral to agreement_sent stage
+      const updatedReferral = await storage.updateReferral(id, {
+        dealStage: 'agreement_sent',
+        status: 'agreement_sent',
+        adminNotes: (referral.adminNotes || '') + `\n[${new Date().toLocaleString()}] Deal moved to Agreement Sent stage by ${req.user.email}. Agreement documents sent to ${referral.businessEmail}.`,
+        updatedAt: new Date()
+      });
+
+      console.log('Deal moved to Agreement Sent:', id, {
+        admin: req.user.email,
+        businessName: referral.businessName,
+        previousStage: 'quote_approved',
+        newStage: 'agreement_sent'
+      });
+
+      res.json({
+        success: true,
+        message: `Deal moved to Agreement Sent stage`,
+        referral: updatedReferral
+      });
+    } catch (error) {
+      console.error("Error moving deal forward:", error);
+      res.status(500).json({ message: "Failed to move deal forward" });
+    }
+  });
+
   // Admin document management
   app.post('/api/admin/referrals/:referralId/docs-out-confirmation', requireAuth, requireAdmin, async (req: any, res) => {
     try {
