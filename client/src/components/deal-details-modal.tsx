@@ -76,6 +76,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
             businessName={deal.businessName}
             onQuoteCreated={handleQuoteCreated}
             onCancel={() => setShowQuoteBuilder(false)}
+            apiEndpoint={`/api/admin/referrals/${deal.id}/generate-quote`}
           />
         </DialogContent>
       </Dialog>

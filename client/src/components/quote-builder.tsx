@@ -67,9 +67,10 @@ interface QuoteBuilderProps {
   businessName: string;
   onQuoteCreated: (quoteId: string) => void;
   onCancel: () => void;
+  apiEndpoint?: string; // Optional custom endpoint for quote generation
 }
 
-export default function QuoteBuilder({ referralId, businessName, onQuoteCreated, onCancel }: QuoteBuilderProps) {
+export default function QuoteBuilder({ referralId, businessName, onQuoteCreated, onCancel, apiEndpoint }: QuoteBuilderProps) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [devicePaymentType, setDevicePaymentType] = useState<"pay_once" | "pay_monthly">("pay_monthly");
   
@@ -167,7 +168,8 @@ export default function QuoteBuilder({ referralId, businessName, onQuoteCreated,
 
   const onSubmit = async (data: QuoteBuilderFormData) => {
     try {
-      const response = await fetch("/api/admin/quotes/create", {
+      const endpoint = apiEndpoint || "/api/admin/quotes/create";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
