@@ -60,8 +60,8 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  // Fetch documents for this business
-  const { data: documents = [], refetch: refetchDocuments } = useQuery({
+  // Combine billUploads from referral (initial uploads) with fetched documents (later uploads)
+  const { data: fetchedDocuments = [], refetch: refetchDocuments } = useQuery({
     queryKey: ['/api/bills', referral.businessName],
     queryFn: async () => {
       const response = await fetch(`/api/bills?businessName=${encodeURIComponent(referral.businessName)}`);
@@ -70,6 +70,9 @@ export default function ProgressTracker({ isOpen, onClose, referral }: ProgressT
     },
     enabled: !!referral.businessName,
   });
+
+  // Merge initial billUploads with any additionally uploaded documents
+  const documents = referral.billUploads || fetchedDocuments;
 
   // Handle file upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
