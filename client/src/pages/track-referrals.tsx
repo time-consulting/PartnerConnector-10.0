@@ -112,6 +112,13 @@ interface Referral {
   monthlyVolume: string | null;
   currentProcessor: string | null;
   status: string;
+  billUploads?: Array<{
+    id: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    uploadedAt: string;
+  }>;
 }
 
 // Track referrals page - Last updated: 2025-11-12

@@ -45,6 +45,13 @@ interface ProgressTrackerProps {
     submittedAt: string | Date;
     selectedProducts: string[];
     estimatedCommission?: string;
+    billUploads?: Array<{
+      id: string;
+      fileName: string;
+      fileSize: number;
+      mimeType: string;
+      uploadedAt: string;
+    }>;
   };
 }
 
