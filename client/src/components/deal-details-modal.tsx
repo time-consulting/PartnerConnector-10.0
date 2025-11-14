@@ -8,11 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Mail, Phone, MapPin, Building2, Calendar, Banknote, 
   FileText, Package, CreditCard, DollarSign, TrendingUp,
-  Download, Eye, Upload, ArrowLeft
+  Download, Eye, Upload, ArrowLeft, ArrowRight, ClipboardCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import QuoteBuilder from "./quote-builder";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 interface DealDetailsModalProps {
   isOpen: boolean;
@@ -23,6 +23,8 @@ interface DealDetailsModalProps {
 export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsModalProps) {
   const { toast } = useToast();
   const [showQuoteBuilder, setShowQuoteBuilder] = useState(false);
+  const [showSignUpForm, setShowSignUpForm] = useState(false);
+  const [isMovingForward, setIsMovingForward] = useState(false);
 
   const handleQuoteCreated = (quoteId: string) => {
     queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
@@ -48,7 +50,194 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
     window.open(`/api/bills/${fileId}/view`, '_blank');
   };
 
+  const handleMoveForward = async () => {
+    try {
+      setIsMovingForward(true);
+      await apiRequest(`/api/admin/referrals/${deal.id}/move-to-agreement-sent`, {
+        method: 'PATCH',
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/referrals'] });
+      
+      toast({
+        title: "Deal Moved Forward",
+        description: `${deal.businessName} has been moved to "Agreement Sent" stage`,
+      });
+      
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to move deal forward. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMovingForward(false);
+    }
+  };
+
   if (!deal) return null;
+
+  // If showing sign up form viewer, render it
+  if (showSignUpForm) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSignUpForm(false)}
+                data-testid="button-back-to-details"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Details
+              </Button>
+              <DialogTitle className="text-2xl font-bold">
+                Sign Up Form for {deal.businessName}
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6 mt-4">
+            {/* Quote Details Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Quote Details Sent to Customer
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {deal.quote ? (
+                  <>
+                    {/* Transaction Rates */}
+                    <div>
+                      <h4 className="font-semibold mb-2">Transaction Rates</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 bg-gray-50 rounded">
+                          <label className="text-xs text-gray-600">Credit Card</label>
+                          <p className="font-medium">{deal.quote.creditCardRate}%</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded">
+                          <label className="text-xs text-gray-600">Debit Card</label>
+                          <p className="font-medium">{deal.quote.debitCardRate}%</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded">
+                          <label className="text-xs text-gray-600">Corporate Card</label>
+                          <p className="font-medium">{deal.quote.corporateCardRate}%</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Devices */}
+                    {deal.quote.devices && deal.quote.devices.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2">Card Machines</h4>
+                        <div className="space-y-2">
+                          {deal.quote.devices.map((device: any, idx: number) => (
+                            <div key={idx} className="p-3 bg-blue-50 border border-blue-200 rounded flex justify-between">
+                              <span>{device.type === 'dojo_go' ? 'Dojo Go' : 'Dojo Pocket'} x {device.quantity}</span>
+                              <span className="font-medium">£{device.price}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">
+                          Payment Type: {deal.quote.devicePaymentType === 'pay_once' ? 'Pay Once' : 'Monthly Payment'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Optional Extras */}
+                    <div>
+                      <h4 className="font-semibold mb-2">Optional Extras</h4>
+                      <div className="space-y-2">
+                        {deal.quote.hardwareCare && (
+                          <div className="flex items-center gap-2">
+                            <Badge>Hardware Care</Badge>
+                            <span className="text-sm">£5 per device/month</span>
+                          </div>
+                        )}
+                        {deal.quote.dojoPlan && (
+                          <div className="flex items-center gap-2">
+                            <Badge>Dojo Plan</Badge>
+                            <span className="text-sm">£11.99/month (3 months free trial)</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">Settlement</Badge>
+                          <span className="text-sm">{deal.quote.settlementType === '5_day' ? '5-Day' : '7-Day'} Settlement</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Total Costs */}
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                      {deal.quote.oneTimeDeviceCost && (
+                        <div className="p-4 bg-green-50 rounded-lg">
+                          <label className="text-sm text-gray-700">One-Time Device Cost</label>
+                          <p className="font-bold text-2xl text-green-700">£{deal.quote.oneTimeDeviceCost}</p>
+                        </div>
+                      )}
+                      {deal.quote.monthlyDeviceCost && (
+                        <div className="p-4 bg-blue-50 rounded-lg">
+                          <label className="text-sm text-gray-700">Monthly Device Cost</label>
+                          <p className="font-bold text-2xl text-blue-700">£{deal.quote.monthlyDeviceCost}/mo</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-gray-500 italic">No quote details available</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Customer Sign-Up Form Data */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardCheck className="h-5 w-5" />
+                  Customer Sign-Up Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {deal.signUpFormData ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      Customer signed up on: {deal.signUpFormData.submittedAt ? format(new Date(deal.signUpFormData.submittedAt), 'PPP') : 'N/A'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      {Object.entries(deal.signUpFormData).map(([key, value]: [string, any]) => (
+                        <div key={key}>
+                          <label className="text-xs text-gray-600 capitalize">{key.replace(/_/g, ' ')}</label>
+                          <p className="font-medium">{String(value)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">Customer has not yet completed the sign-up form</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowSignUpForm(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Back to Details
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   // If showing quote builder, render it full screen in the modal
   if (showQuoteBuilder) {
@@ -328,16 +517,41 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
 
           <Separator />
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Different per Stage */}
           <div className="flex gap-3">
-            <Button
-              onClick={() => setShowQuoteBuilder(true)}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-lg py-6"
-              data-testid="button-open-quote-form"
-            >
-              <DollarSign className="h-5 w-5 mr-2" />
-              Generate Quote
-            </Button>
+            {deal.dealStage === 'quote_request_received' && (
+              <Button
+                onClick={() => setShowQuoteBuilder(true)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-lg py-6"
+                data-testid="button-open-quote-form"
+              >
+                <DollarSign className="h-5 w-5 mr-2" />
+                Generate Quote
+              </Button>
+            )}
+            
+            {deal.dealStage === 'quote_approved' && (
+              <>
+                <Button
+                  onClick={() => setShowSignUpForm(true)}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-lg py-6"
+                  data-testid="button-view-signup-form"
+                >
+                  <ClipboardCheck className="h-5 w-5 mr-2" />
+                  View Sign Up Form
+                </Button>
+                <Button
+                  onClick={handleMoveForward}
+                  disabled={isMovingForward}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-lg py-6"
+                  data-testid="button-move-forward"
+                >
+                  <ArrowRight className="h-5 w-5 mr-2" />
+                  {isMovingForward ? 'Moving...' : 'Move Forward'}
+                </Button>
+              </>
+            )}
+            
             <Button
               onClick={onClose}
               variant="outline"
