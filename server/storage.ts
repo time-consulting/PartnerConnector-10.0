@@ -1039,11 +1039,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getReferralsByUserId(userId: string): Promise<Referral[]> {
-    return await db
+    const results = await db
       .select()
       .from(referrals)
       .where(eq(referrals.referrerId, userId))
       .orderBy(desc(referrals.submittedAt));
+    
+    // Fetch billUploads for each referral
+    const referralsWithUploads = await Promise.all(
+      results.map(async (referral) => {
+        const uploads = await db
+          .select()
+          .from(billUploads)
+          .where(eq(billUploads.businessName, referral.businessName));
+        
+        return {
+          ...referral,
+          billUploads: uploads
+        };
+      })
+    );
+    
+    return referralsWithUploads as any;
   }
 
   async searchBusinessNames(userId: string, query: string): Promise<Array<{ 
