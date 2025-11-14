@@ -346,47 +346,115 @@ export function AdminDealsPipeline() {
                               </div>
                             )}
 
-                            {/* Actions */}
+                            {/* Actions - Stage-specific buttons */}
                             <div className="flex gap-2 pt-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedDeal(deal);
-                                  setDetailsModalOpen(true);
-                                }}
-                                data-testid={`button-view-deal-${deal.id}`}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedDeal(deal);
-                                  setQueryDialogOpen(true);
-                                }}
-                                data-testid={`button-query-deal-${deal.id}`}
-                              >
-                                <MessageSquare className="h-4 w-4 mr-2" />
-                                Send Query
-                              </Button>
-                              {stage.id !== "completed" && stage.id !== "declined" && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    const currentIndex = PIPELINE_STAGES.findIndex((s) => s.id === stage.id);
-                                    const nextStage = PIPELINE_STAGES[currentIndex + 1];
-                                    if (nextStage) {
-                                      handleMoveToStage(deal, nextStage.id);
-                                    }
-                                  }}
-                                  data-testid={`button-move-deal-${deal.id}`}
-                                >
-                                  <ArrowRight className="h-4 w-4 mr-2" />
-                                  Move Forward
-                                </Button>
+                              {/* Quote Request Stage - Show Generate Quote button */}
+                              {stage.id === "quote_request_received" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedDeal(deal);
+                                      setDetailsModalOpen(true);
+                                    }}
+                                    data-testid={`button-view-deal-${deal.id}`}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedDeal(deal);
+                                      setDetailsModalOpen(true);
+                                    }}
+                                    data-testid={`button-generate-quote-${deal.id}`}
+                                  >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Generate Quote
+                                  </Button>
+                                </>
+                              )}
+
+                              {/* Quote Approved Stage - Show Sign Up Form & Move Forward */}
+                              {stage.id === "quote_approved" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="bg-purple-50 hover:bg-purple-100"
+                                    onClick={() => {
+                                      setSelectedDeal(deal);
+                                      setDetailsModalOpen(true);
+                                    }}
+                                    data-testid={`button-view-signup-${deal.id}`}
+                                  >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    View Sign Up Form
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => {
+                                      const currentIndex = PIPELINE_STAGES.findIndex((s) => s.id === stage.id);
+                                      const nextStage = PIPELINE_STAGES[currentIndex + 1];
+                                      if (nextStage) {
+                                        handleMoveToStage(deal, nextStage.id);
+                                      }
+                                    }}
+                                    data-testid={`button-move-forward-${deal.id}`}
+                                  >
+                                    <ArrowRight className="h-4 w-4 mr-2" />
+                                    Move Forward
+                                  </Button>
+                                </>
+                              )}
+
+                              {/* Default buttons for other stages */}
+                              {stage.id !== "quote_request_received" && stage.id !== "quote_approved" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedDeal(deal);
+                                      setDetailsModalOpen(true);
+                                    }}
+                                    data-testid={`button-view-deal-${deal.id}`}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedDeal(deal);
+                                      setQueryDialogOpen(true);
+                                    }}
+                                    data-testid={`button-query-deal-${deal.id}`}
+                                  >
+                                    <MessageSquare className="h-4 w-4 mr-2" />
+                                    Send Query
+                                  </Button>
+                                  {stage.id !== "completed" && stage.id !== "declined" && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        const currentIndex = PIPELINE_STAGES.findIndex((s) => s.id === stage.id);
+                                        const nextStage = PIPELINE_STAGES[currentIndex + 1];
+                                        if (nextStage) {
+                                          handleMoveToStage(deal, nextStage.id);
+                                        }
+                                      }}
+                                      data-testid={`button-move-deal-${deal.id}`}
+                                    >
+                                      <ArrowRight className="h-4 w-4 mr-2" />
+                                      Move Forward
+                                    </Button>
+                                  )}
+                                </>
                               )}
                             </div>
                           </div>
