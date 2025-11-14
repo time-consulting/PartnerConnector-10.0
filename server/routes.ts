@@ -3968,6 +3968,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate quote from deal details modal
+  app.post('/api/admin/referrals/:id/generate-quote', requireAuth, requireAdmin, auditAdminAction('generate_quote', 'referral'), async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { proposedRate, monthlyFee, setupFee, estimatedCommission, notes } = req.body;
+
+      // Get referral
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === id);
+
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      // Update referral with quote data and move to quote_sent stage
+      await storage.updateReferral(id, {
+        dealStage: 'quote_sent',
+        adminNotes: (referral.adminNotes || '') + `\n[${new Date().toLocaleString()}] Quote generated: Rate ${proposedRate}%, Monthly Fee £${monthlyFee}, Setup Fee £${setupFee}, Est. Commission £${estimatedCommission}. ${notes ? 'Notes: ' + notes : ''}`,
+        updatedAt: new Date()
+      });
+
+      // Log quote generation
+      console.log('Quote generated for referral:', id, {
+        admin: req.user.email,
+        proposedRate,
+        monthlyFee,
+        setupFee,
+        estimatedCommission,
+        businessEmail: referral.businessEmail
+      });
+
+      res.json({
+        success: true,
+        message: `Quote sent to ${referral.businessEmail}`,
+        quoteData: {
+          proposedRate,
+          monthlyFee,
+          setupFee,
+          estimatedCommission,
+          sentAt: new Date()
+        }
+      });
+    } catch (error) {
+      console.error("Error generating quote:", error);
+      res.status(500).json({ message: "Failed to generate quote" });
+    }
+  });
+
   // Admin document management
   app.post('/api/admin/referrals/:referralId/docs-out-confirmation', requireAuth, requireAdmin, async (req: any, res) => {
     try {
