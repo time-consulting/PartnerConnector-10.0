@@ -39,8 +39,10 @@ export default function OfflinePage() {
       });
       
       if (response.ok) {
-        // Connection restored, reload the page
-        window.location.reload();
+        // Connection restored - show success message instead of auto-reloading
+        // User can manually refresh if needed
+        const event = new CustomEvent('connection-restored');
+        window.dispatchEvent(event);
       }
     } catch (error) {
       // Still offline

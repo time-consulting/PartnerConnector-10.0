@@ -61,6 +61,11 @@ class OfflineSyncManager {
   private handleOnline = () => {
     console.log('Network status: Online');
     this.updateOnlineStatus(true);
+    
+    // Emit connection restored event for UI notification
+    const event = new CustomEvent('connection-restored');
+    window.dispatchEvent(event);
+    
     this.syncPendingData();
   };
 
