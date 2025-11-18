@@ -12,7 +12,8 @@ import {
   Contact,
   Target,
   ClipboardList,
-  FileText
+  FileText,
+  Wallet
 } from "lucide-react";
 
 export default function SideNavigation() {
@@ -63,6 +64,12 @@ export default function SideNavigation() {
       label: "Quotes",
       path: "/quotes",
       testId: "sidenav-quotes"
+    },
+    {
+      icon: Wallet,
+      label: "Commissions",
+      path: "/commissions",
+      testId: "sidenav-commissions"
     },
     {
       icon: Users,

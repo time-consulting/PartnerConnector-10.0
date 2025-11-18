@@ -42,6 +42,7 @@ const OnboardingPage = lazy(() => import("@/pages/onboarding"));
 const QuickAddReferral = lazy(() => import("@/pages/quick-add-referral"));
 const OfflinePage = lazy(() => import("@/pages/offline"));
 const QuotesPage = lazy(() => import("@/pages/quotes"));
+const CommissionsPage = lazy(() => import("@/pages/commissions"));
 const VerifyEmailPage = lazy(() => import("@/pages/verify-email"));
 const ResendVerificationPage = lazy(() => import("@/pages/resend-verification"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
@@ -152,6 +153,7 @@ function AppRoutes() {
       <Route path="/upload-bills" component={() => <PrivateRoute><UploadBills /></PrivateRoute>} />
       <Route path="/track-referrals" component={() => <PrivateRoute><TrackReferrals /></PrivateRoute>} />
       <Route path="/quotes" component={() => <PrivateRoute><QuotesPage /></PrivateRoute>} />
+      <Route path="/commissions" component={() => <PrivateRoute><CommissionsPage /></PrivateRoute>} />
       <Route path="/team-management" component={() => <PrivateRoute><TeamManagement /></PrivateRoute>} />
       <Route path="/account/profile" component={() => <PrivateRoute><ProfilePage /></PrivateRoute>} />
       <Route path="/account/banking" component={() => <PrivateRoute><BankingPage /></PrivateRoute>} />
