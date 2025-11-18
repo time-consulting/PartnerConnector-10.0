@@ -4360,6 +4360,235 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ COMMISSION PAYMENTS & WITHDRAWALS ============
+  
+  // Set up bank details for withdrawals
+  app.patch('/api/user/bank-details', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { bankAccountName, bankSortCode, bankAccountNumber } = req.body;
+
+      if (!bankAccountName || !bankSortCode || !bankAccountNumber) {
+        return res.status(400).json({ message: "All bank details are required" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, {
+        bankAccountName,
+        bankSortCode,
+        bankAccountNumber,
+        bankingComplete: true
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Bank details saved successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error saving bank details:", error);
+      res.status(500).json({ message: "Failed to save bank details" });
+    }
+  });
+
+  // Get user's commission payments
+  app.get('/api/commission-payments', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const payments = await storage.getCommissionPaymentsByRecipient(userId);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching commission payments:", error);
+      res.status(500).json({ message: "Failed to fetch commission payments" });
+    }
+  });
+
+  // Get team commission payments (downline)
+  app.get('/api/commission-payments/team', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user's downline (direct referrals and their referrals)
+      const teamMembers = await storage.getDownlineUsers(userId);
+      
+      // Get commission payments for team members where current user is recipient
+      const teamPayments = await storage.getTeamCommissionPayments(userId);
+      
+      res.json(teamPayments);
+    } catch (error) {
+      console.error("Error fetching team commission payments:", error);
+      res.status(500).json({ message: "Failed to fetch team commission payments" });
+    }
+  });
+
+  // Approve commission payment
+  app.patch('/api/commission-payments/:paymentId/approve', requireAuth, async (req: any, res) => {
+    try {
+      const { paymentId } = req.params;
+      const userId = req.user.id;
+      
+      // Verify payment belongs to user
+      const payments = await storage.getCommissionPaymentsByRecipient(userId);
+      const payment = payments.find(p => p.id === paymentId);
+      
+      if (!payment) {
+        return res.status(404).json({ message: "Commission payment not found" });
+      }
+
+      if (payment.approvalStatus !== 'pending') {
+        return res.status(400).json({ message: "Commission payment is not pending" });
+      }
+
+      // Update payment approval status
+      const updatedPayment = await storage.updateCommissionPaymentApproval(paymentId, 'approved', null);
+
+      res.json({ 
+        success: true, 
+        message: "Commission payment approved successfully",
+        payment: updatedPayment
+      });
+    } catch (error) {
+      console.error("Error approving commission payment:", error);
+      res.status(500).json({ message: "Failed to approve commission payment" });
+    }
+  });
+
+  // Query commission payment
+  app.patch('/api/commission-payments/:paymentId/query', requireAuth, async (req: any, res) => {
+    try {
+      const { paymentId } = req.params;
+      const { queryNotes } = req.body;
+      const userId = req.user.id;
+      
+      if (!queryNotes) {
+        return res.status(400).json({ message: "Query notes are required" });
+      }
+
+      // Verify payment belongs to user
+      const payments = await storage.getCommissionPaymentsByRecipient(userId);
+      const payment = payments.find(p => p.id === paymentId);
+      
+      if (!payment) {
+        return res.status(404).json({ message: "Commission payment not found" });
+      }
+
+      if (payment.approvalStatus !== 'pending') {
+        return res.status(400).json({ message: "Commission payment is not pending" });
+      }
+
+      // Update payment with query
+      const updatedPayment = await storage.updateCommissionPaymentApproval(paymentId, 'queried', queryNotes);
+
+      res.json({ 
+        success: true, 
+        message: "Query submitted successfully",
+        payment: updatedPayment
+      });
+    } catch (error) {
+      console.error("Error querying commission payment:", error);
+      res.status(500).json({ message: "Failed to submit query" });
+    }
+  });
+
+  // ============ ADMIN: CREATE MULTI-LEVEL COMMISSIONS ============
+  
+  // Admin endpoint to create multi-level commissions when marking deal as live
+  app.post('/api/admin/referrals/:referralId/create-commission', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { referralId } = req.params;
+      const { totalCommission } = req.body;
+
+      if (!totalCommission || isNaN(parseFloat(totalCommission))) {
+        return res.status(400).json({ message: "Valid total commission amount is required" });
+      }
+
+      const total = parseFloat(totalCommission);
+
+      // Get referral to find the direct referrer
+      const referral = await storage.getReferralById(referralId);
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
+      }
+
+      const directReferrerId = referral.referrerId;
+
+      // Get direct referrer
+      const directReferrer = await storage.getUser(directReferrerId);
+      if (!directReferrer) {
+        return res.status(404).json({ message: "Direct referrer not found" });
+      }
+
+      const commissions = [];
+
+      // Level 1: Direct referrer gets 60%
+      const level1Amount = total * 0.60;
+      const level1Commission = await storage.createCommissionPayment({
+        referralId,
+        recipientId: directReferrerId,
+        level: 1,
+        amount: level1Amount.toFixed(2),
+        percentage: "60.00",
+        totalCommission: total.toFixed(2),
+        businessName: referral.businessName,
+        dealStage: referral.dealStage || 'live',
+        approvalStatus: 'pending',
+        paymentStatus: 'pending'
+      });
+      commissions.push(level1Commission);
+
+      // Level 2: Parent gets 20% (if exists)
+      if (directReferrer.parentPartnerId) {
+        const level2Amount = total * 0.20;
+        const level2Commission = await storage.createCommissionPayment({
+          referralId,
+          recipientId: directReferrer.parentPartnerId,
+          level: 2,
+          amount: level2Amount.toFixed(2),
+          percentage: "20.00",
+          totalCommission: total.toFixed(2),
+          businessName: referral.businessName,
+          dealStage: referral.dealStage || 'live',
+          approvalStatus: 'pending',
+          paymentStatus: 'pending'
+        });
+        commissions.push(level2Commission);
+
+        // Level 3: Grandparent gets 10% (if exists)
+        const parentUser = await storage.getUser(directReferrer.parentPartnerId);
+        if (parentUser && parentUser.parentPartnerId) {
+          const level3Amount = total * 0.10;
+          const level3Commission = await storage.createCommissionPayment({
+            referralId,
+            recipientId: parentUser.parentPartnerId,
+            level: 3,
+            amount: level3Amount.toFixed(2),
+            percentage: "10.00",
+            totalCommission: total.toFixed(2),
+            businessName: referral.businessName,
+            dealStage: referral.dealStage || 'live',
+            approvalStatus: 'pending',
+            paymentStatus: 'pending'
+          });
+          commissions.push(level3Commission);
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Multi-level commissions created successfully",
+        commissions,
+        totalCommission: total,
+        split: {
+          level1: level1Amount,
+          level2: directReferrer.parentPartnerId ? total * 0.20 : 0,
+          level3: directReferrer.parentPartnerId ? total * 0.10 : 0
+        }
+      });
+    } catch (error) {
+      console.error("Error creating multi-level commissions:", error);
+      res.status(500).json({ message: "Failed to create commissions" });
+    }
+  });
+
   app.get('/api/notifications', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;

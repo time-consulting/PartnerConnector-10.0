@@ -2952,7 +2952,11 @@ export class DatabaseStorage implements IStorage {
     level: number;
     amount: string;
     percentage: string;
-    status?: string;
+    totalCommission?: string;
+    businessName?: string;
+    dealStage?: string;
+    approvalStatus?: string;
+    paymentStatus?: string;
     paymentDate?: Date;
     transferReference?: string;
     notes?: string;
@@ -2963,12 +2967,74 @@ export class DatabaseStorage implements IStorage {
       level: paymentData.level,
       amount: paymentData.amount,
       percentage: paymentData.percentage,
-      status: paymentData.status || 'pending',
+      totalCommission: paymentData.totalCommission || null,
+      businessName: paymentData.businessName || null,
+      dealStage: paymentData.dealStage || null,
+      approvalStatus: paymentData.approvalStatus || 'pending',
+      paymentStatus: paymentData.paymentStatus || 'pending',
       paymentDate: paymentData.paymentDate || null,
       transferReference: paymentData.transferReference || null,
       notes: paymentData.notes || null,
     }).returning();
     return payment;
+  }
+
+  async getCommissionPaymentsByRecipient(recipientId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(commissionPayments)
+      .where(eq(commissionPayments.recipientId, recipientId))
+      .orderBy(desc(commissionPayments.createdAt));
+  }
+
+  async getTeamCommissionPayments(userId: string): Promise<any[]> {
+    // Get commission payments where the user is recipient and level is 2 or 3 (override payments)
+    return await db
+      .select()
+      .from(commissionPayments)
+      .where(eq(commissionPayments.recipientId, userId))
+      .orderBy(desc(commissionPayments.createdAt));
+  }
+
+  async updateCommissionPaymentApproval(paymentId: string, approvalStatus: string, queryNotes: string | null): Promise<any> {
+    const updateData: any = { 
+      approvalStatus,
+      updatedAt: new Date()
+    };
+    
+    if (approvalStatus === 'approved') {
+      updateData.approvedAt = new Date();
+      updateData.paymentStatus = 'approved_pending';
+    }
+    
+    if (queryNotes) {
+      updateData.queryNotes = queryNotes;
+    }
+
+    const [payment] = await db
+      .update(commissionPayments)
+      .set(updateData)
+      .where(eq(commissionPayments.id, paymentId))
+      .returning();
+    return payment;
+  }
+
+  async getDownlineUsers(userId: string): Promise<any[]> {
+    // Get all users who have this user in their parent chain
+    const allUsers = await this.getAllUsers();
+    const downline: any[] = [];
+    
+    // Find direct children (level 1)
+    const directChildren = allUsers.filter((u: any) => u.parentPartnerId === userId);
+    downline.push(...directChildren);
+    
+    // Find grandchildren (level 2)
+    for (const child of directChildren) {
+      const grandchildren = allUsers.filter((u: any) => u.parentPartnerId === child.id);
+      downline.push(...grandchildren);
+    }
+    
+    return downline;
   }
 
   async processCommissionPayment(approvalId: string, paymentReference: string): Promise<void> {
