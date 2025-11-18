@@ -2,9 +2,10 @@ import { Router, Switch, Route, useLocation } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-// import { Toaster } from "@/components/ui/toaster"; // Temporarily disabled due to React hook violation
+import { Toaster } from "@/components/ui/toaster";
 // import { TooltipProvider } from "@/components/ui/tooltip"; // Temporarily disabled due to React hook violation
 import { useAuth } from "@/hooks/useAuth";
+import ConnectionStatusNotifier from "@/components/connection-status-notifier";
 // import ImpersonationBanner from "@/components/impersonation-banner"; - Temporarily disabled due to React hook violation
 // import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
@@ -174,12 +175,13 @@ function App() {
       {/* <TooltipProvider> - Temporarily disabled due to React hook violation */}
         <Router>
           {/* <ImpersonationBanner /> - Temporarily disabled due to React hook violation */}
+          <ConnectionStatusNotifier />
           <Suspense fallback={<LoadingFallback />}>
             <AppRoutes />
             {/* <PWAInstallPrompt /> */}
           </Suspense>
         </Router>
-        {/* <Toaster /> - Temporarily disabled due to React hook violation */}
+        <Toaster />
       {/* </TooltipProvider> */}
     </QueryClientProvider>
   );
