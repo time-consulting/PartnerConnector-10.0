@@ -4489,6 +4489,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get withdrawn/paid commissions
+  app.get('/api/commission-payments/withdrawn', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const payments = await storage.getCommissionPaymentsByRecipient(userId);
+      
+      // Filter only paid commissions
+      const withdrawnPayments = payments.filter((p: any) => p.paymentStatus === 'paid');
+      
+      res.json(withdrawnPayments);
+    } catch (error) {
+      console.error("Error fetching withdrawn payments:", error);
+      res.status(500).json({ message: "Failed to fetch withdrawn payments" });
+    }
+  });
+
   // ============ ADMIN: CREATE MULTI-LEVEL COMMISSIONS ============
   
   // Admin endpoint to create multi-level commissions when marking deal as live
@@ -4586,6 +4602,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating multi-level commissions:", error);
       res.status(500).json({ message: "Failed to create commissions" });
+    }
+  });
+
+  // Admin endpoint to mark commission as withdrawn/paid
+  app.patch('/api/admin/commission-payments/:paymentId/withdraw', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { paymentId } = req.params;
+      const { transferReference } = req.body;
+      
+      // Get the commission payment
+      const payment = await storage.db.select().from(storage.schema.commissionPayments).where(sql`id = ${paymentId}`).limit(1);
+      
+      if (!payment || payment.length === 0) {
+        return res.status(404).json({ message: "Commission payment not found" });
+      }
+      
+      const commissionPayment = payment[0];
+      
+      // Update commission payment to paid status
+      await storage.db.update(storage.schema.commissionPayments)
+        .set({
+          paymentStatus: 'paid',
+          paymentDate: new Date(),
+          transferReference: transferReference || null,
+          updatedAt: new Date()
+        })
+        .where(sql`id = ${paymentId}`);
+      
+      // Update referral deal stage to "live_paid" if this is the level 1 commission
+      if (commissionPayment.level === 1 && commissionPayment.referralId) {
+        await storage.db.update(storage.schema.referrals)
+          .set({
+            dealStage: 'live_paid',
+            updatedAt: new Date()
+          })
+          .where(sql`id = ${commissionPayment.referralId}`);
+      }
+      
+      res.json({ 
+        success: true, 
+        message: "Commission marked as paid and withdrawn successfully"
+      });
+    } catch (error) {
+      console.error("Error processing withdrawal:", error);
+      res.status(500).json({ message: "Failed to process withdrawal" });
     }
   });
 

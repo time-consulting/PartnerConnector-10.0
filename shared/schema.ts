@@ -148,7 +148,7 @@ export const referrals = pgTable("referrals", {
   adminNotes: text("admin_notes"),
   gdprConsent: boolean("gdpr_consent").default(false),
   // Enhanced admin fields for deal management
-  dealStage: varchar("deal_stage").notNull().default("quote_request"), // quote_request, quote_sent, quote_approved, agreement_sent, signed_awaiting_docs, approved, live_confirm_ltr, invoice_received, completed, declined
+  dealStage: varchar("deal_stage").notNull().default("quote_request"), // quote_request, quote_sent, quote_approved, agreement_sent, signed_awaiting_docs, approved, live_confirm_ltr, invoice_received, live_paid, completed, declined
   quoteRates: jsonb("quote_rates"), // Store detailed rate information for quotes
   docsOutConfirmed: boolean("docs_out_confirmed").default(false),
   docsOutConfirmedAt: timestamp("docs_out_confirmed_at"),

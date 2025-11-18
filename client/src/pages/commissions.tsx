@@ -65,6 +65,11 @@ export default function CommissionsPage() {
     queryKey: ["/api/commission-payments/team"]
   });
 
+  // Fetch withdrawn/paid commissions
+  const { data: withdrawnPayments = [], isLoading: withdrawnLoading } = useQuery({
+    queryKey: ["/api/commission-payments/withdrawn"]
+  });
+
   // Calculate totals
   const totalAvailable = payments
     .filter((p: any) => p.approvalStatus === 'approved' && p.paymentStatus === 'approved_pending')
@@ -258,6 +263,7 @@ export default function CommissionsPage() {
           <div className="flex items-center justify-between mb-4">
             <TabsList>
               <TabsTrigger value="commissions" data-testid="tab-commissions">Commissions</TabsTrigger>
+              <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Withdrawals</TabsTrigger>
               <TabsTrigger value="team" data-testid="tab-team">Team payments</TabsTrigger>
             </TabsList>
             <div className="flex gap-2">
@@ -342,6 +348,65 @@ export default function CommissionsPage() {
                                 Query submitted
                               </Badge>
                             )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Withdrawals Tab */}
+          <TabsContent value="withdrawals" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Withdrawn Commissions</CardTitle>
+                <CardDescription>
+                  History of your paid commission withdrawals
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {withdrawnLoading ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : withdrawnPayments.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No withdrawn payments yet</p>
+                    <p className="text-sm mt-2">Approved commissions will appear here once paid</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Business Name</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Deal Stage</TableHead>
+                        <TableHead>Payment Date</TableHead>
+                        <TableHead>Transfer Reference</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {withdrawnPayments.map((payment: any) => (
+                        <TableRow key={payment.id}>
+                          <TableCell className="font-medium">{payment.businessName || "N/A"}</TableCell>
+                          <TableCell>
+                            <span className="text-sm text-gray-600">{getLevelLabel(payment.level)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              Live-Paid
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {payment.paymentDate ? format(new Date(payment.paymentDate), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {payment.transferReference || '-'}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-green-600">
+                            £{parseFloat(payment.amount).toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
