@@ -4420,6 +4420,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get withdrawn/paid commission payments
+  app.get('/api/commission-payments/withdrawn', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get commission payments that have been paid/withdrawn
+      const withdrawnPayments = await storage.db.select()
+        .from(storage.schema.commissionPayments)
+        .where(sql`recipient_id = ${userId} AND payment_status = 'paid'`)
+        .orderBy(sql`payment_date DESC`);
+      
+      res.json(withdrawnPayments);
+    } catch (error) {
+      console.error("Error fetching withdrawn commission payments:", error);
+      res.status(500).json({ message: "Failed to fetch withdrawn commission payments" });
+    }
+  });
+
+  // Admin: Get approved commission payments ready for withdrawal
+  app.get('/api/admin/commission-payments/approved', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      // Get all approved commission payments with recipient details
+      const approvedPayments = await storage.db.select({
+        id: storage.schema.commissionPayments.id,
+        referralId: storage.schema.commissionPayments.referralId,
+        recipientId: storage.schema.commissionPayments.recipientId,
+        level: storage.schema.commissionPayments.level,
+        amount: storage.schema.commissionPayments.amount,
+        percentage: storage.schema.commissionPayments.percentage,
+        businessName: storage.schema.commissionPayments.businessName,
+        approvalStatus: storage.schema.commissionPayments.approvalStatus,
+        paymentStatus: storage.schema.commissionPayments.paymentStatus,
+        createdAt: storage.schema.commissionPayments.createdAt,
+        recipientName: sql`${storage.schema.users.firstName} || ' ' || ${storage.schema.users.lastName}`,
+        recipientEmail: storage.schema.users.email,
+        bankAccountNumber: storage.schema.users.bankAccountNumber,
+        bankSortCode: storage.schema.users.bankSortCode,
+        bankAccountName: storage.schema.users.bankAccountName,
+      })
+      .from(storage.schema.commissionPayments)
+      .leftJoin(storage.schema.users, sql`${storage.schema.commissionPayments.recipientId} = ${storage.schema.users.id}`)
+      .where(sql`${storage.schema.commissionPayments.paymentStatus} = 'approved_pending'`)
+      .orderBy(sql`${storage.schema.commissionPayments.createdAt} DESC`);
+      
+      res.json(approvedPayments);
+    } catch (error) {
+      console.error("Error fetching approved commission payments:", error);
+      res.status(500).json({ message: "Failed to fetch approved commission payments" });
+    }
+  });
+
   // Approve commission payment
   app.patch('/api/commission-payments/:paymentId/approve', requireAuth, async (req: any, res) => {
     try {

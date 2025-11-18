@@ -47,10 +47,46 @@ export function AdminPaymentsPortal() {
   const [calculatedBreakdown, setCalculatedBreakdown] = useState<any>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [manualOverrides, setManualOverrides] = useState<{ [key: number]: string }>({});
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [transferReference, setTransferReference] = useState("");
 
   // Fetch live accounts
   const { data: liveAccounts = [], isLoading } = useQuery({
     queryKey: ['/api/admin/payments/live-accounts'],
+  });
+
+  // Fetch approved commissions ready for withdrawal
+  const { data: approvedPayments = [], isLoading: approvedLoading } = useQuery({
+    queryKey: ['/api/admin/commission-payments/approved'],
+  });
+
+  // Withdrawal mutation
+  const withdrawMutation = useMutation({
+    mutationFn: async ({ paymentId, transferReference }: { paymentId: string; transferReference?: string }) => {
+      const response = await apiRequest('PATCH', `/api/admin/commission-payments/${paymentId}/withdraw`, {
+        transferReference
+      });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/commission-payments/approved'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/payments/live-accounts'] });
+      setWithdrawDialogOpen(false);
+      setSelectedPayment(null);
+      setTransferReference("");
+      toast({
+        title: "Payment Withdrawn",
+        description: "Commission payment has been marked as paid and withdrawn successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Withdrawal Failed",
+        description: error.message || "Failed to process withdrawal",
+        variant: "destructive",
+      });
+    },
   });
 
   // Calculate breakdown mutation
@@ -212,6 +248,68 @@ export function AdminPaymentsPortal() {
           </div>
         </CardHeader>
       </Card>
+
+      {/* Approved Payments Ready for Withdrawal */}
+      {!approvedLoading && approvedPayments.length > 0 && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              Approved Commissions Ready for Withdrawal
+            </CardTitle>
+            <CardDescription>
+              Process bank transfers for these approved commission payments
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {approvedPayments.map((payment: any) => (
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between p-4 bg-white rounded-lg border"
+                  data-testid={`payment-approved-${payment.id}`}
+                >
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      {payment.businessName || "N/A"}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {payment.recipientName} • {payment.recipientEmail}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="outline" className="text-xs">
+                        Level {payment.level} - {payment.percentage}%
+                      </Badge>
+                      <Badge className="bg-blue-500 text-white text-xs">
+                        Approved
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="text-right mr-4">
+                    <div className="text-2xl font-bold text-blue-600">
+                      £{parseFloat(payment.amount).toFixed(2)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {payment.bankAccountNumber ? `****${payment.bankAccountNumber.slice(-4)}` : "No bank details"}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setSelectedPayment(payment);
+                      setWithdrawDialogOpen(true);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid={`button-withdraw-${payment.id}`}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Mark as Paid
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Live Accounts Grid */}
       {liveAccounts.length === 0 ? (
@@ -526,6 +624,94 @@ export function AdminPaymentsPortal() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Withdrawal Confirmation Dialog */}
+      <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-blue-600" />
+              Confirm Commission Withdrawal
+            </DialogTitle>
+            <DialogDescription>
+              Mark this commission payment as paid and provide optional transfer reference
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPayment && (
+            <div className="space-y-4 py-4">
+              <div className="p-4 bg-gray-50 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Business:</span>
+                  <span className="font-medium">{selectedPayment.businessName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Recipient:</span>
+                  <span className="font-medium">{selectedPayment.recipientName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Amount:</span>
+                  <span className="font-bold text-blue-600">£{parseFloat(selectedPayment.amount).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Bank Account:</span>
+                  <span className="font-medium">
+                    {selectedPayment.bankAccountNumber ? `****${selectedPayment.bankAccountNumber.slice(-4)}` : "N/A"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="transferReference">Transfer Reference (Optional)</Label>
+                <Input
+                  id="transferReference"
+                  placeholder="e.g. TXN123456789"
+                  value={transferReference}
+                  onChange={(e) => setTransferReference(e.target.value)}
+                  data-testid="input-transfer-reference"
+                />
+                <p className="text-xs text-gray-500">
+                  Enter the bank transfer reference number for tracking purposes
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setWithdrawDialogOpen(false);
+                setSelectedPayment(null);
+                setTransferReference("");
+              }}
+              data-testid="button-cancel-withdraw"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedPayment) {
+                  withdrawMutation.mutate({
+                    paymentId: selectedPayment.id,
+                    transferReference: transferReference || undefined
+                  });
+                }
+              }}
+              disabled={withdrawMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-confirm-withdraw"
+            >
+              {withdrawMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Confirm Payment Sent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
