@@ -199,15 +199,26 @@ export const commissionPayments = pgTable("commission_payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   referralId: varchar("referral_id").notNull(),
   recipientId: varchar("recipient_id").notNull(), // User receiving commission
-  level: integer("level").notNull(), // 1 = direct, 2 = level 2, 3 = level 3
+  level: integer("level").notNull(), // 1 = direct (60%), 2 = parent (20%), 3 = grandparent (10%)
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  percentage: decimal("percentage", { precision: 5, scale: 4 }).notNull(),
+  percentage: decimal("percentage", { precision: 5, scale: 2 }).notNull(), // 60.00, 20.00, or 10.00
+  totalCommission: decimal("total_commission", { precision: 10, scale: 2 }), // Total commission before split
+  businessName: varchar("business_name"),
+  dealStage: varchar("deal_stage"),
+  approvalStatus: varchar("approval_status").notNull().default("pending"), // pending, approved, queried
+  queryNotes: text("query_notes"),
+  paymentStatus: varchar("payment_status").notNull().default("pending"), // pending, approved_pending, processing, paid, failed
   paymentDate: timestamp("payment_date"),
-  status: varchar("status").notNull().default("pending"), // pending, processing, paid, failed
+  approvedAt: timestamp("approved_at"),
   transferReference: varchar("transfer_reference"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("commission_payments_recipient_idx").on(table.recipientId),
+  index("commission_payments_referral_idx").on(table.referralId),
+  index("commission_payments_status_idx").on(table.approvalStatus, table.paymentStatus),
+]);
 
 // Partner hierarchy for MLM tracking
 export const partnerHierarchy = pgTable("partner_hierarchy", {
@@ -1181,6 +1192,12 @@ export type Referral = typeof referrals.$inferSelect;
 export type BusinessType = typeof businessTypes.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type BillUpload = typeof billUploads.$inferSelect;
+export const insertCommissionPaymentSchema = createInsertSchema(commissionPayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertCommissionPayment = z.infer<typeof insertCommissionPaymentSchema>;
 export type CommissionPayment = typeof commissionPayments.$inferSelect;
 export type BusinessOwner = typeof businessOwners.$inferSelect;
 export type BusinessDetails = typeof businessDetails.$inferSelect;
