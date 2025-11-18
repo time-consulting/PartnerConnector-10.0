@@ -66,16 +66,16 @@ export default function SideNavigation() {
       testId: "sidenav-quotes"
     },
     {
-      icon: Wallet,
-      label: "Commissions",
-      path: "/commissions",
-      testId: "sidenav-commissions"
-    },
-    {
       icon: Users,
       label: "Team",
       path: "/team-management",
       testId: "sidenav-team"
+    },
+    {
+      icon: Wallet,
+      label: "Commissions",
+      path: "/commissions",
+      testId: "sidenav-commissions"
     },
     {
       icon: GraduationCap,
