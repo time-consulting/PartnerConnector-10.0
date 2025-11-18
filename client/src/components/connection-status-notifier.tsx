@@ -1,11 +1,22 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { WifiIcon, RefreshCwIcon } from 'lucide-react';
 
 export default function ConnectionStatusNotifier() {
+  const lastNotificationTime = useRef(0);
+  const THROTTLE_MS = 10000; // Only show notifications every 10 seconds
+
   useEffect(() => {
     const handleConnectionRestored = () => {
+      const now = Date.now();
+      // Throttle to prevent constant notifications during Vite reconnects
+      if (now - lastNotificationTime.current < THROTTLE_MS) {
+        console.log('Connection restored (throttled)');
+        return;
+      }
+      
+      lastNotificationTime.current = now;
       console.log('Connection restored event received');
       
       toast({
@@ -36,6 +47,14 @@ export default function ConnectionStatusNotifier() {
     };
 
     const handleOffline = () => {
+      const now = Date.now();
+      // Throttle to prevent constant notifications
+      if (now - lastNotificationTime.current < THROTTLE_MS) {
+        console.log('Connection lost (throttled)');
+        return;
+      }
+      
+      lastNotificationTime.current = now;
       console.log('Connection lost event received');
       
       toast({
@@ -48,7 +67,7 @@ export default function ConnectionStatusNotifier() {
     // Listen for custom connection-restored events
     window.addEventListener('connection-restored', handleConnectionRestored);
     
-    // Listen for native offline event
+    // Listen for native offline event (but only if truly offline, not Vite restarts)
     window.addEventListener('offline', handleOffline);
 
     return () => {

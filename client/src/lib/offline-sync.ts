@@ -62,9 +62,14 @@ class OfflineSyncManager {
     console.log('Network status: Online');
     this.updateOnlineStatus(true);
     
-    // Emit connection restored event for UI notification
-    const event = new CustomEvent('connection-restored');
-    window.dispatchEvent(event);
+    // Only emit connection restored if we were actually offline for a while
+    // Don't trigger on every Vite dev server reconnect
+    setTimeout(() => {
+      if (navigator.onLine) {
+        const event = new CustomEvent('connection-restored');
+        window.dispatchEvent(event);
+      }
+    }, 2000); // Wait 2 seconds to avoid Vite flicker
     
     this.syncPendingData();
   };
