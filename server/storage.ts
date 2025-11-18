@@ -1185,7 +1185,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(commissionPayments.recipientId, userId),
-          eq(commissionPayments.status, 'pending')
+          eq(commissionPayments.paymentStatus, 'pending')
         )
       );
 
@@ -1209,7 +1209,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(commissionPayments.recipientId, userId),
-          eq(commissionPayments.status, 'paid')
+          eq(commissionPayments.paymentStatus, 'paid')
         )
       );
 
