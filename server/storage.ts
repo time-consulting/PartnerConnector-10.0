@@ -286,6 +286,13 @@ export interface IStorage {
   markInvoiceAsPaid(invoiceId: string, paymentReference: string, adminNotes?: string): Promise<void>;
   updateInvoiceStatus(invoiceId: string, status: string): Promise<void>;
 
+  // Commission payment operations
+  getCommissionPaymentsByRecipient(recipientId: string): Promise<any[]>;
+  getTeamCommissionPayments(userId: string): Promise<any[]>;
+  updateCommissionPaymentApproval(paymentId: string, approvalStatus: string, queryNotes: string | null): Promise<any>;
+  getDownlineUsers(userId: string): Promise<any[]>;
+  createCommissionPayment(paymentData: any): Promise<any>;
+
   // Test data seeding
   seedTestReferrals(): Promise<void>;
 }
