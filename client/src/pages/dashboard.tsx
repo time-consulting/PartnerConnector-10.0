@@ -584,9 +584,6 @@ export default function Dashboard() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-gray-900" data-testid={`text-commission-${deals?.id}`}>
-                              £{deals?.estimatedCommission || "0"}
-                            </p>
                             <p className="text-sm text-gray-500" data-testid={`text-date-${deals?.id}`}>
                               {new Date(deals?.submittedAt).toLocaleDateString()}
                             </p>

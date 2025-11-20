@@ -501,12 +501,6 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
                   <p className="text-sm text-gray-500">{deal.referrer.email}</p>
                 </div>
               )}
-              {deal.estimatedCommission && (
-                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                  <label className="text-sm text-gray-700">Estimated Commission</label>
-                  <p className="font-bold text-2xl text-green-700">£{deal.estimatedCommission}</p>
-                </div>
-              )}
             </CardContent>
           </Card>
 

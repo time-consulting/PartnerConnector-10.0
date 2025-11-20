@@ -250,26 +250,6 @@ export default function TrackReferrals() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Est. Commission</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">
-                    £{deals?List
-                      .reduce((sum: number, r: any) => sum + (parseFloat(r.estimatedCommission) || 0), 0)
-                      .toLocaleString()}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <PoundSterling className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-              <p className="text-sm text-purple-600 mt-3">
-                Total potential
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Search */}
@@ -409,18 +389,6 @@ export default function TrackReferrals() {
                                     </div>
                                   )}
                                 </div>
-
-                                {/* Commission Display */}
-                                {deals?.estimatedCommission && (
-                                  <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-sm font-medium text-gray-700">Estimated Commission</span>
-                                      <span className="text-2xl font-bold text-green-700">
-                                        £{deals?.estimatedCommission}
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
 
                                 {/* Actions */}
                                 <div className="flex gap-2 pt-2">
