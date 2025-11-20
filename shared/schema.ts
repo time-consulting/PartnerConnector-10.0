@@ -438,29 +438,6 @@ export const opportunities = pgTable("opportunities", {
   index("opportunities_partner_status_idx").on(table.partnerId, table.status),
 ]);
 
-// Keep legacy leads table for backward compatibility during migration
-export const leads = pgTable("leads", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: varchar("partner_id").notNull(), // User who owns this lead
-  businessName: varchar("business_name").notNull(),
-  contactName: varchar("contact_name").notNull(),
-  contactEmail: varchar("contact_email"),
-  contactPhone: varchar("contact_phone"),
-  businessType: varchar("business_type"),
-  estimatedMonthlyVolume: varchar("estimated_monthly_volume"),
-  leadSource: varchar("lead_source"), // referral, cold_call, networking, etc.
-  status: varchar("status").notNull().default("uploaded"), // uploaded, contacted, interested, quoted, converted, not_interested
-  priority: varchar("priority").default("medium"), // low, medium, high
-  notes: text("notes"),
-  lastContact: timestamp("last_contact"),
-  nextFollowUp: timestamp("next_follow_up"),
-  tags: text("tags").array(), // Array of tags for categorization
-  estimatedValue: varchar("estimated_value"),
-  probabilityScore: integer("probability_score").default(50), // 0-100 percentage
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
 // Contact interactions/activity log
 export const contactInteractions = pgTable("contact_interactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -498,20 +475,6 @@ export const opportunityInteractions = pgTable("opportunity_interactions", {
   index("opportunity_interactions_created_at_idx").on(table.createdAt),
   index("opportunity_interactions_type_idx").on(table.interactionType),
 ]);
-
-// Keep legacy lead interactions for backward compatibility
-export const leadInteractions = pgTable("lead_interactions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  leadId: varchar("lead_id").notNull(),
-  partnerId: varchar("partner_id").notNull(),
-  interactionType: varchar("interaction_type").notNull(), // call, email, meeting, note, status_change
-  subject: varchar("subject"),
-  details: text("details"),
-  outcome: varchar("outcome"), // positive, neutral, negative, follow_up_required
-  nextAction: text("next_action"),
-  attachments: text("attachments").array(), // File paths or references
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
 // Email communications for 2-way sync with Outlook
 export const emailCommunications = pgTable("email_communications", {
@@ -749,7 +712,6 @@ export const notifications = pgTable("notifications", {
   message: text("message").notNull(),
   read: boolean("read").default(false),
   dealId: varchar("deal_id").references(() => deals.id, { onDelete: "set null" }), // Optional - for deal-related notifications
-  leadId: varchar("lead_id").references(() => leads.id, { onDelete: "set null" }), // Optional - for lead-related notifications
   contactId: varchar("contact_id").references(() => contacts.id, { onDelete: "set null" }), // Optional - for contact-related notifications
   opportunityId: varchar("opportunity_id").references(() => opportunities.id, { onDelete: "set null" }), // Optional - for opportunity-related notifications
   businessName: varchar("business_name"), // For context in notifications
@@ -783,10 +745,8 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   deals: many(deals),
-  leads: many(leads),
   opportunities: many(opportunities),
   contacts: many(contacts),
-  leadInteractions: many(leadInteractions),
   contactInteractions: many(contactInteractions),
   opportunityInteractions: many(opportunityInteractions),
   emailCommunications: many(emailCommunications),
@@ -948,25 +908,6 @@ export const emailCommunicationsRelations = relations(emailCommunications, ({ on
   }),
 }));
 
-export const leadsRelations = relations(leads, ({ one, many }) => ({
-  partner: one(users, {
-    fields: [leads.partnerId],
-    references: [users.id],
-  }),
-  interactions: many(leadInteractions),
-}));
-
-export const leadInteractionsRelations = relations(leadInteractions, ({ one }) => ({
-  lead: one(leads, {
-    fields: [leadInteractions.leadId],
-    references: [leads.id],
-  }),
-  partner: one(users, {
-    fields: [leadInteractions.partnerId],
-    references: [users.id],
-  }),
-}));
-
 export const partnersRelations = relations(partners, ({ many }) => ({
   reviews: many(partnerReviews),
 }));
@@ -986,10 +927,6 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   deal: one(deals, {
     fields: [notifications.dealId],
     references: [deals.id],
-  }),
-  lead: one(leads, {
-    fields: [notifications.leadId],
-    references: [leads.id],
   }),
   contact: one(contacts, {
     fields: [notifications.contactId],
@@ -1090,17 +1027,6 @@ export const insertEmailCommunicationSchema = createInsertSchema(emailCommunicat
   createdAt: true,
 });
 
-export const insertLeadSchema = createInsertSchema(leads).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertLeadInteractionSchema = createInsertSchema(leadInteractions).omit({
-  id: true,
-  createdAt: true,
-});
-
 export const insertPartnerSchema = createInsertSchema(partners).omit({
   id: true,
   createdAt: true,
@@ -1130,8 +1056,6 @@ export type OpportunityInteraction = typeof opportunityInteractions.$inferSelect
 export type InsertOpportunityInteraction = z.infer<typeof insertOpportunityInteractionSchema>;
 export type EmailCommunication = typeof emailCommunications.$inferSelect;
 export type InsertEmailCommunication = z.infer<typeof insertEmailCommunicationSchema>;
-export type Lead = typeof leads.$inferSelect;
-export type InsertLead = z.infer<typeof insertLeadSchema>;
 
 // Audit trail table for tracking important actions
 export const audits = pgTable("audits", {
@@ -1237,8 +1161,6 @@ export type TeamInvitation = typeof teamInvitations.$inferSelect;
 export type PartnerHierarchy = typeof partnerHierarchy.$inferSelect;
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type InsertTeamInvitation = z.infer<typeof insertTeamInvitationSchema>;
-export type LeadInteraction = typeof leadInteractions.$inferSelect;
-export type InsertLeadInteraction = z.infer<typeof insertLeadInteractionSchema>;
 export type Partner = typeof partners.$inferSelect;
 export type InsertPartner = z.infer<typeof insertPartnerSchema>;
 export type PartnerReview = typeof partnerReviews.$inferSelect;
