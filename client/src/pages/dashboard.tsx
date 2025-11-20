@@ -9,7 +9,7 @@ import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import StatsCard from "@/components/stats-card";
-import DealProgress from "@/components/deals?-progress";
+import DealProgress from "@/components/deals-progress";
 import ProgressTracker from "@/components/progress-tracker";
 import QuoteSystem from "@/components/quote-system";
 import AdditionalDetailsForm from "@/components/additional-details-form";
