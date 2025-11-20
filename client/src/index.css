@@ -5,6 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force dark theme on root */
+html {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+body {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
 /* Mobile-specific optimizations */
 @media (max-width: 768px) {
   /* Improve touch targets for mobile */

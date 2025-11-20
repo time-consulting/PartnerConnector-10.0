@@ -166,21 +166,12 @@ function AppRoutes() {
 }
 
 function App() {
-  // Set dark mode as default theme
+  // Set dark mode as default theme - ALWAYS dark
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    // Default to dark mode unless user explicitly chose light
-    if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-      // Save dark as default if no preference exists
-      if (!savedTheme) {
-        localStorage.setItem('theme', 'dark');
-      }
-    }
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+    document.documentElement.style.backgroundColor = '#0f172a';
+    document.documentElement.style.color = '#ffffff';
   }, []);
 
   return (
