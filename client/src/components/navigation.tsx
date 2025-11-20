@@ -122,7 +122,7 @@ export default function Navigation() {
                                 </div>
                                 <div>
                                   <h4 className="font-medium text-gray-900">Lead Tracking</h4>
-                                  <p className="text-sm text-gray-600">Track your deals? from submission to payout</p>
+                                  <p className="text-sm text-gray-600">Track your deal from submission to payout</p>
                                 </div>
                               </div>
                             </Link>
@@ -350,7 +350,7 @@ export default function Navigation() {
                             <Home className="w-5 h-5" />
                             <div>
                               <h4 className="font-medium">Go to Dashboard</h4>
-                              <p className="text-xs text-blue-100">Manage your deals? and earnings</p>
+                              <p className="text-xs text-blue-100">Manage your deal and earnings</p>
                             </div>
                           </div>
                         </Link>
@@ -511,10 +511,10 @@ export default function Navigation() {
                       <span className="font-medium">Opportunities</span>
                     </div>
                   </Link>
-                  <Link href="/submit-deals?" onClick={handleMobileMenuClose}>
+                  <Link href="/submit-deal" onClick={handleMobileMenuClose}>
                     <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                      isActive('/submit-deals?') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-                    }`} data-testid="mobile-link-submit-deals?">
+                      isActive('/submit-deal') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`} data-testid="mobile-link-submit-deal">
                       <UsersIcon className="w-5 h-5" />
                       <span className="font-medium">Submit Deal</span>
                     </div>
@@ -635,7 +635,7 @@ export default function Navigation() {
                         <BarChart3Icon className="w-5 h-5 text-purple-600" />
                         <div>
                           <h4 className="font-medium text-gray-900">Lead Tracking</h4>
-                          <p className="text-xs text-gray-600">Track deals? to payout</p>
+                          <p className="text-xs text-gray-600">Track deal to payout</p>
                         </div>
                       </div>
                     </Link>
@@ -740,7 +740,7 @@ export default function Navigation() {
       {/* Floating Action Button for Mobile - Submit Deal */}
       {isAuthenticated && (
         <div className="fixed bottom-6 right-6 sm:hidden z-50">
-          <Link href="/submit-deals?">
+          <Link href="/submit-deal">
             <Button
               size="lg"
               className="h-14 w-14 rounded-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105"

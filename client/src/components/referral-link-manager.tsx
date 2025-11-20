@@ -68,7 +68,7 @@ export default function ReferralLinkManager({ userReferralCode }: ReferralLinkMa
   ];
 
   const handleShare = (action: string, url: string) => {
-    const message = `Join our partner network and start earning commissions! Use my deals? link: ${url}`;
+    const message = `Join our partner network and start earning commissions! Use my deal link: ${url}`;
     
     switch (action) {
       case 'email':
@@ -90,7 +90,7 @@ export default function ReferralLinkManager({ userReferralCode }: ReferralLinkMa
     
     toast({
       title: "Shared!",
-      description: `Opened ${action} to share your deals? link`,
+      description: `Opened ${action} to share your deal link`,
     });
   };
 
@@ -107,7 +107,7 @@ export default function ReferralLinkManager({ userReferralCode }: ReferralLinkMa
         <CardContent>
           <div className="text-center py-4">
             <div className="text-sm text-gray-600 mb-2">Share this code with potential partners</div>
-            <div className="text-4xl font-bold text-blue-600 tracking-wider mb-4" data-testid="text-deals?-code">
+            <div className="text-4xl font-bold text-blue-600 tracking-wider mb-4" data-testid="text-deal-code">
               {userReferralCode || 'Not Available'}
             </div>
             <Button
@@ -136,7 +136,7 @@ export default function ReferralLinkManager({ userReferralCode }: ReferralLinkMa
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-            <div className="flex-1 text-sm font-mono text-gray-700 break-all" data-testid="text-deals?-url">
+            <div className="flex-1 text-sm font-mono text-gray-700 break-all" data-testid="text-deal-url">
               {primaryReferralUrl}
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -190,7 +190,7 @@ export default function ReferralLinkManager({ userReferralCode }: ReferralLinkMa
             </div>
             <div>
               <h4 className="font-medium text-gray-900">Share Your Link</h4>
-              <p className="text-sm text-gray-600">Send your deals? link to potential partners via email, social media, or messaging apps.</p>
+              <p className="text-sm text-gray-600">Send your deal link to potential partners via email, social media, or messaging apps.</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -230,7 +230,7 @@ export default function ReferralLinkManager({ userReferralCode }: ReferralLinkMa
               />
             </div>
             <p className="text-sm text-gray-600">
-              Scan this QR code to access your deals? link
+              Scan this QR code to access your deal link
             </p>
             <div className="flex gap-2 justify-center">
               <Button variant="outline" data-testid="button-download-qr">

@@ -36,7 +36,7 @@ interface OnboardingData {
   businessContacts: string;
   industryExperience: string[];
   networkSize: string;
-  deals?Experience: string;
+  dealExperience: string;
   
   // Goals & Preferences
   monthlyEarningsGoal: string;
@@ -71,7 +71,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
     businessContacts: '',
     industryExperience: [],
     networkSize: '',
-    deals?Experience: '',
+    dealExperience: '',
     monthlyEarningsGoal: '',
     timeCommitment: '',
     primaryInterest: [],
@@ -173,10 +173,10 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
         }
         break;
       case 3: // Network & Relationships
-        if (!formData.networkSize || !formData.deals?Experience) {
+        if (!formData.networkSize || !formData.dealExperience) {
           toast({
             title: "Required Fields Missing",
-            description: "Please provide information about your network and deals? experience.",
+            description: "Please provide information about your network and deal experience.",
             variant: "destructive",
           });
           return false;
@@ -237,7 +237,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
               <div className="bg-white border-2 border-blue-100 p-6 rounded-xl">
                 <div className="text-blue-600 text-3xl font-bold mb-2">60%</div>
                 <div className="font-semibold text-gray-900 mb-2">Commission Rate</div>
-                <div className="text-sm text-gray-600 mb-4">Earn up to 60% commission on all successful deals?</div>
+                <div className="text-sm text-gray-600 mb-4">Earn up to 60% commission on all successful deal</div>
                 <div className="text-sm bg-blue-50 p-3 rounded-lg">
                   <strong>Example:</strong> £75,000 business funding = <strong>£1,350</strong> commission to you
                 </div>
@@ -246,7 +246,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
               <div className="bg-white border-2 border-green-100 p-6 rounded-xl">
                 <div className="text-green-600 text-3xl font-bold mb-2">Team</div>
                 <div className="font-semibold text-gray-900 mb-2">Building Rewards</div>
-                <div className="text-sm text-gray-600 mb-4">Invite team members and earn from their deals? too</div>
+                <div className="text-sm text-gray-600 mb-4">Invite team members and earn from their deal too</div>
                 <div className="text-sm bg-green-50 p-3 rounded-lg">
                   <strong>Growth:</strong> Build a network and earn passive income from your team's success
                 </div>
@@ -431,16 +431,16 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
             </div>
 
             <div>
-              <Label htmlFor="deals?Experience">Referral/Commission Experience *</Label>
-              <Select value={formData.deals?Experience} onValueChange={(value) => updateFormData('deals?Experience', value)}>
-                <SelectTrigger data-testid="select-deals?-experience">
+              <Label htmlFor="dealExperience">Referral/Commission Experience *</Label>
+              <Select value={formData.dealExperience} onValueChange={(value) => updateFormData('dealExperience', value)}>
+                <SelectTrigger data-testid="select-deal-experience">
                   <SelectValue placeholder="Have you earned commissions before?" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No experience with deals?</SelectItem>
-                  <SelectItem value="some">Some deals? experience</SelectItem>
-                  <SelectItem value="experienced">Experienced with deals?</SelectItem>
-                  <SelectItem value="expert">Expert - deals? are my main income</SelectItem>
+                  <SelectItem value="none">No experience with deal</SelectItem>
+                  <SelectItem value="some">Some deal experience</SelectItem>
+                  <SelectItem value="experienced">Experienced with deal</SelectItem>
+                  <SelectItem value="expert">Expert - deal are my main income</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -570,7 +570,7 @@ export default function OnboardingQuestionnaire({ onComplete, onSkip }: Onboardi
                 <SelectContent>
                   <SelectItem value="google">Google Search</SelectItem>
                   <SelectItem value="social-media">Social Media</SelectItem>
-                  <SelectItem value="deals?">Referral from colleague</SelectItem>
+                  <SelectItem value="deal">Referral from colleague</SelectItem>
                   <SelectItem value="email">Email marketing</SelectItem>
                   <SelectItem value="event">Industry event</SelectItem>
                   <SelectItem value="other">Other</SelectItem>

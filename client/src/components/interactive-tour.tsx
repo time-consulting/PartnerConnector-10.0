@@ -51,15 +51,15 @@ export default function InteractiveTour({ isVisible, onComplete, onSkip, startSt
     {
       id: "dashboard-overview",
       title: "Your Partner Dashboard",
-      description: "This is your command center! Here you can see your earnings, track deals?, and monitor your progress toward the next partner level.",
+      description: "This is your command center! Here you can see your earnings, track deal, and monitor your progress toward the next partner level.",
       element: "[data-testid='dashboard-stats']",
       position: "bottom"
     },
     {
-      id: "submit-deals?",
+      id: "submit-deal",
       title: "Submit Your First Deal",
-      description: "Click here to submit deals? for businesses that need payment processing or funding. Each successful deals? earns you substantial commissions!",
-      element: "[data-testid='link-submit-deals?']",
+      description: "Click here to submit deal for businesses that need payment processing or funding. Each successful deal earns you substantial commissions!",
+      element: "[data-testid='link-submit-deal']",
       position: "bottom",
       highlight: true
     },
@@ -144,8 +144,8 @@ export default function InteractiveTour({ isVisible, onComplete, onSkip, startSt
 
   const handleFirstAction = (action: string) => {
     switch (action) {
-      case 'submit-deals?':
-        window.location.href = '/submit-deals?';
+      case 'submit-deal':
+        window.location.href = '/submit-deal';
         break;
       case 'training':
         window.location.href = '/training';
@@ -220,9 +220,9 @@ export default function InteractiveTour({ isVisible, onComplete, onSkip, startSt
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
-                    onClick={() => handleFirstAction('submit-deals?')}
+                    onClick={() => handleFirstAction('submit-deal')}
                     className="flex flex-col items-center gap-1 h-auto py-3"
-                    data-testid="button-first-action-deals?"
+                    data-testid="button-first-action-deal"
                   >
                     <CreditCardIcon className="w-5 h-5 text-green-600" />
                     <span className="text-xs">Submit Deal</span>

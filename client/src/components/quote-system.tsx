@@ -33,7 +33,7 @@ interface QuoteSystemProps {
   isOpen: boolean;
   onClose: () => void;
   onApprove: () => void;
-  deals?: {
+  deal: {
     id: string;
     businessName: string;
     businessEmail: string;
@@ -42,7 +42,7 @@ interface QuoteSystemProps {
   };
 }
 
-export default function QuoteSystem({ isOpen, onClose, onApprove, deals? }: QuoteSystemProps) {
+export default function QuoteSystem({ isOpen, onClose, onApprove, deal }: QuoteSystemProps) {
   const [isApproving, setIsApproving] = useState(false);
 
   // Mock quote data - in real app this would come from backend
@@ -100,7 +100,7 @@ export default function QuoteSystem({ isOpen, onClose, onApprove, deals? }: Quot
     }
   ];
 
-  const monthlyVolume = parseInt(deals?.monthlyVolume?.replace(/[£,]/g, '') || '50000');
+  const monthlyVolume = parseInt(deal.monthlyVolume?.replace(/[£,]/g, '') || '50000');
   const totalMonthlySavings = quoteRates.reduce((total, rate) => {
     const currentPercent = parseFloat(rate.currentRate) / 100;
     const newPercent = parseFloat(rate.newRate) / 100;
@@ -131,7 +131,7 @@ export default function QuoteSystem({ isOpen, onClose, onApprove, deals? }: Quot
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Star className="w-6 h-6 text-yellow-500" />
-            Competitive Quote Ready - {deals?.businessName}
+            Competitive Quote Ready - {deal.businessName}
           </DialogTitle>
         </DialogHeader>
 

@@ -50,13 +50,13 @@ export default function SideNavigation() {
     {
       icon: Plus,
       label: "Submit Deal",
-      path: "/submit-deals?", 
-      testId: "sidenav-submit-deals?"
+      path: "/submit-deal", 
+      testId: "sidenav-submit-deal"
     },
     {
       icon: ClipboardList,
       label: "Track Submissions",
-      path: "/track-deals?",
+      path: "/track-deal",
       testId: "sidenav-track-submissions"
     },
     {

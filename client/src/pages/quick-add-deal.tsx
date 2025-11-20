@@ -176,7 +176,7 @@ export default function QuickAddReferral() {
         description: "This quick form is optimized for mobile. Redirecting to full form...",
       });
       setTimeout(() => {
-        setLocation("/submit-deals?");
+        setLocation("/submit-deal");
       }, 2000);
     }
   }, [isLoading, toast, setLocation]);
@@ -186,7 +186,7 @@ export default function QuickAddReferral() {
     if (!isLoading && !isAuthenticated) {
       toast({
         title: "Please login",
-        description: "You need to be logged in to submit deals?.",
+        description: "You need to be logged in to submit deal.",
         variant: "destructive",
       });
       setTimeout(() => {

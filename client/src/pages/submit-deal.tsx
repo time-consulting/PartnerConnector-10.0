@@ -6,7 +6,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
-import DealStepper from "@/components/deals?-stepper";
+import DealStepper from "@/components/deal-stepper";
 import BillUpload from "@/components/bill-upload";
 import { CheckCircleIcon, Sparkles } from "lucide-react";
 
@@ -38,9 +38,9 @@ export default function SubmitDeal() {
 
   const submitDealMutation = useMutation({
     mutationFn: async ({ dealData, files }: { dealData: any; files: File[] }) => {
-      // First, create the deals?
+      // First, create the deal
       const response = await apiRequest("POST", "/api/deals", dealData);
-      const deals? = await response.json();
+      const deal = await response.json();
       
       // Then, upload files if any
       if (files && files.length > 0) {
@@ -49,21 +49,21 @@ export default function SubmitDeal() {
           formData.append('bills', file);
         });
         
-        await fetch(`/api/deals/${deals?.id}/upload-bill`, {
+        await fetch(`/api/deals/${deal.id}/upload-bill`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
         });
       }
       
-      return deals?;
+      return deal;
     },
     onSuccess: (data) => {
       setSubmittedReferralId(data.id);
       setShowConfetti(true);
       toast({
         title: "🎉 Referral Submitted Successfully!",
-        description: "Your deals? has been submitted and will be processed within 24 hours.",
+        description: "Your deal has been submitted and will be processed within 24 hours.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
@@ -86,7 +86,7 @@ export default function SubmitDeal() {
       }
       toast({
         title: "Error",
-        description: "Failed to submit deals?. Please try again.",
+        description: "Failed to submit deal. Please try again.",
         variant: "destructive",
       });
     },

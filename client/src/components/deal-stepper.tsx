@@ -78,7 +78,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [dealId, setDealId] = useState<string | null>(null);
 
-  // Fetch existing deals? for search
+  // Fetch existing deal for search
   const { data: existingReferrals = [] } = useQuery<any[]>({
     queryKey: ['/api/deals'],
   });
@@ -188,7 +188,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
     }
   }, [businessTypes]);
 
-  // Filter deals? based on search term
+  // Filter deal based on search term
   const filteredReferrals = existingReferrals.filter((ref: any) => {
     if (!searchTerm) return false;
     const searchLower = searchTerm.toLowerCase();
@@ -199,23 +199,23 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
     );
   });
 
-  // Auto-populate form with selected deals? data
-  const handleSelectReferral = (deals?: any) => {
-    form.setValue('businessName', deals?.businessName || '');
-    form.setValue('contactName', deals?.contactName || '');
-    form.setValue('businessEmail', deals?.businessEmail || '');
-    form.setValue('businessPhone', deals?.businessPhone || '');
-    form.setValue('businessAddress', deals?.businessAddress || '');
-    form.setValue('businessTypeId', deals?.businessTypeId || '');
-    form.setValue('currentProcessor', deals?.currentProcessor || '');
-    form.setValue('monthlyVolume', deals?.monthlyVolume || '50000');
-    form.setValue('currentRate', deals?.currentRate || '');
-    form.setValue('cardMachineQuantity', deals?.cardMachineQuantity || 1);
-    form.setValue('cardMachineProvider', deals?.cardMachineProvider || '');
+  // Auto-populate form with selected deal data
+  const handleSelectReferral = (deal: any) => {
+    form.setValue('businessName', deal.businessName || '');
+    form.setValue('contactName', deal.contactName || '');
+    form.setValue('businessEmail', deal.businessEmail || '');
+    form.setValue('businessPhone', deal.businessPhone || '');
+    form.setValue('businessAddress', deal.businessAddress || '');
+    form.setValue('businessTypeId', deal.businessTypeId || '');
+    form.setValue('currentProcessor', deal.currentProcessor || '');
+    form.setValue('monthlyVolume', deal.monthlyVolume || '50000');
+    form.setValue('currentRate', deal.currentRate || '');
+    form.setValue('cardMachineQuantity', deal.cardMachineQuantity || 1);
+    form.setValue('cardMachineProvider', deal.cardMachineProvider || '');
     
     // Update monthly volume slider
-    if (deals?.monthlyVolume) {
-      setMonthlyVolume([parseInt(deals?.monthlyVolume)]);
+    if (deal.monthlyVolume) {
+      setMonthlyVolume([parseInt(deal.monthlyVolume)]);
     }
 
     // Close search results
@@ -302,7 +302,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
                 setShowSearchResults(e.target.value.length > 0);
               }}
               className="pl-12 pr-10 h-14 text-base rounded-xl border-2 border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
-              data-testid="input-search-deals?"
+              data-testid="input-search-deal"
             />
             {searchTerm && (
               <button
@@ -320,16 +320,16 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
           {/* Search Results */}
           {showSearchResults && filteredReferrals.length > 0 && (
             <Card className="mt-2 p-2 max-h-64 overflow-y-auto border-2 border-teal-200 rounded-xl shadow-lg">
-              {filteredReferrals.map((deals?: any) => (
+              {filteredReferrals.map((deal: any) => (
                 <button
-                  key={deals?.id}
-                  onClick={() => handleSelectReferral(deals?)}
+                  key={deal.id}
+                  onClick={() => handleSelectReferral(deal)}
                   className="w-full text-left p-3 hover:bg-teal-50 rounded-lg transition-colors"
-                  data-testid={`button-select-deals?-${deals?.id}`}
+                  data-testid={`button-select-deal-${deal.id}`}
                 >
-                  <div className="font-semibold text-gray-900">{deals?.businessName}</div>
-                  <div className="text-sm text-gray-600">{deals?.contactName}</div>
-                  <div className="text-sm text-gray-500">{deals?.businessEmail}</div>
+                  <div className="font-semibold text-gray-900">{deal.businessName}</div>
+                  <div className="text-sm text-gray-600">{deal.contactName}</div>
+                  <div className="text-sm text-gray-500">{deal.businessEmail}</div>
                 </button>
               ))}
             </Card>

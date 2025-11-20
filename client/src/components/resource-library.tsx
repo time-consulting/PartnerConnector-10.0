@@ -93,7 +93,7 @@ export default function KnowledgeBase() {
     {
       id: '3',
       question: 'What commission rates do you offer?',
-      answer: 'Our commission structure is tiered based on performance. Level 1 partners earn upfront commissions on successful deals?, Level 2 partners earn 20% ongoing commission from their team\'s success, and Extended network partners earn 10% ongoing commission from their extended network. Commission amounts vary by service type, with payment processing starting at £300 per successful deals?.',
+      answer: 'Our commission structure is tiered based on performance. Level 1 partners earn upfront commissions on successful deal, Level 2 partners earn 20% ongoing commission from their team\'s success, and Extended network partners earn 10% ongoing commission from their extended network. Commission amounts vary by service type, with payment processing starting at £300 per successful deal.',
       category: 'commission-structure',
       tags: ['rates', 'commission', 'tiers'],
       helpful: 52,
@@ -104,14 +104,14 @@ export default function KnowledgeBase() {
       question: 'What services can I refer clients for?',
       answer: 'You can refer clients for card payment processing, business funding & merchant cash advances, business insurance, utility supply (gas & electric), and equipment financing. Each service has different commission structures and requirements.',
       category: 'products-services',
-      tags: ['services', 'products', 'deals?'],
+      tags: ['services', 'products', 'deal'],
       helpful: 41,
       views: 267
     },
     {
       id: '5',
-      question: 'How do I track my deals??',
-      answer: 'Use your partner dashboard to track all deals? in real-time. You can see the status of each deals?, expected commission amounts, and payment history. You\'ll also receive email notifications when deals? statuses change.',
+      question: 'How do I track my deal?',
+      answer: 'Use your partner dashboard to track all deal in real-time. You can see the status of each deal, expected commission amounts, and payment history. You\'ll also receive email notifications when deal statuses change.',
       category: 'sales-process',
       tags: ['tracking', 'dashboard', 'status'],
       helpful: 33,
@@ -129,7 +129,7 @@ export default function KnowledgeBase() {
     {
       id: '7',
       question: 'Can I refer businesses outside the UK?',
-      answer: 'Currently, we only accept deals? for UK-based businesses. The business must be registered in the UK and have a UK bank account to qualify for our services. We\'re working on expanding to other markets in the future.',
+      answer: 'Currently, we only accept deal for UK-based businesses. The business must be registered in the UK and have a UK bank account to qualify for our services. We\'re working on expanding to other markets in the future.',
       category: 'products-services',
       tags: ['eligibility', 'uk-only', 'requirements'],
       helpful: 22,
@@ -137,8 +137,8 @@ export default function KnowledgeBase() {
     },
     {
       id: '8',
-      question: 'How long does it take for a deals? to convert?',
-      answer: 'The conversion process typically takes 2-4 weeks from initial deals? to commission payment. This includes quote generation, client approval, documentation, and service setup. Complex cases may take longer.',
+      question: 'How long does it take for a deal to convert?',
+      answer: 'The conversion process typically takes 2-4 weeks from initial deal to commission payment. This includes quote generation, client approval, documentation, and service setup. Complex cases may take longer.',
       category: 'sales-process',
       tags: ['timeline', 'conversion', 'process'],
       helpful: 36,

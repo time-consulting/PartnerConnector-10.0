@@ -28,7 +28,7 @@ import {
 interface AdminSignupsTabsProps {
   signupsLoading: boolean;
   signups: any[];
-  deals?Data: { deals: any[] };
+  dealData: { deals: any[] };
   signupSubTab: string;
   setSignupSubTab: (tab: string) => void;
   setSelectedSignupForDocs: (signup: any) => void;
@@ -40,7 +40,7 @@ interface AdminSignupsTabsProps {
   setDecision: (decision: 'approved' | 'declined') => void;
   setDecisionCommission: (commission: string) => void;
   setShowQuoteModal: (show: boolean) => void;
-  setSelectedReferral: (deals?: any) => void;
+  setSelectedReferral: (deal: any) => void;
   setShowCancelQuoteDialog: (show: boolean) => void;
   setSelectedQuoteToCancel: (quote: any) => void;
 }
@@ -49,7 +49,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
   const {
     signupsLoading,
     signups,
-    deals?Data,
+    dealData,
     signupSubTab,
     setSignupSubTab,
     setSelectedSignupForDocs,
@@ -189,7 +189,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
     s.customerJourneyStatus === 'declined'
   ) || [];
 
-  // Component to display deals? documents (same as Quote Request section)
+  // Component to display deal documents (same as Quote Request section)
   const ReferralDocumentsSection = ({ businessName, parentId }: { businessName?: string | null, parentId?: string }) => {
     const { data: documents = [] } = useQuery({
       queryKey: ['/api/bills', businessName],
@@ -370,7 +370,7 @@ export function AdminSignupsTabs(props: AdminSignupsTabsProps) {
                 {data.businessStructure && <p><strong>Structure:</strong> {data.businessStructure}</p>}
                 {data.tradingAddress && <p><strong>Trading Address:</strong> {data.tradingAddress}</p>}
                 
-                {/* Show processing info for deals? */}
+                {/* Show processing info for deal */}
                 {isReferral && (
                   <div className="mt-4 pt-4 border-t">
                     <p className="font-semibold text-md mb-2">Processing Details</p>

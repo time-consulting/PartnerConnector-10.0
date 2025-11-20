@@ -280,7 +280,7 @@ export default function Login() {
               Your Partner Dashboard Awaits
             </h2>
             <p className="text-blue-100 mb-8">
-              Access your earnings, track deals?, and manage your growing partner network.
+              Access your earnings, track deal, and manage your growing partner network.
             </p>
 
             <div className="space-y-4">
@@ -290,7 +290,7 @@ export default function Login() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">60% Commission Rate</h3>
-                  <p className="text-blue-100 text-sm">Earn industry-leading commissions on every successful deals?</p>
+                  <p className="text-blue-100 text-sm">Earn industry-leading commissions on every successful deal</p>
                 </div>
               </div>
 

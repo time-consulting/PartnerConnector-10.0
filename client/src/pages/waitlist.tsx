@@ -417,7 +417,7 @@ export default function WaitlistPage() {
                             <SelectValue placeholder="Select how you heard about us" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="deals?">Referral from colleague</SelectItem>
+                            <SelectItem value="deal">Referral from colleague</SelectItem>
                             <SelectItem value="online-search">Online search</SelectItem>
                             <SelectItem value="social-media">Social media</SelectItem>
                             <SelectItem value="industry-event">Industry event</SelectItem>

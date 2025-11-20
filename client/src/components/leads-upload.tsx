@@ -173,7 +173,7 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
   ];
 
   const leadSourceOptions = [
-    { value: "deals?", label: "Referral" },
+    { value: "deal", label: "Referral" },
     { value: "cold_call", label: "Cold Call" },
     { value: "networking", label: "Networking Event" },
     { value: "social_media", label: "Social Media" },
@@ -198,14 +198,14 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
               <Button 
                 variant="outline" 
                 className="ml-4 border-green-600 text-green-700 hover:bg-green-600 hover:text-white"
-                onClick={() => window.location.href = '/submit-deals?'}
-                data-testid="button-submit-deals?"
+                onClick={() => window.location.href = '/submit-deal'}
+                data-testid="button-submit-deal"
               >
                 Submit Deal
               </Button>
             </div>
             <p className="text-sm text-green-600 mt-2">
-              🎯 Next step: Review and qualify these leads, then submit the best ones as deals? to earn commissions.
+              🎯 Next step: Review and qualify these leads, then submit the best ones as deal to earn commissions.
             </p>
           </CardContent>
         </Card>

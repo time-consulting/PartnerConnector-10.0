@@ -103,7 +103,7 @@ const confirmPaymentSchema = z.object({
   paymentNotes: z.string().optional(),
 });
 
-// Component to display deals? documents with view/download
+// Component to display deal documents with view/download
 function ReferralDocumentsDisplay({ businessName }: { businessName: string }) {
   const { data: documents = [] } = useQuery({
     queryKey: ['/api/bills', businessName],
@@ -273,8 +273,8 @@ export default function AdminDashboard() {
     );
   }
 
-  // Fetch admin deals?
-  const { data: deals?Data, isLoading: deals?Loading } = useQuery<{
+  // Fetch admin deal
+  const { data: dealData, isLoading: dealLoading } = useQuery<{
     deals: any[];
     total: number;
     pagination: {
@@ -284,7 +284,7 @@ export default function AdminDashboard() {
       totalPages: number;
     };
   }>({
-    queryKey: ['/api/admin/deals?', { search: searchTerm, status: statusFilter, page: currentPage }],
+    queryKey: ['/api/admin/deal', { search: searchTerm, status: statusFilter, page: currentPage }],
     enabled: !!(user as any)?.isAdmin,
   });
 
@@ -338,8 +338,8 @@ export default function AdminDashboard() {
     };
 
     // Count submissions that need review (new or quote_requested status)
-    if (deals?Data?.deals?) {
-      counts.submissions = deals?Data.deals?.filter(
+    if (dealData?.deal) {
+      counts.submissions = dealData.deal.filter(
         (r: any) => r.status === 'submitted'
       ).length;
     }
@@ -430,7 +430,7 @@ export default function AdminDashboard() {
   // Send quote mutation
   const sendQuoteMutation = useMutation({
     mutationFn: async (data: { dealId: string; quoteData: any }) => {
-      const response = await fetch(`/api/admin/deals?/${data.dealId}/send-quote`, {
+      const response = await fetch(`/api/admin/deal/${data.dealId}/send-quote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.quoteData),
@@ -438,7 +438,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
       setShowQuoteModal(false);
       quoteForm.reset();
     },
@@ -447,7 +447,7 @@ export default function AdminDashboard() {
   // Update document requirements mutation
   const updateDocumentsMutation = useMutation({
     mutationFn: async (data: { dealId: string; documentsData: any }) => {
-      const response = await fetch(`/api/admin/deals?/${data.dealId}/document-requirements`, {
+      const response = await fetch(`/api/admin/deal/${data.dealId}/document-requirements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.documentsData),
@@ -455,7 +455,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
       setShowDocumentsModal(false);
       documentForm.reset();
     },
@@ -464,7 +464,7 @@ export default function AdminDashboard() {
   // Update stage mutation
   const updateStageMutation = useMutation({
     mutationFn: async (data: { dealId: string; stageData: z.infer<typeof stageFormSchema> }) => {
-      const response = await fetch(`/api/admin/deals?/${data.dealId}/update-stage`, {
+      const response = await fetch(`/api/admin/deal/${data.dealId}/update-stage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.stageData),
@@ -472,7 +472,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
       setShowStageModal(false);
       stageForm.reset();
     },
@@ -481,7 +481,7 @@ export default function AdminDashboard() {
   // Stage override mutation
   const stageOverrideMutation = useMutation({
     mutationFn: async (data: { dealId: string; overrideData: any }) => {
-      const response = await fetch(`/api/admin/deals?/${data.dealId}/override-stage`, {
+      const response = await fetch(`/api/admin/deal/${data.dealId}/override-stage`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.overrideData),
@@ -489,7 +489,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
       setShowStageOverrideModal(false);
       stageOverrideForm.reset();
     },
@@ -498,7 +498,7 @@ export default function AdminDashboard() {
   // Preview commission distribution
   const previewCommissionMutation = useMutation({
     mutationFn: async (data: { dealId: string; actualCommission: string }) => {
-      const response = await fetch(`/api/admin/deals?/${data.dealId}/preview-commission`, {
+      const response = await fetch(`/api/admin/deal/${data.dealId}/preview-commission`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actualCommission: data.actualCommission }),
@@ -514,7 +514,7 @@ export default function AdminDashboard() {
   // Confirm payment mutation
   const confirmPaymentMutation = useMutation({
     mutationFn: async (data: { dealId: string; paymentData: any }) => {
-      const response = await fetch(`/api/admin/deals?/${data.dealId}/confirm-payment`, {
+      const response = await fetch(`/api/admin/deal/${data.dealId}/confirm-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.paymentData),
@@ -522,7 +522,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
       setShowConfirmPaymentModal(false);
       setPaymentStep('input');
       setCommissionPreview(null);
@@ -546,7 +546,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
       setSeedingTestData(false);
     },
     onError: () => {
@@ -557,7 +557,7 @@ export default function AdminDashboard() {
   // Docs out confirmation mutation
   const docsOutMutation = useMutation({
     mutationFn: async (dealId: string) => {
-      const response = await fetch(`/api/admin/deals?/${dealId}/docs-out-confirmation`, {
+      const response = await fetch(`/api/admin/deal/${dealId}/docs-out-confirmation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
     },
   });
 
@@ -918,17 +918,17 @@ export default function AdminDashboard() {
                   <CardHeader className="bg-gradient-to-r from-orange-100/50 to-amber-100/50">
                     <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                       <AlertCircle className="w-6 h-6 text-orange-600" />
-                      New Quote Requests ({deals?Data?.deals??.filter((r: any) => r.status === 'submitted').length || 0})
+                      New Quote Requests ({dealData?.deal?.filter((r: any) => r.status === 'submitted').length || 0})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {deals?Data?.deals? && deals?Data.deals?.filter((r: any) => r.status === 'submitted').length > 0 ? (
+                    {dealData?.deal && dealData.deal.filter((r: any) => r.status === 'submitted').length > 0 ? (
                       <div className="space-y-1">
-                        {deals?Data.deals?
+                        {dealData.deal
                           .filter((r: any) => r.status === 'submitted')
-                          .map((deals?: any, index: number, arr: any[]) => (
+                          .map((deal: any, index: number, arr: any[]) => (
                             <div
-                              key={deals?.id}
+                              key={deal.id}
                               className={`p-6 hover:bg-white/80 transition-all duration-200 ${
                                 index !== arr.length - 1 ? 'border-b border-orange-200' : ''
                               }`}
@@ -936,11 +936,11 @@ export default function AdminDashboard() {
                               <div className="flex justify-between items-start gap-6">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-4">
-                                    <h3 className="font-bold text-xl text-gray-900">{deals?.businessName}</h3>
+                                    <h3 className="font-bold text-xl text-gray-900">{deal.businessName}</h3>
                                     <Badge className="bg-orange-100 text-orange-800 border-0 font-medium px-3 py-1">
                                       NEW REQUEST
                                     </Badge>
-                                    {deals?.gdprConsent && (
+                                    {deal.gdprConsent && (
                                       <Badge className="bg-green-100 text-green-800 border-0 font-medium px-3 py-1">
                                         GDPR ✓
                                       </Badge>
@@ -953,14 +953,14 @@ export default function AdminDashboard() {
                                       <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                       <div>
                                         <p className="text-xs text-gray-500 font-medium">Email</p>
-                                        <p className="text-sm">{deals?.businessEmail}</p>
+                                        <p className="text-sm">{deal.businessEmail}</p>
                                       </div>
                                     </div>
                                     <div className="flex items-start gap-2 text-gray-700">
                                       <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                       <div>
                                         <p className="text-xs text-gray-500 font-medium">Phone</p>
-                                        <p className="text-sm">{deals?.businessPhone || 'Not provided'}</p>
+                                        <p className="text-sm">{deal.businessPhone || 'Not provided'}</p>
                                       </div>
                                     </div>
                                     <div className="flex items-start gap-2 text-gray-700">
@@ -968,46 +968,46 @@ export default function AdminDashboard() {
                                       <div>
                                         <p className="text-xs text-gray-500 font-medium">Submitted</p>
                                         <p className="text-sm">
-                                          {new Date(deals?.submittedAt).toLocaleDateString()}
+                                          {new Date(deal.submittedAt).toLocaleDateString()}
                                         </p>
                                       </div>
                                     </div>
                                   </div>
 
                                   {/* Business Details */}
-                                  {(deals?.businessAddress || deals?.businessTypeName) && (
+                                  {(deal.businessAddress || deal.businessTypeName) && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-white/60 rounded-lg">
-                                      {deals?.businessAddress && (
+                                      {deal.businessAddress && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Business Address</p>
-                                          <p className="text-sm text-gray-700">{deals?.businessAddress}</p>
+                                          <p className="text-sm text-gray-700">{deal.businessAddress}</p>
                                         </div>
                                       )}
-                                      {deals?.businessTypeName && (
+                                      {deal.businessTypeName && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Business Type</p>
-                                          <p className="text-sm text-gray-700">{deals?.businessTypeName}</p>
+                                          <p className="text-sm text-gray-700">{deal.businessTypeName}</p>
                                         </div>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Monthly Volume Information */}
-                                  {deals?.monthlyVolume && (
+                                  {deal.monthlyVolume && (
                                     <div className="mb-4 p-3 bg-blue-50/60 rounded-lg border-l-4 border-blue-400">
                                       <p className="text-xs text-gray-500 font-medium mb-1">Monthly Card Volume</p>
-                                      <p className="text-lg text-blue-700 font-bold">£{parseInt(deals?.monthlyVolume || '0').toLocaleString()}</p>
+                                      <p className="text-lg text-blue-700 font-bold">£{parseInt(deal.monthlyVolume || '0').toLocaleString()}</p>
                                     </div>
                                   )}
 
                                   {/* Products and Services */}
-                                  {(deals?.selectedProducts?.length > 0 || deals?.cardMachineQuantity || deals?.fundingAmount) && (
+                                  {(deal.selectedProducts?.length > 0 || deal.cardMachineQuantity || deal.fundingAmount) && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-purple-50/60 rounded-lg">
-                                      {deals?.selectedProducts?.length > 0 && (
+                                      {deal.selectedProducts?.length > 0 && (
                                         <div className="md:col-span-2">
                                           <p className="text-xs text-gray-500 font-medium mb-1">Selected Products</p>
                                           <div className="flex flex-wrap gap-2">
-                                            {deals?.selectedProducts.map((product: string, idx: number) => (
+                                            {deal.selectedProducts.map((product: string, idx: number) => (
                                               <Badge key={idx} className="bg-purple-100 text-purple-800 border-0">
                                                 {product}
                                               </Badge>
@@ -1015,44 +1015,44 @@ export default function AdminDashboard() {
                                           </div>
                                         </div>
                                       )}
-                                      {deals?.cardMachineQuantity && (
+                                      {deal.cardMachineQuantity && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Card Machines</p>
-                                          <p className="text-sm text-gray-700 font-semibold">{deals?.cardMachineQuantity}</p>
+                                          <p className="text-sm text-gray-700 font-semibold">{deal.cardMachineQuantity}</p>
                                         </div>
                                       )}
-                                      {deals?.cardMachineProvider && (
+                                      {deal.cardMachineProvider && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Current Card Machine Provider</p>
-                                          <p className="text-sm text-gray-700 font-semibold">{deals?.cardMachineProvider}</p>
+                                          <p className="text-sm text-gray-700 font-semibold">{deal.cardMachineProvider}</p>
                                         </div>
                                       )}
-                                      {deals?.fundingAmount && (
+                                      {deal.fundingAmount && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Funding Amount</p>
-                                          <p className="text-sm text-gray-700 font-semibold">£{deals?.fundingAmount}</p>
+                                          <p className="text-sm text-gray-700 font-semibold">£{deal.fundingAmount}</p>
                                         </div>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Partner Notes */}
-                                  {deals?.notes && (
+                                  {deal.notes && (
                                     <div className="mt-3 p-3 bg-amber-50/60 border-l-4 border-amber-400 rounded">
                                       <p className="text-xs text-gray-500 font-medium mb-1">Partner Notes</p>
-                                      <p className="text-sm text-gray-700">{deals?.notes}</p>
+                                      <p className="text-sm text-gray-700">{deal.notes}</p>
                                     </div>
                                   )}
 
                                   {/* Uploaded Documents Section */}
-                                  <ReferralDocumentsDisplay businessName={deals?.businessName} />
+                                  <ReferralDocumentsDisplay businessName={deal.businessName} />
 
                                   {/* Partner Information */}
-                                  {(deals?.partnerName || deals?.partnerEmail) && (
+                                  {(deal.partnerName || deal.partnerEmail) && (
                                     <div className="mt-3 p-3 bg-teal-50/60 border-l-4 border-teal-400 rounded">
                                       <p className="text-xs text-gray-500 font-medium mb-1">Referred By</p>
                                       <p className="text-sm text-gray-700">
-                                        {deals?.partnerName} {deals?.partnerEmail && `(${deals?.partnerEmail})`}
+                                        {deal.partnerName} {deal.partnerEmail && `(${deal.partnerEmail})`}
                                       </p>
                                     </div>
                                   )}
@@ -1062,11 +1062,11 @@ export default function AdminDashboard() {
                                   <Button
                                     size="lg"
                                     onClick={() => {
-                                      setSelectedReferral(deals?);
+                                      setSelectedReferral(deal);
                                       setShowQuoteModal(true);
                                     }}
                                     className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg whitespace-nowrap"
-                                    data-testid={`button-create-quote-${deals?.id}`}
+                                    data-testid={`button-create-quote-${deal.id}`}
                                   >
                                     <Plus className="w-4 h-4 mr-2" />
                                     Create Quote
@@ -1195,7 +1195,7 @@ export default function AdminDashboard() {
                       <AdminSignupsTabs
                         signupsLoading={signupsLoading}
                         signups={signups}
-                        deals?Data={deals?Data}
+                        dealData={dealData}
                         signupSubTab={signupSubTab}
                         setSignupSubTab={setSignupSubTab}
                         setSelectedSignupForDocs={setSelectedSignupForDocs}
@@ -1416,9 +1416,9 @@ export default function AdminDashboard() {
                               <p className="text-xs text-gray-500">
                                 Partner ID: {user.partnerId || 'Not assigned'}
                               </p>
-                              {user.deals?Code && (
+                              {user.dealCode && (
                                 <p className="text-xs text-gray-500">
-                                  Referral Code: {user.deals?Code}
+                                  Referral Code: {user.dealCode}
                                 </p>
                               )}
                             </div>
@@ -1538,7 +1538,7 @@ export default function AdminDashboard() {
                       <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                         <h3 className="font-bold text-green-900 mb-2">Direct Sales (L1)</h3>
                         <p className="text-3xl font-bold text-green-700">60%</p>
-                        <p className="text-sm text-green-600 mt-1">Commission on direct deals?</p>
+                        <p className="text-sm text-green-600 mt-1">Commission on direct deal</p>
                       </div>
                       <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <h3 className="font-bold text-blue-900 mb-2">Level 2 Team</h3>
@@ -1617,15 +1617,15 @@ export default function AdminDashboard() {
                         variant="outline"
                         className="h-20 flex flex-col items-center justify-center gap-2"
                         onClick={async () => {
-                          const response = await fetch('/api/admin/export/deals?');
+                          const response = await fetch('/api/admin/export/deal');
                           const blob = await response.blob();
                           const url = window.URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = `deals?-export-${new Date().toISOString().split('T')[0]}.csv`;
+                          a.download = `deal-export-${new Date().toISOString().split('T')[0]}.csv`;
                           a.click();
                         }}
-                        data-testid="button-export-deals?"
+                        data-testid="button-export-deal"
                       >
                         <FileText className="w-6 h-6" />
                         <span>Export Referrals CSV</span>
@@ -1664,7 +1664,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
                         <h3 className="font-medium">Seed Test Data</h3>
-                        <p className="text-sm text-gray-600">Generate sample deals? for testing</p>
+                        <p className="text-sm text-gray-600">Generate sample deal for testing</p>
                       </div>
                       <Button
                         variant="outline"
@@ -1738,7 +1738,7 @@ export default function AdminDashboard() {
                 businessName={selectedReferral.businessName}
                 onQuoteCreated={(quoteId) => {
                   setShowQuoteModal(false);
-                  queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
                 }}
                 onCancel={() => setShowQuoteModal(false)}
               />

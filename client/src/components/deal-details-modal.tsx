@@ -27,7 +27,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
   const [isMovingForward, setIsMovingForward] = useState(false);
 
   const handleQuoteCreated = (quoteId: string) => {
-    queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
     toast({
       title: "Quote Generated",
       description: `Quote sent successfully to ${deal.businessEmail}`,
@@ -53,7 +53,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
   const handleMoveForward = async () => {
     try {
       setIsMovingForward(true);
-      const response = await fetch(`/api/admin/deals?/${deal.id}/move-to-agreement-sent`, {
+      const response = await fetch(`/api/admin/deal/${deal.id}/move-to-agreement-sent`, {
         method: 'PATCH',
         credentials: 'include',
       });
@@ -62,7 +62,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
         throw new Error('Failed to move deal forward');
       }
       
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals?'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/deal'] });
       queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
       
       toast({
@@ -274,7 +274,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
               businessName={deal.businessName}
               onQuoteCreated={handleQuoteCreated}
               onCancel={() => setShowQuoteBuilder(false)}
-              apiEndpoint={`/api/admin/deals?/${deal.id}/generate-quote`}
+              apiEndpoint={`/api/admin/deal/${deal.id}/generate-quote`}
             />
           </div>
         </DialogContent>
@@ -291,7 +291,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
             Deal Details: {deal.businessName}
           </DialogTitle>
           <DialogDescription>
-            Complete information from the deals? submission
+            Complete information from the deal submission
           </DialogDescription>
         </DialogHeader>
 
