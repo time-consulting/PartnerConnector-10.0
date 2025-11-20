@@ -201,6 +201,12 @@ export interface IStorage {
   processCommissionPayment(approvalId: string, paymentReference: string): Promise<void>;
   distributeUplineCommissions(dealId: string, totalCommission: number, paymentReference: string, paymentMethod: string): Promise<CommissionApproval[]>;
 
+  // Payment verification operations (2FA)
+  createPaymentVerificationCode(verificationData: InsertPaymentVerificationCode): Promise<PaymentVerificationCode>;
+  getPaymentVerificationCode(dealId: string, code: string): Promise<PaymentVerificationCode | undefined>;
+  markVerificationCodeAsUsed(verificationId: string): Promise<void>;
+  checkDealPaymentLock(dealId: string): Promise<boolean>; // Returns true if payment is locked/in-progress
+  
   // Audit trail operations
   createAudit(auditData: InsertAudit): Promise<Audit>;
   getAudits(limit?: number): Promise<Audit[]>;
