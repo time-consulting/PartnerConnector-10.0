@@ -170,8 +170,8 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.add('dark');
     document.documentElement.classList.remove('light');
-    document.documentElement.style.backgroundColor = '#0f172a';
-    document.documentElement.style.color = '#ffffff';
+    document.documentElement.style.backgroundColor = '#0B1120';
+    document.documentElement.style.color = '#FAFBFC';
   }, []);
 
   return (
