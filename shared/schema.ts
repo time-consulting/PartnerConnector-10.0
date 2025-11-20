@@ -261,6 +261,26 @@ export const commissionApprovals = pgTable("commission_approvals", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Payment verification codes for 2FA on commission payments
+export const paymentVerificationCodes = pgTable("payment_verification_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dealId: varchar("deal_id").notNull(),
+  adminId: varchar("admin_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  code: varchar("code", { length: 6 }).notNull(), // 6-digit verification code
+  actualCommission: decimal("actual_commission", { precision: 10, scale: 2 }).notNull(),
+  paymentReference: varchar("payment_reference"),
+  paymentMethod: varchar("payment_method"),
+  paymentNotes: text("payment_notes"),
+  isUsed: boolean("is_used").default(false),
+  usedAt: timestamp("used_at"),
+  expiresAt: timestamp("expires_at").notNull(), // 10 minute expiry
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("payment_verification_codes_deal_idx").on(table.dealId),
+  index("payment_verification_codes_admin_idx").on(table.adminId),
+  index("payment_verification_codes_expires_idx").on(table.expiresAt),
+]);
+
 // Partner invoices - for manual invoice-based commission payment workflow
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1176,6 +1196,14 @@ export type Rate = typeof rates.$inferSelect;
 export const insertCommissionApprovalSchema = createInsertSchema(commissionApprovals);
 export type InsertCommissionApproval = z.infer<typeof insertCommissionApprovalSchema>;
 export type CommissionApproval = typeof commissionApprovals.$inferSelect;
+
+// Payment verification code types and schemas
+export const insertPaymentVerificationCodeSchema = createInsertSchema(paymentVerificationCodes).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertPaymentVerificationCode = z.infer<typeof insertPaymentVerificationCodeSchema>;
+export type PaymentVerificationCode = typeof paymentVerificationCodes.$inferSelect;
 
 // Invoice types and schemas
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
