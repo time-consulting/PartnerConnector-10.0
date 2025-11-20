@@ -2291,6 +2291,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateQuoteJourneyStatus(quoteId: string, status: string): Promise<void> {
+    // Map Quote Status to Deal Stage to keep them in sync
+    const statusToDealStageMap: Record<string, string> = {
+      'review_quote': 'quote_request_received',
+      'quote_sent': 'quote_sent',
+      'awaiting_signup': 'quote_approved',
+      'agreement_sent': 'agreement_sent',
+      'awaiting_docs': 'signed_awaiting_docs',
+      'docs_out': 'signed_awaiting_docs',
+      'request_documents': 'signed_awaiting_docs',
+      'approved': 'approved',
+      'live': 'live_confirm_ltr',
+      'complete': 'completed',
+      'declined': 'declined'
+    };
+
     const updateData: any = { 
       customerJourneyStatus: status,
       updatedAt: new Date()
@@ -2303,10 +2318,23 @@ export class DatabaseStorage implements IStorage {
       updateData.requestDocumentsDate = new Date();
     }
     
+    // Update the quote
     await db
       .update(quotes)
       .set(updateData)
       .where(eq(quotes.id, quoteId));
+
+    // SYNC: Find the parent deal and update its stage to match
+    const quote = await this.getQuoteById(quoteId);
+    if (quote && quote.dealId && statusToDealStageMap[status]) {
+      await db
+        .update(deals)
+        .set({ 
+          dealStage: statusToDealStageMap[status],
+          updatedAt: new Date()
+        })
+        .where(eq(deals.id, quote.dealId));
+    }
   }
 
   async addQuoteQuestion(quoteId: string, question: string): Promise<void> {
