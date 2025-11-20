@@ -2,6 +2,14 @@
 
 PartnerConnector is a professional referral platform for accountants, business consultants, and financial advisors. Its primary purpose is to facilitate the referral of payment processing solutions to clients, enabling partners to earn commissions. The platform aims to be a comprehensive tool for managing referrals, tracking commissions, and providing robust support for its users.
 
+# Recent Changes
+
+## November 20, 2025 - Codebase Cleanup
+- **Removed Legacy Leads System**: Deleted the legacy "leads" table and "leadInteractions" table from the database schema, along with all associated API endpoints and storage methods. Partners now exclusively use the "opportunities" table for tracking potential business before submitting formal deals.
+- **Consolidated Email Services**: Removed SendGrid dependency and associated `emailService.ts` file. All email communications now use GoHighLevel exclusively for both transactional emails (verification, password reset) and SMS (2FA verification codes).
+- **Removed Admin Backdoor**: Deleted the `/api/admin/initialize-production-admin` route for security purposes. Admin accounts must be created through proper channels.
+- **Terminology Clarification**: "Leads" terminology fully removed from business deal tracking to eliminate confusion with MLM partner hierarchy (which uses "referrals" for team invites).
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
