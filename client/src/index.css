@@ -47,65 +47,65 @@ body {
   }
 }
 
-/* Dark Modern Theme - Default (Gemini-inspired professional palette) */
+/* Modern Professional Theme - Indigo & Cyan Palette */
 :root {
-  /* Background: Deep charcoal/slate for trust and sophistication */
-  --background: hsl(220 20% 10%);
-  --foreground: hsl(0 0% 95%);
+  /* Background: Deep navy for sophistication and reduced eye strain */
+  --background: hsl(220 40% 6%);
+  --foreground: hsl(210 20% 98%);
   
-  /* Cards: Elevated dark grey for depth and modern aesthetics */
-  --card: hsl(220 20% 14%);
-  --card-foreground: hsl(0 0% 92%);
+  /* Cards: Elevated surfaces with subtle depth */
+  --card: hsl(220 30% 12%);
+  --card-foreground: hsl(210 20% 98%);
   
   /* Popovers */
-  --popover: hsl(220 20% 12%);
-  --popover-foreground: hsl(0 0% 95%);
+  --popover: hsl(220 30% 10%);
+  --popover-foreground: hsl(210 20% 98%);
   
-  /* Primary: Bright Orange for energy and CTAs (#FF5722) */
-  --primary: hsl(14 100% 57%);
-  --primary-foreground: 0deg 0% 0%;
+  /* Primary: Modern indigo for trust and professionalism (#6366F1) */
+  --primary: hsl(239 84% 67%);
+  --primary-foreground: hsl(0 0% 100%);
   
-  /* Secondary: Muted slate for secondary actions */
-  --secondary: hsl(220 15% 25%);
-  --secondary-foreground: hsl(0 0% 95%);
+  /* Secondary: Vibrant cyan for energy and modernity (#06B6D4) */
+  --secondary: hsl(189 94% 43%);
+  --secondary-foreground: hsl(0 0% 100%);
   
-  /* Muted: Subtle backgrounds */
-  --muted: hsl(220 20% 18%);
-  --muted-foreground: hsl(0 0% 65%);
+  /* Muted: Subtle backgrounds for less important content */
+  --muted: hsl(220 25% 16%);
+  --muted-foreground: hsl(215 16% 65%);
   
-  /* Accent: Subtle highlights */
-  --accent: hsl(220 20% 20%);
-  --accent-foreground: hsl(0 0% 90%);
+  /* Accent: Highlight color for interactive elements */
+  --accent: hsl(220 30% 18%);
+  --accent-foreground: hsl(210 20% 98%);
   
-  /* Success: Vibrant green for positive actions (#10B981) */
+  /* Success: Vibrant emerald for positive actions (#10B981) */
   --success: hsl(158 64% 52%);
   --success-foreground: hsl(0 0% 100%);
   
-  /* Destructive: Soft red for errors (#F87171) */
-  --destructive: hsl(0 84% 71%);
+  /* Destructive: Warm red for errors and warnings */
+  --destructive: hsl(0 72% 60%);
   --destructive-foreground: hsl(0 0% 100%);
   
   /* Borders and inputs */
-  --border: hsl(220 20% 20%);
-  --input: hsl(220 20% 16%);
-  --ring: hsl(14 100% 57%);
+  --border: hsl(220 25% 20%);
+  --input: hsl(220 30% 14%);
+  --ring: hsl(239 84% 67%);
   
-  /* Charts: High-contrast colors for data visualization */
-  --chart-1: hsl(14 100% 57%);
-  --chart-2: hsl(158 64% 52%);
-  --chart-3: hsl(43 96% 56%);
-  --chart-4: hsl(271 81% 56%);
-  --chart-5: hsl(339 82% 52%);
+  /* Charts: Harmonious colors for data visualization */
+  --chart-1: hsl(239 84% 67%);
+  --chart-2: hsl(189 94% 43%);
+  --chart-3: hsl(158 64% 52%);
+  --chart-4: hsl(271 81% 71%);
+  --chart-5: hsl(339 82% 67%);
   
   /* Sidebar: Consistent with main background */
-  --sidebar: hsl(220 20% 12%);
-  --sidebar-foreground: hsl(0 0% 92%);
-  --sidebar-primary: hsl(14 100% 57%);
+  --sidebar: hsl(220 35% 8%);
+  --sidebar-foreground: hsl(210 20% 98%);
+  --sidebar-primary: hsl(239 84% 67%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(220 20% 20%);
-  --sidebar-accent-foreground: hsl(0 0% 90%);
-  --sidebar-border: hsl(220 20% 18%);
-  --sidebar-ring: hsl(14 100% 57%);
+  --sidebar-accent: hsl(220 30% 16%);
+  --sidebar-accent-foreground: hsl(210 20% 98%);
+  --sidebar-border: hsl(220 25% 18%);
+  --sidebar-ring: hsl(239 84% 67%);
   
   /* Typography */
   --font-sans: 'Inter', 'Poppins', sans-serif;
@@ -113,17 +113,17 @@ body {
   --font-mono: Menlo, monospace;
   
   /* Design system */
-  --radius: 1rem;
+  --radius: 0.75rem;
   --spacing: 0.25rem;
   --tracking-normal: 0em;
   
-  /* Shadows with orange tint for depth */
-  --shadow: 0px 2px 8px 0px hsl(14, 100%, 57% / 0.08);
-  --shadow-sm: 0px 1px 4px 0px hsl(14, 100%, 57% / 0.06);
-  --shadow-md: 0px 4px 12px 0px hsl(14, 100%, 57% / 0.10);
-  --shadow-lg: 0px 8px 20px 0px hsl(14, 100%, 57% / 0.12);
-  --shadow-xl: 0px 12px 32px 0px hsl(14, 100%, 57% / 0.15);
-  --shadow-2xl: 0px 20px 48px 0px hsl(14, 100%, 57% / 0.18);
+  /* Shadows with subtle indigo tint for depth */
+  --shadow: 0px 2px 8px 0px hsl(239, 84%, 67% / 0.08);
+  --shadow-sm: 0px 1px 4px 0px hsl(239, 84%, 67% / 0.06);
+  --shadow-md: 0px 4px 12px 0px hsl(239, 84%, 67% / 0.12);
+  --shadow-lg: 0px 8px 20px 0px hsl(239, 84%, 67% / 0.15);
+  --shadow-xl: 0px 12px 32px 0px hsl(239, 84%, 67% / 0.18);
+  --shadow-2xl: 0px 20px 48px 0px hsl(239, 84%, 67% / 0.22);
 }
 
 /* Light Theme - Alternative (keep current light theme) */
