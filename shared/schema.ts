@@ -1318,3 +1318,22 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 });
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+// Utility function to map dealStage to customerJourneyStatus for quotes table sync
+// dealStage is the single source of truth, customerJourneyStatus mirrors it for backward compatibility
+export function mapDealStageToCustomerJourney(dealStage: string): string {
+  const mapping: Record<string, string> = {
+    'quote_request_received': 'review_quote',
+    'quote_sent': 'quote_sent',
+    'quote_approved': 'awaiting_signup',
+    'agreement_sent': 'agreement_sent',
+    'signed_awaiting_docs': 'awaiting_docs',
+    'approved': 'approved',
+    'live_confirm_ltr': 'live',
+    'invoice_received': 'live',
+    'completed': 'complete',
+    'declined': 'declined',
+  };
+  
+  return mapping[dealStage] || 'review_quote';
+}
