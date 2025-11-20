@@ -18,11 +18,46 @@ import { pushNotificationService } from "./push-notifications";
 import Stripe from 'stripe';
 import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
+import { ghlSmsService } from "./ghlSmsService";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
+
+// Commission variance validation helper
+function validateCommissionVariance(
+  expectedCommission: number,
+  actualCommission: number,
+  dealType: string
+): {
+  isValid: boolean;
+  variancePercentage: number;
+  requires2FA: boolean;
+  message?: string;
+} {
+  const variance = Math.abs(actualCommission - expectedCommission);
+  const variancePercentage = expectedCommission > 0 ? (variance / expectedCommission) * 100 : 0;
+
+  // All payments >£1000 require 2FA
+  const requires2FA = actualCommission >= 1000;
+
+  // Variance tolerance based on deal type
+  const maxVariance = dealType === 'NTC' ? 20 : 100; // NTC: 20%, Switcher: 100%
+
+  const isValid = variancePercentage <= maxVariance;
+
+  if (!isValid) {
+    return {
+      isValid: false,
+      variancePercentage,
+      requires2FA,
+      message: `Commission variance ${variancePercentage.toFixed(1)}% exceeds ${maxVariance}% tolerance for ${dealType} deals`
+    };
+  }
+
+  return { isValid: true, variancePercentage, requires2FA };
+}
 
 // GHL Integration function
 async function submitToGHL(referral: any) {
@@ -3759,22 +3794,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Confirm payment section for commission amounts
+  // Initiate payment process - Generate 2FA code and send via GHL SMS
+  app.post('/api/admin/deals/:dealId/initiate-payment', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { dealId } = req.params;
+      const { actualCommission } = req.body;
+
+      if (!actualCommission || actualCommission <= 0) {
+        return res.status(400).json({ message: "Valid commission amount required" });
+      }
+
+      // Get deal details
+      const allDeals = await storage.getAllDeals();
+      const deal = allDeals.find((d: any) => d.id === dealId);
+      
+      if (!deal) {
+        return res.status(404).json({ message: "Deal not found" });
+      }
+
+      // Check if there's already an active verification code (payment in progress)
+      const hasLock = await storage.checkDealPaymentLock(dealId);
+      if (hasLock) {
+        return res.status(409).json({ 
+          message: "Payment verification already in progress for this deal. Please wait or use the existing code." 
+        });
+      }
+
+      // Generate 6-digit verification code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store verification code (expires in 10 minutes)
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await storage.createPaymentVerificationCode({
+        dealId,
+        code,
+        expiresAt,
+        isUsed: false,
+        createdBy: req.user.id
+      });
+
+      // Send SMS via GHL
+      const smsSent = await ghlSmsService.send2FACode(code, {
+        businessName: deal.businessName,
+        amount: parseFloat(actualCommission),
+        dealId
+      });
+
+      if (!smsSent && ghlSmsService.isServiceConfigured()) {
+        // If GHL is configured but SMS failed, return error
+        return res.status(500).json({ 
+          message: "Failed to send verification code. Please try again." 
+        });
+      }
+
+      res.json({ 
+        success: true,
+        message: smsSent 
+          ? `Verification code sent to ${ghlSmsService.getAdminPhone()}`
+          : `GHL SMS not configured. Code: ${code}`,
+        requires2FA: parseFloat(actualCommission) >= 1000,
+        expiresAt,
+        debugCode: !ghlSmsService.isServiceConfigured() ? code : undefined
+      });
+    } catch (error) {
+      console.error("Error initiating payment:", error);
+      res.status(500).json({ message: "Failed to initiate payment verification" });
+    }
+  });
+
+  // Confirm payment section for commission amounts with 2FA verification
   app.post('/api/admin/referrals/:dealId/confirm-payment', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { dealId } = req.params;
-      const { actualCommission, paymentReference, paymentMethod, paymentNotes } = req.body;
+      const { actualCommission, paymentReference, paymentMethod, paymentNotes, verificationCode } = req.body;
+
+      if (!actualCommission || actualCommission <= 0) {
+        return res.status(400).json({ message: "Valid commission amount required" });
+      }
 
       // Get deal details
       const allDeals = await storage.getAllDeals();
       const deal = allDeals.find((r: any) => r.id === dealId);
       
-      if (!referral) {
+      if (!deal) {
         return res.status(404).json({ message: "Deal not found" });
       }
 
+      // Check if deal already has a payment
+      if (deal.actualCommission && parseFloat(deal.actualCommission) > 0) {
+        return res.status(409).json({ 
+          message: "Payment already processed for this deal",
+          existingAmount: deal.actualCommission
+        });
+      }
+
+      const commissionAmount = parseFloat(actualCommission);
+      const expectedCommission = deal.estimatedCommission ? parseFloat(deal.estimatedCommission) : 0;
+
+      // Validate commission variance
+      const validation = validateCommissionVariance(
+        expectedCommission,
+        commissionAmount,
+        deal.dealType || 'Switcher'
+      );
+
+      if (!validation.isValid) {
+        return res.status(400).json({ 
+          message: validation.message,
+          variancePercentage: validation.variancePercentage
+        });
+      }
+
+      // Verify 2FA code for ALL payments (as requested)
+      if (!verificationCode) {
+        return res.status(400).json({ 
+          message: "Verification code required for all commission payments",
+          requires2FA: true
+        });
+      }
+
+      const verificationRecord = await storage.getPaymentVerificationCode(dealId);
+      
+      if (!verificationRecord) {
+        return res.status(400).json({ 
+          message: "No valid verification code found. Please initiate payment first." 
+        });
+      }
+
+      if (verificationRecord.code !== verificationCode) {
+        return res.status(403).json({ 
+          message: "Invalid verification code" 
+        });
+      }
+
+      if (new Date() > new Date(verificationRecord.expiresAt)) {
+        return res.status(400).json({ 
+          message: "Verification code expired. Please request a new code." 
+        });
+      }
+
+      // Mark verification code as used
+      await storage.markVerificationCodeAsUsed(verificationRecord.id);
+
       // Update deal with payment confirmation
-      const paymentConfirmationNote = `\n[${new Date().toLocaleString()}] Payment confirmed by admin ${req.user.email}: £${actualCommission} via ${paymentMethod || 'Bank Transfer'}. Reference: ${paymentReference}. Notes: ${paymentNotes || 'No additional notes'}`;
+      const paymentConfirmationNote = `\n[${new Date().toLocaleString()}] Payment confirmed by admin ${req.user.email}: £${actualCommission} via ${paymentMethod || 'Bank Transfer'}. Reference: ${paymentReference}. Variance: ${validation.variancePercentage.toFixed(1)}%. Notes: ${paymentNotes || 'No additional notes'}`;
       
       const updateData = {
         actualCommission: actualCommission.toString(),
@@ -3784,12 +3947,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       };
 
-      const updatedReferral = await storage.updateDeal(dealId, updateData);
+      const updatedDeal = await storage.updateDeal(dealId, updateData);
 
       // Distribute commissions across the upline chain (60%, 20%, 10%)
       const approvals = await storage.distributeUplineCommissions(
         dealId,
-        parseFloat(actualCommission),
+        commissionAmount,
         paymentReference,
         paymentMethod || 'Bank Transfer'
       );
@@ -3798,17 +3961,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const approval of approvals) {
         const ratesData = approval.ratesData as any || {};
         const commissionPercentage = parseFloat(ratesData.commissionRate || '0%');
-        const commissionAmount = parseFloat(approval.commissionAmount);
+        const commissionAmountForUser = parseFloat(approval.commissionAmount);
         const commissionType = ratesData.commissionType || 'direct';
         
         await createNotificationForUser(approval.userId, {
           type: 'commission_paid',
           title: commissionType === 'direct' ? 'Commission Payment Confirmed' : 'Override Commission Paid',
-          message: `You earned £${commissionAmount.toFixed(2)} (${commissionPercentage}% ${commissionType} commission) for ${referral.businessName}. Reference: ${approval.paymentReference}`,
+          message: `You earned £${commissionAmountForUser.toFixed(2)} (${commissionPercentage}% ${commissionType} commission) for ${deal.businessName}. Reference: ${approval.paymentReference}`,
           dealId: dealId,
           businessName: deal.businessName,
           metadata: {
-            amount: commissionAmount,
+            amount: commissionAmountForUser,
             percentage: commissionPercentage,
             commissionType: commissionType,
             paymentReference: approval.paymentReference,
@@ -3822,7 +3985,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           {
             dealId: dealId,
             businessName: deal.businessName,
-            amount: commissionAmount,
+            amount: commissionAmountForUser,
             level: ratesData.level || 1,
             percentage: commissionPercentage
           }
@@ -3832,10 +3995,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         message: `Payment confirmed and distributed to ${approvals.length} people in the commission chain`,
-        referral: updatedReferral,
+        deal: updatedDeal,
         approvals: approvals,
         paymentDetails: {
           totalAmount: actualCommission,
+          variance: `${validation.variancePercentage.toFixed(1)}%`,
           reference: paymentReference,
           method: paymentMethod || 'Bank Transfer',
           date: new Date(),
