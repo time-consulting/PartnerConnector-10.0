@@ -96,8 +96,8 @@ const PIPELINE_STAGES = [
     label: "Declined",
     description: "Deal did not proceed",
     icon: XCircle,
-    color: "bg-gray-50 border-gray-200",
-    badgeColor: "bg-gray-500",
+    color: "bg-slate-800 border-gray-200",
+    badgeColor: "bg-slate-8000",
   },
 ];
 
@@ -177,7 +177,7 @@ export default function TrackReferrals() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <Link href="/dashboard">
-                  <Button variant="outline" size="sm" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+                  <Button variant="outline" size="sm" className="bg-slate-800/20 border-white/30 text-white hover:bg-slate-800/30">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Dashboard
                   </Button>
@@ -193,12 +193,12 @@ export default function TrackReferrals() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+          <Card className="bg-slate-800/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Deals</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{dealList.length}</p>
+                  <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Total Deals</p>
+                  <p className="text-3xl font-bold text-slate-100 mt-2">{dealList.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Building className="w-6 h-6 text-blue-600" />
@@ -211,12 +211,12 @@ export default function TrackReferrals() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+          <Card className="bg-slate-800/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">In Progress</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">
+                  <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">In Progress</p>
+                  <p className="text-3xl font-bold text-slate-100 mt-2">
                     {dealList.filter((r: any) => !['live_confirm_ltr', 'declined'].includes(r.dealStage)).length}
                   </p>
                 </div>
@@ -230,12 +230,12 @@ export default function TrackReferrals() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+          <Card className="bg-slate-800/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Live Deals</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">
+                  <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Live Deals</p>
+                  <p className="text-3xl font-bold text-slate-100 mt-2">
                     {dealList.filter((r: any) => r.dealStage === 'live_confirm_ltr').length}
                   </p>
                 </div>
@@ -272,7 +272,7 @@ export default function TrackReferrals() {
                 <Button
                   variant="outline"
                   onClick={() => setSearchTerm("")}
-                  className="h-12 px-6 border-gray-200 hover:bg-gray-50"
+                  className="h-12 px-6 border-gray-200 hover:bg-slate-800"
                   data-testid="button-clear-search"
                 >
                   Clear Search
@@ -280,7 +280,7 @@ export default function TrackReferrals() {
               )}
             </div>
             {searchTerm && (
-              <div className="mt-4 text-sm text-gray-600 bg-blue-50 rounded-lg p-3">
+              <div className="mt-4 text-sm text-slate-400 bg-blue-50 rounded-lg p-3">
                 Showing <span className="font-semibold">{filteredReferrals.length}</span> of <span className="font-semibold">{dealList.length}</span> deal
                 {searchTerm && (
                   <span> matching "<span className="font-medium text-blue-600">{searchTerm}</span>"</span>
@@ -302,8 +302,8 @@ export default function TrackReferrals() {
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Building className="w-10 h-10 text-blue-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">No deal found</h3>
-                <p className="text-gray-600 text-lg mb-8 max-w-md mx-auto">
+                <h3 className="text-2xl font-bold text-slate-100 mb-3">No deal found</h3>
+                <p className="text-slate-400 text-lg mb-8 max-w-md mx-auto">
                   {searchTerm 
                     ? "Try adjusting your search criteria to find what you're looking for"
                     : "Ready to start earning? Submit your first deal and begin building your commission income"
@@ -336,8 +336,8 @@ export default function TrackReferrals() {
                       <div className="flex items-center gap-4">
                         <Icon className="h-6 w-6 text-gray-700" />
                         <div className="text-left">
-                          <h3 className="text-lg font-bold text-gray-900">{stage.label}</h3>
-                          <p className="text-sm text-gray-600">{stage.description}</p>
+                          <h3 className="text-lg font-bold text-slate-100">{stage.label}</h3>
+                          <p className="text-sm text-slate-400">{stage.description}</p>
                         </div>
                       </div>
                       <Badge className={`${stage.badgeColor} text-white text-sm px-3 py-1`}>
@@ -347,7 +347,7 @@ export default function TrackReferrals() {
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6">
                     {stageReferrals.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-slate-500">
                         <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>No deal in this stage</p>
                       </div>
@@ -360,7 +360,7 @@ export default function TrackReferrals() {
                                 {/* Header */}
                                 <div className="flex items-start justify-between">
                                   <div>
-                                    <h4 className="text-xl font-bold text-gray-900">{deal.businessName}</h4>
+                                    <h4 className="text-xl font-bold text-slate-100">{deal.businessName}</h4>
                                   </div>
                                 </div>
 
@@ -368,24 +368,24 @@ export default function TrackReferrals() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                   <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4 text-gray-400" />
-                                    <span className="text-gray-600">{deal.businessEmail}</span>
+                                    <span className="text-slate-400">{deal.businessEmail}</span>
                                   </div>
                                   {deal.businessPhone && (
                                     <div className="flex items-center gap-2">
                                       <Phone className="h-4 w-4 text-gray-400" />
-                                      <span className="text-gray-600">{deal.businessPhone}</span>
+                                      <span className="text-slate-400">{deal.businessPhone}</span>
                                     </div>
                                   )}
                                   <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-gray-400" />
-                                    <span className="text-gray-600">
+                                    <span className="text-slate-400">
                                       {format(new Date(deal.submittedAt), "MMM dd, yyyy")}
                                     </span>
                                   </div>
                                   {deal.monthlyVolume && (
                                     <div className="flex items-center gap-2">
                                       <Banknote className="h-4 w-4 text-gray-400" />
-                                      <span className="text-gray-600">Vol: {deal.monthlyVolume}</span>
+                                      <span className="text-slate-400">Vol: {deal.monthlyVolume}</span>
                                     </div>
                                   )}
                                 </div>

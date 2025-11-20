@@ -9,7 +9,7 @@ import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import StatsCard from "@/components/stats-card";
-import DealProgress from "@/components/deals-progress";
+import DealProgress from "@/components/deal-progress";
 import ProgressTracker from "@/components/progress-tracker";
 import QuoteSystem from "@/components/quote-system";
 import AdditionalDetailsForm from "@/components/additional-details-form";
@@ -216,15 +216,15 @@ export default function Dashboard() {
   const progressData = calculateProgressToNextBonus();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-slate-900 text-white dark:bg-slate-900 dark:text-slate-50">
       <SideNavigation />
       <div className="lg:ml-16">
         {/* Simple top bar with notification bell and sync status */}
         <div className="flex justify-between items-center p-4">
           {/* Offline status indicator */}
           {!isOnline && (
-            <div className="flex items-center space-x-2 px-3 py-2 bg-yellow-100 rounded-lg">
-              <span className="text-sm font-medium text-yellow-800">
+            <div className="flex items-center space-x-2 px-3 py-2 bg-yellow-900/30 rounded-lg">
+              <span className="text-sm font-medium text-yellow-300">
                 Offline Mode - {pendingCount} item{pendingCount !== 1 ? 's' : ''} pending sync
               </span>
             </div>
@@ -252,12 +252,12 @@ export default function Dashboard() {
 
             {/* Snapshot Cards - Side by Side Layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-deals-submitted">
+              <Card className="bg-slate-800/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-deals-submitted">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Deals Submitted</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">
+                      <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Deals Submitted</p>
+                      <p className="text-3xl font-bold text-slate-100 mt-2">
                         {statsLoading ? "..." : (stats as any)?.dealsSubmitted?.toString() || "0"}
                       </p>
                     </div>
@@ -272,12 +272,12 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-commission-pending">
+              <Card className="bg-slate-800/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-commission-pending">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Commission Pending</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">
+                      <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Commission Pending</p>
+                      <p className="text-3xl font-bold text-slate-100 mt-2">
                         £{statsLoading ? "..." : (stats as any)?.commissionPending?.toLocaleString() || "0"}
                       </p>
                     </div>
@@ -291,12 +291,12 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-deal-made">
+              <Card className="bg-slate-800/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-deal-made">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Deals</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">
+                      <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Total Deals</p>
+                      <p className="text-3xl font-bold text-slate-100 mt-2">
                         {statsLoading ? "..." : (stats as any)?.totalReferrals?.toString() || "0"}
                       </p>
                     </div>
@@ -311,12 +311,12 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-total-value-earned">
+              <Card className="bg-slate-800/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-total-value-earned">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Value Earned</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">
+                      <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">Total Value Earned</p>
+                      <p className="text-3xl font-bold text-slate-100 mt-2">
                         £{statsLoading ? "..." : (stats as any)?.totalValueEarned?.toLocaleString() || "0"}
                       </p>
                     </div>
@@ -332,32 +332,32 @@ export default function Dashboard() {
             </div>
 
             {/* Performance Bonus Progress */}
-            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl" data-testid="card-bonus-progress">
+            <Card className="bg-slate-800/95 backdrop-blur-sm border-0 shadow-xl" data-testid="card-bonus-progress">
               <CardContent className="p-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">
+                    <h3 className="text-xl font-bold text-slate-100">
                       {progressData.remaining === 0 ? '🎉 Bonus Milestone Achieved!' : `You're ${progressData.remaining} deals away from your next bonus`}
                     </h3>
-                    <p className="text-gray-600 mt-1">
+                    <p className="text-slate-400 mt-1">
                       {progressData.remaining === 0 ? 'Congratulations on reaching this milestone!' : 'Keep submitting deals to unlock your next performance bonus!'}
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="text-2xl font-bold text-blue-600">{Math.round(progressData.progress)}%</span>
-                    <p className="text-sm text-gray-500">Complete</p>
+                    <p className="text-sm text-slate-500">Complete</p>
                   </div>
                 </div>
                 
                 {/* Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div className="w-full bg-slate-600 rounded-full h-4 overflow-hidden">
                   <div 
                     className="bg-gradient-to-r from-blue-500 to-purple-500 h-4 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${progressData.progress}%` }}
                   ></div>
                 </div>
                 
-                <div className="flex justify-between mt-3 text-sm text-gray-500">
+                <div className="flex justify-between mt-3 text-sm text-slate-500">
                   <span>Current Progress: {progressData.current} deals</span>
                   <span>Next Bonus: 10 deals</span>
                 </div>
@@ -367,14 +367,14 @@ export default function Dashboard() {
         </section>
 
         {/* === ACTION HUB SECTION (MIDDLE) === */}
-        <section className="bg-white py-16">
+        <section className="bg-slate-800 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Section Header */}
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl font-bold text-slate-100 mb-4">
                 Ready to Grow Your Business? 🚀
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className="text-xl text-slate-400 max-w-3xl mx-auto">
                 Take the next steps to expand your network and maximize your earning potential
               </p>
             </div>
@@ -386,7 +386,7 @@ export default function Dashboard() {
                   <div className="flex flex-col lg:flex-row items-center justify-between">
                     <div className="lg:w-2/3 mb-8 lg:mb-0">
                       <div className="flex items-center mb-6">
-                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-6">
+                        <div className="w-16 h-16 bg-slate-800/20 rounded-2xl flex items-center justify-center mr-6">
                           <UserPlusIcon className="w-8 h-8 text-white" />
                         </div>
                         <div>
@@ -399,15 +399,15 @@ export default function Dashboard() {
                         earns you bonus commissions on top of your individual earnings.
                       </p>
                       <div className="flex flex-wrap gap-4">
-                        <div className="flex items-center bg-white/20 rounded-lg px-4 py-2">
+                        <div className="flex items-center bg-slate-800/20 rounded-lg px-4 py-2">
                           <TrendingUpIcon className="w-5 h-5 text-white mr-2" />
                           <span className="text-white font-medium">+15% Team Bonus</span>
                         </div>
-                        <div className="flex items-center bg-white/20 rounded-lg px-4 py-2">
+                        <div className="flex items-center bg-slate-800/20 rounded-lg px-4 py-2">
                           <NetworkIcon className="w-5 h-5 text-white mr-2" />
                           <span className="text-white font-medium">Unlimited Team Size</span>
                         </div>
-                        <div className="flex items-center bg-white/20 rounded-lg px-4 py-2">
+                        <div className="flex items-center bg-slate-800/20 rounded-lg px-4 py-2">
                           <DollarSignIcon className="w-5 h-5 text-white mr-2" />
                           <span className="text-white font-medium">Passive Income</span>
                         </div>
@@ -418,7 +418,7 @@ export default function Dashboard() {
                       <Link href="/team-management">
                         <Button 
                           size="lg" 
-                          className="bg-white text-blue-600 hover:bg-blue-50 shadow-xl text-xl px-12 py-6 rounded-2xl font-bold transform hover:scale-105 transition-all duration-300" 
+                          className="bg-slate-800 text-blue-600 hover:bg-blue-50 shadow-xl text-xl px-12 py-6 rounded-2xl font-bold transform hover:scale-105 transition-all duration-300" 
                           data-testid="button-add-team-member"
                         >
                           <UserPlusIcon className="w-6 h-6 mr-3" />
@@ -443,8 +443,8 @@ export default function Dashboard() {
                     <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                       <PlusIcon className="w-10 h-10 text-blue-600" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Submit a Deal</h3>
-                    <p className="text-gray-600 text-lg mb-6">
+                    <h3 className="text-2xl font-bold text-slate-100 mb-3">Submit a Deal</h3>
+                    <p className="text-slate-400 text-lg mb-6">
                       Add a new business deal and start earning commissions
                     </p>
                     <div className="bg-blue-50 rounded-lg p-4">
@@ -461,8 +461,8 @@ export default function Dashboard() {
                     <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                       <ChartBarIcon className="w-10 h-10 text-green-600" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Track a Referral</h3>
-                    <p className="text-gray-600 text-lg mb-6">
+                    <h3 className="text-2xl font-bold text-slate-100 mb-3">Track a Referral</h3>
+                    <p className="text-slate-400 text-lg mb-6">
                       Monitor your deal progress and commission status
                     </p>
                     <div className="bg-green-50 rounded-lg p-4">
@@ -479,8 +479,8 @@ export default function Dashboard() {
                     <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                       <PoundSterlingIcon className="w-10 h-10 text-purple-600" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">View Payout History</h3>
-                    <p className="text-gray-600 text-lg mb-6">
+                    <h3 className="text-2xl font-bold text-slate-100 mb-3">View Payout History</h3>
+                    <p className="text-slate-400 text-lg mb-6">
                       Review your earnings and payment history
                     </p>
                     <div className="bg-purple-50 rounded-lg p-4">
@@ -497,8 +497,8 @@ export default function Dashboard() {
                     <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                       <UploadIcon className="w-10 h-10 text-orange-600" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Upload Bills</h3>
-                    <p className="text-gray-600 text-lg mb-6">
+                    <h3 className="text-2xl font-bold text-slate-100 mb-3">Upload Bills</h3>
+                    <p className="text-slate-400 text-lg mb-6">
                       Compare processing costs and identify opportunities
                     </p>
                     <div className="bg-orange-50 rounded-lg p-4">
@@ -512,14 +512,14 @@ export default function Dashboard() {
         </section>
 
         {/* === ENGAGEMENT FEED SECTION (LOWER) === */}
-        <section className="bg-gray-50 py-16">
+        <section className="bg-slate-800 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Section Header */}
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl font-bold text-slate-100 mb-4">
                 Daily Engagement Hub
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-slate-400">
                 Stay on top of your tasks and recent activity
               </p>
             </div>
@@ -533,7 +533,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
               {/* Recent Referrals */}
               {/* Recent Referrals */}
-              <Card className="shadow-lg border-0 bg-white" data-testid="card-recent-deals">
+              <Card className="shadow-lg border-0 bg-slate-800" data-testid="card-recent-deals">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
@@ -545,7 +545,7 @@ export default function Dashboard() {
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="animate-pulse">
-                          <div className="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+                          <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
                             <div className="flex items-center space-x-3">
                               <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
                               <div className="space-y-2">
@@ -566,7 +566,7 @@ export default function Dashboard() {
                       {(deals as any[]).slice(0, 5).map((deal: any) => (
                         <div 
                           key={deal.id} 
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition-all duration-300" 
+                          className="flex items-center justify-between p-4 bg-slate-800 rounded-xl hover:bg-slate-700 cursor-pointer transition-all duration-300" 
                           data-testid={`deal-${deal.id}`}
                           onClick={() => handleReferralClick(deal)}
                         >
@@ -575,7 +575,7 @@ export default function Dashboard() {
                               <HandshakeIcon className="w-5 h-5 text-blue-600" />
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-900" data-testid={`text-business-name-${deal.id}`}>
+                              <p className="font-semibold text-slate-100" data-testid={`text-business-name-${deal.id}`}>
                                 {deal.businessName}
                               </p>
                               <div data-testid={`status-${deal.id}`}>
@@ -584,7 +584,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm text-gray-500" data-testid={`text-date-${deal.id}`}>
+                            <p className="text-sm text-slate-500" data-testid={`text-date-${deal.id}`}>
                               {new Date(deal.submittedAt).toLocaleDateString()}
                             </p>
                           </div>
@@ -593,7 +593,7 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-gray-500" data-testid="text-no-deals">
+                      <p className="text-slate-500" data-testid="text-no-deals">
                         No deals yet. Start by submitting your first deal!
                       </p>
                     </div>
@@ -602,7 +602,7 @@ export default function Dashboard() {
               </Card>
 
               {/* Suggestions & Tips */}
-              <Card className="shadow-lg border-0 bg-white" data-testid="card-suggestions">
+              <Card className="shadow-lg border-0 bg-slate-800" data-testid="card-suggestions">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-600 rounded-full"></div>
@@ -685,6 +685,7 @@ export default function Dashboard() {
             onClose={() => setShowAdditionalDetails(false)}
             onComplete={handleAdditionalDetailsComplete}
             deal={selectedReferral}
+            quoteId={(selectedReferral as any)?.id || ""}
           />
         )}
 
@@ -772,14 +773,14 @@ function CommissionApprovalCard({ approval, onApprove }: { approval: any; onAppr
   };
 
   return (
-    <div className="bg-white border-2 border-green-300 rounded-lg p-6">
+    <div className="bg-slate-800 border-2 border-green-300 rounded-lg p-6">
       {/* Commission Amount and Business */}
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="text-xl font-bold text-green-800">
             Commission: £{Number(approval.commissionAmount).toLocaleString()}
           </h3>
-          <p className="text-gray-600">{approval.clientBusinessName}</p>
+          <p className="text-slate-400">{approval.clientBusinessName}</p>
           <Badge variant="secondary" className="mt-1">
             Status: {approval.approvalStatus}
           </Badge>
@@ -795,20 +796,20 @@ function CommissionApprovalCard({ approval, onApprove }: { approval: any; onAppr
       </div>
 
       {/* Current Rates Display */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+      <div className="bg-slate-800 rounded-lg p-4 mb-4">
         <h4 className="font-medium mb-2">Current Rates Offered:</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           <div>
-            <span className="text-gray-600">Debit:</span> <strong>{ratesData.debitRate}%</strong>
+            <span className="text-slate-400">Debit:</span> <strong>{ratesData.debitRate}%</strong>
           </div>
           <div>
-            <span className="text-gray-600">Credit:</span> <strong>{ratesData.creditRate}%</strong>
+            <span className="text-slate-400">Credit:</span> <strong>{ratesData.creditRate}%</strong>
           </div>
           <div>
-            <span className="text-gray-600">Corporate:</span> <strong>{ratesData.corporateRate}%</strong>
+            <span className="text-slate-400">Corporate:</span> <strong>{ratesData.corporateRate}%</strong>
           </div>
           <div>
-            <span className="text-gray-600">Platform:</span> <strong>£{ratesData.platformFee}</strong>
+            <span className="text-slate-400">Platform:</span> <strong>£{ratesData.platformFee}</strong>
           </div>
         </div>
       </div>
@@ -824,7 +825,7 @@ function CommissionApprovalCard({ approval, onApprove }: { approval: any; onAppr
         
         {showBreakdown && (
           <div className="mt-3 p-4 bg-blue-50 rounded-lg">
-            <p className="text-xs text-gray-500 italic mb-3">Adjust rates to optimize your commission (higher rates = higher commission)</p>
+            <p className="text-xs text-slate-500 italic mb-3">Adjust rates to optimize your commission (higher rates = higher commission)</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-medium">Debit Rate (%)</label>
