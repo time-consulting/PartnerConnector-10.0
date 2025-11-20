@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 
-export interface ReferralSheetData {
+export interface DealSheetData {
   partnerId: string;
   partnerName: string;
   partnerEmail: string;
@@ -111,9 +111,9 @@ class GoogleSheetsService {
     }
   }
 
-  async addReferral(data: ReferralSheetData): Promise<void> {
+  async addDeal(data: DealSheetData): Promise<void> {
     if (!this.isInitialized) {
-      console.warn('Google Sheets not initialized - skipping referral sync');
+      console.warn('Google Sheets not initialized - skipping deal sync');
       return;
     }
     
@@ -151,7 +151,7 @@ class GoogleSheetsService {
 
       console.log('Referral added to Google Sheets successfully');
     } catch (error) {
-      console.error('Error adding referral to Google Sheets:', error);
+      console.error('Error adding deal to Google Sheets:', error);
       throw error;
     }
   }
@@ -195,12 +195,12 @@ class GoogleSheetsService {
           },
         });
 
-        console.log(`Updated referral status in Google Sheets: ${newStatus}`);
+        console.log(`Updated deal status in Google Sheets: ${newStatus}`);
       } else {
         console.warn(`Referral not found in Google Sheets: ${partnerId} - ${businessName}`);
       }
     } catch (error) {
-      console.error('Error updating referral status in Google Sheets:', error);
+      console.error('Error updating deal status in Google Sheets:', error);
       throw error;
     }
   }
