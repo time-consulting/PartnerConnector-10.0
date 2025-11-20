@@ -106,19 +106,19 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br slate-900">
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <Link href="/">
               <div className="flex items-center gap-2 cursor-pointer">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-teal-500 rounded-xl flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <span className="text-xl font-bold text-gray-900">PartnerConnector</span>
+                <span className="text-xl font-bold text-white">PartnerConnector</span>
               </div>
             </Link>
             <Button variant="ghost" asChild data-testid="button-back-home">
@@ -133,14 +133,14 @@ export default function Login() {
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
           <div className="max-w-md w-full">
             <div className="text-center mb-8">
-              <Badge className="mb-4 bg-green-100 text-green-700" data-testid="badge-secure">
+              <Badge className="mb-4 bg-green-100 text-teal-400" data-testid="badge-secure">
                 <Shield className="w-3 h-3 mr-1" />
                 Secure Login
               </Badge>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              <h1 className="text-3xl font-bold text-white mb-3">
                 Welcome Back
               </h1>
-              <p className="text-gray-600">
+              <p className="text-slate-400">
                 Sign in to access your partner dashboard
               </p>
             </div>
@@ -177,7 +177,7 @@ export default function Login() {
                       <Link href="/forgot-password">
                         <button
                           type="button"
-                          className="text-sm text-blue-600 hover:text-blue-500 underline"
+                          className="text-sm text-orange-500 hover:text-orange-400 underline"
                           data-testid="link-forgot-password"
                         >
                           Forgot password?
@@ -196,7 +196,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
                         data-testid="button-toggle-password"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -210,7 +210,7 @@ export default function Login() {
                   {/* Submit Button */}
                   <Button 
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                    className="w-full h-12 bg-gradient-to-r from-orange-500 to-teal-500 hover:from-orange-600 hover:to-teal-600 text-white"
                     disabled={isLoading}
                     data-testid="button-submit-login"
                   >
@@ -229,10 +229,10 @@ export default function Login() {
 
                 {/* Create New Account */}
                 <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-3">Don't have an account?</p>
+                  <p className="text-sm text-slate-400 mb-3">Don't have an account?</p>
                   <Button 
                     variant="outline"
-                    className="w-full h-12 border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+                    className="w-full h-12 border-2 border-orange-500 text-orange-500 hover:bg-slate-800"
                     asChild
                     data-testid="button-create-account"
                   >
@@ -245,11 +245,11 @@ export default function Login() {
                 <Separator className="my-6" />
 
                 {/* Security Notice */}
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                   <div className="flex items-start gap-2">
-                    <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />
-                    <div className="text-xs text-gray-700">
-                      <p className="font-medium text-gray-900 mb-1">100% Secure & Private</p>
+                    <Shield className="w-5 h-5 text-teal-500 flex-shrink-0" />
+                    <div className="text-xs text-slate-300">
+                      <p className="font-medium text-white mb-1">100% Secure & Private</p>
                       <p>Your data is protected with enterprise-grade encryption.</p>
                     </div>
                   </div>
@@ -259,11 +259,11 @@ export default function Login() {
 
             {/* Support */}
             <div className="text-center mt-4">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 Need help?{' '}
                 <a 
                   href="mailto:support@partnerconnector.co.uk"
-                  className="text-blue-600 hover:text-blue-500 underline"
+                  className="text-orange-500 hover:text-orange-400 underline"
                   data-testid="link-support"
                 >
                   Contact Support
@@ -274,7 +274,7 @@ export default function Login() {
         </div>
 
         {/* Right Side - Benefits */}
-        <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-600 to-purple-600 items-center justify-center px-8">
+        <div className="hidden lg:flex flex-1 bg-gradient-to-br from-orange-500 to-teal-500 items-center justify-center px-8">
           <div className="max-w-md text-white">
             <h2 className="text-3xl font-bold mb-6">
               Your Partner Dashboard Awaits
