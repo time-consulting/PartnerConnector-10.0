@@ -4,7 +4,6 @@ import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
 import { insertDealSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema, mapDealStageToCustomerJourney } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
-import { emailService } from "./emailService";
 import { ghlEmailService } from "./ghlEmailService";
 import multer from "multer";
 import { z } from "zod";
@@ -2331,8 +2330,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a simple reset token (in production, use crypto.randomBytes)
       const resetToken = `rst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Send password reset email
-      const emailSent = await emailService.sendPasswordResetEmail(user.email, resetToken);
+      // Send password reset email via GHL
+      const emailSent = await ghlEmailService.sendPasswordResetEmail(user.email, resetToken, user.firstName, user.lastName);
       
       if (emailSent) {
         res.json({ 
