@@ -39,62 +39,62 @@
 /* Dark Modern Theme - Default (Gemini-inspired professional palette) */
 :root {
   /* Background: Deep charcoal/slate for trust and sophistication */
-  --background: hsl(220, 20%, 10%);
-  --foreground: hsl(0, 0%, 95%);
+  --background: hsl(220 20% 10%);
+  --foreground: hsl(0 0% 95%);
   
   /* Cards: Elevated dark grey for depth and modern aesthetics */
-  --card: hsl(220, 20%, 14%);
-  --card-foreground: hsl(0, 0%, 92%);
+  --card: hsl(220 20% 14%);
+  --card-foreground: hsl(0 0% 92%);
   
   /* Popovers */
-  --popover: hsl(220, 20%, 12%);
-  --popover-foreground: hsl(0, 0%, 95%);
+  --popover: hsl(220 20% 12%);
+  --popover-foreground: hsl(0 0% 95%);
   
   /* Primary: Bright Orange for energy and CTAs (#FF5722) */
-  --primary: hsl(14, 100%, 57%);
-  --primary-foreground: hsl(0, 0%, 100%);
+  --primary: hsl(14 100% 57%);
+  --primary-foreground: 0deg 0% 0%;
   
   /* Secondary: Muted slate for secondary actions */
-  --secondary: hsl(220, 15%, 25%);
-  --secondary-foreground: hsl(0, 0%, 95%);
+  --secondary: hsl(220 15% 25%);
+  --secondary-foreground: hsl(0 0% 95%);
   
   /* Muted: Subtle backgrounds */
-  --muted: hsl(220, 20%, 18%);
-  --muted-foreground: hsl(0, 0%, 65%);
+  --muted: hsl(220 20% 18%);
+  --muted-foreground: hsl(0 0% 65%);
   
   /* Accent: Subtle highlights */
-  --accent: hsl(220, 20%, 20%);
-  --accent-foreground: hsl(0, 0%, 90%);
+  --accent: hsl(220 20% 20%);
+  --accent-foreground: hsl(0 0% 90%);
   
   /* Success: Vibrant green for positive actions (#10B981) */
-  --success: hsl(158, 64%, 52%);
-  --success-foreground: hsl(0, 0%, 100%);
+  --success: hsl(158 64% 52%);
+  --success-foreground: hsl(0 0% 100%);
   
   /* Destructive: Soft red for errors (#F87171) */
-  --destructive: hsl(0, 84%, 71%);
-  --destructive-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0 84% 71%);
+  --destructive-foreground: hsl(0 0% 100%);
   
   /* Borders and inputs */
-  --border: hsl(220, 20%, 20%);
-  --input: hsl(220, 20%, 16%);
-  --ring: hsl(14, 100%, 57%);
+  --border: hsl(220 20% 20%);
+  --input: hsl(220 20% 16%);
+  --ring: hsl(14 100% 57%);
   
   /* Charts: High-contrast colors for data visualization */
-  --chart-1: hsl(14, 100%, 57%);
-  --chart-2: hsl(158, 64%, 52%);
-  --chart-3: hsl(43, 96%, 56%);
-  --chart-4: hsl(271, 81%, 56%);
-  --chart-5: hsl(339, 82%, 52%);
+  --chart-1: hsl(14 100% 57%);
+  --chart-2: hsl(158 64% 52%);
+  --chart-3: hsl(43 96% 56%);
+  --chart-4: hsl(271 81% 56%);
+  --chart-5: hsl(339 82% 52%);
   
   /* Sidebar: Consistent with main background */
-  --sidebar: hsl(220, 20%, 12%);
-  --sidebar-foreground: hsl(0, 0%, 92%);
-  --sidebar-primary: hsl(14, 100%, 57%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(220, 20%, 20%);
-  --sidebar-accent-foreground: hsl(0, 0%, 90%);
-  --sidebar-border: hsl(220, 20%, 18%);
-  --sidebar-ring: hsl(14, 100%, 57%);
+  --sidebar: hsl(220 20% 12%);
+  --sidebar-foreground: hsl(0 0% 92%);
+  --sidebar-primary: hsl(14 100% 57%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(220 20% 20%);
+  --sidebar-accent-foreground: hsl(0 0% 90%);
+  --sidebar-border: hsl(220 20% 18%);
+  --sidebar-ring: hsl(14 100% 57%);
   
   /* Typography */
   --font-sans: 'Inter', 'Poppins', sans-serif;

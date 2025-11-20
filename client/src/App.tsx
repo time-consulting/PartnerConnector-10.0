@@ -82,38 +82,33 @@ function PrivateRoute({ children, bypassOnboarding = false }: { children: React.
   const [location, setLocation] = useLocation();
   
   useEffect(() => {
+    // If loading is finished AND user is not authenticated, redirect.
     if (!isLoading && !isAuthenticated) {
       setLocation('/login');
-    } else if (!isLoading && isAuthenticated && !bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
+    } 
+    // If loading is finished AND authenticated AND onboarding is incomplete, redirect to onboarding.
+    else if (!isLoading && isAuthenticated && !bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
       setLocation('/onboarding');
     }
-  }, [isAuthenticated, isLoading, user, bypassOnboarding, setLocation]);
+  }, [isAuthenticated, isLoading, user, bypassOnboarding, setLocation, location]);
 
+  // If loading, show loading fallback screen (Crucial to prevent flicker)
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
+    return <LoadingFallback />;
   }
 
+  // If NOT authenticated, return null. The useEffect above has already triggered the redirect.
+  // This prevents rendering a temporary message that causes the flicker.
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Redirecting to login...</div>
-      </div>
-    );
+    return null;
   }
 
-  // If user hasn't completed onboarding and we're not on the onboarding page, redirect
+  // If onboarding redirect is pending, also return null while waiting.
   if (!bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Redirecting to onboarding...</div>
-      </div>
-    );
+    return null;
   }
 
+  // Everything is authenticated and authorized, render content.
   return <>{children}</>;
 }
 
