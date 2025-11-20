@@ -36,14 +36,94 @@
   }
 }
 
+/* Dark Modern Theme - Default (Gemini-inspired professional palette) */
 :root {
+  /* Background: Deep charcoal/slate for trust and sophistication */
+  --background: hsl(220, 20%, 10%);
+  --foreground: hsl(0, 0%, 95%);
+  
+  /* Cards: Elevated dark grey for depth and modern aesthetics */
+  --card: hsl(220, 20%, 14%);
+  --card-foreground: hsl(0, 0%, 92%);
+  
+  /* Popovers */
+  --popover: hsl(220, 20%, 12%);
+  --popover-foreground: hsl(0, 0%, 95%);
+  
+  /* Primary: Bright Orange for energy and CTAs (#FF5722) */
+  --primary: hsl(14, 100%, 57%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  
+  /* Secondary: Muted slate for secondary actions */
+  --secondary: hsl(220, 15%, 25%);
+  --secondary-foreground: hsl(0, 0%, 95%);
+  
+  /* Muted: Subtle backgrounds */
+  --muted: hsl(220, 20%, 18%);
+  --muted-foreground: hsl(0, 0%, 65%);
+  
+  /* Accent: Subtle highlights */
+  --accent: hsl(220, 20%, 20%);
+  --accent-foreground: hsl(0, 0%, 90%);
+  
+  /* Success: Vibrant green for positive actions (#10B981) */
+  --success: hsl(158, 64%, 52%);
+  --success-foreground: hsl(0, 0%, 100%);
+  
+  /* Destructive: Soft red for errors (#F87171) */
+  --destructive: hsl(0, 84%, 71%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  
+  /* Borders and inputs */
+  --border: hsl(220, 20%, 20%);
+  --input: hsl(220, 20%, 16%);
+  --ring: hsl(14, 100%, 57%);
+  
+  /* Charts: High-contrast colors for data visualization */
+  --chart-1: hsl(14, 100%, 57%);
+  --chart-2: hsl(158, 64%, 52%);
+  --chart-3: hsl(43, 96%, 56%);
+  --chart-4: hsl(271, 81%, 56%);
+  --chart-5: hsl(339, 82%, 52%);
+  
+  /* Sidebar: Consistent with main background */
+  --sidebar: hsl(220, 20%, 12%);
+  --sidebar-foreground: hsl(0, 0%, 92%);
+  --sidebar-primary: hsl(14, 100%, 57%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(220, 20%, 20%);
+  --sidebar-accent-foreground: hsl(0, 0%, 90%);
+  --sidebar-border: hsl(220, 20%, 18%);
+  --sidebar-ring: hsl(14, 100%, 57%);
+  
+  /* Typography */
+  --font-sans: 'Inter', 'Poppins', sans-serif;
+  --font-serif: 'Poppins', sans-serif;
+  --font-mono: Menlo, monospace;
+  
+  /* Design system */
+  --radius: 1rem;
+  --spacing: 0.25rem;
+  --tracking-normal: 0em;
+  
+  /* Shadows with orange tint for depth */
+  --shadow: 0px 2px 8px 0px hsl(14, 100%, 57% / 0.08);
+  --shadow-sm: 0px 1px 4px 0px hsl(14, 100%, 57% / 0.06);
+  --shadow-md: 0px 4px 12px 0px hsl(14, 100%, 57% / 0.10);
+  --shadow-lg: 0px 8px 20px 0px hsl(14, 100%, 57% / 0.12);
+  --shadow-xl: 0px 12px 32px 0px hsl(14, 100%, 57% / 0.15);
+  --shadow-2xl: 0px 20px 48px 0px hsl(14, 100%, 57% / 0.18);
+}
+
+/* Light Theme - Alternative (keep current light theme) */
+.light {
   --background: hsl(220, 65%, 97%);
   --foreground: hsl(220, 30%, 6%);
   --card: hsl(0, 0%, 100%);
   --card-foreground: hsl(220, 30%, 6%);
   --popover: hsl(0, 0%, 100%);
   --popover-foreground: hsl(220, 30%, 6%);
-  --primary: hsl(220, 75%, 56%);
+  --primary: hsl(14, 100%, 57%);
   --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(220, 30%, 95%);
   --secondary-foreground: hsl(220, 30%, 6%);
@@ -51,103 +131,60 @@
   --muted-foreground: hsl(220, 30%, 45%);
   --accent: hsl(220, 30%, 95%);
   --accent-foreground: hsl(220, 30%, 6%);
+  --success: hsl(158, 64%, 52%);
+  --success-foreground: hsl(0, 0%, 100%);
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(0, 0%, 100%);
   --border: hsl(220, 30%, 88%);
   --input: hsl(220, 30%, 96%);
-  --ring: hsl(220, 75%, 56%);
-  --chart-1: hsl(220, 75%, 56%);
-  --chart-2: hsl(160, 75%, 48%);
-  --chart-3: hsl(30, 75%, 55%);
-  --chart-4: hsl(280, 75%, 60%);
-  --chart-5: hsl(340, 75%, 55%);
-  --sidebar: hsl(45, 25%, 97%);
-  --sidebar-foreground: hsl(20, 14%, 17%);
-  --sidebar-primary: hsl(9, 75%, 61%);
+  --ring: hsl(14, 100%, 57%);
+  --chart-1: hsl(14, 100%, 57%);
+  --chart-2: hsl(158, 64%, 52%);
+  --chart-3: hsl(43, 96%, 56%);
+  --chart-4: hsl(271, 81%, 56%);
+  --chart-5: hsl(339, 82%, 52%);
+  --sidebar: hsl(0, 0%, 98%);
+  --sidebar-foreground: hsl(220, 30%, 10%);
+  --sidebar-primary: hsl(14, 100%, 57%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(25, 45%, 80%);
-  --sidebar-accent-foreground: hsl(20, 14%, 17%);
-  --sidebar-border: hsl(45, 15%, 80%);
-  --sidebar-ring: hsl(9, 75%, 61%);
-  --font-sans: 'Poppins', sans-serif;
-  --font-serif: 'Poppins', sans-serif;
-  --font-mono: Menlo, monospace;
-  --radius: 0.8rem;
-  --shadow: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 1px 2px -1px hsl(9, 75%, 61% / 0.00);
-  --spacing: 0.25rem;
-  --shadow-lg: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 4px 6px -1px hsl(9, 75%, 61% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 2px 4px -1px hsl(9, 75%, 61% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 1px 2px -1px hsl(9, 75%, 61% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 8px 10px -1px hsl(9, 75%, 61% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
-  --shadow-2xs: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
-  --tracking-normal: 0em;
+  --sidebar-accent: hsl(220, 30%, 94%);
+  --sidebar-accent-foreground: hsl(220, 30%, 10%);
+  --sidebar-border: hsl(220, 30%, 85%);
+  --sidebar-ring: hsl(14, 100%, 57%);
 }
 
-.dark {
-  --background: hsl(20, 14%, 4%);
-  --foreground: hsl(45, 25%, 91%);
-  --card: hsl(20, 14%, 8%);
-  --card-foreground: hsl(45, 25%, 85%);
-  --popover: hsl(20, 14%, 4%);
-  --popover-foreground: hsl(45, 25%, 91%);
-  --primary: hsl(9, 75%, 61%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(30, 15%, 52%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --muted: hsl(20, 14%, 15%);
-  --muted-foreground: hsl(45, 15%, 46%);
-  --accent: hsl(25, 45%, 20%);
-  --accent-foreground: hsl(45, 25%, 85%);
-  --border: hsl(20, 14%, 15%);
-  --input: hsl(20, 14%, 18%);
-  --ring: hsl(9, 75%, 61%);
-  --chart-1: hsl(203.8863, 88.2845%, 53.1373%);
-  --chart-2: hsl(159.7826, 100%, 36.0784%);
-  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
-  --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
-  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
-  --sidebar: hsl(20, 14%, 8%);
-  --destructive: hsl(356.3033, 90.5579%, 54.3137%);
-  --sidebar-ring: hsl(9, 75%, 61%);
-  --sidebar-accent: hsl(25, 45%, 20%);
-  --sidebar-border: hsl(20, 14%, 15%);
-  --sidebar-primary: hsl(9, 75%, 61%);
-  --sidebar-foreground: hsl(45, 25%, 85%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent-foreground: hsl(45, 25%, 85%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-}
-
+/* Dark theme gradients */
 .hero-gradient {
-  background: linear-gradient(135deg, hsl(220, 75%, 56%) 0%, hsl(220, 75%, 70%) 50%, hsl(220, 75%, 90%) 100%);
+  background: linear-gradient(135deg, hsl(14, 100%, 57%) 0%, hsl(14, 90%, 50%) 50%, hsl(14, 80%, 45%) 100%);
 }
 
 .stats-gradient {
-  background: linear-gradient(135deg, hsl(0, 0%, 98%) 0%, hsl(220, 30%, 96%) 100%);
+  background: linear-gradient(135deg, hsl(220, 20%, 14%) 0%, hsl(220, 20%, 16%) 100%);
 }
 
 .card-gradient {
-  background: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(220, 30%, 99%) 100%);
+  background: linear-gradient(135deg, hsl(220, 20%, 14%) 0%, hsl(220, 20%, 16%) 100%);
 }
 
+/* Modern curved card with hover effect */
 .card-hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(220, 30%, 99%) 100%);
-  border: 1px solid hsl(220, 30%, 92%);
+  background: linear-gradient(135deg, hsl(220, 20%, 14%) 0%, hsl(220, 20%, 16%) 100%);
+  border: 1px solid hsl(220, 20%, 22%);
+  border-radius: 1rem;
 }
 
 .card-hover:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 25px 50px -12px hsl(220, 75%, 56% / 0.25), 0 0 0 1px hsl(220, 75%, 56% / 0.05);
-  border-color: hsl(220, 75%, 70%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -8px hsl(14, 100%, 57% / 0.25), 0 0 0 1px hsl(14, 100%, 57% / 0.15);
+  border-color: hsl(14, 100%, 57% / 0.4);
 }
 
+/* Glass effect for dark theme */
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(30, 35, 48, 0.7);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .shimmer {
@@ -210,7 +247,7 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    background-image: radial-gradient(circle at 50% 50%, hsl(220, 75%, 96%) 0%, hsl(220, 65%, 97%) 100%);
+    background-image: radial-gradient(circle at 50% 50%, hsl(220, 20%, 12%) 0%, hsl(220, 20%, 10%) 100%);
   }
 
   html {
@@ -222,11 +259,11 @@
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary via-orange-500 to-orange-600 bg-clip-text text-transparent;
   }
 
   .btn-gradient {
-    @apply bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary;
+    @apply bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20;
   }
 
   .scroll-smooth {
