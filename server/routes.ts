@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
-import { insertDealSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema } from "@shared/schema";
+import { insertDealSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema, mapDealStageToCustomerJourney } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
 import { ghlEmailService } from "./ghlEmailService";
@@ -4302,6 +4302,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending password reset:", error);
       res.status(500).json({ message: "Failed to send password reset email" });
+    }
+  });
+
+  // Migration endpoint: Sync dealStage to customerJourneyStatus
+  app.post('/api/admin/migrate-deal-stages', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const deals = await storage.getAllDeals();
+      let syncedCount = 0;
+      
+      for (const deal of deals) {
+        if (deal.dealStage && deal.id) {
+          // Find any quotes associated with this deal
+          const allQuotes = await storage.getAllQuotesForAdmin();
+          const dealQuotes = allQuotes.filter((q: any) => q.dealId === deal.id);
+          
+          // Sync customerJourneyStatus for each quote
+          for (const quote of dealQuotes) {
+            const customerJourneyStatus = mapDealStageToCustomerJourney(deal.dealStage);
+            await storage.db.update(storage.schema.quotes)
+              .set({ 
+                customerJourneyStatus,
+                updatedAt: new Date() 
+              })
+              .where(storage.eq(storage.schema.quotes.id, quote.id));
+            syncedCount++;
+          }
+        }
+      }
+      
+      res.json({ 
+        success: true,
+        message: `Successfully synced ${syncedCount} quotes to match deal stages`,
+        syncedCount 
+      });
+    } catch (error) {
+      console.error("Error migrating deal stages:", error);
+      res.status(500).json({ message: "Failed to migrate deal stages" });
     }
   });
 
