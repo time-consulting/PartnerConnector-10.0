@@ -5,15 +5,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Force dark theme on root */
+/* Light theme as default */
 html {
-  background-color: #0f172a;
-  color: #ffffff;
+  background-color: #fafbfc;
+  color: #000000;
 }
 
 body {
-  background-color: #0f172a;
-  color: #ffffff;
+  background-color: #fafbfc;
+  color: #000000;
 }
 
 /* Mobile-specific optimizations */
@@ -47,65 +47,42 @@ body {
   }
 }
 
-/* Modern Professional Theme - Indigo & Cyan Palette */
+/* Original Light Theme - Orange & Teal Palette */
 :root {
-  /* Background: Deep navy for sophistication and reduced eye strain */
-  --background: hsl(220 40% 6%);
-  --foreground: hsl(210 20% 98%);
-  
-  /* Cards: Elevated surfaces with subtle depth */
-  --card: hsl(220 30% 12%);
-  --card-foreground: hsl(210 20% 98%);
-  
-  /* Popovers */
-  --popover: hsl(220 30% 10%);
-  --popover-foreground: hsl(210 20% 98%);
-  
-  /* Primary: Modern indigo for trust and professionalism (#6366F1) */
-  --primary: hsl(239 84% 67%);
-  --primary-foreground: hsl(0 0% 100%);
-  
-  /* Secondary: Vibrant cyan for energy and modernity (#06B6D4) */
-  --secondary: hsl(189 94% 43%);
-  --secondary-foreground: hsl(0 0% 100%);
-  
-  /* Muted: Subtle backgrounds for less important content */
-  --muted: hsl(220 25% 16%);
-  --muted-foreground: hsl(215 16% 65%);
-  
-  /* Accent: Highlight color for interactive elements */
-  --accent: hsl(220 30% 18%);
-  --accent-foreground: hsl(210 20% 98%);
-  
-  /* Success: Vibrant emerald for positive actions (#10B981) */
-  --success: hsl(158 64% 52%);
-  --success-foreground: hsl(0 0% 100%);
-  
-  /* Destructive: Warm red for errors and warnings */
-  --destructive: hsl(0 72% 60%);
-  --destructive-foreground: hsl(0 0% 100%);
-  
-  /* Borders and inputs */
-  --border: hsl(220 25% 20%);
-  --input: hsl(220 30% 14%);
-  --ring: hsl(239 84% 67%);
-  
-  /* Charts: Harmonious colors for data visualization */
-  --chart-1: hsl(239 84% 67%);
-  --chart-2: hsl(189 94% 43%);
-  --chart-3: hsl(158 64% 52%);
-  --chart-4: hsl(271 81% 71%);
-  --chart-5: hsl(339 82% 67%);
-  
-  /* Sidebar: Consistent with main background */
-  --sidebar: hsl(220 35% 8%);
-  --sidebar-foreground: hsl(210 20% 98%);
-  --sidebar-primary: hsl(239 84% 67%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(220 30% 16%);
-  --sidebar-accent-foreground: hsl(210 20% 98%);
-  --sidebar-border: hsl(220 25% 18%);
-  --sidebar-ring: hsl(239 84% 67%);
+  --background: hsl(220, 65%, 97%);
+  --foreground: hsl(220, 30%, 6%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(220, 30%, 6%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(220, 30%, 6%);
+  --primary: hsl(14, 100%, 57%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(220, 30%, 95%);
+  --secondary-foreground: hsl(220, 30%, 6%);
+  --muted: hsl(220, 30%, 96%);
+  --muted-foreground: hsl(220, 30%, 45%);
+  --accent: hsl(220, 30%, 95%);
+  --accent-foreground: hsl(220, 30%, 6%);
+  --success: hsl(158, 64%, 52%);
+  --success-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(220, 30%, 88%);
+  --input: hsl(220, 30%, 96%);
+  --ring: hsl(14, 100%, 57%);
+  --chart-1: hsl(14, 100%, 57%);
+  --chart-2: hsl(158, 64%, 52%);
+  --chart-3: hsl(43, 96%, 56%);
+  --chart-4: hsl(271, 81%, 56%);
+  --chart-5: hsl(339, 82%, 52%);
+  --sidebar: hsl(0, 0%, 98%);
+  --sidebar-foreground: hsl(220, 30%, 10%);
+  --sidebar-primary: hsl(14, 100%, 57%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(220, 30%, 94%);
+  --sidebar-accent-foreground: hsl(220, 30%, 10%);
+  --sidebar-border: hsl(220, 30%, 85%);
+  --sidebar-ring: hsl(14, 100%, 57%);
   
   /* Typography */
   --font-sans: 'Inter', 'Poppins', sans-serif;
