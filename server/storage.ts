@@ -63,6 +63,7 @@ import {
   type InsertWaitlist,
   type PushSubscription,
   type InsertPushSubscription,
+  mapDealStageToCustomerJourney,
 } from "@shared/schema";
 import { googleSheetsService, type DealSheetData } from "./googleSheets";
 import { db } from "./db";
@@ -1414,8 +1415,21 @@ export class DatabaseStorage implements IStorage {
     const [deal] = await db
       .update(deals)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(deals.id, referralId))
+      .where(eq(deals.id, dealId))
       .returning();
+    
+    // If dealStage was updated, sync customerJourneyStatus in any associated quotes
+    if (data.dealStage && deal) {
+      const customerJourneyStatus = mapDealStageToCustomerJourney(data.dealStage);
+      await db
+        .update(quotes)
+        .set({ 
+          customerJourneyStatus,
+          updatedAt: new Date() 
+        })
+        .where(eq(quotes.dealId, dealId));
+    }
+    
     return deal;
   }
 
