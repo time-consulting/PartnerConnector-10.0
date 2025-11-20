@@ -172,6 +172,23 @@ function AppRoutes() {
 }
 
 function App() {
+  // Set dark mode as default theme
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    // Default to dark mode unless user explicitly chose light
+    if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      // Save dark as default if no preference exists
+      if (!savedTheme) {
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {/* <TooltipProvider> - Temporarily disabled due to React hook violation */}
