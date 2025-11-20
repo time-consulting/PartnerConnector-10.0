@@ -3,8 +3,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useOfflineSync } from "@/lib/offline-sync";
-import SyncStatus from "@/components/sync-status";
 import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
@@ -53,7 +51,6 @@ import {
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
-  const { isOnline, pendingCount } = useOfflineSync();
   const isMobile = useIsMobile();
   const [, setLocation] = useLocation();
   const [selectedReferral, setSelectedReferral] = useState<any>(null);
@@ -219,18 +216,9 @@ export default function Dashboard() {
     <div className="min-h-screen bg-slate-900 text-white dark:bg-slate-900 dark:text-slate-50">
       <SideNavigation />
       <div className="lg:ml-16">
-        {/* Simple top bar with notification bell and sync status */}
+        {/* Simple top bar */}
         <div className="flex justify-between items-center p-4">
-          {/* Offline status indicator */}
-          {!isOnline && (
-            <div className="flex items-center space-x-2 px-3 py-2 bg-yellow-900/30 rounded-lg">
-              <span className="text-sm font-medium text-yellow-300">
-                Offline Mode - {pendingCount} item{pendingCount !== 1 ? 's' : ''} pending sync
-              </span>
-            </div>
-          )}
           <div className="flex items-center space-x-3 ml-auto">
-            <SyncStatus compact />
           </div>
         </div>
       

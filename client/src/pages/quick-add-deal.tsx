@@ -2,9 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/offline-api"; // Use offline-aware API
-import { useOfflineSync } from "@/lib/offline-sync";
-import SyncStatus from "@/components/sync-status";
+import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -109,7 +107,6 @@ const useVoiceRecognition = () => {
 export default function QuickAddReferral() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
-  const { isOnline, pendingCount } = useOfflineSync();
   const [, setLocation] = useLocation();
   const [showSuccess, setShowSuccess] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -377,7 +374,6 @@ export default function QuickAddReferral() {
           </div>
           {/* Offline/Online Status Indicator */}
           <SyncStatus compact />
-        </div>
         {/* Progress Bar */}
         <div className="h-1 bg-gray-100">
           <motion.div 
