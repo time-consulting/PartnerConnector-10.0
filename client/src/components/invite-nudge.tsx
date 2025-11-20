@@ -76,7 +76,7 @@ I've joined PartnerConnector and thought you'd be interested too. It's a platfor
 
 The commission structure is impressive - upfront commissions on successful deals?, plus 20% team overrides and 10% extended network commissions.
 
-Want to check it out? Here's my deals? link: {deals?Link}
+Want to check it out? Here's my deals? link: {dealLink}
 
 Best regards,
 {userFirstName}`;
@@ -102,24 +102,24 @@ export default function InviteNudge({
     name: "",
     personalMessage: DEFAULT_INVITE_MESSAGE
       .replace("{userFirstName}", userFirstName)
-      .replace("{deals?Link}", "Loading link...")
+      .replace("{dealLink}", "Loading link...")
   });
   
-  const [deals?Link, setReferralLink] = useState("https://partnerconnector.com/join?ref=PC123");
+  const [dealLink, setDealLink] = useState("https://partnerconnector.com/join?ref=PC123");
   
   // Fetch user's deals? link
-  const deals?LinkQuery = useQuery({
+  const dealLinkQuery = useQuery({
     queryKey: ['/api/auth/deals?-link'],
     enabled: isVisible,
     onSuccess: (data) => {
-      const link = data.deals?Link || "https://partnerconnector.com/join?ref=PC123";
-      setReferralLink(link);
+      const link = data.dealLink || "https://partnerconnector.com/join?ref=PC123";
+      setDealLink(link);
       
       // Update the personal message with real link
       setInviteData(prev => ({
         ...prev,
         personalMessage: prev.personalMessage.replace("Loading link...", link)
-          .replace("{deals?Link}", link)
+          .replace("{dealLink}", link)
       }));
     }
   });
@@ -217,7 +217,7 @@ export default function InviteNudge({
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(deals?Link);
+    navigator.clipboard.writeText(dealLink);
     
     // Track link copy event
     fetch('/api/analytics/track', {

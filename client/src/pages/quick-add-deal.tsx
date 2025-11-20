@@ -195,7 +195,7 @@ export default function QuickAddReferral() {
     }
   }, [isAuthenticated, isLoading, toast, setLocation]);
 
-  const submitReferralMutation = useMutation({
+  const submitDealMutation = useMutation({
     mutationFn: async (data: any) => {
       // Use the first business type as default, or create a fallback
       const defaultBusinessTypeId = businessTypes?.[0]?.id || "general";
@@ -270,7 +270,7 @@ export default function QuickAddReferral() {
       return;
     }
 
-    submitReferralMutation.mutate(formData);
+    submitDealMutation.mutate(formData);
   };
 
   const updateFormData = (field: string, value: string) => {
@@ -590,11 +590,11 @@ export default function QuickAddReferral() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={submitReferralMutation.isPending}
+                    disabled={submitDealMutation.isPending}
                     className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 rounded-xl"
                     data-testid="button-submit"
                   >
-                    {submitReferralMutation.isPending ? (
+                    {submitDealMutation.isPending ? (
                       <div className="flex items-center justify-center">
                         <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
                         Submitting...
@@ -625,11 +625,11 @@ export default function QuickAddReferral() {
         {/* <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
           <Button
             type="submit"
-            disabled={!formData.businessName || !formData.contactName || !formData.businessPhone || submitReferralMutation.isPending}
+            disabled={!formData.businessName || !formData.contactName || !formData.businessPhone || submitDealMutation.isPending}
             className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700 rounded-xl"
             data-testid="button-submit-sticky"
           >
-            {submitReferralMutation.isPending ? (
+            {submitDealMutation.isPending ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
                 Submitting...

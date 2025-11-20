@@ -95,7 +95,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (isAuthenticated && user && stats) {
       // Check if user is new (no deals?, no commission history)
-      const hasNoActivity = (stats as any)?.totalCommissions === 0 && (stats as any)?.activeReferrals === 0;
+      const hasNoActivity = (stats as any)?.totalCommissions === 0 && (stats as any)?.activeDeals === 0;
       const isFirstLogin = !setupCompleted && !tourCompleted;
       
       if (hasNoActivity && isFirstLogin) {

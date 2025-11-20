@@ -10,10 +10,10 @@ import DealStepper from "@/components/deals?-stepper";
 import BillUpload from "@/components/bill-upload";
 import { CheckCircleIcon, Sparkles } from "lucide-react";
 
-export default function SubmitReferral() {
+export default function SubmitDeal() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const [submittedReferralId, setSubmittedReferralId] = useState<string | null>(null);
+  const [submittedDealId, setSubmittedReferralId] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
   // Redirect to login if not authenticated
@@ -36,7 +36,7 @@ export default function SubmitReferral() {
     enabled: isAuthenticated,
   });
 
-  const submitReferralMutation = useMutation({
+  const submitDealMutation = useMutation({
     mutationFn: async ({ dealData, files }: { dealData: any; files: File[] }) => {
       // First, create the deals?
       const response = await apiRequest("POST", "/api/deals", dealData);
@@ -92,8 +92,8 @@ export default function SubmitReferral() {
     },
   });
 
-  const handleReferralSubmit = (data: any, files: File[]) => {
-    submitReferralMutation.mutate({ dealData: data, files });
+  const handleDealSubmit = (data: any, files: File[]) => {
+    submitDealMutation.mutate({ dealData: data, files });
   };
 
 
@@ -135,8 +135,8 @@ export default function SubmitReferral() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <DealStepper 
               businessTypes={businessTypes}
-              onSubmit={handleReferralSubmit}
-              isSubmitting={submitReferralMutation.isPending}
+              onSubmit={handleDealSubmit}
+              isSubmitting={submitDealMutation.isPending}
             />
           </div>
         </div>

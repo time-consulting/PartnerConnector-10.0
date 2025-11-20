@@ -162,7 +162,7 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
     { value: "contacted", label: "Contacted" },
     { value: "interested", label: "Interested" },
     { value: "quoted", label: "Quote Sent" },
-    { value: "converted", label: "Converted to Referral" },
+    { value: "converted", label: "Converted to Deal" },
     { value: "not_interested", label: "Not Interested" },
   ];
 

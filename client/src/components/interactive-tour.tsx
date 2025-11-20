@@ -57,7 +57,7 @@ export default function InteractiveTour({ isVisible, onComplete, onSkip, startSt
     },
     {
       id: "submit-deals?",
-      title: "Submit Your First Referral",
+      title: "Submit Your First Deal",
       description: "Click here to submit deals? for businesses that need payment processing or funding. Each successful deals? earns you substantial commissions!",
       element: "[data-testid='link-submit-deals?']",
       position: "bottom",

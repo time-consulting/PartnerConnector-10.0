@@ -36,11 +36,11 @@ interface Recommendation {
 
 interface RecommendationsProps {
   userStats: any;
-  userReferrals: any[];
+  userDeals: any[];
   isLoading: boolean;
 }
 
-export default function Recommendations({ userStats, userReferrals, isLoading }: RecommendationsProps) {
+export default function Recommendations({ userStats, userDeals, isLoading }: RecommendationsProps) {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
     const stored = localStorage.getItem('dismissedRecommendations');
@@ -50,9 +50,9 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
   useEffect(() => {
     if (isLoading || !userStats) return;
     
-    const newRecommendations = generatePersonalizedRecommendations(userStats, userReferrals, dismissedIds);
+    const newRecommendations = generatePersonalizedRecommendations(userStats, userDeals, dismissedIds);
     setRecommendations(newRecommendations);
-  }, [userStats, userReferrals, isLoading, dismissedIds]);
+  }, [userStats, userDeals, isLoading, dismissedIds]);
 
   const generatePersonalizedRecommendations = (stats: any, deals: any[], dismissed: string[]): Recommendation[] => {
     const recs: Recommendation[] = [];
@@ -63,7 +63,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
         id: 'first-deals?',
         type: 'action',
         priority: 'high',
-        title: 'Submit Your First Referral',
+        title: 'Submit Your First Deal',
         description: 'Get started earning commissions by submitting your first business deals? today.',
         action: 'Submit Deal',
         actionUrl: '/submit-deals?',
@@ -90,13 +90,13 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
       });
     }
 
-    if (stats.activeReferrals > 5) {
+    if (stats.activeDeals > 5) {
       recs.push({
         id: 'follow-up',
         type: 'tip',
         priority: 'medium',
         title: 'Follow Up on Active Deals',
-        description: `You have ${stats.activeReferrals} active deals?. Consider following up with these businesses to maintain engagement.`,
+        description: `You have ${stats.activeDeals} active deals?. Consider following up with these businesses to maintain engagement.`,
         icon: MessageSquareIcon,
         category: 'Relationship Management',
         timeToComplete: '30 minutes',
@@ -118,13 +118,13 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
     }
 
     // Behavioral recommendations
-    const recentReferrals = deals?.filter(r => {
+    const recentDeals = deals?.filter(r => {
       const submittedDate = new Date(r.submittedAt);
       const daysAgo = (Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24);
       return daysAgo <= 7;
     });
 
-    if (recentReferrals.length === 0 && deals?.length > 0) {
+    if (recentDeals.length === 0 && deals?.length > 0) {
       recs.push({
         id: 'stay-active',
         type: 'action',
@@ -191,7 +191,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
 
     // Time-based contextual recommendations
     const currentHour = new Date().getHours();
-    if (currentHour >= 9 && currentHour <= 17 && recentReferrals.length === 0) {
+    if (currentHour >= 9 && currentHour <= 17 && recentDeals.length === 0) {
       recs.push({
         id: 'business-hours-activity',
         type: 'tip',

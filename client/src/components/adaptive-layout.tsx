@@ -22,11 +22,11 @@ interface WidgetConfig {
 
 interface AdaptiveLayoutProps {
   userStats: any;
-  userReferrals: any[];
+  userDeals: any[];
   children: React.ReactNode[];
 }
 
-export default function AdaptiveLayout({ userStats, userReferrals, children }: AdaptiveLayoutProps) {
+export default function AdaptiveLayout({ userStats, userDeals, children }: AdaptiveLayoutProps) {
   const [layoutPreferences, setLayoutPreferences] = useState(() => {
     const stored = localStorage.getItem('dashboardLayout');
     return stored ? JSON.parse(stored) : null;
@@ -36,14 +36,14 @@ export default function AdaptiveLayout({ userStats, userReferrals, children }: A
 
   // Analyze user behavior and adapt layout
   useEffect(() => {
-    if (!userStats || !userReferrals) return;
+    if (!userStats || !userDeals) return;
     
-    const adaptedLayout = generateAdaptiveLayout(userStats, userReferrals);
+    const adaptedLayout = generateAdaptiveLayout(userStats, userDeals);
     if (!layoutPreferences) {
       setLayoutPreferences(adaptedLayout);
       localStorage.setItem('dashboardLayout', JSON.stringify(adaptedLayout));
     }
-  }, [userStats, userReferrals, layoutPreferences]);
+  }, [userStats, userDeals, layoutPreferences]);
 
   const generateAdaptiveLayout = (stats: any, deals: any[]) => {
     const layout = {
@@ -104,7 +104,7 @@ export default function AdaptiveLayout({ userStats, userReferrals, children }: A
   };
 
   const resetToDefault = () => {
-    const defaultLayout = generateAdaptiveLayout(userStats, userReferrals);
+    const defaultLayout = generateAdaptiveLayout(userStats, userDeals);
     setLayoutPreferences(defaultLayout);
     localStorage.setItem('dashboardLayout', JSON.stringify(defaultLayout));
   };

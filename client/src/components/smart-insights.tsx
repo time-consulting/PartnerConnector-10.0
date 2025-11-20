@@ -13,7 +13,7 @@ import {
 
 interface SmartInsightsProps {
   userStats: any;
-  userReferrals: any[];
+  userDeals: any[];
   isLoading: boolean;
 }
 
@@ -29,7 +29,7 @@ interface Insight {
   color: string;
 }
 
-export default function SmartInsights({ userStats, userReferrals, isLoading }: SmartInsightsProps) {
+export default function SmartInsights({ userStats, userDeals, isLoading }: SmartInsightsProps) {
   const generateInsights = (): Insight[] => {
     if (!userStats || isLoading) return [];
     
@@ -126,16 +126,16 @@ export default function SmartInsights({ userStats, userReferrals, isLoading }: S
   };
 
   const analyzeRecentActivity = (): { streak: number; avgPerWeek: number } => {
-    if (!userReferrals.length) return { streak: 0, avgPerWeek: 0 };
+    if (!userDeals.length) return { streak: 0, avgPerWeek: 0 };
     
-    const sortedReferrals = userReferrals.sort((a, b) => 
+    const sortedDeals = userDeals.sort((a, b) => 
       new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
     );
     
     let streak = 0;
     let currentDate = new Date();
     
-    for (const deals? of sortedReferrals) {
+    for (const deals? of sortedDeals) {
       const deals?Date = new Date(deals?.submittedAt);
       const diffDays = Math.floor((currentDate.getTime() - deals?Date.getTime()) / (1000 * 60 * 60 * 24));
       
@@ -146,15 +146,15 @@ export default function SmartInsights({ userStats, userReferrals, isLoading }: S
       }
     }
     
-    return { streak, avgPerWeek: userReferrals.length / Math.max(1, streak / 7) };
+    return { streak, avgPerWeek: userDeals.length / Math.max(1, streak / 7) };
   };
 
   const identifyBestPerformingBusinessType = (): { name: string; rate: number } | null => {
-    if (!userReferrals.length) return null;
+    if (!userDeals.length) return null;
     
     const typePerformance: { [key: string]: { total: number; successful: number } } = {};
     
-    userReferrals.forEach(deals? => {
+    userDeals.forEach(deals? => {
       const type = deals?.businessType || 'Unknown';
       if (!typePerformance[type]) {
         typePerformance[type] = { total: 0, successful: 0 };

@@ -927,7 +927,7 @@ Look for businesses that:
 - Explain how we can help
 - Gauge their interest level
 
-### Step 3: Submit the Referral
+### Step 3: Submit the Deal
 - Use our online deals? form
 - Provide complete business information
 - Include contact details and best times to call
