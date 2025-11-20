@@ -5813,50 +5813,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ================== PRODUCTION ADMIN INITIALIZATION ==================
-  
-  // Special endpoint to grant admin access in production
-  // Use this once to set up your admin account
-  app.post('/api/admin/initialize-production-admin', async (req: any, res) => {
-    try {
-      const { secretKey, email } = req.body;
-      
-      // Check secret key (you should set this as an environment variable)
-      const ADMIN_INIT_SECRET = process.env.ADMIN_INIT_SECRET || 'your-secret-key-2024';
-      
-      if (!secretKey || secretKey !== ADMIN_INIT_SECRET) {
-        return res.status(403).json({ message: "Invalid secret key" });
-      }
-      
-      if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-      }
-      
-      // Update the user to be an admin
-      const user = await storage.getUserByEmail(email);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found. Please log in first to create your account." });
-      }
-      
-      // Grant admin access
-      await storage.updateUser(user.id, { isAdmin: true });
-      
-      // Log this important action
-      console.log(`[ADMIN INIT] Granted admin access to ${email} (user ID: ${user.id})`);
-      
-      res.json({ 
-        success: true, 
-        message: `Admin access granted to ${email}`,
-        userId: user.id 
-      });
-      
-    } catch (error) {
-      console.error("Error initializing production admin:", error);
-      res.status(500).json({ message: "Failed to initialize admin access" });
-    }
-  });
-
   // ================== STRIPE PAYMENT PROCESSING ROUTES ==================
 
   // Admin: Get Pending Payments
