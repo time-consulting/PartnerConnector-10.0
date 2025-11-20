@@ -1293,11 +1293,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update quote status to cancelled
       await storage.updateQuote(req.params.id, {
-        customerJourneyStatus: 'declined',
         status: 'cancelled',
         adminNotes: `Quote cancelled. Reason: ${reason}`,
         updatedAt: new Date()
       });
+      
+      // Update the deal stage to declined (will auto-sync customerJourneyStatus)
+      if (quote.dealId) {
+        await storage.updateDeal(quote.dealId, {
+          dealStage: 'declined',
+          adminNotes: `Deal declined - Quote cancelled. Reason: ${reason}`,
+        });
+      }
 
       // Post cancellation message to quote Q&A
       await fetch(`${req.protocol}://${req.get('host')}/api/quotes/${req.params.id}/qa`, {
@@ -1491,12 +1498,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Decision must be 'approved' or 'declined'" });
       }
 
-      const customerJourneyStatus = decision === 'approved' ? 'approved' : 'declined';
+      const dealStage = decision === 'approved' ? 'approved' : 'declined';
 
       // Update quote with final decision
       await storage.db.update(storage.schema.quotes)
         .set({
-          customerJourneyStatus,
           finalDecision: decision,
           finalDecisionDate: new Date(),
           finalDecisionNotes: notes || null,
@@ -1505,11 +1511,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(storage.eq(storage.schema.quotes.id, quoteId));
 
-      // Get the quote to find the associated referral
+      // Get the quote to find the associated deal and update its stage (will auto-sync customerJourneyStatus)
       const quote = await storage.getQuoteById(quoteId);
       if (quote && quote.dealId) {
         const noteText = `\n[${new Date().toLocaleString()}] Deal ${decision.toUpperCase()} - ${notes || ''}`;
         await storage.updateDeal(quote.dealId, {
+          dealStage,
           status: decision,
           adminNotes: (quote.adminNotes || '') + noteText,
           actualCommission: actualCommission ? parseFloat(actualCommission) : null,
@@ -1529,8 +1536,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { quoteId } = req.params;
 
-      // Update quote journey status to "complete" (installed and paid)
-      await storage.updateQuoteJourneyStatus(quoteId, 'complete');
+      // Get the quote to find the associated deal
+      const quote = await storage.getQuoteById(quoteId);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      // Update deal stage to completed (will auto-sync customerJourneyStatus)
+      if (quote.dealId) {
+        await storage.updateDeal(quote.dealId, {
+          dealStage: 'completed',
+          status: 'completed',
+        });
+      }
 
       console.log(`Quote ${quoteId} marked as complete by admin ${req.user.email}`);
 
@@ -1551,12 +1569,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Quote not found" });
       }
 
-      if (quote.customerJourneyStatus !== 'approved') {
+      // Get the associated deal to check status
+      if (!quote.dealId) {
+        return res.status(400).json({ message: "Quote is not associated with a deal" });
+      }
+
+      const deals = await storage.getAllDeals();
+      const deal = deals.find((d: any) => d.id === quote.dealId);
+      
+      if (!deal || deal.dealStage !== 'approved') {
         return res.status(400).json({ message: "Only approved deals can be moved to pending payments" });
       }
 
-      // Move to "live" status (pending payment)
-      await storage.updateQuoteJourneyStatus(quoteId, 'live');
+      // Move to "live_confirm_ltr" status (will auto-sync customerJourneyStatus to 'live')
+      await storage.updateDeal(quote.dealId, {
+        dealStage: 'live_confirm_ltr',
+      });
 
       console.log(`Quote ${quoteId} moved to pending payments by admin ${req.user.email}`);
 
@@ -2830,18 +2858,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         !q.commissionPaid
       );
 
-      // Enhance with referral and user data
+      // Enhance with deal and user data
       const enhancedAccounts = await Promise.all(
         liveAccounts.map(async (quote: any) => {
           const deal = await storage.getDealById(quote.dealId);
-          const user = referral ? await storage.getUser(deal.referrerId) : null;
+          const user = deal ? await storage.getUser(deal.referrerId) : null;
           
           // Get upline structure
           const upline = user ? await storage.getMlmHierarchy(user.id) : { parents: [] };
           
           return {
             ...quote,
-            referral,
+            deal,
             user,
             uplineUsers: upline.parents || [],
           };
@@ -3874,11 +3902,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { dealId } = req.params;
       const quoteData = req.body;
       
-      // Verify referral exists
+      // Verify deal exists
       const allDeals = await storage.getAllDeals();
       const deal = allDeals.find((r: any) => r.id === dealId);
       
-      if (!referral) {
+      if (!deal) {
         return res.status(404).json({ message: "Deal not found" });
       }
 
@@ -3934,11 +3962,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dojoPlan,
       } = req.body;
 
-      // Verify referral exists
+      // Verify deal exists
       const allDeals = await storage.getAllDeals();
       const deal = allDeals.find((r: any) => r.id === dealId);
       
-      if (!referral) {
+      if (!deal) {
         return res.status(404).json({ message: "Deal not found" });
       }
 
@@ -3980,8 +4008,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: req.user.id,
       });
 
-      // Update deal status
+      // Update deal status and stage (dealStage will auto-sync customerJourneyStatus)
       await storage.updateDeal(dealId, {
+        dealStage: 'quote_sent',
         status: 'quote_sent',
         quoteGenerated: true,
         updatedAt: new Date()
