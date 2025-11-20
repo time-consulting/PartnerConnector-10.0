@@ -213,18 +213,10 @@ export default function QuickAddReferral() {
       
       setShowSuccess(true);
       
-      // Different message for offline vs online submission
-      if (!isOnline) {
-        toast({
-          title: "📱 Lead Saved Offline!",
-          description: "Will sync automatically when connection is restored.",
-        });
-      } else {
-        toast({
-          title: "🎉 Lead Captured!",
-          description: "Referral submitted successfully.",
-        });
-      }
+      toast({
+        title: "🎉 Lead Captured!",
+        description: "Referral submitted successfully.",
+      });
 
       // Redirect to dashboard after animation
       setTimeout(() => {
@@ -232,25 +224,11 @@ export default function QuickAddReferral() {
       }, 2500);
     },
     onError: (error: any) => {
-      // Check if it was queued offline (which appears as success in our offline API)
-      if (!isOnline) {
-        // Clear saved draft since it was queued
-        localStorage.removeItem("quickReferralDraft");
-        setShowSuccess(true);
-        toast({
-          title: "📱 Saved for Later",
-          description: "Your lead will be submitted when you're back online.",
-        });
-        setTimeout(() => {
-          setLocation("/dashboard");
-        }, 2500);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to submit. Your draft is saved.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: "Failed to submit. Your draft is saved.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -372,8 +350,7 @@ export default function QuickAddReferral() {
             <ZapIcon className="w-5 h-5 text-teal-600" />
             <span className="font-semibold text-gray-900">Quick Add Lead</span>
           </div>
-          {/* Offline/Online Status Indicator */}
-          <SyncStatus compact />
+        </div>
         {/* Progress Bar */}
         <div className="h-1 bg-gray-100">
           <motion.div 
