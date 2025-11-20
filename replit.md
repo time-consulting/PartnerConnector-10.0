@@ -28,11 +28,12 @@ The backend is a RESTful API developed with Express.js and TypeScript, designed 
 ## Database Design
 A PostgreSQL database underpins the application, featuring core entities such as:
 - **Users**: User profiles, including onboarding status, GDPR/marketing consent, and authentication security fields (emailVerified, verificationToken, passwordResetToken, passwordResetExpires, loginAttempts, lockoutUntil, lastLogin).
-- **Referrals**: Tracks submitted referrals, their status, and associated information.
+- **Deals**: Tracks business deal submissions (formerly called "referrals"), their status, and associated information. Note: Partner invites/team referrals use separate "referral" terminology to distinguish from business deals.
 - **Quotes**: Manages quotes sent from Dojo, including customer journey status.
 - **Business Types**: Categorization of businesses for commission calculations.
-- **Bill Uploads**: Stores client payment processing bills.
+- **Bill Uploads**: Stores client payment processing bills (file content excluded from list queries for performance).
 - **Commission Payments**: Records commission payouts to users.
+- **Payment Verification Codes**: Stores 2FA codes for commission payment verification (10-minute expiry).
 - **Sessions**: Stores user session data.
 - **Partner Hierarchy**: Tracks multi-level marketing (MLM) relationships and commission structures.
 
@@ -52,7 +53,17 @@ A PostgreSQL database underpins the application, featuring core entities such as
 ## File Upload System
 - **Storage**: In-memory with Multer (10MB limit).
 - **Security**: File type and size validation.
-- **Association**: Files are linked to specific referrals.
+- **Association**: Files are linked to specific deals.
+- **Performance Optimization**: File content (fileContent/fileData) excluded from list queries, only loaded for downloads (20-50x faster queries).
+
+## Commission Fraud Prevention
+- **2FA Authentication**: All commission payments require SMS verification code (6-digit, 10-minute expiry).
+- **Variance Validation**: Automated checks against expected commissions:
+  - NTC deals: Max 20% variance tolerance
+  - Switcher deals: Max 100% variance tolerance
+- **Duplicate Prevention**: Payment lock system prevents simultaneous payments for the same deal.
+- **SMS Service**: GoHighLevel (GHL) integration for sending verification codes to admin phone.
+- **Audit Trail**: All payment confirmations logged with variance percentage and verification details.
 
 ## UI/UX Decisions
 - **Design Language**: Inspired by Dojo.tech, featuring rounded cards, clear action buttons, and professional typography.
@@ -66,14 +77,22 @@ A PostgreSQL database underpins the application, featuring core entities such as
 - **Referral Status**: Default status changed from 'pending' to 'submitted' to ensure new referrals appear immediately in Quote Requests tab.
 
 ## Features and Functionality
+- **Deals Management**: Create, track, and manage business deal submissions (terminology: "deals" for business submissions, "referrals" for partner team invites).
 - **Quotes Management**: View, approve, question, request rate changes, and send quotes to clients.
 - **Onboarding System**: Mandatory multi-step onboarding for new users.
 - **Team Tracking & MLM**: Referral code generation, hierarchical team linking (L1=60%, L2=20%, L3=10% commissions), and real-time team analytics.
 - **Admin Portal**: Streamlined dashboard with single Quote Requests tab (status='submitted'), Deal Management Pipeline with 7 subtabs (Sent Quotes, Sign Up, Docs Out, Awaiting Docs, Approved, Complete, Declined), CSV export, analytics, and system settings.
+- **Commission Payment System**: 
+  - Two-step payment process: Initiate (generates 2FA code) → Confirm (verifies code)
+  - SMS verification via GoHighLevel for all payments
+  - Variance validation (NTC 20%, Switcher 100%)
+  - Duplicate payment prevention
+  - MLM distribution (60% direct, 20% parent, 10% grandparent)
+  - Commission displays removed from partner UI (fraud prevention)
 - **Mobile Engagement**: Real-time notifications via WebSockets, quick add form, push notifications via Web Push API, PWA support with offline mode, and voice input.
 - **Authentication System**: 
   - Custom login/signup with email verification
-  - Password reset flow with secure tokens
+  - Password reset flow with secure tokens (via GoHighLevel)
   - Rate limiting and account lockout protection
   - Resend verification email capability
   - Password strength validation
