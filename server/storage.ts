@@ -4,8 +4,6 @@ import {
   businessTypes,
   billUploads,
   commissionPayments,
-  leads,
-  leadInteractions,
   contacts,
   contactInteractions,
   opportunities,
@@ -163,13 +161,6 @@ export interface IStorage {
   getEmailCommunicationsByContact(contactId: string): Promise<EmailCommunication[]>;
   getEmailCommunicationsByOpportunity(opportunityId: string): Promise<EmailCommunication[]>;
   syncOutlookEmails(partnerId: string): Promise<void>;
-
-  // Leads operations (legacy)
-  createLead(lead: any): Promise<any>;
-  createLeadsBulk(leads: any[]): Promise<{ count: number }>;
-  getLeadsByUserId(userId: string): Promise<any[]>;
-  updateLeadStatus(leadId: string, status: string): Promise<any>;
-  addLeadInteraction(leadId: string, interaction: any): Promise<any>;
   
   // Partner operations  
   getPartners(): Promise<any[]>;
@@ -588,68 +579,6 @@ export class DatabaseStorage implements IStorage {
 
   async getBusinessTypes(): Promise<BusinessType[]> {
     return await db.select().from(businessTypes);
-  }
-
-  // Leads operations
-  async createLead(leadData: any): Promise<any> {
-    const [lead] = await db
-      .insert(leads)
-      .values(leadData)
-      .returning();
-    return lead;
-  }
-
-  async createLeadsBulk(leadsData: any[]): Promise<{ count: number }> {
-    const results = await db
-      .insert(leads)
-      .values(leadsData)
-      .returning();
-    return { count: results.length };
-  }
-
-  async getLeadsByUserId(userId: string): Promise<any[]> {
-    return await db
-      .select()
-      .from(leads)
-      .where(eq(leads.partnerId, userId))
-      .orderBy(desc(leads.createdAt));
-  }
-
-  async updateLeadStatus(leadId: string, status: string): Promise<any> {
-    const [lead] = await db
-      .update(leads)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(leads.id, leadId))
-      .returning();
-    return lead;
-  }
-
-  async updateLead(leadId: string, updates: any): Promise<any> {
-    const [lead] = await db
-      .update(leads)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(leads.id, leadId))
-      .returning();
-    return lead;
-  }
-
-  async getLeadInteractions(leadId: string): Promise<any[]> {
-    return await db
-      .select()
-      .from(leadInteractions)
-      .where(eq(leadInteractions.leadId, leadId))
-      .orderBy(desc(leadInteractions.createdAt));
-  }
-
-  async addLeadInteraction(leadId: string, interactionData: any): Promise<any> {
-    const [interaction] = await db
-      .insert(leadInteractions)
-      .values({
-        leadId,
-        ...interactionData,
-      })
-      .returning();
-    return interaction;
   }
 
   // Contacts operations
