@@ -87,7 +87,7 @@ export default function LearningPortal() {
             Learning Portal
           </h1>
           <p className="text-xl text-muted-foreground">
-            Master the art of referral sales and maximize your commission potential
+            Master the art of deals? sales and maximize your commission potential
           </p>
         </div>
 

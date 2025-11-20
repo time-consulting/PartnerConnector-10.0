@@ -425,7 +425,7 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
               </div>
               <p className="text-sm text-green-700">
                 After completing onboarding, you'll get access to your personalized dashboard, 
-                training modules, and can start submitting referrals immediately.
+                training modules, and can start submitting deals? immediately.
               </p>
             </div>
           </div>

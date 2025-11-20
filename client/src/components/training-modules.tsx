@@ -173,7 +173,7 @@ Our commission structure is based on comprehensive Lifetime Value analysis consi
 - **Card Type Split**: Debit vs credit card usage affecting processing costs
 - **Industry Factors**: Specific needs and retention rates by sector
 
-This ensures fair compensation based on the long-term value each referral brings to our partners.
+This ensures fair compensation based on the long-term value each deals? brings to our partners.
 
 ### Perfect Client Types for Dojo
 
@@ -242,14 +242,14 @@ This ensures fair compensation based on the long-term value each referral brings
 1. **Week 1**: Review your current client base for payment processing opportunities
 2. **Week 2**: Reach out to 5 prospects using the positioning scripts provided
 3. **Week 3**: Schedule discovery calls and gather payment processing statements
-4. **Week 4**: Submit your first Dojo referral and track commission
+4. **Week 4**: Submit your first Dojo deals? and track commission
 
 ### Support Resources
 
 - **Dojo Partner Portal**: Access rates, collateral, and client onboarding tools
 - **Live Chat Support**: Direct line to Dojo partnership team
 - **Monthly Partner Webinars**: Latest product updates and sales techniques
-- **Commission Dashboard**: Real-time tracking of all your Dojo referrals
+- **Commission Dashboard**: Real-time tracking of all your Dojo deals?
 
 Remember: Dojo isn't just a product - it's a partnership that grows with your clients' success. Focus on long-term value creation rather than quick sales.
 `
@@ -396,7 +396,7 @@ Using our £250 per £10,000 base rate, commissions are calculated through LTV a
 - **Level 3 (Network)**: 10% ongoing from extended network
 
 ### Building Monthly Income:
-While direct funding referrals provide upfront commissions, focus on team building to create consistent monthly income through the 20% and 10% ongoing structure.
+While direct funding deals? provide upfront commissions, focus on team building to create consistent monthly income through the 20% and 10% ongoing structure.
 
 ## Real Client Success Stories
 
@@ -475,19 +475,19 @@ Remember: Business funding solves real problems and helps businesses grow. You'r
 
 ## Dashboard Overview
 
-Your PartnerConnector dashboard is your command center for managing referrals, tracking commissions, and building your partner network.
+Your PartnerConnector dashboard is your command center for managing deals?, tracking commissions, and building your partner network.
 
 ### Key Dashboard Sections:
 
 #### 1. Performance Overview
 - **Monthly Earnings**: Real-time commission tracking
-- **Active Referrals**: Pipeline management
+- **Active Deals**: Pipeline management
 - **Team Performance**: Monitor your network's success
 - **Achievement Progress**: Track training and milestones
 
 #### 2. Referral Management
-- **Submit New Referral**: Quick referral submission
-- **Track Status**: Real-time referral progress
+- **Submit New Deal**: Quick deals? submission
+- **Track Status**: Real-time deals? progress
 - **Commission Calculator**: Estimate earnings
 - **Client Communication**: Built-in messaging system
 
@@ -507,9 +507,9 @@ Your PartnerConnector dashboard is your command center for managing referrals, t
 `
     },
     {
-      id: 'referral-submission-process',
+      id: 'deals?-submission-process',
       title: 'Referral Submission & Tracking System',
-      description: 'Step-by-step guide to submitting and managing client referrals',
+      description: 'Step-by-step guide to submitting and managing client deals?',
       duration: '12 min',
       difficulty: 'Beginner',
       type: 'interactive',
@@ -523,14 +523,14 @@ Your PartnerConnector dashboard is your command center for managing referrals, t
       rating: 4.9,
       enrolledCount: 987,
       lastUpdated: '2025-09-11',
-      tags: ['referrals', 'submission', 'tracking'],
+      tags: ['deals?', 'submission', 'tracking'],
       content: `
 # 📈 Referral Submission Training
 
 ## The Complete Referral Process
 
 ### Step 1: Client Discovery & Qualification
-**Before submitting any referral**, ensure the client meets our criteria:
+**Before submitting any deals?**, ensure the client meets our criteria:
 
 #### Dojo Card Payments:
 ✅ Currently taking card payments OR planning to
@@ -556,7 +556,7 @@ Your PartnerConnector dashboard is your command center for managing referrals, t
 ### Step 3: Referral Submission
 
 #### Using the Dashboard:
-1. Click "Submit New Referral"
+1. Click "Submit New Deal"
 2. Select service type (Dojo/Funding/Insurance)
 3. Complete client information form
 4. Add notes about client needs
@@ -582,7 +582,7 @@ Your PartnerConnector dashboard is your command center for managing referrals, t
 ### Step 5: Tracking & Follow-up
 
 #### Dashboard Tracking:
-- **Status Updates**: Real-time referral progress
+- **Status Updates**: Real-time deals? progress
 - **Communication Log**: All client interactions
 - **Commission Tracking**: Estimated and confirmed earnings
 - **Next Actions**: Your follow-up tasks
@@ -600,27 +600,27 @@ Your PartnerConnector dashboard is your command center for managing referrals, t
 #### Dojo Card Payments:
 - **Commission Confirmed**: When client goes live
 - **Payment Processing**: Monthly on 15th
-- **Typical Timeline**: 4-6 weeks from referral
+- **Typical Timeline**: 4-6 weeks from deals?
 
 #### Business Funding:
 - **Commission Confirmed**: When funds are drawn
 - **Payment Processing**: Within 7 days
-- **Typical Timeline**: 2-3 weeks from referral
+- **Typical Timeline**: 2-3 weeks from deals?
 
 ### Best Practices for Success:
 
 #### Do's:
 ✅ **Pre-qualify thoroughly** - saves everyone time
 ✅ **Set clear expectations** with clients
-✅ **Provide complete information** in referral form
+✅ **Provide complete information** in deals? form
 ✅ **Stay engaged** throughout the process
 ✅ **Follow up promptly** on any requests
 
 #### Don'ts:
-❌ Don't submit unqualified referrals
+❌ Don't submit unqualified deals?
 ❌ Don't promise specific rates or terms
 ❌ Don't go silent after submission
-❌ Don't bypass the referral system
+❌ Don't bypass the deals? system
 ❌ Don't submit duplicates
 
 ### Troubleshooting Common Issues:
@@ -629,7 +629,7 @@ Your PartnerConnector dashboard is your command center for managing referrals, t
 → Contact the client yourself to re-engage, then provide updated contact details
 
 **"Referral was declined"**
-→ Review feedback and understand why - use this learning for future referrals
+→ Review feedback and understand why - use this learning for future deals?
 
 **"Commission amount seems wrong"**
 → Check the commission calculator and contact support if there's a discrepancy
@@ -643,15 +643,15 @@ Your PartnerConnector dashboard is your command center for managing referrals, t
 - **Approval Rate**: Target 60%+ (industry average: 35%)
 - **Response Rate**: Target 80%+ client engagement
 - **Processing Time**: Average 48 hours to outcome
-- **Commission Value**: Average £400+ per referral
+- **Commission Value**: Average £400+ per deals?
 
 #### Weekly Goals:
 - **Qualified Conversations**: 10 potential clients
-- **Referral Submissions**: 3-4 quality referrals
+- **Referral Submissions**: 3-4 quality deals?
 - **Follow-up Actions**: Complete all dashboard tasks
 - **Success Rate**: 2-3 approvals per week
 
-Remember: Quality over quantity. One well-qualified, properly submitted referral is worth more than five poor-quality submissions.
+Remember: Quality over quantity. One well-qualified, properly submitted deals? is worth more than five poor-quality submissions.
 `
     },
     {
@@ -683,7 +683,7 @@ The General Data Protection Regulation (GDPR) is EU legislation that governs how
 ### 2. Purpose Limitation
 - Data can only be collected for specified, explicit, and legitimate purposes
 - Data cannot be used for purposes incompatible with the original purpose
-- Business referral data must only be used for processing applications
+- Business deals? data must only be used for processing applications
 
 ### 3. Data Minimization
 - Only collect data that is necessary for the specified purpose
@@ -698,7 +698,7 @@ The General Data Protection Regulation (GDPR) is EU legislation that governs how
 ### Your Responsibilities as a Partner:
 
 #### Data Collection:
-✅ Only collect information necessary for referrals
+✅ Only collect information necessary for deals?
 ✅ Explain why you need each piece of information
 ✅ Get explicit consent before collecting sensitive data
 ✅ Store information securely (encrypted, password-protected)
@@ -707,7 +707,7 @@ The General Data Protection Regulation (GDPR) is EU legislation that governs how
 ✅ Only share with authorized PartnerConnector systems
 ✅ Use secure transmission methods
 ✅ Never share data with unauthorized third parties
-✅ Delete local copies once referral is submitted
+✅ Delete local copies once deals? is submitted
 
 #### Client Rights:
 Clients have the right to:
@@ -725,7 +725,7 @@ Clients have the right to:
 4. **Regular Deletion**: Remove old data you no longer need
 5. **Incident Reporting**: Report any data breaches immediately
 
-*Completion of this module is required before you can submit referrals.*
+*Completion of this module is required before you can submit deals?.*
 
 ### 5. Storage Limitation
 - Data should not be kept longer than necessary
@@ -740,7 +740,7 @@ Clients have the right to:
 ## Your Responsibilities as a Partner
 
 ### Data Collection
-- Only collect data necessary for processing referrals
+- Only collect data necessary for processing deals?
 - Obtain proper consent from clients
 - Clearly explain how data will be used
 - Provide privacy notices and terms
@@ -786,7 +786,7 @@ Under GDPR, clients have the right to:
 
 ### Before Collecting Data:
 □ Verify you have a legal basis for collection
-□ Ensure data is necessary for the referral process
+□ Ensure data is necessary for the deals? process
 □ Provide clear privacy notice to the client
 □ Obtain proper consent where required
 
@@ -888,7 +888,7 @@ PartnerConnector specializes in connecting businesses with:
 ### Your Role as a Partner
 As a PartnerConnector partner, you will:
 - Identify businesses that need our services
-- Submit referrals through our platform
+- Submit deals? through our platform
 - Earn commissions on successful applications
 - Build long-term relationships with clients
 - Access ongoing training and support
@@ -896,19 +896,19 @@ As a PartnerConnector partner, you will:
 ## Commission Structure
 
 ### Level 1 Partners (Bronze)
-- **Payment Processing**: Upfront commissions on successful referrals
-- **Business Funding**: £300-£1,500 per successful referral
+- **Payment Processing**: Upfront commissions on successful deals?
+- **Business Funding**: £300-£1,500 per successful deals?
 - **Minimum Requirements**: Complete training modules
 
 ### Level 2 Partners (Silver)
 - **Payment Processing**: 20% ongoing commission from team members
-- **Business Funding**: £400-£2,000 per successful referral
-- **Requirements**: 10+ successful referrals, advanced certification
+- **Business Funding**: £400-£2,000 per successful deals?
+- **Requirements**: 10+ successful deals?, advanced certification
 
 ### Level 3 Partners (Gold/Extended Network)
 - **Payment Processing**: 10% ongoing commission from extended network
-- **Business Funding**: £500-£2,500 per successful referral
-- **Requirements**: 25+ successful referrals, master certification
+- **Business Funding**: £500-£2,500 per successful deals?
+- **Requirements**: 25+ successful deals?, master certification
 
 ## Getting Your First Referral
 
@@ -928,7 +928,7 @@ Look for businesses that:
 - Gauge their interest level
 
 ### Step 3: Submit the Referral
-- Use our online referral form
+- Use our online deals? form
 - Provide complete business information
 - Include contact details and best times to call
 - Add notes about their specific needs
@@ -943,7 +943,7 @@ Look for businesses that:
 ## Platform Features
 
 ### Dashboard
-- View your referral pipeline
+- View your deals? pipeline
 - Track commission earnings
 - Monitor application statuses
 - Access training materials
@@ -992,7 +992,7 @@ Look for businesses that:
 2. **Take the platform tour**
 3. **Review our service offerings**
 4. **Download sales materials**
-5. **Submit your first referral**
+5. **Submit your first deals?**
 
 Ready to start earning? Let's move on to learning about our payment processing solutions!
       `
@@ -1218,7 +1218,7 @@ Remember: Payment processing is just the beginning of a long-term partnership. F
 
 ## Introduction to Business Funding
 
-Business funding is one of our highest-commission services, with potential earnings of £300-£2,500 per successful referral. Understanding how to identify, qualify, and present funding opportunities is essential for maximizing your income.
+Business funding is one of our highest-commission services, with potential earnings of £300-£2,500 per successful deals?. Understanding how to identify, qualify, and present funding opportunities is essential for maximizing your income.
 
 ## Types of Business Funding We Offer
 
@@ -1418,7 +1418,7 @@ Monthly card sales × 10 = Potential funding amount
 - Monitor business performance post-funding
 - Identify additional funding needs
 - Refer for other services
-- Ask for referrals to other businesses
+- Ask for deals? to other businesses
 
 ## Red Flags to Avoid
 
@@ -1771,7 +1771,7 @@ Use these to secure agreement:
 - Ensure they're getting expected results
 - Address any issues promptly
 - Look for additional opportunities
-- Ask for referrals
+- Ask for deals?
 
 ### Ongoing Value Creation
 - Share industry insights
@@ -1781,8 +1781,8 @@ Use these to secure agreement:
 - Remember personal details
 
 ### Referral Generation
-- Ask satisfied clients for referrals
-- Offer referral incentives
+- Ask satisfied clients for deals?
+- Offer deals? incentives
 - Stay connected on social media
 - Attend industry events together
 - Build your professional network

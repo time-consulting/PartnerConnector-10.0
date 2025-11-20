@@ -16,7 +16,7 @@ interface User {
   teamRole?: string;
   isAdmin?: boolean;
   hasCompletedOnboarding?: boolean;
-  referralCode?: string;
+  deals?Code?: string;
 }
 
 export function useAuth() {

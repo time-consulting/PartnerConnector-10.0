@@ -28,12 +28,12 @@ const quickFormSchema = z.object({
 
 type QuickFormData = z.infer<typeof quickFormSchema>;
 
-interface QuickReferralFormProps {
+interface QuickDealFormProps {
   onSubmit: (data: QuickFormData) => void;
   isSubmitting: boolean;
 }
 
-export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickReferralFormProps) {
+export default function QuickDealForm({ onSubmit, isSubmitting }: QuickDealFormProps) {
   const form = useForm<QuickFormData>({
     resolver: zodResolver(quickFormSchema),
     defaultValues: {
@@ -50,7 +50,7 @@ export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickRefer
       <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
         <div className="flex items-center gap-2">
           <Zap className="h-5 w-5 text-primary" />
-          <CardTitle>Quick Referral</CardTitle>
+          <CardTitle>Quick Deal</CardTitle>
         </div>
         <CardDescription>
           Capture the essentials. Complete details later.
@@ -174,9 +174,9 @@ export default function QuickReferralForm({ onSubmit, isSubmitting }: QuickRefer
                 className="w-full h-11" 
                 size="lg"
                 disabled={isSubmitting}
-                data-testid="button-submit-quick-referral"
+                data-testid="button-submit-quick-deals?"
               >
-                {isSubmitting ? "Submitting..." : "Submit Quick Referral"}
+                {isSubmitting ? "Submitting..." : "Submit Quick Deal"}
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 You can add more details and complete the full information later from your pipeline

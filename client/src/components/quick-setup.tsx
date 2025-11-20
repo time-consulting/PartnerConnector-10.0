@@ -436,7 +436,7 @@ export default function QuickSetup({ onComplete, onDefer, initialData }: QuickSe
               <CreditCard className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               <AlertDescription className="flex items-center justify-between">
                 <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                  💰 Add payout details to get paid faster when referrals convert.
+                  💰 Add payout details to get paid faster when deals? convert.
                 </span>
                 <div className="flex gap-2">
                   <Button 

@@ -137,7 +137,7 @@ class OfflineSyncManager {
   // Queue an action for sync
   async queueAction(
     action: 'create' | 'update' | 'delete',
-    entity: 'referral' | 'notification' | 'user',
+    entity: 'deals?' | 'notification' | 'user',
     data: any,
     entityId?: string
   ): Promise<void> {
@@ -221,7 +221,7 @@ class OfflineSyncManager {
 
       // Invalidate React Query cache after successful sync
       if (successCount > 0) {
-        queryClient.invalidateQueries({ queryKey: ['/api/referrals'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
         queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
         queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       }
@@ -264,7 +264,7 @@ class OfflineSyncManager {
   // Process a single sync item
   private async processSyncItem(item: SyncQueueItem): Promise<void> {
     switch (item.entity) {
-      case 'referral':
+      case 'deals?':
         await this.syncReferral(item);
         break;
       case 'notification':
@@ -278,14 +278,14 @@ class OfflineSyncManager {
     }
   }
 
-  // Sync a referral
+  // Sync a deals?
   private async syncReferral(item: SyncQueueItem): Promise<void> {
     switch (item.action) {
       case 'create':
-        const response = await apiRequest('POST', '/api/referrals', item.data);
+        const response = await apiRequest('POST', '/api/deals', item.data);
         const created = await response.json();
         
-        // Update local referral with server ID
+        // Update local deals? with server ID
         if (item.entityId) {
           await offlineDB.markReferralSynced(item.entityId, created.id);
         }
@@ -295,20 +295,20 @@ class OfflineSyncManager {
         if (!item.entityId) throw new Error('Entity ID required for update');
         
         // Get the server ID if we have it
-        const referral = await offlineDB.getReferral(item.entityId);
-        const serverId = referral?.serverId || item.entityId;
+        const deals? = await offlineDB.getReferral(item.entityId);
+        const serverId = deals??.serverId || item.entityId;
         
-        await apiRequest('PATCH', `/api/referrals/${serverId}`, item.data);
+        await apiRequest('PATCH', `/api/deals/${serverId}`, item.data);
         await offlineDB.markReferralSynced(item.entityId);
         break;
 
       case 'delete':
         if (!item.entityId) throw new Error('Entity ID required for delete');
         
-        const referralToDelete = await offlineDB.getReferral(item.entityId);
-        const deleteId = referralToDelete?.serverId || item.entityId;
+        const deals?ToDelete = await offlineDB.getReferral(item.entityId);
+        const deleteId = deals?ToDelete?.serverId || item.entityId;
         
-        await apiRequest('DELETE', `/api/referrals/${deleteId}`);
+        await apiRequest('DELETE', `/api/deals/${deleteId}`);
         await offlineDB.delete(STORES.REFERRALS, item.entityId);
         break;
     }

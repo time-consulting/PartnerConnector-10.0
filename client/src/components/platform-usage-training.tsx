@@ -48,11 +48,11 @@ export default function PlatformUsageTraining() {
       id: "dashboard",
       title: "Dashboard Overview",
       icon: <LayoutDashboardIcon className="w-6 h-6" />,
-      description: "Your central hub for monitoring performance, tracking referrals, and accessing quick actions.",
+      description: "Your central hub for monitoring performance, tracking deals?, and accessing quick actions.",
       image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop",
       keyPoints: [
-        "View real-time statistics on deals submitted, commissions pending, and total referrals",
-        "Access quick actions to submit deals, track referrals, and view payout history",
+        "View real-time statistics on deals submitted, commissions pending, and total deals?",
+        "Access quick actions to submit deals, track deals?, and view payout history",
         "Monitor your progress with visual charts and metrics",
         "Stay engaged with weekly tasks and daily suggestions"
       ],
@@ -105,7 +105,7 @@ export default function PlatformUsageTraining() {
       id: "submission",
       title: "Deal Submission Process",
       icon: <SendIcon className="w-6 h-6" />,
-      description: "Submit client referrals for review and quote generation by specialist partners.",
+      description: "Submit client deals? for review and quote generation by specialist partners.",
       image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&auto=format&fit=crop",
       keyPoints: [
         "Submit deals using the simple 3-stage mobile-first form",
@@ -129,14 +129,14 @@ export default function PlatformUsageTraining() {
       description: "Monitor the status of all your submitted deals in real-time.",
       image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop",
       keyPoints: [
-        "View all submitted referrals with current status (Submitted, Under Review, Quote Sent, Won, Lost)",
+        "View all submitted deals? with current status (Submitted, Under Review, Quote Sent, Won, Lost)",
         "See which deals are awaiting specialist partner review",
         "Track when quotes have been sent to clients",
         "Monitor deal outcomes and commission status",
-        "Filter and search through your referral history"
+        "Filter and search through your deals? history"
       ],
       details: [
-        "The tracking system keeps you informed at every stage of the referral process.",
+        "The tracking system keeps you informed at every stage of the deals? process.",
         "You'll see when a deal moves from 'Submitted' to 'Under Review' as specialist partners begin their assessment.",
         "When a quote is sent to your client, the status updates to 'Quote Sent' - this is a good time to follow up with them.",
         "If the client accepts and signs up, the deal moves to 'Won' and commission is calculated.",
@@ -159,7 +159,7 @@ export default function PlatformUsageTraining() {
       details: [
         "Commissions are calculated based on the products your clients sign up for and their transaction volumes.",
         "You earn recurring commissions on card payment processing as long as the client remains active.",
-        "Business funding referrals generate one-time commission payments.",
+        "Business funding deals? generate one-time commission payments.",
         "The commission dashboard shows both confirmed earnings and pending amounts awaiting payment processing.",
         "Payment histories help you reconcile your records and plan your finances."
       ]
@@ -168,20 +168,20 @@ export default function PlatformUsageTraining() {
       id: "team",
       title: "Team Management",
       icon: <UserPlusIcon className="w-6 h-6" />,
-      description: "Build your network and earn override commissions from your team's referrals.",
+      description: "Build your network and earn override commissions from your team's deals?.",
       image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop",
       keyPoints: [
         "Invite colleagues and business contacts to join as partners",
         "Earn 20% override commission on direct team members (Level 2)",
         "Earn 10% override on extended network (Level 3)",
         "View team performance and hierarchy",
-        "Share your unique referral link for easy sign-ups"
+        "Share your unique deals? link for easy sign-ups"
       ],
       details: [
         "Building a team creates passive income through override commissions on their deals.",
         "Your direct invites are Level 2 - you earn 20% of their commissions without reducing their earnings.",
         "When your Level 2 partners invite others (Level 3), you earn 10% of those commissions.",
-        "Use your unique referral link to invite accountants, bookkeepers, business consultants, or financial advisors.",
+        "Use your unique deals? link to invite accountants, bookkeepers, business consultants, or financial advisors.",
         "The platform tracks all relationships automatically, ensuring you receive proper credit for your network."
       ]
     },

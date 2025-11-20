@@ -762,7 +762,7 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
-  referrals: many(referrals),
+  deals: many(deals),
   leads: many(leads),
   opportunities: many(opportunities),
   contacts: many(contacts),
@@ -816,37 +816,37 @@ export const partnerHierarchyRelations = relations(partnerHierarchy, ({ one }) =
   }),
 }));
 
-export const referralsRelations = relations(referrals, ({ one, many }) => ({
+export const dealsRelations = relations(deals, ({ one, many }) => ({
   referrer: one(users, {
-    fields: [referrals.referrerId],
+    fields: [deals.referrerId],
     references: [users.id],
   }),
   parentReferrer: one(users, {
-    fields: [referrals.parentReferrerId],
+    fields: [deals.parentReferrerId],
     references: [users.id],
   }),
   businessType: one(businessTypes, {
-    fields: [referrals.businessTypeId],
+    fields: [deals.businessTypeId],
     references: [businessTypes.id],
   }),
   billUploads: many(billUploads),
   commissionPayments: many(commissionPayments),
   businessOwner: one(businessOwners, {
-    fields: [referrals.id],
-    references: [businessOwners.referralId],
+    fields: [deals.id],
+    references: [businessOwners.dealId],
   }),
   businessDetails: one(businessDetails, {
-    fields: [referrals.id],
-    references: [businessDetails.referralId],
+    fields: [deals.id],
+    references: [businessDetails.dealId],
   }),
 }));
 
 // billUploads now links to business name only, no direct relations
 
 export const commissionPaymentsRelations = relations(commissionPayments, ({ one }) => ({
-  referral: one(referrals, {
-    fields: [commissionPayments.referralId],
-    references: [referrals.id],
+  deal: one(deals, {
+    fields: [commissionPayments.dealId],
+    references: [deals.id],
   }),
   recipient: one(users, {
     fields: [commissionPayments.recipientId],
@@ -855,16 +855,16 @@ export const commissionPaymentsRelations = relations(commissionPayments, ({ one 
 }));
 
 export const businessOwnersRelations = relations(businessOwners, ({ one }) => ({
-  referral: one(referrals, {
-    fields: [businessOwners.referralId],
-    references: [referrals.id],
+  deal: one(deals, {
+    fields: [businessOwners.dealId],
+    references: [deals.id],
   }),
 }));
 
 export const businessDetailsRelations = relations(businessDetails, ({ one }) => ({
-  referral: one(referrals, {
-    fields: [businessDetails.referralId],
-    references: [referrals.id],
+  deal: one(deals, {
+    fields: [businessDetails.dealId],
+    references: [deals.id],
   }),
 }));
 

@@ -45,13 +45,13 @@ export default function AdaptiveLayout({ userStats, userReferrals, children }: A
     }
   }, [userStats, userReferrals, layoutPreferences]);
 
-  const generateAdaptiveLayout = (stats: any, referrals: any[]) => {
+  const generateAdaptiveLayout = (stats: any, deals: any[]) => {
     const layout = {
-      widgetOrder: ['recommendations', 'insights', 'recent-referrals', 'progress'],
+      widgetOrder: ['recommendations', 'insights', 'recent-deals?', 'progress'],
       widgetVisibility: {
         recommendations: true,
         insights: true,
-        'recent-referrals': true,
+        'recent-deals?': true,
         progress: true,
         'quick-actions': true,
         analytics: false
@@ -60,23 +60,23 @@ export default function AdaptiveLayout({ userStats, userReferrals, children }: A
     };
 
     // Adapt based on user activity level
-    if (referrals.length === 0) {
+    if (deals?.length === 0) {
       // New user layout - prioritize getting started
       layout.widgetOrder = ['recommendations', 'quick-actions', 'insights', 'progress'];
       layout.widgetVisibility.analytics = false;
-    } else if (referrals.length > 10) {
+    } else if (deals?.length > 10) {
       // Experienced user layout - show analytics
-      layout.widgetOrder = ['insights', 'analytics', 'recommendations', 'recent-referrals'];
+      layout.widgetOrder = ['insights', 'analytics', 'recommendations', 'recent-deals?'];
       layout.widgetVisibility.analytics = true;
     }
 
     // Adapt based on success rate
     if (stats.successRate < 40) {
       // Struggling user - focus on recommendations and help
-      layout.widgetOrder = ['recommendations', 'insights', 'recent-referrals', 'progress'];
+      layout.widgetOrder = ['recommendations', 'insights', 'recent-deals?', 'progress'];
     } else if (stats.successRate > 80) {
       // High performer - show analytics and minimize tips
-      layout.widgetOrder = ['analytics', 'recent-referrals', 'insights', 'recommendations'];
+      layout.widgetOrder = ['analytics', 'recent-deals?', 'insights', 'recommendations'];
     }
 
     return layout;
@@ -199,7 +199,7 @@ export default function AdaptiveLayout({ userStats, userReferrals, children }: A
           const widgetMap: { [key: string]: React.ReactNode } = {
             'recommendations': children[0],
             'insights': children[1], 
-            'recent-referrals': children[2],
+            'recent-deals?': children[2],
             'progress': children[3],
             'quick-actions': children[4],
             'analytics': children[5]

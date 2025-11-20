@@ -115,13 +115,13 @@ export default function PartnerOnboarding() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">3. Start Earning</h3>
                 <p className="text-gray-600 mb-6">
-                  Begin submitting referrals and watch your revenue grow. Our platform 
+                  Begin submitting deals? and watch your revenue grow. Our platform 
                   handles everything from lead tracking to commission payments.
                 </p>
                 <ul className="text-left text-sm text-gray-600 space-y-2">
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-green-600" />
-                    Submit your first referral
+                    Submit your first deals?
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-green-600" />
@@ -153,7 +153,7 @@ export default function PartnerOnboarding() {
                   <DollarSignIcon className="w-6 h-6 text-blue-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">High Commissions</h3>
-                <p className="text-sm text-gray-600">Earn up to £2,000 per successful referral with our competitive commission structure</p>
+                <p className="text-sm text-gray-600">Earn up to £2,000 per successful deals? with our competitive commission structure</p>
               </CardContent>
             </Card>
 

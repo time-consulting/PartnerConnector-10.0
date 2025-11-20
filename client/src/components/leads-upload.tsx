@@ -173,7 +173,7 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
   ];
 
   const leadSourceOptions = [
-    { value: "referral", label: "Referral" },
+    { value: "deals?", label: "Referral" },
     { value: "cold_call", label: "Cold Call" },
     { value: "networking", label: "Networking Event" },
     { value: "social_media", label: "Social Media" },
@@ -198,14 +198,14 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
               <Button 
                 variant="outline" 
                 className="ml-4 border-green-600 text-green-700 hover:bg-green-600 hover:text-white"
-                onClick={() => window.location.href = '/submit-referral'}
-                data-testid="button-submit-referral"
+                onClick={() => window.location.href = '/submit-deals?'}
+                data-testid="button-submit-deals?"
               >
-                Submit Referral
+                Submit Deal
               </Button>
             </div>
             <p className="text-sm text-green-600 mt-2">
-              🎯 Next step: Review and qualify these leads, then submit the best ones as referrals to earn commissions.
+              🎯 Next step: Review and qualify these leads, then submit the best ones as deals? to earn commissions.
             </p>
           </CardContent>
         </Card>
@@ -219,7 +219,7 @@ export default function LeadsUpload({ onLeadSubmit, onBulkUpload, isSubmitting }
           </CardTitle>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
             <p className="text-sm text-blue-800">
-              💡 <strong>Important:</strong> This uploads leads to your tracking system. Once you qualify a lead, use the "Submit Referral" button to submit it for commission.
+              💡 <strong>Important:</strong> This uploads leads to your tracking system. Once you qualify a lead, use the "Submit Deal" button to submit it for commission.
             </p>
           </div>
         </CardHeader>

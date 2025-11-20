@@ -6,7 +6,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
-import ReferralStepper from "@/components/referral-stepper";
+import DealStepper from "@/components/deals?-stepper";
 import BillUpload from "@/components/bill-upload";
 import { CheckCircleIcon, Sparkles } from "lucide-react";
 
@@ -37,10 +37,10 @@ export default function SubmitReferral() {
   });
 
   const submitReferralMutation = useMutation({
-    mutationFn: async ({ referralData, files }: { referralData: any; files: File[] }) => {
-      // First, create the referral
-      const response = await apiRequest("POST", "/api/referrals", referralData);
-      const referral = await response.json();
+    mutationFn: async ({ dealData, files }: { dealData: any; files: File[] }) => {
+      // First, create the deals?
+      const response = await apiRequest("POST", "/api/deals", dealData);
+      const deals? = await response.json();
       
       // Then, upload files if any
       if (files && files.length > 0) {
@@ -49,23 +49,23 @@ export default function SubmitReferral() {
           formData.append('bills', file);
         });
         
-        await fetch(`/api/referrals/${referral.id}/upload-bill`, {
+        await fetch(`/api/deals/${deals?.id}/upload-bill`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
         });
       }
       
-      return referral;
+      return deals?;
     },
     onSuccess: (data) => {
       setSubmittedReferralId(data.id);
       setShowConfetti(true);
       toast({
         title: "🎉 Referral Submitted Successfully!",
-        description: "Your referral has been submitted and will be processed within 24 hours.",
+        description: "Your deals? has been submitted and will be processed within 24 hours.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/referrals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
@@ -86,14 +86,14 @@ export default function SubmitReferral() {
       }
       toast({
         title: "Error",
-        description: "Failed to submit referral. Please try again.",
+        description: "Failed to submit deals?. Please try again.",
         variant: "destructive",
       });
     },
   });
 
   const handleReferralSubmit = (data: any, files: File[]) => {
-    submitReferralMutation.mutate({ referralData: data, files });
+    submitReferralMutation.mutate({ dealData: data, files });
   };
 
 
@@ -122,7 +122,7 @@ export default function SubmitReferral() {
             <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <div className="text-center">
                 <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                  Submit New Referral
+                  Submit New Deal
                 </h1>
                 <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                   Connect businesses with the right payment solutions and earn commissions
@@ -133,7 +133,7 @@ export default function SubmitReferral() {
 
           {/* Main Content - Full Width Centered Layout */}
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <ReferralStepper 
+            <DealStepper 
               businessTypes={businessTypes}
               onSubmit={handleReferralSubmit}
               isSubmitting={submitReferralMutation.isPending}

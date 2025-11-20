@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import ProgressionSystem from "@/components/progression-system";
-import ReferralLinkManager from "@/components/referral-link-manager";
+import ReferralLinkManager from "@/components/deals?-link-manager";
 import InviteTracker from "@/components/invite-tracker";
 import MobileShareSheet from "@/components/mobile-share-sheet";
 import TeamAnalytics from "@/components/team-analytics";
@@ -35,7 +35,7 @@ interface User {
   email?: string;
   firstName?: string;
   lastName?: string;
-  referralCode?: string;
+  deals?Code?: string;
   partnerId?: string;
   partnerLevel?: number;
   teamRole?: string;
@@ -123,17 +123,17 @@ export default function TeamManagement() {
     enabled: isAuthenticated,
   });
 
-  const { data: referralStats, isLoading: isLoadingStats, refetch: refetchStats } = useQuery<InviteMetrics>({
-    queryKey: ['/api/team/referral-stats'],
+  const { data: deals?Stats, isLoading: isLoadingStats, refetch: refetchStats } = useQuery<InviteMetrics>({
+    queryKey: ['/api/team/deals?-stats'],
     enabled: isAuthenticated,
   });
 
   const { data: teamReferrals, isLoading: isLoadingReferrals, refetch: refetchReferrals } = useQuery<any[]>({
-    queryKey: ['/api/team/referrals'],
+    queryKey: ['/api/team/deals?'],
     enabled: isAuthenticated,
   });
 
-  const inviteMetrics: InviteMetrics = referralStats || {
+  const inviteMetrics: InviteMetrics = deals?Stats || {
     teamMembers: 0,
     registered: 0,
     active: 0
@@ -145,7 +145,7 @@ export default function TeamManagement() {
     name: member.name,
     status: member.status as 'registered' | 'active',
     joinedAt: new Date(member.joinedAt),
-    referralCode: member.referralCode || '',
+    deals?Code: member.deals?Code || '',
     hasSubmittedDeals: member.hasSubmittedDeals || 0
   }));
 
@@ -169,7 +169,7 @@ export default function TeamManagement() {
       };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/referral-links'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/deals?-links'] });
       toast({
         title: "Link Created",
         description: "Referral link created successfully",
@@ -189,7 +189,7 @@ export default function TeamManagement() {
       }
       toast({
         title: "Error",
-        description: "Failed to create referral link",
+        description: "Failed to create deals? link",
         variant: "destructive",
       });
     },
@@ -354,7 +354,7 @@ export default function TeamManagement() {
                       <Rocket className="w-4 h-4" />
                       Progression
                     </TabsTrigger>
-                    <TabsTrigger value="referral-links" className="flex items-center gap-2" data-testid="tab-referral-links">
+                    <TabsTrigger value="deals?-links" className="flex items-center gap-2" data-testid="tab-deals?-links">
                       <Share2 className="w-4 h-4" />
                       Referral Links
                     </TabsTrigger>
@@ -368,9 +368,9 @@ export default function TeamManagement() {
                     <ProgressionSystem data={progressionData} />
                   </TabsContent>
 
-                  <TabsContent value="referral-links" className="space-y-6">
+                  <TabsContent value="deals?-links" className="space-y-6">
                     <ReferralLinkManager 
-                      userReferralCode={typedUser?.referralCode || ''}
+                      userReferralCode={typedUser?.deals?Code || ''}
                       links={[]}
                       onCreateLink={handleCreateReferralLink}
                       onUpdateLink={handleUpdateReferralLink}
@@ -488,7 +488,7 @@ export default function TeamManagement() {
                             <div className="flex justify-between items-center">
                               <div>
                                 <span className="text-gray-600">Total Team Members</span>
-                                <p className="text-xs text-gray-400">People who signed up with your referral code</p>
+                                <p className="text-xs text-gray-400">People who signed up with your deals? code</p>
                               </div>
                               <span className="font-semibold text-lg" data-testid="stat-total-members">{inviteMetrics.teamMembers}</span>
                             </div>
@@ -580,7 +580,7 @@ export default function TeamManagement() {
         <MobileShareSheet 
           isOpen={showMobileShareSheet}
           onOpenChange={setShowMobileShareSheet}
-          referralUrl={`${window.location.origin}/signup?ref=${typedUser?.id || 'demo123'}`}
+          deals?Url={`${window.location.origin}/signup?ref=${typedUser?.id || 'demo123'}`}
           userStats={{
             level: progressionData?.partnerLevel || 'Bronze Partner',
             earnings: progressionData?.totalRevenue || 0,

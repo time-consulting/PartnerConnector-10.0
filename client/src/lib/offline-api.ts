@@ -45,7 +45,7 @@ function getCacheKey(method: string, url: string, data?: any): string {
 // Helper to check if URL is an API endpoint we can cache
 function isCacheableEndpoint(url: string): boolean {
   const cacheablePatterns = [
-    /^\/api\/referrals/,
+    /^\/api\/deals?/,
     /^\/api\/notifications/,
     /^\/api\/dashboard/,
     /^\/api\/business-types/,
@@ -62,7 +62,7 @@ function isQueueableEndpoint(url: string, method: string): boolean {
   if (method === 'GET') return false;
   
   const queueablePatterns = [
-    /^\/api\/referrals/,
+    /^\/api\/deals?/,
     /^\/api\/notifications/,
     /^\/api\/auth\/user/
   ];
@@ -71,8 +71,8 @@ function isQueueableEndpoint(url: string, method: string): boolean {
 }
 
 // Extract entity type from URL
-function getEntityFromUrl(url: string): 'referral' | 'notification' | 'user' | null {
-  if (url.includes('/referrals')) return 'referral';
+function getEntityFromUrl(url: string): 'deals?' | 'notification' | 'user' | null {
+  if (url.includes('/deals?')) return 'deals?';
   if (url.includes('/notifications')) return 'notification';
   if (url.includes('/auth/user')) return 'user';
   return null;
@@ -174,7 +174,7 @@ export async function offlineApiRequest(
           );
           
           // For creates, also save to offline DB immediately
-          if (method === 'POST' && entity === 'referral' && data) {
+          if (method === 'POST' && entity === 'deals?' && data) {
             const offlineReferral: OfflineReferral = {
               id: uuidv4(),
               ...(data as any),
@@ -222,10 +222,10 @@ async function getFromCache(url: string): Promise<any> {
   }
   
   // Check IndexedDB for specific endpoints
-  if (url.includes('/api/referrals')) {
-    const referrals = await offlineDB.getAllReferrals();
-    if (referrals.length > 0) {
-      return referrals;
+  if (url.includes('/api/deals')) {
+    const deals? = await offlineDB.getAllReferrals();
+    if (deals?.length > 0) {
+      return deals?;
     }
   } else if (url.includes('/api/notifications')) {
     const notifications = await offlineDB.getAllNotifications();
@@ -255,8 +255,8 @@ async function getFromCache(url: string): Promise<any> {
 // Update offline cache with fresh data
 async function updateOfflineCache(url: string, data: any): Promise<void> {
   try {
-    if (url.includes('/api/referrals') && Array.isArray(data)) {
-      // Convert and save referrals
+    if (url.includes('/api/deals') && Array.isArray(data)) {
+      // Convert and save deals?
       const offlineReferrals: OfflineReferral[] = data.map(ref => ({
         ...ref,
         id: ref.id || uuidv4(),

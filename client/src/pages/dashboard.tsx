@@ -9,7 +9,7 @@ import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
 import StatsCard from "@/components/stats-card";
-import ReferralProgress from "@/components/referral-progress";
+import DealProgress from "@/components/deals?-progress";
 import ProgressTracker from "@/components/progress-tracker";
 import QuoteSystem from "@/components/quote-system";
 import AdditionalDetailsForm from "@/components/additional-details-form";
@@ -94,7 +94,7 @@ export default function Dashboard() {
   // New user detection for streamlined onboarding
   useEffect(() => {
     if (isAuthenticated && user && stats) {
-      // Check if user is new (no referrals, no commission history)
+      // Check if user is new (no deals?, no commission history)
       const hasNoActivity = (stats as any)?.totalCommissions === 0 && (stats as any)?.activeReferrals === 0;
       const isFirstLogin = !setupCompleted && !tourCompleted;
       
@@ -104,8 +104,8 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, user, stats, setupCompleted, tourCompleted]);
 
-  const { data: referrals, isLoading: referralsLoading } = useQuery({
-    queryKey: ["/api/referrals"],
+  const { data: deals?, isLoading: deals?Loading } = useQuery({
+    queryKey: ["/api/deals"],
     enabled: isAuthenticated,
   });
 
@@ -134,7 +134,7 @@ export default function Dashboard() {
     
     toast({
       title: "You're all set! 🚀",
-      description: "Start submitting referrals to earn your first commissions!",
+      description: "Start submitting deals? to earn your first commissions!",
     });
   };
 
@@ -173,17 +173,17 @@ export default function Dashboard() {
     }
   };
 
-  const handleReferralClick = (referral: any) => {
-    setSelectedReferral(referral);
+  const handleReferralClick = (deals?: any) => {
+    setSelectedReferral(deals?);
     setShowProgressTracker(true);
   };
 
-  const handleQuoteClick = (referralId: string) => {
-    // Find the referral and show quote
-    if (referrals && Array.isArray(referrals)) {
-      const referral = referrals.find((r: any) => r.id === referralId);
-      if (referral) {
-        setSelectedReferral(referral);
+  const handleQuoteClick = (dealId: string) => {
+    // Find the deals? and show quote
+    if (deals? && Array.isArray(deals?)) {
+      const deals? = deals?.find((r: any) => r.id === dealId);
+      if (deals?) {
+        setSelectedReferral(deals?);
         setShowQuoteSystem(true);
       }
     }
@@ -196,7 +196,7 @@ export default function Dashboard() {
   };
 
   const handleAdditionalDetailsComplete = () => {
-    // Update referral status or refresh data
+    // Update deals? status or refresh data
     setShowAdditionalDetails(false);
     setSelectedReferral(null);
     toast({
@@ -291,11 +291,11 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-referrals-made">
+              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300" data-testid="card-deals?-made">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Referrals</p>
+                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Deals</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">
                         {statsLoading ? "..." : (stats as any)?.totalReferrals?.toString() || "0"}
                       </p>
@@ -395,7 +395,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <p className="text-white/80 text-lg leading-relaxed mb-6">
-                        Build your referral network by inviting team members. Every successful referral from your team 
+                        Build your deals? network by inviting team members. Every successful deals? from your team 
                         earns you bonus commissions on top of your individual earnings.
                       </p>
                       <div className="flex flex-wrap gap-4">
@@ -437,7 +437,7 @@ export default function Dashboard() {
             {/* Quick Actions Grid - 2 Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Submit a Deal */}
-              <Link href="/submit-referral">
+              <Link href="/submit-deals?">
                 <Card className="group hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-blue-200 cursor-pointer" data-testid="card-submit-deal">
                   <CardContent className="p-10 text-center">
                     <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -445,7 +445,7 @@ export default function Dashboard() {
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-3">Submit a Deal</h3>
                     <p className="text-gray-600 text-lg mb-6">
-                      Add a new business referral and start earning commissions
+                      Add a new business deals? and start earning commissions
                     </p>
                     <div className="bg-blue-50 rounded-lg p-4">
                       <p className="text-blue-700 font-semibold">Earn upfront commissions</p>
@@ -455,15 +455,15 @@ export default function Dashboard() {
               </Link>
 
               {/* Track a Referral */}
-              <Link href="/track-referrals">
-                <Card className="group hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-green-200 cursor-pointer" data-testid="card-track-referral">
+              <Link href="/track-deals?">
+                <Card className="group hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-green-200 cursor-pointer" data-testid="card-track-deals?">
                   <CardContent className="p-10 text-center">
                     <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                       <ChartBarIcon className="w-10 h-10 text-green-600" />
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-3">Track a Referral</h3>
                     <p className="text-gray-600 text-lg mb-6">
-                      Monitor your referral progress and commission status
+                      Monitor your deals? progress and commission status
                     </p>
                     <div className="bg-green-50 rounded-lg p-4">
                       <p className="text-green-700 font-semibold">Real-time updates</p>
@@ -533,7 +533,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
               {/* Recent Referrals */}
               {/* Recent Referrals */}
-              <Card className="shadow-lg border-0 bg-white" data-testid="card-recent-referrals">
+              <Card className="shadow-lg border-0 bg-white" data-testid="card-recent-deals?">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
@@ -541,7 +541,7 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {referralsLoading ? (
+                  {deals?Loading ? (
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="animate-pulse">
@@ -561,34 +561,34 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                  ) : referrals && (referrals as any[]).length > 0 ? (
+                  ) : deals? && (deals? as any[]).length > 0 ? (
                     <div className="space-y-4">
-                      {(referrals as any[]).slice(0, 5).map((referral: any) => (
+                      {(deals? as any[]).slice(0, 5).map((deals?: any) => (
                         <div 
-                          key={referral.id} 
+                          key={deals?.id} 
                           className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition-all duration-300" 
-                          data-testid={`referral-${referral.id}`}
-                          onClick={() => handleReferralClick(referral)}
+                          data-testid={`deals?-${deals?.id}`}
+                          onClick={() => handleReferralClick(deals?)}
                         >
                           <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                               <HandshakeIcon className="w-5 h-5 text-blue-600" />
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-900" data-testid={`text-business-name-${referral.id}`}>
-                                {referral.businessName}
+                              <p className="font-semibold text-gray-900" data-testid={`text-business-name-${deals?.id}`}>
+                                {deals?.businessName}
                               </p>
-                              <div data-testid={`status-${referral.id}`}>
-                                {getStatusBadge(referral.status)}
+                              <div data-testid={`status-${deals?.id}`}>
+                                {getStatusBadge(deals?.status)}
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-gray-900" data-testid={`text-commission-${referral.id}`}>
-                              £{referral.estimatedCommission || "0"}
+                            <p className="font-semibold text-gray-900" data-testid={`text-commission-${deals?.id}`}>
+                              £{deals?.estimatedCommission || "0"}
                             </p>
-                            <p className="text-sm text-gray-500" data-testid={`text-date-${referral.id}`}>
-                              {new Date(referral.submittedAt).toLocaleDateString()}
+                            <p className="text-sm text-gray-500" data-testid={`text-date-${deals?.id}`}>
+                              {new Date(deals?.submittedAt).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -596,8 +596,8 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-gray-500" data-testid="text-no-referrals">
-                        No referrals yet. Start by submitting your first referral!
+                      <p className="text-gray-500" data-testid="text-no-deals?">
+                        No deals? yet. Start by submitting your first deals?!
                       </p>
                     </div>
                   )}
@@ -650,7 +650,7 @@ export default function Dashboard() {
                         <div>
                           <h4 className="font-semibold text-purple-800">Track Performance</h4>
                           <p className="text-sm text-purple-700 mt-1">
-                            Check your referral progress regularly to optimize your approach
+                            Check your deals? progress regularly to optimize your approach
                           </p>
                         </div>
                       </div>
@@ -667,7 +667,7 @@ export default function Dashboard() {
           <ProgressTracker
             isOpen={showProgressTracker}
             onClose={() => setShowProgressTracker(false)}
-            referral={selectedReferral}
+            deals?={selectedReferral}
           />
         )}
         
@@ -677,7 +677,7 @@ export default function Dashboard() {
             isOpen={showQuoteSystem}
             onClose={() => setShowQuoteSystem(false)}
             onApprove={handleQuoteApproval}
-            referral={selectedReferral}
+            deals?={selectedReferral}
           />
         )}
         
@@ -687,7 +687,7 @@ export default function Dashboard() {
             isOpen={showAdditionalDetails}
             onClose={() => setShowAdditionalDetails(false)}
             onComplete={handleAdditionalDetailsComplete}
-            referral={selectedReferral}
+            deals?={selectedReferral}
           />
         )}
 
@@ -740,12 +740,12 @@ export default function Dashboard() {
           />
         )}
 
-        {/* Mobile FAB for Quick Add Referral */}
+        {/* Mobile FAB for Quick Add Deal */}
         {isMobile && (
           <button
-            onClick={() => setLocation("/quick-add-referral")}
+            onClick={() => setLocation("/quick-add-deals?")}
             className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700 text-white rounded-full shadow-xl hover:shadow-2xl transform hover:scale-110 transition-all duration-200 flex items-center justify-center group"
-            aria-label="Quick Add Referral"
+            aria-label="Quick Add Deal"
             data-testid="button-fab-quick-add"
           >
             <PlusIcon className="w-8 h-8" />

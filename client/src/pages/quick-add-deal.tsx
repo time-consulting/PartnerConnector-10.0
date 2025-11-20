@@ -176,7 +176,7 @@ export default function QuickAddReferral() {
         description: "This quick form is optimized for mobile. Redirecting to full form...",
       });
       setTimeout(() => {
-        setLocation("/submit-referral");
+        setLocation("/submit-deals?");
       }, 2000);
     }
   }, [isLoading, toast, setLocation]);
@@ -186,7 +186,7 @@ export default function QuickAddReferral() {
     if (!isLoading && !isAuthenticated) {
       toast({
         title: "Please login",
-        description: "You need to be logged in to submit referrals.",
+        description: "You need to be logged in to submit deals?.",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -200,7 +200,7 @@ export default function QuickAddReferral() {
       // Use the first business type as default, or create a fallback
       const defaultBusinessTypeId = businessTypes?.[0]?.id || "general";
       
-      const response = await apiRequest("POST", "/api/referrals", {
+      const response = await apiRequest("POST", "/api/deals", {
         ...data,
         businessTypeId: defaultBusinessTypeId,
         businessEmail: data.businessEmail || `${data.businessPhone}@placeholder.com`, // Email is required by API

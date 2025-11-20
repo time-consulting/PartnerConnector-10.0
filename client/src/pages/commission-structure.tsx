@@ -227,7 +227,7 @@ export default function CommissionStructure() {
               <h2 className="text-4xl font-bold text-gray-900 mb-6">Payment Process</h2>
               <p className="text-lg text-gray-600 mb-8">
                 Our automated commission system ensures you get paid quickly and accurately 
-                for every successful referral and network activity.
+                for every successful deals? and network activity.
               </p>
               
               <div className="space-y-6">
