@@ -1,4 +1,5 @@
-// Service Worker registration with update handling
+// NOTE: This file has been edited to ensure Service Worker (PWA) is disabled
+// in development mode to prevent caching conflicts with Vite HMR.
 
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
@@ -13,24 +14,40 @@ type Config = {
   onUpdate?: (registration: ServiceWorkerRegistration) => void;
 };
 
-export function register(config?: Config) {
+// Explicit function to unregister the Service Worker
+export function unregister() {
   if ('serviceWorker' in navigator) {
-    // Register service worker after page load
+    navigator.serviceWorker.ready
+      .then((registration) => {
+        registration.unregister();
+        console.log('Service Worker unregistered to prevent cache conflicts.');
+      })
+      .catch((error) => {
+        // Silently fail
+      });
+  }
+}
+
+export function register(config?: Config) {
+  // CRITICAL: Check for production flag. If not production, unregister and exit.
+  if (process.env.NODE_ENV !== 'production' && 'serviceWorker' in navigator) {
+    unregister();
+    return;
+  }
+  
+  // Only proceed with registration if in production
+  if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       const swUrl = '/service-worker.js';
 
       if (isLocalhost) {
-        // This is running on localhost. Check if a service worker still exists or not.
         checkValidServiceWorker(swUrl, config);
-
-        // Add some additional logging to localhost
         navigator.serviceWorker.ready.then(() => {
           console.log(
             'This web app is being served cache-first by a service worker.'
           );
         });
       } else {
-        // Is not localhost. Just register service worker
         registerValidSW(swUrl, config);
       }
     });
@@ -49,22 +66,16 @@ function registerValidSW(swUrl: string, config?: Config) {
         installingWorker.onstatechange = () => {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
-              // At this point, the updated precached content has been fetched,
-              // but the previous service worker will still serve the older
-              // content until all client tabs are closed.
               console.log(
                 'New content is available and will be used when all tabs for this page are closed.'
               );
 
-              // Execute callback
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
               }
             } else {
-              // At this point, everything has been precached.
               console.log('Content is cached for offline use.');
 
-              // Execute callback
               if (config && config.onSuccess) {
                 config.onSuccess(registration);
               }
@@ -79,26 +90,17 @@ function registerValidSW(swUrl: string, config?: Config) {
 }
 
 function checkValidServiceWorker(swUrl: string, config?: Config) {
-  // Check if the service worker can be found. If it can't reload the page.
   fetch(swUrl, {
     headers: { 'Service-Worker': 'script' },
   })
     .then((response) => {
-      // Ensure service worker exists, and that we really are getting a JS file.
       const contentType = response.headers.get('content-type');
       if (
         response.status === 404 ||
         (contentType != null && contentType.indexOf('javascript') === -1)
       ) {
-        // No service worker found in development - this is expected, don't reload
-        console.log('Service worker not found. This is normal in development mode.');
-        navigator.serviceWorker.ready.then((registration) => {
-          registration.unregister();
-        }).catch(() => {
-          // Silently fail if no service worker to unregister
-        });
+        unregister();
       } else {
-        // Service worker found. Proceed as normal.
         registerValidSW(swUrl, config);
       }
     })
@@ -107,40 +109,9 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
     });
 }
 
-export function unregister() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready
-      .then((registration) => {
-        registration.unregister();
-      })
-      .catch((error) => {
-        console.error(error.message);
-      });
-  }
-}
-
-// Helper to request persistent storage
 export async function requestPersistentStorage() {
   if (navigator.storage && navigator.storage.persist) {
     const isPersisted = await navigator.storage.persist();
-    console.log(`Persistent storage ${isPersisted ? 'granted' : 'denied'}`);
-    return isPersisted;
-  }
-  return false;
-}
-
-// Helper to check if update is available
-export function checkForUpdates() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.update();
-    });
-  }
-}
-
-// Helper to skip waiting and activate new service worker
-export function skipWaiting() {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+    console.log('Persistent storage enabled:', isPersisted);
   }
 }
