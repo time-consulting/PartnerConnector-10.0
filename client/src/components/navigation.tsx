@@ -31,7 +31,13 @@ import {
 } from "lucide-react";
 
 export default function Navigation() {
-  const [location] = useLocation();
+  let location = "/";
+  try {
+    [location] = useLocation();
+  } catch (error) {
+    console.warn("Navigation: useLocation failed, using fallback", error);
+  }
+  
   const { isAuthenticated, user, logout } = useAuth();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
