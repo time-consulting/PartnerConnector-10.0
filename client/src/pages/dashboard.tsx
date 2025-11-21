@@ -97,11 +97,11 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background">
       <Sidebar onExpandChange={setSidebarExpanded} />
       
-      <div className={`flex-1 transition-all duration-300 ${sidebarExpanded ? 'ml-64' : 'ml-20'}`}>
-        <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className={`transition-all duration-300 ${sidebarExpanded ? 'ml-64' : 'ml-20'}`}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
