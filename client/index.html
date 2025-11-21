@@ -36,6 +36,29 @@
   </head>
   <body>
     <div id="root"></div>
+    
+    <!-- Suppress Vite HMR reconnection messages to reduce perceived reloading -->
+    <script>
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      
+      console.error = function(...args) {
+        const msg = args[0]?.toString?.() || '';
+        if (msg.includes('server connection lost') || msg.includes('HMR') || msg.includes('WebSocket') || msg.includes('polling')) {
+          return;
+        }
+        originalError.apply(console, args);
+      };
+      
+      console.warn = function(...args) {
+        const msg = args[0]?.toString?.() || '';
+        if (msg.includes('HMR') || msg.includes('WebSocket') || msg.includes('connection') || msg.includes('polling')) {
+          return;
+        }
+        originalWarn.apply(console, args);
+      };
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
     
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
