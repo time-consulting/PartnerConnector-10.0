@@ -63,41 +63,41 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Orange with white text */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
+          <Card className="bg-primary border-0">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Deals</CardTitle>
-              <FileText className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-white">Total Deals</CardTitle>
+              <FileText className="w-5 h-5 text-white/80" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <div className="text-3xl font-bold text-white">0</div>
+              <p className="text-xs text-white/70 mt-1 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 Submissions this month
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-primary border-0">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Commissions</CardTitle>
-              <DollarSign className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-white">Total Commissions</CardTitle>
+              <DollarSign className="w-5 h-5 text-white/80" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">£0.00</div>
-              <p className="text-xs text-muted-foreground mt-1">Lifetime earnings</p>
+              <div className="text-3xl font-bold text-white">£0.00</div>
+              <p className="text-xs text-white/70 mt-1">Lifetime earnings</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-primary border-0">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Team Members</CardTitle>
-              <Users className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-white">Team Members</CardTitle>
+              <Users className="w-5 h-5 text-white/80" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground mt-1">Active partners in your network</p>
+              <div className="text-3xl font-bold text-white">0</div>
+              <p className="text-xs text-white/70 mt-1">Active partners in your network</p>
             </CardContent>
           </Card>
         </div>
@@ -106,19 +106,19 @@ export default function Dashboard() {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-foreground mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="bg-primary border-0 hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <FileText className="w-6 h-6 text-primary" />
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                  <FileText className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle>Submit a Deal</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-white">Submit a Deal</CardTitle>
+                <CardDescription className="text-white/70">
                   Submit a new business deal and start earning commissions
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Link href="/submit-deal">
-                  <Button className="w-full">
+                  <Button className="w-full bg-white text-primary hover:bg-white/90">
                     Submit Deal
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -126,19 +126,19 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="bg-primary border-0 hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mb-4">
-                  <Target className="w-6 h-6 text-success" />
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                  <Target className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle>Track Deals</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-white">Track Deals</CardTitle>
+                <CardDescription className="text-white/70">
                   View and monitor the status of all your submitted deals
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Link href="/track-deals">
-                  <Button variant="outline" className="w-full">
+                  <Button className="w-full bg-white text-primary hover:bg-white/90">
                     Track Deals
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -146,19 +146,19 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="bg-primary border-0 hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mb-4">
-                  <Award className="w-6 h-6 text-success" />
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                  <Award className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle>View Commissions</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-white">View Commissions</CardTitle>
+                <CardDescription className="text-white/70">
                   Check your commission history and payment details
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Link href="/commissions">
-                  <Button variant="outline" className="w-full">
+                  <Button className="w-full bg-white text-primary hover:bg-white/90">
                     View Commissions
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
