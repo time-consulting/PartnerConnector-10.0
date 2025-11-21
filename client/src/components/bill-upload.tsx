@@ -8,12 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface BillUploadProps {
-  dealId: string;
+  referralId: string;
   onComplete?: () => void;
   isOptional?: boolean;
 }
 
-export default function BillUpload({ dealId, onComplete, isOptional = false }: BillUploadProps) {
+export default function BillUpload({ referralId, onComplete, isOptional = false }: BillUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -22,7 +22,7 @@ export default function BillUpload({ dealId, onComplete, isOptional = false }: B
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await fetch(`/api/deals/${dealId}/upload-bill`, {
+      const response = await fetch(`/api/referrals/${referralId}/upload-bill`, {
         method: 'POST',
         body: formData,
       });
@@ -38,7 +38,7 @@ export default function BillUpload({ dealId, onComplete, isOptional = false }: B
         title: "Files Uploaded Successfully",
         description: "Your payment processing bills have been uploaded and will help us create a competitive quote.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/referrals"] });
       setUploadedFiles([]);
       if (onComplete) {
         onComplete();
@@ -116,7 +116,7 @@ export default function BillUpload({ dealId, onComplete, isOptional = false }: B
     if (uploadedFiles.length === 0) return;
 
     const formData = new FormData();
-    formData.append('dealId', dealId);
+    formData.append('referralId', referralId);
     uploadedFiles.forEach((file) => {
       formData.append('bills', file);
     });

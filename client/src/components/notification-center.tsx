@@ -17,7 +17,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import type { Notification } from "@shared/schema";
 
 interface NotificationCenterProps {
-  onQuoteClick?: (dealId: string) => void;
+  onQuoteClick?: (referralId: string) => void;
 }
 
 export default function NotificationCenter({ onQuoteClick }: NotificationCenterProps) {
@@ -138,8 +138,8 @@ export default function NotificationCenter({ onQuoteClick }: NotificationCenterP
     }
     
     // Handle specific notification actions
-    if (notification.type === "quote_ready" && notification.dealId && onQuoteClick) {
-      onQuoteClick(notification.dealId);
+    if (notification.type === "quote_ready" && notification.referralId && onQuoteClick) {
+      onQuoteClick(notification.referralId);
     }
     
     setIsOpen(false);

@@ -103,7 +103,7 @@ const confirmPaymentSchema = z.object({
   paymentNotes: z.string().optional(),
 });
 
-// Component to display deals documents with view/download
+// Component to display referral documents with view/download
 function ReferralDocumentsDisplay({ businessName }: { businessName: string }) {
   const { data: documents = [] } = useQuery({
     queryKey: ['/api/bills', businessName],
@@ -273,9 +273,9 @@ export default function AdminDashboard() {
     );
   }
 
-  // Fetch admin deals
-  const { data: dealsData, isLoading: dealsLoading } = useQuery<{
-    deals: any[];
+  // Fetch admin referrals
+  const { data: referralsData, isLoading: referralsLoading } = useQuery<{
+    referrals: any[];
     total: number;
     pagination: {
       page: number;
@@ -284,7 +284,7 @@ export default function AdminDashboard() {
       totalPages: number;
     };
   }>({
-    queryKey: ['/api/admin/deals', { search: searchTerm, status: statusFilter, page: currentPage }],
+    queryKey: ['/api/admin/referrals', { search: searchTerm, status: statusFilter, page: currentPage }],
     enabled: !!(user as any)?.isAdmin,
   });
 
@@ -338,8 +338,8 @@ export default function AdminDashboard() {
     };
 
     // Count submissions that need review (new or quote_requested status)
-    if (dealsData?.deals) {
-      counts.submissions = dealsData.deals.filter(
+    if (referralsData?.referrals) {
+      counts.submissions = referralsData.referrals.filter(
         (r: any) => r.status === 'submitted'
       ).length;
     }
@@ -429,8 +429,8 @@ export default function AdminDashboard() {
 
   // Send quote mutation
   const sendQuoteMutation = useMutation({
-    mutationFn: async (data: { dealId: string; quoteData: any }) => {
-      const response = await fetch(`/api/admin/deals/${data.dealId}/send-quote`, {
+    mutationFn: async (data: { referralId: string; quoteData: any }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/send-quote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.quoteData),
@@ -438,7 +438,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setShowQuoteModal(false);
       quoteForm.reset();
     },
@@ -446,8 +446,8 @@ export default function AdminDashboard() {
 
   // Update document requirements mutation
   const updateDocumentsMutation = useMutation({
-    mutationFn: async (data: { dealId: string; documentsData: any }) => {
-      const response = await fetch(`/api/admin/deals/${data.dealId}/document-requirements`, {
+    mutationFn: async (data: { referralId: string; documentsData: any }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/document-requirements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.documentsData),
@@ -455,7 +455,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setShowDocumentsModal(false);
       documentForm.reset();
     },
@@ -463,8 +463,8 @@ export default function AdminDashboard() {
 
   // Update stage mutation
   const updateStageMutation = useMutation({
-    mutationFn: async (data: { dealId: string; stageData: z.infer<typeof stageFormSchema> }) => {
-      const response = await fetch(`/api/admin/deals/${data.dealId}/update-stage`, {
+    mutationFn: async (data: { referralId: string; stageData: z.infer<typeof stageFormSchema> }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/update-stage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.stageData),
@@ -472,7 +472,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setShowStageModal(false);
       stageForm.reset();
     },
@@ -480,8 +480,8 @@ export default function AdminDashboard() {
 
   // Stage override mutation
   const stageOverrideMutation = useMutation({
-    mutationFn: async (data: { dealId: string; overrideData: any }) => {
-      const response = await fetch(`/api/admin/deals/${data.dealId}/override-stage`, {
+    mutationFn: async (data: { referralId: string; overrideData: any }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/override-stage`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.overrideData),
@@ -489,7 +489,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setShowStageOverrideModal(false);
       stageOverrideForm.reset();
     },
@@ -497,8 +497,8 @@ export default function AdminDashboard() {
 
   // Preview commission distribution
   const previewCommissionMutation = useMutation({
-    mutationFn: async (data: { dealId: string; actualCommission: string }) => {
-      const response = await fetch(`/api/admin/deals/${data.dealId}/preview-commission`, {
+    mutationFn: async (data: { referralId: string; actualCommission: string }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/preview-commission`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actualCommission: data.actualCommission }),
@@ -513,8 +513,8 @@ export default function AdminDashboard() {
 
   // Confirm payment mutation
   const confirmPaymentMutation = useMutation({
-    mutationFn: async (data: { dealId: string; paymentData: any }) => {
-      const response = await fetch(`/api/admin/deals/${data.dealId}/confirm-payment`, {
+    mutationFn: async (data: { referralId: string; paymentData: any }) => {
+      const response = await fetch(`/api/admin/referrals/${data.referralId}/confirm-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data.paymentData),
@@ -522,7 +522,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setShowConfirmPaymentModal(false);
       setPaymentStep('input');
       setCommissionPreview(null);
@@ -546,7 +546,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
       setSeedingTestData(false);
     },
     onError: () => {
@@ -556,8 +556,8 @@ export default function AdminDashboard() {
 
   // Docs out confirmation mutation
   const docsOutMutation = useMutation({
-    mutationFn: async (dealId: string) => {
-      const response = await fetch(`/api/admin/deals/${dealId}/docs-out-confirmation`, {
+    mutationFn: async (referralId: string) => {
+      const response = await fetch(`/api/admin/referrals/${referralId}/docs-out-confirmation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
     },
   });
 
@@ -918,17 +918,17 @@ export default function AdminDashboard() {
                   <CardHeader className="bg-gradient-to-r from-orange-100/50 to-amber-100/50">
                     <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                       <AlertCircle className="w-6 h-6 text-orange-600" />
-                      New Quote Requests ({dealsData?.deals?.filter((r: any) => r.status === 'submitted').length || 0})
+                      New Quote Requests ({referralsData?.referrals?.filter((r: any) => r.status === 'submitted').length || 0})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {dealsData?.deals && dealsData.deals.filter((r: any) => r.status === 'submitted').length > 0 ? (
+                    {referralsData?.referrals && referralsData.referrals.filter((r: any) => r.status === 'submitted').length > 0 ? (
                       <div className="space-y-1">
-                        {dealsData.deals
+                        {referralsData.referrals
                           .filter((r: any) => r.status === 'submitted')
-                          .map((deals: any, index: number, arr: any[]) => (
+                          .map((referral: any, index: number, arr: any[]) => (
                             <div
-                              key={deals.id}
+                              key={referral.id}
                               className={`p-6 hover:bg-white/80 transition-all duration-200 ${
                                 index !== arr.length - 1 ? 'border-b border-orange-200' : ''
                               }`}
@@ -936,11 +936,11 @@ export default function AdminDashboard() {
                               <div className="flex justify-between items-start gap-6">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-4">
-                                    <h3 className="font-bold text-xl text-gray-900">{deals.businessName}</h3>
+                                    <h3 className="font-bold text-xl text-gray-900">{referral.businessName}</h3>
                                     <Badge className="bg-orange-100 text-orange-800 border-0 font-medium px-3 py-1">
                                       NEW REQUEST
                                     </Badge>
-                                    {deals.gdprConsent && (
+                                    {referral.gdprConsent && (
                                       <Badge className="bg-green-100 text-green-800 border-0 font-medium px-3 py-1">
                                         GDPR ✓
                                       </Badge>
@@ -953,14 +953,14 @@ export default function AdminDashboard() {
                                       <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                       <div>
                                         <p className="text-xs text-gray-500 font-medium">Email</p>
-                                        <p className="text-sm">{deals.businessEmail}</p>
+                                        <p className="text-sm">{referral.businessEmail}</p>
                                       </div>
                                     </div>
                                     <div className="flex items-start gap-2 text-gray-700">
                                       <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                       <div>
                                         <p className="text-xs text-gray-500 font-medium">Phone</p>
-                                        <p className="text-sm">{deals.businessPhone || 'Not provided'}</p>
+                                        <p className="text-sm">{referral.businessPhone || 'Not provided'}</p>
                                       </div>
                                     </div>
                                     <div className="flex items-start gap-2 text-gray-700">
@@ -968,46 +968,46 @@ export default function AdminDashboard() {
                                       <div>
                                         <p className="text-xs text-gray-500 font-medium">Submitted</p>
                                         <p className="text-sm">
-                                          {new Date(deals.submittedAt).toLocaleDateString()}
+                                          {new Date(referral.submittedAt).toLocaleDateString()}
                                         </p>
                                       </div>
                                     </div>
                                   </div>
 
                                   {/* Business Details */}
-                                  {(deals.businessAddress || deals.businessTypeName) && (
+                                  {(referral.businessAddress || referral.businessTypeName) && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-white/60 rounded-lg">
-                                      {deals.businessAddress && (
+                                      {referral.businessAddress && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Business Address</p>
-                                          <p className="text-sm text-gray-700">{deals.businessAddress}</p>
+                                          <p className="text-sm text-gray-700">{referral.businessAddress}</p>
                                         </div>
                                       )}
-                                      {deals.businessTypeName && (
+                                      {referral.businessTypeName && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Business Type</p>
-                                          <p className="text-sm text-gray-700">{deals.businessTypeName}</p>
+                                          <p className="text-sm text-gray-700">{referral.businessTypeName}</p>
                                         </div>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Monthly Volume Information */}
-                                  {deals.monthlyVolume && (
+                                  {referral.monthlyVolume && (
                                     <div className="mb-4 p-3 bg-blue-50/60 rounded-lg border-l-4 border-blue-400">
                                       <p className="text-xs text-gray-500 font-medium mb-1">Monthly Card Volume</p>
-                                      <p className="text-lg text-blue-700 font-bold">£{parseInt(deals.monthlyVolume || '0').toLocaleString()}</p>
+                                      <p className="text-lg text-blue-700 font-bold">£{parseInt(referral.monthlyVolume || '0').toLocaleString()}</p>
                                     </div>
                                   )}
 
                                   {/* Products and Services */}
-                                  {(deals.selectedProducts?.length > 0 || deals.cardMachineQuantity || deals.fundingAmount) && (
+                                  {(referral.selectedProducts?.length > 0 || referral.cardMachineQuantity || referral.fundingAmount) && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-purple-50/60 rounded-lg">
-                                      {deals.selectedProducts?.length > 0 && (
+                                      {referral.selectedProducts?.length > 0 && (
                                         <div className="md:col-span-2">
                                           <p className="text-xs text-gray-500 font-medium mb-1">Selected Products</p>
                                           <div className="flex flex-wrap gap-2">
-                                            {deals.selectedProducts.map((product: string, idx: number) => (
+                                            {referral.selectedProducts.map((product: string, idx: number) => (
                                               <Badge key={idx} className="bg-purple-100 text-purple-800 border-0">
                                                 {product}
                                               </Badge>
@@ -1015,44 +1015,44 @@ export default function AdminDashboard() {
                                           </div>
                                         </div>
                                       )}
-                                      {deals.cardMachineQuantity && (
+                                      {referral.cardMachineQuantity && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Card Machines</p>
-                                          <p className="text-sm text-gray-700 font-semibold">{deals.cardMachineQuantity}</p>
+                                          <p className="text-sm text-gray-700 font-semibold">{referral.cardMachineQuantity}</p>
                                         </div>
                                       )}
-                                      {deals.cardMachineProvider && (
+                                      {referral.cardMachineProvider && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Current Card Machine Provider</p>
-                                          <p className="text-sm text-gray-700 font-semibold">{deals.cardMachineProvider}</p>
+                                          <p className="text-sm text-gray-700 font-semibold">{referral.cardMachineProvider}</p>
                                         </div>
                                       )}
-                                      {deals.fundingAmount && (
+                                      {referral.fundingAmount && (
                                         <div>
                                           <p className="text-xs text-gray-500 font-medium mb-1">Funding Amount</p>
-                                          <p className="text-sm text-gray-700 font-semibold">£{deals.fundingAmount}</p>
+                                          <p className="text-sm text-gray-700 font-semibold">£{referral.fundingAmount}</p>
                                         </div>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Partner Notes */}
-                                  {deals.notes && (
+                                  {referral.notes && (
                                     <div className="mt-3 p-3 bg-amber-50/60 border-l-4 border-amber-400 rounded">
                                       <p className="text-xs text-gray-500 font-medium mb-1">Partner Notes</p>
-                                      <p className="text-sm text-gray-700">{deals.notes}</p>
+                                      <p className="text-sm text-gray-700">{referral.notes}</p>
                                     </div>
                                   )}
 
                                   {/* Uploaded Documents Section */}
-                                  <ReferralDocumentsDisplay businessName={deals.businessName} />
+                                  <ReferralDocumentsDisplay businessName={referral.businessName} />
 
                                   {/* Partner Information */}
-                                  {(deals.partnerName || deals.partnerEmail) && (
+                                  {(referral.partnerName || referral.partnerEmail) && (
                                     <div className="mt-3 p-3 bg-teal-50/60 border-l-4 border-teal-400 rounded">
                                       <p className="text-xs text-gray-500 font-medium mb-1">Referred By</p>
                                       <p className="text-sm text-gray-700">
-                                        {deals.partnerName} {deals.partnerEmail && `(${deals.partnerEmail})`}
+                                        {referral.partnerName} {referral.partnerEmail && `(${referral.partnerEmail})`}
                                       </p>
                                     </div>
                                   )}
@@ -1062,11 +1062,11 @@ export default function AdminDashboard() {
                                   <Button
                                     size="lg"
                                     onClick={() => {
-                                      setSelectedReferral(deals);
+                                      setSelectedReferral(referral);
                                       setShowQuoteModal(true);
                                     }}
                                     className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg whitespace-nowrap"
-                                    data-testid={`button-create-quote-${deals.id}`}
+                                    data-testid={`button-create-quote-${referral.id}`}
                                   >
                                     <Plus className="w-4 h-4 mr-2" />
                                     Create Quote
@@ -1195,7 +1195,7 @@ export default function AdminDashboard() {
                       <AdminSignupsTabs
                         signupsLoading={signupsLoading}
                         signups={signups}
-                        dealsData={dealsData}
+                        referralsData={referralsData}
                         signupSubTab={signupSubTab}
                         setSignupSubTab={setSignupSubTab}
                         setSelectedSignupForDocs={setSelectedSignupForDocs}
@@ -1416,9 +1416,9 @@ export default function AdminDashboard() {
                               <p className="text-xs text-gray-500">
                                 Partner ID: {user.partnerId || 'Not assigned'}
                               </p>
-                              {user.dealsCode && (
+                              {user.referralCode && (
                                 <p className="text-xs text-gray-500">
-                                  Referral Code: {user.dealsCode}
+                                  Referral Code: {user.referralCode}
                                 </p>
                               )}
                             </div>
@@ -1489,7 +1489,7 @@ export default function AdminDashboard() {
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-green-600">Total Deals</p>
+                          <p className="text-sm font-medium text-green-600">Total Referrals</p>
                           <p className="text-3xl font-bold text-green-900">{adminStats?.totalReferrals || 0}</p>
                           <p className="text-xs text-green-600 mt-1">All time deals</p>
                         </div>
@@ -1538,7 +1538,7 @@ export default function AdminDashboard() {
                       <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                         <h3 className="font-bold text-green-900 mb-2">Direct Sales (L1)</h3>
                         <p className="text-3xl font-bold text-green-700">60%</p>
-                        <p className="text-sm text-green-600 mt-1">Commission on direct deals</p>
+                        <p className="text-sm text-green-600 mt-1">Commission on direct referrals</p>
                       </div>
                       <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <h3 className="font-bold text-blue-900 mb-2">Level 2 Team</h3>
@@ -1617,15 +1617,15 @@ export default function AdminDashboard() {
                         variant="outline"
                         className="h-20 flex flex-col items-center justify-center gap-2"
                         onClick={async () => {
-                          const response = await fetch('/api/admin/export/deals');
+                          const response = await fetch('/api/admin/export/referrals');
                           const blob = await response.blob();
                           const url = window.URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = `deals-export-${new Date().toISOString().split('T')[0]}.csv`;
+                          a.download = `referrals-export-${new Date().toISOString().split('T')[0]}.csv`;
                           a.click();
                         }}
-                        data-testid="button-export-deals"
+                        data-testid="button-export-referrals"
                       >
                         <FileText className="w-6 h-6" />
                         <span>Export Referrals CSV</span>
@@ -1664,7 +1664,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
                         <h3 className="font-medium">Seed Test Data</h3>
-                        <p className="text-sm text-gray-600">Generate sample deals for testing</p>
+                        <p className="text-sm text-gray-600">Generate sample referrals for testing</p>
                       </div>
                       <Button
                         variant="outline"
@@ -1734,11 +1734,11 @@ export default function AdminDashboard() {
           <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="modal-quote-builder">
             {selectedReferral && (
               <QuoteBuilder
-                dealId={selectedReferral.id}
+                referralId={selectedReferral.id}
                 businessName={selectedReferral.businessName}
                 onQuoteCreated={(quoteId) => {
                   setShowQuoteModal(false);
-                  queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
                 }}
                 onCancel={() => setShowQuoteModal(false)}
               />
@@ -1755,7 +1755,7 @@ export default function AdminDashboard() {
             <Form {...documentForm}>
               <form onSubmit={documentForm.handleSubmit((data) => {
                 updateDocumentsMutation.mutate({
-                  dealId: selectedReferral.id,
+                  referralId: selectedReferral.id,
                   documentsData: data
                 });
               })} className="space-y-4">
@@ -1855,7 +1855,7 @@ export default function AdminDashboard() {
             <Form {...stageForm}>
               <form onSubmit={stageForm.handleSubmit((data) => {
                 updateStageMutation.mutate({
-                  dealId: selectedReferral.id,
+                  referralId: selectedReferral.id,
                   stageData: data
                 });
               })} className="space-y-4">
@@ -2383,7 +2383,7 @@ export default function AdminDashboard() {
                   <Form {...confirmPaymentForm}>
                     <form onSubmit={confirmPaymentForm.handleSubmit((values) => {
                       previewCommissionMutation.mutate({
-                        dealId: selectedReferral.id,
+                        referralId: selectedReferral.id,
                         actualCommission: values.actualCommission
                       });
                     })} className="space-y-4">
@@ -2564,7 +2564,7 @@ export default function AdminDashboard() {
                       <Button 
                         onClick={() => {
                           confirmPaymentMutation.mutate({
-                            dealId: selectedReferral.id,
+                            referralId: selectedReferral.id,
                             paymentData: confirmPaymentForm.getValues()
                           });
                         }}

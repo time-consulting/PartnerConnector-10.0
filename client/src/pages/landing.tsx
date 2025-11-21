@@ -47,7 +47,7 @@ export default function Landing() {
                 </h1>
                 
                 <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  Access your dashboard to track deals, monitor commissions, and manage your growing partner network.
+                  Access your dashboard to track referrals, monitor commissions, and manage your growing partner network.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -61,14 +61,14 @@ export default function Landing() {
                       Go to Dashboard
                     </Button>
                   </Link>
-                  <Link href="/submit-deal">
+                  <Link href="/submit-referral">
                     <Button 
                       variant="outline" 
                       size="lg"
                       className="w-full sm:w-auto border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-4 text-lg font-semibold transition-all duration-300"
-                      data-testid="button-submit-deals"
+                      data-testid="button-submit-referral"
                     >
-                      Submit New Deal
+                      Submit New Referral
                       <ArrowRightIcon className="ml-2 w-5 h-5" />
                     </Button>
                   </Link>
@@ -87,7 +87,7 @@ export default function Landing() {
                       </div>
                     </Card>
                   </Link>
-                  <Link href="/track-deals">
+                  <Link href="/track-referrals">
                     <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-green-500">
                       <div className="flex items-center gap-3">
                         <BarChart3 className="w-5 h-5 text-green-600" />

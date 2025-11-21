@@ -38,7 +38,7 @@ const PIPELINE_STAGES = [
   {
     id: "quote_request_received",
     label: "Quote Requested",
-    description: "Your deal is being reviewed",
+    description: "Your referral is being reviewed",
     icon: FileText,
     color: "bg-blue-50 border-blue-200",
     badgeColor: "bg-blue-500",
@@ -121,35 +121,35 @@ interface Referral {
   }>;
 }
 
-// Track deals page - Last updated: 2025-11-21
+// Track referrals page - Last updated: 2025-11-12
 export default function TrackReferrals() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReferral, setSelectedReferral] = useState<any>(null);
   const [showProgressTracker, setShowProgressTracker] = useState(false);
 
-  const { data: deals, isLoading: dealsLoading } = useQuery({
-    queryKey: ["/api/deals"],
+  const { data: referrals, isLoading: referralsLoading } = useQuery({
+    queryKey: ["/api/referrals"],
     enabled: isAuthenticated,
     retry: false,
   });
 
-  const dealsList = Array.isArray(deals) ? deals : [];
+  const referralsList = Array.isArray(referrals) ? referrals : [];
 
-  const filteredReferrals = dealsList.filter((deal: any) => {
-    const matchesSearch = deal?.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         deal?.businessEmail.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredReferrals = referralsList.filter((referral: any) => {
+    const matchesSearch = referral.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         referral.businessEmail.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
-  // Group deals by deal stage
-  const dealsByStage = PIPELINE_STAGES.reduce((acc, stage) => {
-    acc[stage.id] = filteredReferrals.filter((deal: any) => deal?.dealStage === stage.id);
+  // Group referrals by deal stage
+  const referralsByStage = PIPELINE_STAGES.reduce((acc, stage) => {
+    acc[stage.id] = filteredReferrals.filter((referral: any) => referral.dealStage === stage.id);
     return acc;
   }, {} as Record<string, Referral[]>);
 
-  const handleViewProgress = (deal: any) => {
-    setSelectedReferral(deal);
+  const handleViewProgress = (referral: any) => {
+    setSelectedReferral(referral);
     setShowProgressTracker(true);
   };
 
@@ -158,7 +158,7 @@ export default function TrackReferrals() {
   }
 
   if (!isAuthenticated) {
-    return <div>Please log in to view your deals.</div>;
+    return <div>Please log in to view your referrals.</div>;
   }
 
   return (
@@ -197,8 +197,8 @@ export default function TrackReferrals() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Deals</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{dealsList.length}</p>
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Referrals</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{referralsList.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Building className="w-6 h-6 text-blue-600" />
@@ -217,7 +217,7 @@ export default function TrackReferrals() {
                 <div>
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">In Progress</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">
-                    {dealsList.filter((r: any) => !['live_confirm_ltr', 'declined'].includes(r.dealStage)).length}
+                    {referralsList.filter((r: any) => !['live_confirm_ltr', 'declined'].includes(r.dealStage)).length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -236,7 +236,7 @@ export default function TrackReferrals() {
                 <div>
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Live Deals</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">
-                    {dealsList.filter((r: any) => r.dealStage === 'live_confirm_ltr').length}
+                    {referralsList.filter((r: any) => r.dealStage === 'live_confirm_ltr').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -250,6 +250,26 @@ export default function TrackReferrals() {
             </CardContent>
           </Card>
 
+          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Est. Commission</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">
+                    £{referralsList
+                      .reduce((sum: number, r: any) => sum + (parseFloat(r.estimatedCommission) || 0), 0)
+                      .toLocaleString()}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <PoundSterling className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+              <p className="text-sm text-purple-600 mt-3">
+                Total potential
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search */}
@@ -264,7 +284,7 @@ export default function TrackReferrals() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-12 h-12 text-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    data-testid="input-search-deals"
+                    data-testid="input-search-referrals"
                   />
                 </div>
               </div>
@@ -281,7 +301,7 @@ export default function TrackReferrals() {
             </div>
             {searchTerm && (
               <div className="mt-4 text-sm text-gray-600 bg-blue-50 rounded-lg p-3">
-                Showing <span className="font-semibold">{filteredReferrals.length}</span> of <span className="font-semibold">{dealsList.length}</span> deals
+                Showing <span className="font-semibold">{filteredReferrals.length}</span> of <span className="font-semibold">{referralsList.length}</span> referrals
                 {searchTerm && (
                   <span> matching "<span className="font-medium text-blue-600">{searchTerm}</span>"</span>
                 )}
@@ -291,7 +311,7 @@ export default function TrackReferrals() {
         </Card>
 
         {/* Pipeline Accordion */}
-        {dealsLoading ? (
+        {referralsLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
@@ -302,17 +322,17 @@ export default function TrackReferrals() {
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Building className="w-10 h-10 text-blue-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">No deals found</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">No referrals found</h3>
                 <p className="text-gray-600 text-lg mb-8 max-w-md mx-auto">
                   {searchTerm 
                     ? "Try adjusting your search criteria to find what you're looking for"
-                    : "Ready to start earning? Submit your first deals and begin building your commission income"
+                    : "Ready to start earning? Submit your first referral and begin building your commission income"
                   }
                 </p>
                 {!searchTerm && (
-                  <Link href="/submit-deal">
+                  <Link href="/submit-referral">
                     <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold rounded-xl shadow-lg">
-                      Submit Your First Deal
+                      Submit Your First Referral
                     </Button>
                   </Link>
                 )}
@@ -322,7 +342,7 @@ export default function TrackReferrals() {
         ) : (
           <Accordion type="multiple" className="w-full space-y-3">
             {PIPELINE_STAGES.map((stage) => {
-              const stageReferrals = dealsByStage[stage.id] || [];
+              const stageReferrals = referralsByStage[stage.id] || [];
               const Icon = stage.icon;
 
               return (
@@ -349,63 +369,75 @@ export default function TrackReferrals() {
                     {stageReferrals.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No deals in this stage</p>
+                        <p>No referrals in this stage</p>
                       </div>
                     ) : (
                       <div className="grid gap-4">
-                        {stageReferrals.map((deal: any) => (
-                          <Card key={deal?.id} className="border-2 hover:shadow-lg transition-shadow">
+                        {stageReferrals.map((referral: any) => (
+                          <Card key={referral.id} className="border-2 hover:shadow-lg transition-shadow">
                             <CardContent className="p-6">
                               <div className="space-y-4">
                                 {/* Header */}
                                 <div className="flex items-start justify-between">
                                   <div>
-                                    <h4 className="text-xl font-bold text-gray-900">{deal?.businessName}</h4>
+                                    <h4 className="text-xl font-bold text-gray-900">{referral.businessName}</h4>
                                   </div>
                                 </div>
 
-                                {/* Deal Details */}
+                                {/* Referral Details */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                   <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4 text-gray-400" />
-                                    <span className="text-gray-600">{deal?.businessEmail}</span>
+                                    <span className="text-gray-600">{referral.businessEmail}</span>
                                   </div>
-                                  {deal?.businessPhone && (
+                                  {referral.businessPhone && (
                                     <div className="flex items-center gap-2">
                                       <Phone className="h-4 w-4 text-gray-400" />
-                                      <span className="text-gray-600">{deal?.businessPhone}</span>
+                                      <span className="text-gray-600">{referral.businessPhone}</span>
                                     </div>
                                   )}
                                   <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-gray-400" />
                                     <span className="text-gray-600">
-                                      {format(new Date(deal?.submittedAt), "MMM dd, yyyy")}
+                                      {format(new Date(referral.submittedAt), "MMM dd, yyyy")}
                                     </span>
                                   </div>
-                                  {deal?.monthlyVolume && (
+                                  {referral.monthlyVolume && (
                                     <div className="flex items-center gap-2">
                                       <Banknote className="h-4 w-4 text-gray-400" />
-                                      <span className="text-gray-600">Vol: {deal?.monthlyVolume}</span>
+                                      <span className="text-gray-600">Vol: {referral.monthlyVolume}</span>
                                     </div>
                                   )}
                                 </div>
+
+                                {/* Commission Display */}
+                                {referral.estimatedCommission && (
+                                  <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm font-medium text-gray-700">Estimated Commission</span>
+                                      <span className="text-2xl font-bold text-green-700">
+                                        £{referral.estimatedCommission}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
 
                                 {/* Actions */}
                                 <div className="flex gap-2 pt-2">
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => handleViewProgress(deal)}
-                                    data-testid={`button-view-details-${deal?.id}`}
+                                    onClick={() => handleViewProgress(referral)}
+                                    data-testid={`button-view-details-${referral.id}`}
                                   >
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Details
                                   </Button>
                                   {['quote_sent', 'quote_approved'].includes(stage.id) && (
-                                    <Link href={`/quotes?dealId=${deal?.id}`}>
+                                    <Link href={`/quotes?referralId=${referral.id}`}>
                                       <Button
                                         size="sm"
-                                        data-testid={`button-view-quote-${deal?.id}`}
+                                        data-testid={`button-view-quote-${referral.id}`}
                                       >
                                         <FileText className="h-4 w-4 mr-2" />
                                         View Quote
@@ -436,7 +468,7 @@ export default function TrackReferrals() {
             setShowProgressTracker(false);
             setSelectedReferral(null);
           }}
-          deal={selectedReferral}
+          referral={selectedReferral}
         />
       )}
     </div>

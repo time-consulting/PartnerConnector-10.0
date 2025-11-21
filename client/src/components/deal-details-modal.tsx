@@ -27,7 +27,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
   const [isMovingForward, setIsMovingForward] = useState(false);
 
   const handleQuoteCreated = (quoteId: string) => {
-    queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
     toast({
       title: "Quote Generated",
       description: `Quote sent successfully to ${deal.businessEmail}`,
@@ -53,7 +53,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
   const handleMoveForward = async () => {
     try {
       setIsMovingForward(true);
-      const response = await fetch(`/api/admin/deals/${deal.id}/move-to-agreement-sent`, {
+      const response = await fetch(`/api/admin/referrals/${deal.id}/move-to-agreement-sent`, {
         method: 'PATCH',
         credentials: 'include',
       });
@@ -62,8 +62,8 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
         throw new Error('Failed to move deal forward');
       }
       
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/deals'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/referrals'] });
       
       toast({
         title: "Deal Moved Forward",
@@ -270,11 +270,11 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
           </DialogHeader>
           <div className="flex-1 overflow-y-auto p-6">
             <QuoteBuilder
-              dealId={deal.id}
+              referralId={deal.id}
               businessName={deal.businessName}
               onQuoteCreated={handleQuoteCreated}
               onCancel={() => setShowQuoteBuilder(false)}
-              apiEndpoint={`/api/admin/deals/${deal.id}/generate-quote`}
+              apiEndpoint={`/api/admin/referrals/${deal.id}/generate-quote`}
             />
           </div>
         </DialogContent>
@@ -291,7 +291,7 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
             Deal Details: {deal.businessName}
           </DialogTitle>
           <DialogDescription>
-            Complete information from the deals submission
+            Complete information from the referral submission
           </DialogDescription>
         </DialogHeader>
 
@@ -499,6 +499,12 @@ export default function DealDetailsModal({ isOpen, onClose, deal }: DealDetailsM
                     {deal.referrer.firstName} {deal.referrer.lastName}
                   </p>
                   <p className="text-sm text-gray-500">{deal.referrer.email}</p>
+                </div>
+              )}
+              {deal.estimatedCommission && (
+                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                  <label className="text-sm text-gray-700">Estimated Commission</label>
+                  <p className="font-bold text-2xl text-green-700">£{deal.estimatedCommission}</p>
                 </div>
               )}
             </CardContent>

@@ -6,14 +6,14 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import SideNavigation from "@/components/side-navigation";
-import DealStepper from "@/components/deal-stepper";
+import ReferralStepper from "@/components/referral-stepper";
 import BillUpload from "@/components/bill-upload";
 import { CheckCircleIcon, Sparkles } from "lucide-react";
 
-export default function SubmitDeal() {
+export default function SubmitReferral() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const [submittedDealId, setSubmittedReferralId] = useState<string | null>(null);
+  const [submittedReferralId, setSubmittedReferralId] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
   // Redirect to login if not authenticated
@@ -36,11 +36,11 @@ export default function SubmitDeal() {
     enabled: isAuthenticated,
   });
 
-  const submitDealMutation = useMutation({
-    mutationFn: async ({ dealData, files }: { dealData: any; files: File[] }) => {
-      // First, create the deal
-      const response = await apiRequest("POST", "/api/deals", dealData);
-      const deal = await response.json();
+  const submitReferralMutation = useMutation({
+    mutationFn: async ({ referralData, files }: { referralData: any; files: File[] }) => {
+      // First, create the referral
+      const response = await apiRequest("POST", "/api/referrals", referralData);
+      const referral = await response.json();
       
       // Then, upload files if any
       if (files && files.length > 0) {
@@ -49,23 +49,23 @@ export default function SubmitDeal() {
           formData.append('bills', file);
         });
         
-        await fetch(`/api/deals/${deal?.id}/upload-bill`, {
+        await fetch(`/api/referrals/${referral.id}/upload-bill`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
         });
       }
       
-      return deal;
+      return referral;
     },
     onSuccess: (data) => {
       setSubmittedReferralId(data.id);
       setShowConfetti(true);
       toast({
         title: "🎉 Referral Submitted Successfully!",
-        description: "Your deal has been submitted and will be processed within 24 hours.",
+        description: "Your referral has been submitted and will be processed within 24 hours.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/referrals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
@@ -86,14 +86,14 @@ export default function SubmitDeal() {
       }
       toast({
         title: "Error",
-        description: "Failed to submit deal. Please try again.",
+        description: "Failed to submit referral. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handleDealSubmit = (data: any, files: File[]) => {
-    submitDealMutation.mutate({ dealData: data, files });
+  const handleReferralSubmit = (data: any, files: File[]) => {
+    submitReferralMutation.mutate({ referralData: data, files });
   };
 
 
@@ -122,7 +122,7 @@ export default function SubmitDeal() {
             <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <div className="text-center">
                 <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                  Submit New Deal
+                  Submit New Referral
                 </h1>
                 <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                   Connect businesses with the right payment solutions and earn commissions
@@ -133,10 +133,10 @@ export default function SubmitDeal() {
 
           {/* Main Content - Full Width Centered Layout */}
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <DealStepper 
+            <ReferralStepper 
               businessTypes={businessTypes}
-              onSubmit={handleDealSubmit}
-              isSubmitting={submitDealMutation.isPending}
+              onSubmit={handleReferralSubmit}
+              isSubmitting={submitReferralMutation.isPending}
             />
           </div>
         </div>

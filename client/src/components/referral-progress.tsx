@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckIcon, ClockIcon, FileTextIcon } from "lucide-react";
 
-interface DealProgressProps {
-  dealId?: string;
+interface ReferralProgressProps {
+  referralId?: string;
 }
 
-export default function DealProgress({ dealId }: DealProgressProps) {
+export default function ReferralProgress({ referralId }: ReferralProgressProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showApprovalForm, setShowApprovalForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -24,7 +24,7 @@ export default function DealProgress({ dealId }: DealProgressProps) {
   const steps = [
     {
       id: 1,
-      title: "Submit Deal",
+      title: "Submit Referral",
       description: "Referral submitted and being processed",
       icon: FileTextIcon,
       status: currentStep > 1 ? "completed" : currentStep === 1 ? "active" : "pending"
@@ -69,10 +69,10 @@ export default function DealProgress({ dealId }: DealProgressProps) {
   };
 
   return (
-    <Card data-testid="card-deals-progress">
+    <Card data-testid="card-referral-progress">
       <CardHeader>
-        <CardTitle className="text-xl font-bold">Deal Progress Tracker</CardTitle>
-        <p className="text-sm text-muted-foreground">Track your deals from submission to completion</p>
+        <CardTitle className="text-xl font-bold">Referral Progress Tracker</CardTitle>
+        <p className="text-sm text-muted-foreground">Track your referral from submission to completion</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">

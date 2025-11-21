@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
-import { insertDealSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema, mapDealStageToCustomerJourney } from "@shared/schema";
+import { insertReferralSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { emailService } from "./emailService";
 import { ghlEmailService } from "./ghlEmailService";
@@ -38,17 +38,17 @@ async function submitToGHL(referral: any) {
     
     // Create contact/lead in GoHighLevel
     const contactData = {
-      firstName: deal.businessOwnerName?.split(' ')[0] || 'Business',
-      lastName: deal.businessOwnerName?.split(' ').slice(1).join(' ') || 'Owner',
-      email: deal.businessEmail,
-      phone: deal.businessPhone,
-      companyName: deal.businessName,
+      firstName: referral.businessOwnerName?.split(' ')[0] || 'Business',
+      lastName: referral.businessOwnerName?.split(' ').slice(1).join(' ') || 'Owner',
+      email: referral.businessEmail,
+      phone: referral.businessPhone,
+      companyName: referral.businessName,
       customFields: {
-        business_type: deal.businessType,
-        monthly_volume: deal.monthlyVolume,
-        annual_turnover: deal.annualTurnover,
+        business_type: referral.businessType,
+        monthly_volume: referral.monthlyVolume,
+        annual_turnover: referral.annualTurnover,
         referral_source: 'PartnerConnector',
-        referral_id: deal.id,
+        referral_id: referral.id,
         submission_date: new Date().toISOString()
       },
       tags: ['PartnerConnector Referral', `Volume: £${referral.monthlyVolume || 'Unknown'}`]
@@ -86,7 +86,7 @@ async function submitToGHL(referral: any) {
     };
   } catch (error) {
     console.error(`Failed to submit referral ${referral.id} to GHL:`, error);
-    // Don't fail the entire deal submission if GHL fails
+    // Don't fail the entire referral submission if GHL fails
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -193,7 +193,7 @@ async function createNotificationForUser(userId: string, notification: any) {
       type: notification.type,
       title: notification.title,
       message: notification.message,
-      dealId: notification.dealId || null,
+      referralId: notification.referralId || null,
       leadId: notification.leadId || null,
       contactId: notification.contactId || null,
       opportunityId: notification.opportunityId || null,
@@ -925,29 +925,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Referrals
-  app.post('/api/deals', requireAuth, async (req: any, res) => {
+  app.post('/api/referrals', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const dealData = {
+      const referralData = {
         ...req.body,
         referrerId: userId,
       };
 
-      const validation = insertDealSchema.safeParse(dealData);
+      const validation = insertReferralSchema.safeParse(referralData);
       if (!validation.success) {
         const validationError = fromZodError(validation.error);
         return res.status(400).json({ message: validationError.message });
       }
 
-      const deal = await storage.createDealWithLevel(validation.data, userId);
+      const referral = await storage.createReferralWithLevel(validation.data, userId);
       
-      // Create notification for deal submission
+      // Create notification for referral submission
       await createNotificationForUser(userId, {
         type: 'status_update',
         title: 'Referral Submitted',
         message: `Your referral for ${referral.businessName} has been submitted and is being processed`,
-        dealId: deal.id,
-        businessName: deal.businessName
+        referralId: referral.id,
+        businessName: referral.businessName
       });
       
       // Submit to GoHighLevel (GHL) for processing
@@ -966,10 +966,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/deals', requireAuth, async (req: any, res) => {
+  app.get('/api/referrals', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const referrals = await storage.getDealsByUserId(userId);
+      const referrals = await storage.getReferralsByUserId(userId);
       res.json(referrals);
     } catch (error) {
       console.error("Error fetching referrals:", error);
@@ -978,15 +978,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload bills for a specific referral
-  app.post('/api/deals/:id/upload-bill', upload.array('bills', 5), async (req: any, res) => {
+  app.post('/api/referrals/:id/upload-bill', upload.array('bills', 5), async (req: any, res) => {
     try {
-      const dealId = req.params.id;
+      const referralId = req.params.id;
       const files = req.files;
       
       // Get the referral to get the businessName
-      const deal = await storage.getDealById(dealId);
+      const referral = await storage.getReferralById(referralId);
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
       
       if (!files || !Array.isArray(files) || files.length === 0) {
@@ -997,7 +997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const uploadPromises = files.map(async (file: any) => {
         const fileContent = file.buffer.toString('base64');
         return storage.createBillUpload(
-          deal.businessName,
+          referral.businessName,
           file.originalname,
           file.size,
           file.mimetype,
@@ -1117,7 +1117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Save the signup information
-      await storage.saveQuoteSignupInfo(quoteId, quote.dealId, signupData);
+      await storage.saveQuoteSignupInfo(quoteId, quote.referralId, signupData);
       
       return res.json({ success: true });
     } catch (error) {
@@ -1198,7 +1198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const uploadRecord = await storage.createQuoteBillUpload(
         req.params.id,
-        quote.dealId,
+        quote.referralId,
         file.originalname,
         file.size,
         file.mimetype,
@@ -1293,18 +1293,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update quote status to cancelled
       await storage.updateQuote(req.params.id, {
+        customerJourneyStatus: 'declined',
         status: 'cancelled',
         adminNotes: `Quote cancelled. Reason: ${reason}`,
         updatedAt: new Date()
       });
-      
-      // Update the deal stage to declined (will auto-sync customerJourneyStatus)
-      if (quote.dealId) {
-        await storage.updateDeal(quote.dealId, {
-          dealStage: 'declined',
-          adminNotes: `Deal declined - Quote cancelled. Reason: ${reason}`,
-        });
-      }
 
       // Post cancellation message to quote Q&A
       await fetch(`${req.protocol}://${req.get('host')}/api/quotes/${req.params.id}/qa`, {
@@ -1337,7 +1330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const upload = await storage.createQuoteBillUpload(
         req.params.id,
-        quote.dealId,
+        quote.referralId,
         fileName,
         fileSize,
         fileType,
@@ -1415,10 +1408,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get the quote to find the associated referral
       const quote = await storage.getQuoteById(quoteId);
-      if (quote && quote.dealId) {
-        // Update deal with admin notes about required documents
+      if (quote && quote.referralId) {
+        // Update referral with admin notes about required documents
         const noteText = `\n[${new Date().toLocaleString()}] Docs Out Confirmed - Agreement sent. ${communicationNotes || ''}`;
-        await storage.updateDeal(quote.dealId, {
+        await storage.updateReferral(quote.referralId, {
           docsOutConfirmed: true,
           docsOutConfirmedAt: new Date(),
           requiredDocuments: requiredDocuments || ['identification', 'proof_of_bank'],
@@ -1445,9 +1438,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get the quote to find the associated referral
       const quote = await storage.getQuoteById(quoteId);
-      if (quote && quote.dealId) {
+      if (quote && quote.referralId) {
         const noteText = `\n[${new Date().toLocaleString()}] Awaiting Documents - ${communicationNotes || 'Waiting for Onfido ID and proof of bank'}`;
-        await storage.updateDeal(quote.dealId, {
+        await storage.updateReferral(quote.referralId, {
           adminNotes: (quote.adminNotes || '') + noteText,
           updatedAt: new Date()
         });
@@ -1471,9 +1464,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get the quote to find the associated referral
       const quote = await storage.getQuoteById(quoteId);
-      if (quote && quote.dealId) {
+      if (quote && quote.referralId) {
         const noteText = `\n[${new Date().toLocaleString()}] Documents Received - Deal Approved - ${notes || 'All required documents received, ready to go live'}`;
-        await storage.updateDeal(quote.dealId, {
+        await storage.updateReferral(quote.referralId, {
           status: 'approved',
           adminNotes: (quote.adminNotes || '') + noteText,
           receivedDocuments: receivedDocuments || [],
@@ -1498,11 +1491,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Decision must be 'approved' or 'declined'" });
       }
 
-      const dealStage = decision === 'approved' ? 'approved' : 'declined';
+      const customerJourneyStatus = decision === 'approved' ? 'approved' : 'declined';
 
       // Update quote with final decision
       await storage.db.update(storage.schema.quotes)
         .set({
+          customerJourneyStatus,
           finalDecision: decision,
           finalDecisionDate: new Date(),
           finalDecisionNotes: notes || null,
@@ -1511,12 +1505,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(storage.eq(storage.schema.quotes.id, quoteId));
 
-      // Get the quote to find the associated deal and update its stage (will auto-sync customerJourneyStatus)
+      // Get the quote to find the associated referral
       const quote = await storage.getQuoteById(quoteId);
-      if (quote && quote.dealId) {
+      if (quote && quote.referralId) {
         const noteText = `\n[${new Date().toLocaleString()}] Deal ${decision.toUpperCase()} - ${notes || ''}`;
-        await storage.updateDeal(quote.dealId, {
-          dealStage,
+        await storage.updateReferral(quote.referralId, {
           status: decision,
           adminNotes: (quote.adminNotes || '') + noteText,
           actualCommission: actualCommission ? parseFloat(actualCommission) : null,
@@ -1536,19 +1529,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { quoteId } = req.params;
 
-      // Get the quote to find the associated deal
-      const quote = await storage.getQuoteById(quoteId);
-      if (!quote) {
-        return res.status(404).json({ message: "Quote not found" });
-      }
-
-      // Update deal stage to completed (will auto-sync customerJourneyStatus)
-      if (quote.dealId) {
-        await storage.updateDeal(quote.dealId, {
-          dealStage: 'completed',
-          status: 'completed',
-        });
-      }
+      // Update quote journey status to "complete" (installed and paid)
+      await storage.updateQuoteJourneyStatus(quoteId, 'complete');
 
       console.log(`Quote ${quoteId} marked as complete by admin ${req.user.email}`);
 
@@ -1569,22 +1551,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Quote not found" });
       }
 
-      // Get the associated deal to check status
-      if (!quote.dealId) {
-        return res.status(400).json({ message: "Quote is not associated with a deal" });
-      }
-
-      const deals = await storage.getAllDeals();
-      const deal = deals.find((d: any) => d.id === quote.dealId);
-      
-      if (!deal || deal.dealStage !== 'approved') {
+      if (quote.customerJourneyStatus !== 'approved') {
         return res.status(400).json({ message: "Only approved deals can be moved to pending payments" });
       }
 
-      // Move to "live_confirm_ltr" status (will auto-sync customerJourneyStatus to 'live')
-      await storage.updateDeal(quote.dealId, {
-        dealStage: 'live_confirm_ltr',
-      });
+      // Move to "live" status (pending payment)
+      await storage.updateQuoteJourneyStatus(quoteId, 'live');
 
       console.log(`Quote ${quoteId} moved to pending payments by admin ${req.user.email}`);
 
@@ -1709,18 +1681,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User endpoint to update their own referrals
-  app.patch('/api/deals/:id', requireAuth, async (req: any, res) => {
+  app.patch('/api/referrals/:id', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.id;
       const updateData = req.body;
       
       // Get current referral and verify ownership
-      const referrals = await storage.getDealsByUserId(userId);
+      const referrals = await storage.getReferralsByUserId(userId);
       const currentReferral = referrals.find(r => r.id === id);
       
       if (!currentReferral) {
-        return res.status(404).json({ message: "Deal not found or you don't have permission to update it" });
+        return res.status(404).json({ message: "Referral not found or you don't have permission to update it" });
       }
 
       // Check if status is changing
@@ -1729,7 +1701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const statusChanged = oldStatus !== newStatus;
 
       // Update the referral
-      const updatedReferral = await storage.updateDeal(id, {
+      const updatedReferral = await storage.updateReferral(id, {
         ...updateData,
         updatedAt: new Date()
       });
@@ -1741,7 +1713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'referral_status_changed',
           title: 'Referral Status Updated',
           message: `Your referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
-          dealId: id,
+          referralId: id,
           businessName: currentReferral.businessName,
           metadata: {
             oldStatus,
@@ -1758,7 +1730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'team_referral_status_changed',
             title: 'Team Member Referral Update',
             message: `${user.firstName || user.email}'s referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
-            dealId: id,
+            referralId: id,
             businessName: currentReferral.businessName,
             metadata: {
               oldStatus,
@@ -2123,7 +2095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bill upload - now uses business name instead of dealId/quoteId
+  // Bill upload - now uses business name instead of referralId/quoteId
   app.post('/api/bills/upload', upload.array('bills', 5), async (req: any, res) => {
     try {
       const businessName = req.body.businessName;
@@ -2233,24 +2205,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit additional details after quote approval
-  app.post('/api/deals/:id/additional-details', async (req: any, res) => {
+  app.post('/api/referrals/:id/additional-details', async (req: any, res) => {
     try {
-      const dealId = req.params.id;
+      const referralId = req.params.id;
       const userId = req.user?.claims?.sub || 'dev-user-123';
       const additionalDetails = req.body;
 
       // Verify the referral belongs to the user  
-      const userReferrals = await storage.getDealsByUserId(userId);
-      const deal = userReferrals.find(r => r.id === dealId);
+      const userReferrals = await storage.getReferralsByUserId(userId);
+      const referral = userReferrals.find(r => r.id === referralId);
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
-      // Update deal status to processing
-      await storage.updateDealStatus(dealId, 'processing');
+      // Update referral status to processing
+      await storage.updateReferralStatus(referralId, 'processing');
 
       // Store additional details (you may want to create a separate table for this)
-      console.log('Additional details received for referral:', dealId, additionalDetails);
+      console.log('Additional details received for referral:', referralId, additionalDetails);
 
       res.json({ 
         success: true,
@@ -2367,42 +2339,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ COMMISSION APPROVAL ENDPOINTS ============
   
   // Create commission approval when admin enters actual commission
-  app.post('/api/admin/referrals/:dealId/create-commission-approval', requireAuth, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/create-commission-approval', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { actualCommission, adminNotes, ratesData } = req.body;
 
       // First update the referral with actual commission
-      await storage.updateDeal(dealId, { 
+      await storage.updateReferral(referralId, { 
         actualCommission: actualCommission,
         adminNotes: adminNotes || null
       });
 
-      // Get deal details for approval
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((r: any) => r.id === dealId);
+      // Get referral details for approval
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
       
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
       // Create commission approval for the user
       const approval = await storage.createCommissionApproval({
-        dealId: dealId,
-        userId: deal.referrerId,
+        referralId: referralId,
+        userId: referral.referrerId,
         commissionAmount: actualCommission,
-        clientBusinessName: deal.businessName,
+        clientBusinessName: referral.businessName,
         adminNotes: adminNotes || null,
         ratesData: ratesData ? JSON.stringify(ratesData) : null
       });
 
       // Create notification for user
-      await createNotificationForUser(deal.referrerId, {
+      await createNotificationForUser(referral.referrerId, {
         type: 'commission_approval',
         title: 'Commission Ready for Approval',
         message: `Your commission of £${actualCommission} for ${referral.businessName} is ready for approval`,
-        dealId: dealId,
-        businessName: deal.businessName
+        referralId: referralId,
+        businessName: referral.businessName
       });
 
       res.json({ 
@@ -2593,7 +2565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!user) return null;
         
         const children = users.filter(u => u.parentPartnerId === rootId);
-        const userReferrals = await storage.getDealsByUserId(rootId);
+        const userReferrals = await storage.getReferralsByUserId(rootId);
         
         const childNodes = [];
         for (const child of children) {
@@ -2608,7 +2580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           partnerId: user.partnerId || '',
           level: user.partnerLevel || 1,
           children: childNodes,
-          totalDeals: userReferrals.length,
+          totalReferrals: userReferrals.length,
           totalCommissions: userReferrals.reduce((sum: number, ref: any) => sum + parseFloat(ref.actualCommission || '0'), 0),
           parentPartnerId: user.parentPartnerId
         };
@@ -2655,7 +2627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
             
             // Get user's referrals for commission data
-            const referrals = await storage.getDealsByUserId(u.id);
+            const referrals = await storage.getReferralsByUserId(u.id);
             const totalCommissions = referrals.reduce((sum: number, ref: any) => 
               sum + parseFloat(ref.actualCommission || '0'), 0
             );
@@ -2668,7 +2640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               parentPartnerId: u.parentPartnerId || null,
               directRecruits,
               totalDownline: countDownline(u.id),
-              totalDeals: referrals.length,
+              totalReferrals: referrals.length,
               totalCommissions
             };
           })
@@ -2736,7 +2708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Build downline tree (all children going down)
       const buildDownlineTree = async (rootId: string): Promise<any> => {
         const children = allUsers.filter((u: any) => u.parentPartnerId === rootId);
-        const userReferrals = await storage.getDealsByUserId(rootId);
+        const userReferrals = await storage.getReferralsByUserId(rootId);
         
         const childNodes = [];
         for (const child of children) {
@@ -2751,7 +2723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           partnerId: user.partnerId || '',
           level: 0,
           children: childNodes,
-          totalDeals: userReferrals.length,
+          totalReferrals: userReferrals.length,
           totalCommissions: userReferrals.reduce((sum: number, ref: any) => sum + parseFloat(ref.actualCommission || '0'), 0)
         };
       };
@@ -2783,8 +2755,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      const referrals = await storage.getDealsByUserId(userId);
-      const referralsByLevel = await storage.getDealsByLevel(userId);
+      const referrals = await storage.getReferralsByUserId(userId);
+      const referralsByLevel = await storage.getReferralsByLevel(userId);
       
       res.json({
         user,
@@ -2858,18 +2830,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         !q.commissionPaid
       );
 
-      // Enhance with deal and user data
+      // Enhance with referral and user data
       const enhancedAccounts = await Promise.all(
         liveAccounts.map(async (quote: any) => {
-          const deal = await storage.getDealById(quote.dealId);
-          const user = deal ? await storage.getUser(deal.referrerId) : null;
+          const referral = await storage.getReferralById(quote.referralId);
+          const user = referral ? await storage.getUser(referral.referrerId) : null;
           
           // Get upline structure
           const upline = user ? await storage.getMlmHierarchy(user.id) : { parents: [] };
           
           return {
             ...quote,
-            deal,
+            referral,
             user,
             uplineUsers: upline.parents || [],
           };
@@ -2913,12 +2885,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Quote not found" });
       }
 
-      const deal = await storage.getDealById(quote.dealId);
+      const referral = await storage.getReferralById(quote.referralId);
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
-      const level1User = await storage.getUser(deal.referrerId);
+      const level1User = await storage.getUser(referral.referrerId);
       if (!level1User) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -3055,14 +3027,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               level: payment.level.toString(),
               percentage: payment.percentage.toString(),
               role: payment.role,
-              dealId: quote.dealId,
+              referralId: quote.referralId,
               userId: user.id
             }
           });
 
           // Create commission payment record
           await storage.createCommissionPayment({
-            dealId: quote.dealId,
+            referralId: quote.referralId,
             recipientId: user.id,
             level: payment.level,
             amount: payment.amount,
@@ -3340,17 +3312,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sortOrder = 'desc' 
       } = req.query;
 
-      let referrals = await storage.getAllDeals();
+      let referrals = await storage.getAllReferrals();
       
       // Fetch and attach billUploads and quote data for each referral
       referrals = await Promise.all(referrals.map(async (referral: any) => {
-        const billUploads = await storage.getBillUploadsByBusinessName(deal.businessName);
+        const billUploads = await storage.getBillUploadsByBusinessName(referral.businessName);
         
         // Get the most recent quote for this referral
         const { quotes } = await import("@shared/schema");
         const [quoteData] = await db.select()
           .from(quotes)
-          .where(eq(quotes.dealId, deal.id))
+          .where(eq(quotes.referralId, referral.id))
           .orderBy(desc(quotes.createdAt))
           .limit(1);
         
@@ -3359,13 +3331,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           billUploads,
           quote: quoteData || null,
           referrer: {
-            firstName: deal.partnerName?.split(' ')[0] || '',
-            lastName: deal.partnerName?.split(' ')[1] || '',
-            email: deal.partnerEmail || '',
-            partnerId: deal.partnerId || ''
+            firstName: referral.partnerName?.split(' ')[0] || '',
+            lastName: referral.partnerName?.split(' ')[1] || '',
+            email: referral.partnerEmail || '',
+            partnerId: referral.partnerId || ''
           },
           businessType: {
-            name: deal.businessTypeName || 'N/A'
+            name: referral.businessTypeName || 'N/A'
           }
         };
       }));
@@ -3440,17 +3412,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced admin referral update with audit trail
-  app.patch('/api/admin/referrals/:dealId', requireAuth, requireAdmin, async (req: any, res) => {
+  app.patch('/api/admin/referrals/:referralId', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const updateData = req.body;
       
       // Get current referral for audit trail
-      const allDeals = await storage.getAllDeals();
-      const currentReferral = allDeals.find((r: any) => r.id === dealId);
+      const allReferrals = await storage.getAllReferrals();
+      const currentReferral = allReferrals.find((r: any) => r.id === referralId);
       
       if (!currentReferral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
       // Check if status is changing
@@ -3473,7 +3445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminAuditNote = `\n[${new Date().toLocaleString()}] Updated by admin ${req.user.email}`;
       const updatedAdminNotes = (currentReferral.adminNotes || '') + adminAuditNote;
 
-      const deal = await storage.updateDeal(dealId, {
+      const referral = await storage.updateReferral(referralId, {
         ...updateData,
         adminNotes: updatedAdminNotes,
         updatedAt: new Date()
@@ -3486,7 +3458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'referral_status_changed',
           title: 'Referral Status Updated',
           message: `Your referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
-          dealId: dealId,
+          referralId: referralId,
           businessName: currentReferral.businessName,
           metadata: {
             oldStatus,
@@ -3504,7 +3476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'team_referral_status_changed',
             title: 'Team Member Referral Update',
             message: `${referralOwner.firstName || referralOwner.email}'s referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
-            dealId: dealId,
+            referralId: referralId,
             businessName: currentReferral.businessName,
             metadata: {
               oldStatus,
@@ -3534,7 +3506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seed test data for demonstrating referral system functionality
   app.post('/api/admin/seed-test-data', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      await storage.seedTestDeals();
+      await storage.seedTestReferrals();
       res.json({ 
         success: true, 
         message: "Test referrals seeded successfully" 
@@ -3546,17 +3518,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced stage override functionality for admin
-  app.patch('/api/admin/referrals/:dealId/override-stage', requireAuth, requireAdmin, async (req: any, res) => {
+  app.patch('/api/admin/referrals/:referralId/override-stage', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { dealStage, status, adminNotes, overrideReason } = req.body;
 
       // Get current referral for audit trail
-      const allDeals = await storage.getAllDeals();
-      const currentReferral = allDeals.find((r: any) => r.id === dealId);
+      const allReferrals = await storage.getAllReferrals();
+      const currentReferral = allReferrals.find((r: any) => r.id === referralId);
       
       if (!currentReferral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
       // Check if status is changing
@@ -3576,7 +3548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       };
 
-      const updatedReferral = await storage.updateDeal(dealId, updateData);
+      const updatedReferral = await storage.updateReferral(referralId, updateData);
 
       // Send status change notifications if status changed
       if (statusChanged) {
@@ -3585,7 +3557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'referral_status_changed',
           title: 'Referral Status Updated',
           message: `Your referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
-          dealId: dealId,
+          referralId: referralId,
           businessName: currentReferral.businessName,
           metadata: {
             oldStatus,
@@ -3603,7 +3575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'team_referral_status_changed',
             title: 'Team Member Referral Update',
             message: `${referralOwner.firstName || referralOwner.email}'s referral for ${currentReferral.businessName} has moved from ${oldStatus} to ${newStatus}`,
-            dealId: dealId,
+            referralId: referralId,
             businessName: currentReferral.businessName,
             metadata: {
               oldStatus,
@@ -3645,7 +3617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'status_update',
             title: notificationData.title,
             message: notificationData.message,
-            dealId: dealId,
+            referralId: referralId,
             businessName: currentReferral.businessName,
             metadata: {
               dealStage,
@@ -3661,7 +3633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               type: 'team_referral_status_changed',
               title: 'Team Member Deal Progress',
               message: `${referralOwner.firstName || referralOwner.email}'s deal ${currentReferral.businessName}: ${notificationData.title}`,
-              dealId: dealId,
+              referralId: referralId,
               businessName: currentReferral.businessName,
               metadata: {
                 dealStage,
@@ -3690,21 +3662,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Preview commission distribution before payment
-  app.post('/api/admin/referrals/:dealId/preview-commission', requireAuth, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/preview-commission', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { actualCommission } = req.body;
 
-      // Get deal details
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((r: any) => r.id === dealId);
+      // Get referral details
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
       
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
       const totalCommission = parseFloat(actualCommission);
-      const submitterId = deal.referrerId;
+      const submitterId = referral.referrerId;
       
       // Calculate commission distribution
       const distribution: any[] = [];
@@ -3750,7 +3722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true,
         totalCommission,
-        businessName: deal.businessName,
+        businessName: referral.businessName,
         distribution
       });
     } catch (error) {
@@ -3760,35 +3732,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Confirm payment section for commission amounts
-  app.post('/api/admin/referrals/:dealId/confirm-payment', requireAuth, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/confirm-payment', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { actualCommission, paymentReference, paymentMethod, paymentNotes } = req.body;
 
-      // Get deal details
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((r: any) => r.id === dealId);
+      // Get referral details
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
       
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
-      // Update deal with payment confirmation
+      // Update referral with payment confirmation
       const paymentConfirmationNote = `\n[${new Date().toLocaleString()}] Payment confirmed by admin ${req.user.email}: £${actualCommission} via ${paymentMethod || 'Bank Transfer'}. Reference: ${paymentReference}. Notes: ${paymentNotes || 'No additional notes'}`;
       
       const updateData = {
         actualCommission: actualCommission.toString(),
         status: 'paid',
         dealStage: 'completed',
-        adminNotes: (deal.adminNotes || '') + paymentConfirmationNote,
+        adminNotes: (referral.adminNotes || '') + paymentConfirmationNote,
         updatedAt: new Date()
       };
 
-      const updatedReferral = await storage.updateDeal(dealId, updateData);
+      const updatedReferral = await storage.updateReferral(referralId, updateData);
 
       // Distribute commissions across the upline chain (60%, 20%, 10%)
       const approvals = await storage.distributeUplineCommissions(
-        dealId,
+        referralId,
         parseFloat(actualCommission),
         paymentReference,
         paymentMethod || 'Bank Transfer'
@@ -3805,8 +3777,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'commission_paid',
           title: commissionType === 'direct' ? 'Commission Payment Confirmed' : 'Override Commission Paid',
           message: `You earned £${commissionAmount.toFixed(2)} (${commissionPercentage}% ${commissionType} commission) for ${referral.businessName}. Reference: ${approval.paymentReference}`,
-          dealId: dealId,
-          businessName: deal.businessName,
+          referralId: referralId,
+          businessName: referral.businessName,
           metadata: {
             amount: commissionAmount,
             percentage: commissionPercentage,
@@ -3820,8 +3792,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await pushNotificationService.sendCommissionApprovalNotification(
           approval.userId,
           {
-            dealId: dealId,
-            businessName: deal.businessName,
+            referralId: referralId,
+            businessName: referral.businessName,
             amount: commissionAmount,
             level: ratesData.level || 1,
             percentage: commissionPercentage
@@ -3857,9 +3829,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin referrer reassignment
-  app.post('/api/admin/referrals/:dealId/reassign', requireAuth, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/reassign', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { newReferrerId, reason } = req.body;
 
       // Verify new referrer exists
@@ -3869,24 +3841,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current referral
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((r: any) => r.id === dealId);
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
       const auditNote = `\n[${new Date().toLocaleString()}] Referral reassigned from ${referral.referrerId} to ${newReferrerId} by admin ${req.user.email}. Reason: ${reason}`;
       
-      await storage.updateDeal(dealId, {
+      await storage.updateReferral(referralId, {
         referrerId: newReferrerId,
-        adminNotes: (deal.adminNotes || '') + auditNote,
+        adminNotes: (referral.adminNotes || '') + auditNote,
         updatedAt: new Date()
       });
 
       res.json({
         success: true,
         message: "Referral reassigned successfully",
-        previousReferrer: deal.referrerId,
+        previousReferrer: referral.referrerId,
         newReferrer: newReferrerId,
         reason
       });
@@ -3897,21 +3869,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced admin quote management
-  app.post('/api/admin/referrals/:dealId/send-quote', requireAuth, requireAdmin, auditAdminAction('send_quote', 'referral'), async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/send-quote', requireAuth, requireAdmin, auditAdminAction('send_quote', 'referral'), async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const quoteData = req.body;
       
-      // Verify deal exists
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((r: any) => r.id === dealId);
+      // Verify referral exists
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
       
-      if (!deal) {
-        return res.status(404).json({ message: "Deal not found" });
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
       }
 
-      // Update deal with quote information
-      await storage.updateDeal(dealId, {
+      // Update referral with quote information
+      await storage.updateReferral(referralId, {
         status: 'quote_sent',
         quoteAmount: quoteData.totalAmount,
         quoteGenerated: true,
@@ -3920,7 +3892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Log admin action
-      console.log('Quote sent by admin for referral:', dealId, {
+      console.log('Quote sent by admin for referral:', referralId, {
         admin: req.user.email,
         quoteAmount: quoteData.totalAmount,
         rates: quoteData.rates
@@ -3930,7 +3902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         message: "Quote sent to customer successfully",
         quoteData: {
-          dealId,
+          referralId,
           totalAmount: quoteData.totalAmount,
           sentAt: new Date()
         }
@@ -3945,7 +3917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/quotes/create', requireAuth, requireAdmin, auditAdminAction('create_quote', 'quote'), async (req: any, res) => {
     try {
       const {
-        dealId,
+        referralId,
         creditCardRate,
         debitCardRate,
         corporateCardRate,
@@ -3962,12 +3934,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dojoPlan,
       } = req.body;
 
-      // Verify deal exists
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((r: any) => r.id === dealId);
+      // Verify referral exists
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === referralId);
       
-      if (!deal) {
-        return res.status(404).json({ message: "Deal not found" });
+      if (!referral) {
+        return res.status(404).json({ message: "Referral not found" });
       }
 
       // Calculate device costs
@@ -3983,7 +3955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create the quote
       const quote = await storage.createQuote({
-        dealId,
+        referralId,
         creditCardRate,
         debitCardRate,
         corporateCardRate,
@@ -4008,9 +3980,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: req.user.id,
       });
 
-      // Update deal status and stage (dealStage will auto-sync customerJourneyStatus)
-      await storage.updateDeal(dealId, {
-        dealStage: 'quote_sent',
+      // Update referral status
+      await storage.updateReferral(referralId, {
         status: 'quote_sent',
         quoteGenerated: true,
         updatedAt: new Date()
@@ -4048,12 +4019,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dojoPlan,
       } = req.body;
 
-      // Get deal
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((r: any) => r.id === id);
+      // Get referral
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === id);
 
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
       // Calculate device costs
@@ -4071,7 +4042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create comprehensive quote record
       const quote = await storage.createQuote({
-        dealId: id,
+        referralId: id,
         creditCardRate: parseFloat(creditCardRate || '0'),
         debitCardRate: parseFloat(debitCardRate || '0'),
         corporateCardRate: parseFloat(corporateCardRate || '0'),
@@ -4093,11 +4064,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: req.user.id,
       });
 
-      // Update deal with quote data and move to quote_sent stage
-      await storage.updateDeal(id, {
+      // Update referral with quote data and move to quote_sent stage
+      await storage.updateReferral(id, {
         dealStage: 'quote_sent',
         quoteGenerated: true,
-        adminNotes: (deal.adminNotes || '') + `\n[${new Date().toLocaleString()}] Comprehensive quote generated by ${req.user.email}. Quote ID: ${quote.id}. Rates: Credit ${creditCardRate}%, Debit ${debitCardRate}%, Corporate ${corporateCardRate}%. Devices: ${totalDevices}. Monthly: £${monthlyTotal.toFixed(2)}, One-time: £${oneTimeTotal.toFixed(2)}`,
+        adminNotes: (referral.adminNotes || '') + `\n[${new Date().toLocaleString()}] Comprehensive quote generated by ${req.user.email}. Quote ID: ${quote.id}. Rates: Credit ${creditCardRate}%, Debit ${debitCardRate}%, Corporate ${corporateCardRate}%. Devices: ${totalDevices}. Monthly: £${monthlyTotal.toFixed(2)}, One-time: £${oneTimeTotal.toFixed(2)}`,
         updatedAt: new Date()
       });
 
@@ -4109,7 +4080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         devices: totalDevices,
         monthlyTotal,
         oneTimeTotal,
-        businessEmail: deal.businessEmail
+        businessEmail: referral.businessEmail
       });
 
       res.json({
@@ -4134,32 +4105,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
 
-      // Get deal
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((r: any) => r.id === id);
+      // Get referral
+      const allReferrals = await storage.getAllReferrals();
+      const referral = allReferrals.find((r: any) => r.id === id);
 
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
       // Verify it's in quote_approved stage
-      if (deal.dealStage !== 'quote_approved') {
+      if (referral.dealStage !== 'quote_approved') {
         return res.status(400).json({ 
           message: "Can only move deals from 'Quote Approved' stage to 'Agreement Sent'" 
         });
       }
 
-      // Update deal to agreement_sent stage
-      const updatedReferral = await storage.updateDeal(id, {
+      // Update referral to agreement_sent stage
+      const updatedReferral = await storage.updateReferral(id, {
         dealStage: 'agreement_sent',
         status: 'agreement_sent',
-        adminNotes: (deal.adminNotes || '') + `\n[${new Date().toLocaleString()}] Deal moved to Agreement Sent stage by ${req.user.email}. Agreement documents sent to ${referral.businessEmail}.`,
+        adminNotes: (referral.adminNotes || '') + `\n[${new Date().toLocaleString()}] Deal moved to Agreement Sent stage by ${req.user.email}. Agreement documents sent to ${referral.businessEmail}.`,
         updatedAt: new Date()
       });
 
       console.log('Deal moved to Agreement Sent:', id, {
         admin: req.user.email,
-        businessName: deal.businessName,
+        businessName: referral.businessName,
         previousStage: 'quote_approved',
         newStage: 'agreement_sent'
       });
@@ -4176,12 +4147,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin document management
-  app.post('/api/admin/referrals/:dealId/docs-out-confirmation', requireAuth, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/docs-out-confirmation', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { documentsSent, recipientEmail } = req.body;
 
-      const deal = await storage.updateDeal(dealId, {
+      const referral = await storage.updateReferral(referralId, {
         status: 'docs_out_confirmation',
         adminNotes: `Documents sent to ${recipientEmail} on ${new Date().toLocaleDateString()}. Documents: ${documentsSent?.join(', ') || 'Agreement documents'}`,
         updatedAt: new Date()
@@ -4199,15 +4170,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin document requirements management
-  app.post('/api/admin/referrals/:dealId/document-requirements', requireAuth, requireAdmin, auditAdminAction('update_document_requirements', 'referral'), async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/document-requirements', requireAuth, requireAdmin, auditAdminAction('update_document_requirements', 'referral'), async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { requiredDocuments, notes } = req.body;
 
-      // Update deal with document requirements
+      // Update referral with document requirements
       const updatedNotes = `Required documents: ${requiredDocuments.join(', ')}. ${notes || ''}`;
       
-      await storage.updateDeal(dealId, {
+      await storage.updateReferral(referralId, {
         adminNotes: updatedNotes,
         updatedAt: new Date()
       });
@@ -4224,9 +4195,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin deal stage management
-  app.patch('/api/admin/referrals/:dealId/stage', requireAuth, requireAdmin, auditAdminAction('update_stage', 'referral'), async (req: any, res) => {
+  app.patch('/api/admin/referrals/:referralId/stage', requireAuth, requireAdmin, auditAdminAction('update_stage', 'referral'), async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { dealStage, productType, quoteDeliveryMethod, notes } = req.body;
 
       // Valid stages for admin override
@@ -4269,7 +4240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.quoteDeliveryMethod = quoteDeliveryMethod;
       }
 
-      await storage.updateDeal(dealId, updateData);
+      await storage.updateReferral(referralId, updateData);
 
       res.json({ 
         success: true,
@@ -4302,43 +4273,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending password reset:", error);
       res.status(500).json({ message: "Failed to send password reset email" });
-    }
-  });
-
-  // Migration endpoint: Sync dealStage to customerJourneyStatus
-  app.post('/api/admin/migrate-deal-stages', requireAuth, requireAdmin, async (req: any, res) => {
-    try {
-      const deals = await storage.getAllDeals();
-      let syncedCount = 0;
-      
-      for (const deal of deals) {
-        if (deal.dealStage && deal.id) {
-          // Find any quotes associated with this deal
-          const allQuotes = await storage.getAllQuotesForAdmin();
-          const dealQuotes = allQuotes.filter((q: any) => q.dealId === deal.id);
-          
-          // Sync customerJourneyStatus for each quote
-          for (const quote of dealQuotes) {
-            const customerJourneyStatus = mapDealStageToCustomerJourney(deal.dealStage);
-            await storage.db.update(storage.schema.quotes)
-              .set({ 
-                customerJourneyStatus,
-                updatedAt: new Date() 
-              })
-              .where(storage.eq(storage.schema.quotes.id, quote.id));
-            syncedCount++;
-          }
-        }
-      }
-      
-      res.json({ 
-        success: true,
-        message: `Successfully synced ${syncedCount} quotes to match deal stages`,
-        syncedCount 
-      });
-    } catch (error) {
-      console.error("Error migrating deal stages:", error);
-      res.status(500).json({ message: "Failed to migrate deal stages" });
     }
   });
 
@@ -4510,7 +4444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all approved commission payments with recipient details
       const approvedPayments = await storage.db.select({
         id: storage.schema.commissionPayments.id,
-        dealId: storage.schema.commissionPayments.dealId,
+        referralId: storage.schema.commissionPayments.referralId,
         recipientId: storage.schema.commissionPayments.recipientId,
         level: storage.schema.commissionPayments.level,
         amount: storage.schema.commissionPayments.amount,
@@ -4625,9 +4559,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ ADMIN: CREATE MULTI-LEVEL COMMISSIONS ============
   
   // Admin endpoint to create multi-level commissions when marking deal as live
-  app.post('/api/admin/referrals/:dealId/create-commission', requireAuth, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/create-commission', requireAuth, requireAdmin, async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { totalCommission } = req.body;
 
       if (!totalCommission || isNaN(parseFloat(totalCommission))) {
@@ -4636,13 +4570,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const total = parseFloat(totalCommission);
 
-      // Get deal to find the direct referrer
-      const deal = await storage.getDealById(dealId);
+      // Get referral to find the direct referrer
+      const referral = await storage.getReferralById(referralId);
       if (!referral) {
-        return res.status(404).json({ message: "Deal not found" });
+        return res.status(404).json({ message: "Referral not found" });
       }
 
-      const directReferrerId = deal.referrerId;
+      const directReferrerId = referral.referrerId;
 
       // Get direct referrer
       const directReferrer = await storage.getUser(directReferrerId);
@@ -4655,14 +4589,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Level 1: Direct referrer gets 60%
       const level1Amount = total * 0.60;
       const level1Commission = await storage.createCommissionPayment({
-        dealId,
+        referralId,
         recipientId: directReferrerId,
         level: 1,
         amount: level1Amount.toFixed(2),
         percentage: "60.00",
         totalCommission: total.toFixed(2),
-        businessName: deal.businessName,
-        dealStage: deal.dealStage || 'live',
+        businessName: referral.businessName,
+        dealStage: referral.dealStage || 'live',
         approvalStatus: 'pending',
         paymentStatus: 'pending'
       });
@@ -4672,14 +4606,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (directReferrer.parentPartnerId) {
         const level2Amount = total * 0.20;
         const level2Commission = await storage.createCommissionPayment({
-          dealId,
+          referralId,
           recipientId: directReferrer.parentPartnerId,
           level: 2,
           amount: level2Amount.toFixed(2),
           percentage: "20.00",
           totalCommission: total.toFixed(2),
-          businessName: deal.businessName,
-          dealStage: deal.dealStage || 'live',
+          businessName: referral.businessName,
+          dealStage: referral.dealStage || 'live',
           approvalStatus: 'pending',
           paymentStatus: 'pending'
         });
@@ -4690,14 +4624,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (parentUser && parentUser.parentPartnerId) {
           const level3Amount = total * 0.10;
           const level3Commission = await storage.createCommissionPayment({
-            dealId,
+            referralId,
             recipientId: parentUser.parentPartnerId,
             level: 3,
             amount: level3Amount.toFixed(2),
             percentage: "10.00",
             totalCommission: total.toFixed(2),
-            businessName: deal.businessName,
-            dealStage: deal.dealStage || 'live',
+            businessName: referral.businessName,
+            dealStage: referral.dealStage || 'live',
             approvalStatus: 'pending',
             paymentStatus: 'pending'
           });
@@ -4747,14 +4681,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(sql`id = ${paymentId}`);
       
-      // Update deal deal stage to "live_paid" if this is the level 1 commission
-      if (commissionPayment.level === 1 && commissionPayment.dealId) {
+      // Update referral deal stage to "live_paid" if this is the level 1 commission
+      if (commissionPayment.level === 1 && commissionPayment.referralId) {
         await storage.db.update(storage.schema.referrals)
           .set({
             dealStage: 'live_paid',
             updatedAt: new Date()
           })
-          .where(sql`id = ${commissionPayment.dealId}`);
+          .where(sql`id = ${commissionPayment.referralId}`);
       }
       
       res.json({ 
@@ -5575,23 +5509,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update Referral Stage
-  app.post('/api/admin/referrals/:dealId/update-stage', requireAuth, requireAdmin, auditAdminAction('update_referral_stage', 'referral'), async (req: any, res) => {
+  app.post('/api/admin/referrals/:referralId/update-stage', requireAuth, requireAdmin, auditAdminAction('update_referral_stage', 'referral'), async (req: any, res) => {
     try {
-      const { dealId } = req.params;
+      const { referralId } = req.params;
       const { stage, notes } = req.body;
 
       if (!stage) {
         return res.status(400).json({ message: "Stage is required" });
       }
 
-      const updatedReferral = await storage.updateDealStage(dealId, stage);
+      const updatedReferral = await storage.updateReferralStage(referralId, stage);
 
       // Add admin audit log
       await storage.createAdminAuditLog({
         actorId: req.user.id,
         action: 'update_referral_stage',
         entityType: 'referral',
-        entityId: dealId,
+        entityId: referralId,
         details: { 
           oldStage: updatedReferral.status,
           newStage: stage,
@@ -5721,11 +5655,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Process Stripe Payout
   app.post('/api/admin/payments/process-stripe', requireAuth, requireAdmin, auditAdminAction('process_stripe_payment', 'payment'), async (req: any, res) => {
     try {
-      const { dealId, recipientId, amount, recipientEmail, recipientName } = req.body;
+      const { referralId, recipientId, amount, recipientEmail, recipientName } = req.body;
 
-      if (!dealId || !recipientId || !amount) {
+      if (!referralId || !recipientId || !amount) {
         return res.status(400).json({ 
-          message: "Missing required fields: dealId, recipientId, and amount are required" 
+          message: "Missing required fields: referralId, recipientId, and amount are required" 
         });
       }
 
@@ -5774,9 +5708,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           amount: amountInPence,
           currency: 'gbp',
           destination: stripeAccountId,
-          description: `Commission payout for referral ${dealId}`,
+          description: `Commission payout for referral ${referralId}`,
           metadata: {
-            dealId,
+            referralId,
             recipientId,
             recipientName: recipientName || 'Partner',
             processedBy: req.user.email
@@ -5784,14 +5718,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // Record the payment in the database
-        await storage.processStripePayment(dealId, recipientId, parseFloat(amount), transfer.id);
+        await storage.processStripePayment(referralId, recipientId, parseFloat(amount), transfer.id);
 
         // Create admin audit log
         await storage.createAdminAuditLog({
           actorId: req.user.id,
           action: 'process_stripe_payment',
           entityType: 'payment',
-          entityId: dealId,
+          entityId: referralId,
           details: {
             recipientId,
             amount: parseFloat(amount),
@@ -5837,17 +5771,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Process Manual Payment (non-Stripe)
   app.post('/api/admin/payments/process-manual', requireAuth, requireAdmin, auditAdminAction('process_manual_payment', 'payment'), async (req: any, res) => {
     try {
-      const { dealId, recipientId, amount, paymentMethod, paymentReference, notes } = req.body;
+      const { referralId, recipientId, amount, paymentMethod, paymentReference, notes } = req.body;
 
-      if (!dealId || !recipientId || !amount) {
+      if (!referralId || !recipientId || !amount) {
         return res.status(400).json({ 
-          message: "Missing required fields: dealId, recipientId, and amount are required" 
+          message: "Missing required fields: referralId, recipientId, and amount are required" 
         });
       }
 
       // Record the manual payment
       await storage.processStripePayment(
-        dealId, 
+        referralId, 
         recipientId, 
         parseFloat(amount), 
         paymentReference || `MANUAL_${Date.now()}`
@@ -5858,7 +5792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         actorId: req.user.id,
         action: 'process_manual_payment',
         entityType: 'payment',
-        entityId: dealId,
+        entityId: referralId,
         details: {
           recipientId,
           amount: parseFloat(amount),

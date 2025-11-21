@@ -65,7 +65,7 @@ interface AdditionalDetailsFormProps {
   onClose: () => void;
   onComplete: () => void;
   quoteId: string;
-  deal?: {
+  referral: {
     id: string;
     businessName: string;
     businessEmail?: string;
@@ -77,7 +77,7 @@ export default function AdditionalDetailsForm({
   onClose, 
   onComplete,
   quoteId,
-  deal 
+  referral 
 }: AdditionalDetailsFormProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<'form' | 'success'>('form');
@@ -88,11 +88,11 @@ export default function AdditionalDetailsForm({
       firstName: "",
       lastName: "",
       homeAddress: "",
-      email: deal?.businessEmail || "",
+      email: referral.businessEmail || "",
       phone: "",
       legalEntity: undefined,
       limitedCompanyName: "",
-      tradingName: deal?.businessName || "",
+      tradingName: referral.businessName || "",
       tradingAddress: "",
       businessDescription: "",
       bankAccountNumber: "",
@@ -166,7 +166,7 @@ export default function AdditionalDetailsForm({
             Complete Signup Information
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Please provide the following details to complete your signup for {deals.businessName}
+            Please provide the following details to complete your signup for {referral.businessName}
           </p>
         </DialogHeader>
 

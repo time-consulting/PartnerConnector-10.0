@@ -13,7 +13,7 @@ import {
 
 interface SmartInsightsProps {
   userStats: any;
-  userDeals: any[];
+  userReferrals: any[];
   isLoading: boolean;
 }
 
@@ -29,7 +29,7 @@ interface Insight {
   color: string;
 }
 
-export default function SmartInsights({ userStats, userDeals, isLoading }: SmartInsightsProps) {
+export default function SmartInsights({ userStats, userReferrals, isLoading }: SmartInsightsProps) {
   const generateInsights = (): Insight[] => {
     if (!userStats || isLoading) return [];
     
@@ -126,18 +126,18 @@ export default function SmartInsights({ userStats, userDeals, isLoading }: Smart
   };
 
   const analyzeRecentActivity = (): { streak: number; avgPerWeek: number } => {
-    if (!userDeals.length) return { streak: 0, avgPerWeek: 0 };
+    if (!userReferrals.length) return { streak: 0, avgPerWeek: 0 };
     
-    const sortedDeals = userDeals.sort((a, b) => 
+    const sortedReferrals = userReferrals.sort((a, b) => 
       new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
     );
     
     let streak = 0;
     let currentDate = new Date();
     
-    for (const deals of sortedDeals) {
-      const dealsDate = new Date(deals.submittedAt);
-      const diffDays = Math.floor((currentDate.getTime() - dealsDate.getTime()) / (1000 * 60 * 60 * 24));
+    for (const referral of sortedReferrals) {
+      const referralDate = new Date(referral.submittedAt);
+      const diffDays = Math.floor((currentDate.getTime() - referralDate.getTime()) / (1000 * 60 * 60 * 24));
       
       if (diffDays <= streak + 1) {
         streak = Math.max(streak, diffDays + 1);
@@ -146,21 +146,21 @@ export default function SmartInsights({ userStats, userDeals, isLoading }: Smart
       }
     }
     
-    return { streak, avgPerWeek: userDeals.length / Math.max(1, streak / 7) };
+    return { streak, avgPerWeek: userReferrals.length / Math.max(1, streak / 7) };
   };
 
   const identifyBestPerformingBusinessType = (): { name: string; rate: number } | null => {
-    if (!userDeals.length) return null;
+    if (!userReferrals.length) return null;
     
     const typePerformance: { [key: string]: { total: number; successful: number } } = {};
     
-    userDeals.forEach(deals => {
-      const type = deals.businessType || 'Unknown';
+    userReferrals.forEach(referral => {
+      const type = referral.businessType || 'Unknown';
       if (!typePerformance[type]) {
         typePerformance[type] = { total: 0, successful: 0 };
       }
       typePerformance[type].total++;
-      if (['approved', 'completed'].includes(deals.status)) {
+      if (['approved', 'completed'].includes(referral.status)) {
         typePerformance[type].successful++;
       }
     });
@@ -169,7 +169,7 @@ export default function SmartInsights({ userStats, userDeals, isLoading }: Smart
     let bestRate = 0;
     
     Object.entries(typePerformance).forEach(([type, stats]) => {
-      if (stats.total >= 2) { // Only consider types with at least 2 deals
+      if (stats.total >= 2) { // Only consider types with at least 2 referrals
         const rate = (stats.successful / stats.total) * 100;
         if (rate > bestRate) {
           bestRate = rate;
@@ -244,7 +244,7 @@ export default function SmartInsights({ userStats, userDeals, isLoading }: Smart
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm">
-            Keep submitting deals to unlock personalized performance insights and trends.
+            Keep submitting referrals to unlock personalized performance insights and trends.
           </p>
         </CardContent>
       </Card>

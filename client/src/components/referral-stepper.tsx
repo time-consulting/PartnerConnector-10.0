@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertDealSchema } from "@shared/schema";
+import { insertReferralSchema } from "@shared/schema";
 import { z } from "zod";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 
 // Form schema for the complete stepper
-const stepperFormSchema = insertDealSchema
+const stepperFormSchema = insertReferralSchema
   .omit({
     referrerId: true,
   })
@@ -41,7 +41,7 @@ const stepperFormSchema = insertDealSchema
 
 type FormData = z.infer<typeof stepperFormSchema>;
 
-interface DealStepperProps {
+interface ReferralStepperProps {
   businessTypes: any[];
   onSubmit: (data: FormData, files: File[]) => void;
   isSubmitting: boolean;
@@ -63,7 +63,7 @@ const productOptions = [
   { id: 'epos-systems', name: 'EPOS Systems', icon: '📱', description: 'Point of sale technology' },
 ];
 
-export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: DealStepperProps) {
+export default function ReferralStepper({ businessTypes, onSubmit, isSubmitting }: ReferralStepperProps) {
   const [location] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -78,9 +78,9 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [dealId, setDealId] = useState<string | null>(null);
 
-  // Fetch existing deals for search
+  // Fetch existing referrals for search
   const { data: existingReferrals = [] } = useQuery<any[]>({
-    queryKey: ['/api/deals'],
+    queryKey: ['/api/referrals'],
   });
 
   const form = useForm<FormData>({
@@ -188,7 +188,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
     }
   }, [businessTypes]);
 
-  // Filter deals based on search term
+  // Filter referrals based on search term
   const filteredReferrals = existingReferrals.filter((ref: any) => {
     if (!searchTerm) return false;
     const searchLower = searchTerm.toLowerCase();
@@ -199,23 +199,23 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
     );
   });
 
-  // Auto-populate form with selected deals data
-  const handleSelectReferral = (deals: any) => {
-    form.setValue('businessName', deals.businessName || '');
-    form.setValue('contactName', deals.contactName || '');
-    form.setValue('businessEmail', deals.businessEmail || '');
-    form.setValue('businessPhone', deals.businessPhone || '');
-    form.setValue('businessAddress', deals.businessAddress || '');
-    form.setValue('businessTypeId', deals.businessTypeId || '');
-    form.setValue('currentProcessor', deals.currentProcessor || '');
-    form.setValue('monthlyVolume', deals.monthlyVolume || '50000');
-    form.setValue('currentRate', deals.currentRate || '');
-    form.setValue('cardMachineQuantity', deals.cardMachineQuantity || 1);
-    form.setValue('cardMachineProvider', deals.cardMachineProvider || '');
+  // Auto-populate form with selected referral data
+  const handleSelectReferral = (referral: any) => {
+    form.setValue('businessName', referral.businessName || '');
+    form.setValue('contactName', referral.contactName || '');
+    form.setValue('businessEmail', referral.businessEmail || '');
+    form.setValue('businessPhone', referral.businessPhone || '');
+    form.setValue('businessAddress', referral.businessAddress || '');
+    form.setValue('businessTypeId', referral.businessTypeId || '');
+    form.setValue('currentProcessor', referral.currentProcessor || '');
+    form.setValue('monthlyVolume', referral.monthlyVolume || '50000');
+    form.setValue('currentRate', referral.currentRate || '');
+    form.setValue('cardMachineQuantity', referral.cardMachineQuantity || 1);
+    form.setValue('cardMachineProvider', referral.cardMachineProvider || '');
     
     // Update monthly volume slider
-    if (deals.monthlyVolume) {
-      setMonthlyVolume([parseInt(deals.monthlyVolume)]);
+    if (referral.monthlyVolume) {
+      setMonthlyVolume([parseInt(referral.monthlyVolume)]);
     }
 
     // Close search results
@@ -302,7 +302,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
                 setShowSearchResults(e.target.value.length > 0);
               }}
               className="pl-12 pr-10 h-14 text-base rounded-xl border-2 border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
-              data-testid="input-search-deals"
+              data-testid="input-search-referral"
             />
             {searchTerm && (
               <button
@@ -320,16 +320,16 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
           {/* Search Results */}
           {showSearchResults && filteredReferrals.length > 0 && (
             <Card className="mt-2 p-2 max-h-64 overflow-y-auto border-2 border-teal-200 rounded-xl shadow-lg">
-              {filteredReferrals.map((deal: any) => (
+              {filteredReferrals.map((referral: any) => (
                 <button
-                  key={deal?.id}
-                  onClick={() => handleSelectReferral(deal)}
+                  key={referral.id}
+                  onClick={() => handleSelectReferral(referral)}
                   className="w-full text-left p-3 hover:bg-teal-50 rounded-lg transition-colors"
-                  data-testid={`button-select-deal-${deal?.id}`}
+                  data-testid={`button-select-referral-${referral.id}`}
                 >
-                  <div className="font-semibold text-gray-900">{deal?.businessName}</div>
-                  <div className="text-sm text-gray-600">{deal?.contactName}</div>
-                  <div className="text-sm text-gray-500">{deal?.businessEmail}</div>
+                  <div className="font-semibold text-gray-900">{referral.businessName}</div>
+                  <div className="text-sm text-gray-600">{referral.contactName}</div>
+                  <div className="text-sm text-gray-500">{referral.businessEmail}</div>
                 </button>
               ))}
             </Card>
@@ -1020,7 +1020,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
               className="h-12 px-8 bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700 text-white rounded-xl"
               data-testid="button-submit"
             >
-              {isSubmitting ? "Submitting..." : "Submit Deal"}
+              {isSubmitting ? "Submitting..." : "Submit Referral"}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           )}

@@ -120,9 +120,9 @@ class WebSocketClient {
 
   private handleNotification(notification: Notification) {
     // Invalidate relevant queries based on notification type
-    if (notification.dealId) {
-      queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/deals", notification.dealId] });
+    if (notification.referralId) {
+      queryClient.invalidateQueries({ queryKey: ["/api/referrals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/referrals", notification.referralId] });
     }
     
     if (notification.leadId) {

@@ -1,6 +1,6 @@
 import {
   users,
-  deals,
+  referrals,
   businessTypes,
   billUploads,
   commissionPayments,
@@ -35,8 +35,8 @@ import {
   type InsertRequestLog,
   type WebhookLog,
   type InsertWebhookLog,
-  type InsertDeal,
-  type Deal,
+  type InsertReferral,
+  type Referral,
   type BusinessType,
   type BillUpload,
   type Contact,
@@ -63,9 +63,8 @@ import {
   type InsertWaitlist,
   type PushSubscription,
   type InsertPushSubscription,
-  mapDealStageToCustomerJourney,
 } from "@shared/schema";
-import { googleSheetsService, type DealSheetData } from "./googleSheets";
+import { googleSheetsService, type ReferralSheetData } from "./googleSheets";
 import { db } from "./db";
 import { eq, desc, and, sql, gte, isNull } from "drizzle-orm";
 
@@ -85,11 +84,11 @@ export interface IStorage {
   getBusinessTypes(): Promise<BusinessType[]>;
   seedBusinessTypes(): Promise<void>;
   
-  // Deal operations
-  createDeal(deal: InsertDeal): Promise<Deal>;
-  getDealById(id: string): Promise<Deal | undefined>;
-  getDealsByUserId(userId: string): Promise<Deal[]>;
-  updateDealStatus(id: string, status: string): Promise<void>;
+  // Referral operations
+  createReferral(referral: InsertReferral): Promise<Referral>;
+  getReferralById(id: string): Promise<Referral | undefined>;
+  getReferralsByUserId(userId: string): Promise<Referral[]>;
+  updateReferralStatus(id: string, status: string): Promise<void>;
   searchBusinessNames(userId: string, query: string): Promise<Array<{ 
     businessName: string; 
     contactName?: string;
@@ -101,7 +100,7 @@ export interface IStorage {
   getUserStats(userId: string): Promise<{
     dealsSubmitted: number;
     commissionPending: number;
-    totalDeals: number;
+    totalReferrals: number;
     totalValueEarned: number;
   }>;
   
@@ -118,20 +117,20 @@ export interface IStorage {
   calculateReferralLevel(referrerId: string): Promise<number>;
   getCommissionPercentage(level: number): number;
   getMlmHierarchy(userId: string): Promise<{ children: User[]; parents: User[]; level: number }>;
-  getDealsByLevel(userId: string): Promise<{ [key: number]: Deal[] }>;
-  createDealWithLevel(dealData: InsertDeal, referrerId: string): Promise<Deal>;
+  getReferralsByLevel(userId: string): Promise<{ [key: number]: Referral[] }>;
+  createReferralWithLevel(referralData: InsertReferral, referrerId: string): Promise<Referral>;
   
   // Admin operations
   getAdminStats(): Promise<{
     totalUsers: number;
-    totalDeals: number;
-    pendingDeals: number;
+    totalReferrals: number;
+    pendingReferrals: number;
     totalCommissions: number;
   }>;
   getAllUsers(): Promise<User[]>;
-  getAllDeals(): Promise<Deal[]>;
+  getAllReferrals(): Promise<Referral[]>;
   updateUser(userId: string, data: Partial<User>): Promise<User>;
-  updateDeal(dealId: string, data: Partial<Deal>): Promise<Deal>;
+  updateReferral(referralId: string, data: Partial<Referral>): Promise<Referral>;
   
   // Admin audit logging
   createAdminAuditLog(auditLog: InsertAdminAuditLog): Promise<AdminAuditLog>;
@@ -199,14 +198,8 @@ export interface IStorage {
   getAllCommissionApprovals(): Promise<CommissionApproval[]>;
   updateCommissionApprovalStatus(approvalId: string, status: string): Promise<CommissionApproval>;
   processCommissionPayment(approvalId: string, paymentReference: string): Promise<void>;
-  distributeUplineCommissions(dealId: string, totalCommission: number, paymentReference: string, paymentMethod: string): Promise<CommissionApproval[]>;
+  distributeUplineCommissions(referralId: string, totalCommission: number, paymentReference: string, paymentMethod: string): Promise<CommissionApproval[]>;
 
-  // Payment verification operations (2FA)
-  createPaymentVerificationCode(verificationData: InsertPaymentVerificationCode): Promise<PaymentVerificationCode>;
-  getPaymentVerificationCode(dealId: string, code: string): Promise<PaymentVerificationCode | undefined>;
-  markVerificationCodeAsUsed(verificationId: string): Promise<void>;
-  checkDealPaymentLock(dealId: string): Promise<boolean>; // Returns true if payment is locked/in-progress
-  
   // Audit trail operations
   createAudit(auditData: InsertAudit): Promise<Audit>;
   getAudits(limit?: number): Promise<Audit[]>;
@@ -264,7 +257,7 @@ export interface IStorage {
   addQuoteRateRequest(quoteId: string, request: string): Promise<void>;
   approveQuoteByPartner(quoteId: string): Promise<void>;
   sendQuoteToClient(quoteId: string): Promise<void>;
-  saveQuoteSignupInfo(quoteId: string, dealId: string, signupData: any): Promise<void>;
+  saveQuoteSignupInfo(quoteId: string, referralId: string, signupData: any): Promise<void>;
   getPendingSignups(): Promise<any[]>;
   getCompletedDeals(): Promise<any[]>;
   getSignupDetails(quoteId: string): Promise<any>;
@@ -278,7 +271,7 @@ export interface IStorage {
   getAllQuoteMessages(): Promise<any[]>;
   
   // Quote bill upload operations
-  createQuoteBillUpload(quoteId: string, dealId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string, fileData?: string): Promise<any>;
+  createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string, fileData?: string): Promise<any>;
   getQuoteBillUploads(quoteId: string): Promise<any[]>;
   getQuoteBillUploadById(billId: string): Promise<any | undefined>;
   approveQuoteBill(billId: string, adminNotes?: string): Promise<void>;
@@ -301,7 +294,7 @@ export interface IStorage {
   createCommissionPayment(paymentData: any): Promise<any>;
 
   // Test data seeding
-  seedTestDeals(): Promise<void>;
+  seedTestReferrals(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -991,48 +984,48 @@ export class DatabaseStorage implements IStorage {
     ]);
   }
 
-  async createDeal(dealData: InsertDeal): Promise<Deal> {
-    const [deal] = await db
-      .insert(deals)
-      .values(dealData)
+  async createReferral(referralData: InsertReferral): Promise<Referral> {
+    const [referral] = await db
+      .insert(referrals)
+      .values(referralData)
       .returning();
     
     // Sync with Google Sheets
     try {
-      let referrer = await this.getUser(deal.referrerId);
+      let referrer = await this.getUser(referral.referrerId);
       
       // Auto-generate partner ID if user doesn't have one (root partner - no parent)
       if (referrer && !referrer.partnerId && referrer.firstName && referrer.lastName) {
         console.log('Generating partner ID for user:', referrer.id);
         await this.generatePartnerId(referrer.id); // No parent, will be root partner
-        referrer = await this.getUser(deal.referrerId); // Refresh user data
+        referrer = await this.getUser(referral.referrerId); // Refresh user data
       }
       
-      const businessType = await db.select().from(businessTypes).where(eq(businessTypes.id, deal.businessTypeId));
+      const businessType = await db.select().from(businessTypes).where(eq(businessTypes.id, referral.businessTypeId));
       
       if (referrer && businessType[0]) {
-        const sheetData: DealSheetData = {
+        const sheetData: ReferralSheetData = {
           partnerId: referrer.partnerId || 'No Partner ID',
           partnerName: `${referrer.firstName || ''} ${referrer.lastName || ''}`.trim() || 'Unknown',
           partnerEmail: referrer.email || '',
-          businessName: deal.businessName,
-          businessEmail: deal.businessEmail,
-          businessPhone: deal.businessPhone || '',
-          businessAddress: deal.businessAddress || '',
+          businessName: referral.businessName,
+          businessEmail: referral.businessEmail,
+          businessPhone: referral.businessPhone || '',
+          businessAddress: referral.businessAddress || '',
           businessType: businessType[0].name,
-          currentProcessor: deal.currentProcessor || '',
-          monthlyVolume: deal.monthlyVolume || '',
-          currentRate: deal.currentRate || '',
-          selectedProducts: deal.selectedProducts?.join(', ') || '',
-          cardMachineQuantity: deal.cardMachineQuantity || 1,
-          status: deal.status,
-          estimatedCommission: deal.estimatedCommission || '',
-          submittedAt: deal.submittedAt?.toISOString() || new Date().toISOString(),
-          notes: deal.notes || ''
+          currentProcessor: referral.currentProcessor || '',
+          monthlyVolume: referral.monthlyVolume || '',
+          currentRate: referral.currentRate || '',
+          selectedProducts: referral.selectedProducts?.join(', ') || '',
+          cardMachineQuantity: referral.cardMachineQuantity || 1,
+          status: referral.status,
+          estimatedCommission: referral.estimatedCommission || '',
+          submittedAt: referral.submittedAt?.toISOString() || new Date().toISOString(),
+          notes: referral.notes || ''
         };
         
         console.log('Syncing referral to Google Sheets for partner:', sheetData.partnerId);
-        await googleSheetsService.addDeal(sheetData);
+        await googleSheetsService.addReferral(sheetData);
         console.log('Successfully synced referral to Google Sheets');
       }
     } catch (error) {
@@ -1040,24 +1033,24 @@ export class DatabaseStorage implements IStorage {
       // Don't throw - we don't want to fail referral creation if sheets sync fails
     }
     
-    return deal;
+    return referral;
   }
 
-  async getDealById(id: string): Promise<Referral | undefined> {
+  async getReferralById(id: string): Promise<Referral | undefined> {
     const result = await db
       .select()
-      .from(deals)
-      .where(eq(deals.id, id))
+      .from(referrals)
+      .where(eq(referrals.id, id))
       .limit(1);
     return result[0];
   }
 
-  async getDealsByUserId(userId: string): Promise<Referral[]> {
+  async getReferralsByUserId(userId: string): Promise<Referral[]> {
     const results = await db
       .select()
-      .from(deals)
-      .where(eq(deals.referrerId, userId))
-      .orderBy(desc(deals.submittedAt));
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId))
+      .orderBy(desc(referrals.submittedAt));
     
     // Fetch billUploads for each referral
     const referralsWithUploads = await Promise.all(
@@ -1065,7 +1058,7 @@ export class DatabaseStorage implements IStorage {
         const uploads = await db
           .select()
           .from(billUploads)
-          .where(eq(billUploads.businessName, deal.businessName));
+          .where(eq(billUploads.businessName, referral.businessName));
         
         return {
           ...referral,
@@ -1103,15 +1096,15 @@ export class DatabaseStorage implements IStorage {
     // Also search referrals
     const referralResults = await db
       .select({ 
-        businessName: deals.businessName,
-        businessEmail: deals.businessEmail,
-        businessPhone: deals.businessPhone
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
+        businessPhone: referrals.businessPhone
       })
-      .from(deals)
+      .from(referrals)
       .where(
         and(
-          eq(deals.referrerId, userId),
-          sql`LOWER(${deals.businessName}) LIKE LOWER(${'%' + query + '%'})`
+          eq(referrals.referrerId, userId),
+          sql`LOWER(${referrals.businessName}) LIKE LOWER(${'%' + query + '%'})`
         )
       )
       .limit(10);
@@ -1149,25 +1142,25 @@ export class DatabaseStorage implements IStorage {
     return Array.from(combined.values()).slice(0, 10);
   }
 
-  async updateDealStatus(id: string, status: string): Promise<void> {
+  async updateReferralStatus(id: string, status: string): Promise<void> {
     // Get referral and user info for Google Sheets update
-    const [deal] = await db.select().from(deals).where(eq(deals.id, id));
+    const [referral] = await db.select().from(referrals).where(eq(referrals.id, id));
     
     if (referral) {
-      const referrer = await this.getUser(deal.referrerId);
+      const referrer = await this.getUser(referral.referrerId);
       
       // Update in database
       await db
-        .update(deals)
+        .update(referrals)
         .set({ status, updatedAt: new Date() })
-        .where(eq(deals.id, id));
+        .where(eq(referrals.id, id));
       
       // Sync status update with Google Sheets
       try {
         if (referrer?.partnerId) {
           await googleSheetsService.updateReferralStatus(
             referrer.partnerId,
-            deal.businessName,
+            referral.businessName,
             status
           );
         }
@@ -1181,14 +1174,14 @@ export class DatabaseStorage implements IStorage {
   async getUserStats(userId: string): Promise<{
     dealsSubmitted: number;
     commissionPending: number;
-    totalDeals: number;
+    totalReferrals: number;
     totalValueEarned: number;
   }> {
     // Get all referrals submitted by this user
     const userReferrals = await db
       .select()
-      .from(deals)
-      .where(eq(deals.referrerId, userId));
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId));
 
     const dealsSubmitted = userReferrals.length;
 
@@ -1214,7 +1207,7 @@ export class DatabaseStorage implements IStorage {
       .from(partnerHierarchy)
       .where(eq(partnerHierarchy.parentId, userId));
 
-    const totalDeals = referredUsers.length;
+    const totalReferrals = referredUsers.length;
 
     // Get total value earned from paid commissions
     const paidCommissions = await db
@@ -1235,7 +1228,7 @@ export class DatabaseStorage implements IStorage {
     return {
       dealsSubmitted,
       commissionPending,
-      totalDeals,
+      totalReferrals,
       totalValueEarned,
     };
   }
@@ -1308,23 +1301,23 @@ export class DatabaseStorage implements IStorage {
   // Admin operations
   async getAdminStats(): Promise<{
     totalUsers: number;
-    totalDeals: number;
-    pendingDeals: number;
+    totalReferrals: number;
+    pendingReferrals: number;
     totalCommissions: number;
   }> {
     const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
-    const totalDeals = await db.select({ count: sql<number>`count(*)` }).from(deals);
-    const pendingDeals = await db.select({ count: sql<number>`count(*)` }).from(deals)
-      .where(eq(deals.status, "pending"));
+    const totalReferrals = await db.select({ count: sql<number>`count(*)` }).from(referrals);
+    const pendingReferrals = await db.select({ count: sql<number>`count(*)` }).from(referrals)
+      .where(eq(referrals.status, "pending"));
     
     const commissionData = await db.select({
       total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)`
-    }).from(deals).where(sql`actual_commission IS NOT NULL`);
+    }).from(referrals).where(sql`actual_commission IS NOT NULL`);
     
     return {
       totalUsers: totalUsers[0]?.count || 0,
-      totalDeals: totalDeals[0]?.count || 0,
-      pendingDeals: pendingDeals[0]?.count || 0,
+      totalReferrals: totalReferrals[0]?.count || 0,
+      pendingReferrals: pendingReferrals[0]?.count || 0,
       totalCommissions: commissionData[0]?.total || 0,
     };
   }
@@ -1371,31 +1364,31 @@ export class DatabaseStorage implements IStorage {
         partnerEmail: users.email,
         partnerId: users.partnerId,
       })
-      .from(deals)
-      .leftJoin(businessTypes, eq(deals.businessTypeId, businessTypes.id))
-      .leftJoin(users, eq(deals.referrerId, users.id));
+      .from(referrals)
+      .leftJoin(businessTypes, eq(referrals.businessTypeId, businessTypes.id))
+      .leftJoin(users, eq(referrals.referrerId, users.id));
     
     if (filters?.status) {
-      query = query.where(eq(deals.status, filters.status));
+      query = query.where(eq(referrals.status, filters.status));
     }
     
     if (filters?.userId) {
-      query = query.where(eq(deals.referrerId, filters.userId));
+      query = query.where(eq(referrals.referrerId, filters.userId));
     }
     
     if (filters?.businessType) {
-      query = query.where(eq(deals.businessTypeId, filters.businessType));
+      query = query.where(eq(referrals.businessTypeId, filters.businessType));
     }
     
     if (filters?.dateFrom) {
-      query = query.where(sql`${deals.submittedAt} >= ${filters.dateFrom}`);
+      query = query.where(sql`${referrals.submittedAt} >= ${filters.dateFrom}`);
     }
     
     if (filters?.dateTo) {
-      query = query.where(sql`${deals.submittedAt} <= ${filters.dateTo}`);
+      query = query.where(sql`${referrals.submittedAt} <= ${filters.dateTo}`);
     }
     
-    query = query.orderBy(desc(deals.submittedAt));
+    query = query.orderBy(desc(referrals.submittedAt));
     
     if (filters?.limit) {
       query = query.limit(filters.limit);
@@ -1417,26 +1410,13 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
   
-  async updateDeal(dealId: string, data: Partial<Deal>): Promise<Deal> {
-    const [deal] = await db
-      .update(deals)
+  async updateReferral(referralId: string, data: Partial<Referral>): Promise<Referral> {
+    const [referral] = await db
+      .update(referrals)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(deals.id, dealId))
+      .where(eq(referrals.id, referralId))
       .returning();
-    
-    // If dealStage was updated, sync customerJourneyStatus in any associated quotes
-    if (data.dealStage && deal) {
-      const customerJourneyStatus = mapDealStageToCustomerJourney(data.dealStage);
-      await db
-        .update(quotes)
-        .set({ 
-          customerJourneyStatus,
-          updatedAt: new Date() 
-        })
-        .where(eq(quotes.dealId, dealId));
-    }
-    
-    return deal;
+    return referral;
   }
 
   async getAnalyticsOverview(): Promise<{
@@ -1454,29 +1434,29 @@ export class DatabaseStorage implements IStorage {
     // Total revenue from completed deals
     const [revenueData] = await db
       .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
-      .from(deals)
-      .where(eq(deals.status, 'won'));
+      .from(referrals)
+      .where(eq(referrals.status, 'won'));
 
     // Active partners (submitted referrals in last 30 days)
     const [activeData] = await db
       .select({ count: sql<number>`COUNT(DISTINCT referrer_id)` })
-      .from(deals)
-      .where(sql`${deals.submittedAt} >= ${thirtyDaysAgo}`);
+      .from(referrals)
+      .where(sql`${referrals.submittedAt} >= ${thirtyDaysAgo}`);
 
     // Average deal size
     const [avgDealData] = await db
       .select({ avg: sql<number>`COALESCE(AVG(CAST(actual_commission AS DECIMAL)), 0)` })
-      .from(deals)
+      .from(referrals)
       .where(sql`actual_commission IS NOT NULL`);
 
     // Conversion rate
     const [totalDeals] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(deals);
+      .from(referrals);
     const [wonDeals] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(deals)
-      .where(eq(deals.status, 'won'));
+      .from(referrals)
+      .where(eq(referrals.status, 'won'));
 
     const conversionRate = totalDeals[0]?.count > 0 
       ? (wonDeals[0]?.count / totalDeals[0]?.count) * 100 
@@ -1485,19 +1465,19 @@ export class DatabaseStorage implements IStorage {
     // Monthly growth comparison
     const [currentMonthRevenue] = await db
       .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
-      .from(deals)
+      .from(referrals)
       .where(and(
-        sql`${deals.submittedAt} >= ${thirtyDaysAgo}`,
-        eq(deals.status, 'won')
+        sql`${referrals.submittedAt} >= ${thirtyDaysAgo}`,
+        eq(referrals.status, 'won')
       ));
 
     const [previousMonthRevenue] = await db
       .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
-      .from(deals)
+      .from(referrals)
       .where(and(
-        sql`${deals.submittedAt} >= ${sixtyDaysAgo}`,
-        sql`${deals.submittedAt} < ${thirtyDaysAgo}`,
-        eq(deals.status, 'won')
+        sql`${referrals.submittedAt} >= ${sixtyDaysAgo}`,
+        sql`${referrals.submittedAt} < ${thirtyDaysAgo}`,
+        eq(referrals.status, 'won')
       ));
 
     const monthlyGrowth = previousMonthRevenue[0]?.total > 0
@@ -1507,11 +1487,11 @@ export class DatabaseStorage implements IStorage {
     // Top products by count
     const topProducts = await db
       .select({
-        name: deals.businessTypeId,
+        name: referrals.businessTypeId,
         count: sql<number>`count(*)`
       })
-      .from(deals)
-      .groupBy(deals.businessTypeId)
+      .from(referrals)
+      .groupBy(referrals.businessTypeId)
       .orderBy(sql`count(*) DESC`)
       .limit(5);
 
@@ -1541,29 +1521,29 @@ export class DatabaseStorage implements IStorage {
     // Current month revenue
     const [currentMonthData] = await db
       .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
-      .from(deals)
+      .from(referrals)
       .where(and(
-        sql`${deals.submittedAt} >= ${currentMonthStart}`,
-        eq(deals.status, 'won')
+        sql`${referrals.submittedAt} >= ${currentMonthStart}`,
+        eq(referrals.status, 'won')
       ));
 
     // Previous month revenue
     const [previousMonthData] = await db
       .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
-      .from(deals)
+      .from(referrals)
       .where(and(
-        sql`${deals.submittedAt} >= ${previousMonthStart}`,
-        sql`${deals.submittedAt} < ${currentMonthStart}`,
-        eq(deals.status, 'won')
+        sql`${referrals.submittedAt} >= ${previousMonthStart}`,
+        sql`${referrals.submittedAt} < ${currentMonthStart}`,
+        eq(referrals.status, 'won')
       ));
 
     // Year to date revenue
     const [yearToDateData] = await db
       .select({ total: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)` })
-      .from(deals)
+      .from(referrals)
       .where(and(
-        sql`${deals.submittedAt} >= ${yearStart}`,
-        eq(deals.status, 'won')
+        sql`${referrals.submittedAt} >= ${yearStart}`,
+        eq(referrals.status, 'won')
       ));
 
     // Projected annual (based on YTD average)
@@ -1573,12 +1553,12 @@ export class DatabaseStorage implements IStorage {
     // Revenue by product
     const byProduct = await db
       .select({
-        product: deals.businessTypeId,
+        product: referrals.businessTypeId,
         revenue: sql<number>`COALESCE(SUM(CAST(actual_commission AS DECIMAL)), 0)`
       })
-      .from(deals)
-      .where(eq(deals.status, 'won'))
-      .groupBy(deals.businessTypeId)
+      .from(referrals)
+      .where(eq(referrals.status, 'won'))
+      .groupBy(referrals.businessTypeId)
       .orderBy(sql`SUM(CAST(actual_commission AS DECIMAL)) DESC`)
       .limit(10);
 
@@ -1588,13 +1568,13 @@ export class DatabaseStorage implements IStorage {
         partnerId: users.partnerId,
         firstName: users.firstName,
         lastName: users.lastName,
-        revenue: sql<number>`COALESCE(SUM(CAST(${deals.actualCommission} AS DECIMAL)), 0)`
+        revenue: sql<number>`COALESCE(SUM(CAST(${referrals.actualCommission} AS DECIMAL)), 0)`
       })
-      .from(deals)
-      .leftJoin(users, eq(deals.referrerId, users.id))
-      .where(eq(deals.status, 'won'))
+      .from(referrals)
+      .leftJoin(users, eq(referrals.referrerId, users.id))
+      .where(eq(referrals.status, 'won'))
       .groupBy(users.partnerId, users.firstName, users.lastName)
-      .orderBy(sql`SUM(CAST(${deals.actualCommission} AS DECIMAL)) DESC`)
+      .orderBy(sql`SUM(CAST(${referrals.actualCommission} AS DECIMAL)) DESC`)
       .limit(10);
 
     return {
@@ -1646,9 +1626,9 @@ export class DatabaseStorage implements IStorage {
 
     // Active users (submitted referrals in last 30 days)
     const [activeData] = await db
-      .select({ count: sql<number>`COUNT(DISTINCT ${deals.referrerId})` })
-      .from(deals)
-      .where(sql`${deals.submittedAt} >= ${thirtyDaysAgo}`);
+      .select({ count: sql<number>`COUNT(DISTINCT ${referrals.referrerId})` })
+      .from(referrals)
+      .where(sql`${referrals.submittedAt} >= ${thirtyDaysAgo}`);
 
     // Growth rate
     const growthRate = newLastMonthData?.count > 0
@@ -1689,7 +1669,7 @@ export class DatabaseStorage implements IStorage {
     userId: string;
     name: string;
     partnerId: string;
-    totalDeals: number;
+    totalReferrals: number;
     wonDeals: number;
     totalRevenue: number;
     conversionRate: number;
@@ -1701,36 +1681,36 @@ export class DatabaseStorage implements IStorage {
         firstName: users.firstName,
         lastName: users.lastName,
         partnerId: users.partnerId,
-        totalDeals: sql<number>`COUNT(${deals.id})`,
-        wonDeals: sql<number>`COUNT(CASE WHEN ${deals.status} = 'won' THEN 1 END)`,
-        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${deals.status} = 'won' THEN CAST(${deals.actualCommission} AS DECIMAL) END), 0)`
+        totalReferrals: sql<number>`COUNT(${referrals.id})`,
+        wonDeals: sql<number>`COUNT(CASE WHEN ${referrals.status} = 'won' THEN 1 END)`,
+        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN ${referrals.status} = 'won' THEN CAST(${referrals.actualCommission} AS DECIMAL) END), 0)`
       })
       .from(users)
-      .leftJoin(referrals, eq(deals.referrerId, users.id))
+      .leftJoin(referrals, eq(referrals.referrerId, users.id))
       .groupBy(users.id, users.firstName, users.lastName, users.partnerId)
-      .having(sql`COUNT(${deals.id}) > 0`)
-      .orderBy(sql`SUM(CASE WHEN ${deals.status} = 'won' THEN CAST(${deals.actualCommission} AS DECIMAL) END) DESC NULLS LAST`)
+      .having(sql`COUNT(${referrals.id}) > 0`)
+      .orderBy(sql`SUM(CASE WHEN ${referrals.status} = 'won' THEN CAST(${referrals.actualCommission} AS DECIMAL) END) DESC NULLS LAST`)
       .limit(20);
 
     return performers.map((p, index) => ({
       userId: p.userId,
       name: `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown',
       partnerId: p.partnerId || '',
-      totalDeals: p.totalDeals,
+      totalReferrals: p.totalReferrals,
       wonDeals: p.wonDeals,
       totalRevenue: p.totalRevenue,
-      conversionRate: p.totalDeals > 0 ? Number(((p.wonDeals / p.totalDeals) * 100).toFixed(2)) : 0,
+      conversionRate: p.totalReferrals > 0 ? Number(((p.wonDeals / p.totalReferrals) * 100).toFixed(2)) : 0,
       rank: index + 1
     }));
   }
 
-  async updateDealStage(dealId: string, stage: string): Promise<Referral> {
-    const [deal] = await db
-      .update(deals)
+  async updateReferralStage(referralId: string, stage: string): Promise<Referral> {
+    const [referral] = await db
+      .update(referrals)
       .set({ status: stage, updatedAt: new Date() })
-      .where(eq(deals.id, referralId))
+      .where(eq(referrals.id, referralId))
       .returning();
-    return deal;
+    return referral;
   }
 
   async exportUsersCSV(): Promise<string> {
@@ -1755,10 +1735,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async exportReferralsCSV(): Promise<string> {
-    const allDeals = await this.getAllReferrals();
+    const allReferrals = await this.getAllReferrals();
     
     const headers = ['ID', 'Business Name', 'Business Type', 'Status', 'Monthly Volume', 'Submitted At', 'Commission'];
-    const rows = allDeals.map(ref => [
+    const rows = allReferrals.map(ref => [
       ref.id,
       ref.businessName,
       ref.businessTypeId || '',
@@ -1779,7 +1759,7 @@ export class DatabaseStorage implements IStorage {
     const payments = await db
       .select({
         id: commissionPayments.id,
-        dealId: commissionPayments.dealId,
+        referralId: commissionPayments.referralId,
         recipientId: commissionPayments.recipientId,
         amount: commissionPayments.amount,
         status: commissionPayments.status,
@@ -1809,7 +1789,7 @@ export class DatabaseStorage implements IStorage {
 
   async getPendingPayments(): Promise<Array<{
     id: string;
-    dealId: string;
+    referralId: string;
     businessName: string;
     partnerId: string;
     partnerName: string;
@@ -1819,31 +1799,31 @@ export class DatabaseStorage implements IStorage {
   }>> {
     const pendingPayments = await db
       .select({
-        dealId: deals.id,
-        businessName: deals.businessName,
-        actualCommission: deals.actualCommission,
-        status: deals.status,
-        submittedAt: deals.submittedAt,
+        referralId: referrals.id,
+        businessName: referrals.businessName,
+        actualCommission: referrals.actualCommission,
+        status: referrals.status,
+        submittedAt: referrals.submittedAt,
         partnerId: users.partnerId,
         firstName: users.firstName,
         lastName: users.lastName
       })
-      .from(deals)
-      .leftJoin(users, eq(deals.referrerId, users.id))
+      .from(referrals)
+      .leftJoin(users, eq(referrals.referrerId, users.id))
       .where(and(
-        eq(deals.status, 'won'),
-        sql`${deals.actualCommission} IS NOT NULL`,
-        sql`${deals.actualCommission}::decimal > 0`,
+        eq(referrals.status, 'won'),
+        sql`${referrals.actualCommission} IS NOT NULL`,
+        sql`${referrals.actualCommission}::decimal > 0`,
         sql`NOT EXISTS (
           SELECT 1 FROM ${commissionPayments}
-          WHERE ${commissionPayments.dealId} = ${deals.id}
+          WHERE ${commissionPayments.referralId} = ${referrals.id}
           AND ${commissionPayments.status} = 'paid'
         )`
       ));
 
     return pendingPayments.map(payment => ({
       id: payment.referralId,
-      dealId: payment.referralId,
+      referralId: payment.referralId,
       businessName: payment.businessName,
       partnerId: payment.partnerId || '',
       partnerName: `${payment.firstName || ''} ${payment.lastName || ''}`.trim(),
@@ -1855,7 +1835,7 @@ export class DatabaseStorage implements IStorage {
 
   async getPaymentHistory(): Promise<Array<{
     id: string;
-    dealId: string;
+    referralId: string;
     businessName: string;
     partnerId: string;
     partnerName: string;
@@ -1867,24 +1847,24 @@ export class DatabaseStorage implements IStorage {
     const history = await db
       .select({
         id: commissionPayments.id,
-        dealId: commissionPayments.dealId,
+        referralId: commissionPayments.referralId,
         amount: commissionPayments.amount,
         status: commissionPayments.status,
         processedAt: commissionPayments.paymentDate,
         paymentReference: commissionPayments.transferReference,
-        businessName: deals.businessName,
+        businessName: referrals.businessName,
         partnerId: users.partnerId,
         firstName: users.firstName,
         lastName: users.lastName
       })
       .from(commissionPayments)
-      .leftJoin(referrals, eq(commissionPayments.dealId, deals.id))
+      .leftJoin(referrals, eq(commissionPayments.referralId, referrals.id))
       .leftJoin(users, eq(commissionPayments.recipientId, users.id))
       .orderBy(desc(commissionPayments.paymentDate));
 
     return history.map(payment => ({
       id: payment.id,
-      dealId: payment.referralId || '',
+      referralId: payment.referralId || '',
       businessName: payment.businessName || '',
       partnerId: payment.partnerId || '',
       partnerName: `${payment.firstName || ''} ${payment.lastName || ''}`.trim(),
@@ -1895,7 +1875,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async processStripePayment(dealId: string, recipientId: string, amount: number, stripeTransferId: string): Promise<void> {
+  async processStripePayment(referralId: string, recipientId: string, amount: number, stripeTransferId: string): Promise<void> {
     // Create commission payment record
     await db.insert(commissionPayments).values({
       referralId,
@@ -1911,12 +1891,12 @@ export class DatabaseStorage implements IStorage {
 
     // Update referral status
     await db
-      .update(deals)
+      .update(referrals)
       .set({ 
         paymentStatus: 'paid',
         updatedAt: new Date()
       })
-      .where(eq(deals.id, referralId));
+      .where(eq(referrals.id, referralId));
   }
   
   // Notification operations
@@ -2069,11 +2049,11 @@ export class DatabaseStorage implements IStorage {
         createdAt: users.createdAt,
         partnerId: users.partnerId,
         referralCode: users.referralCode,
-        referralCount: sql<number>`COUNT(${deals.id})`,
+        referralCount: sql<number>`COUNT(${referrals.id})`,
         hasChildren: sql<number>`(SELECT COUNT(*) FROM ${users} children WHERE children.parent_partner_id = ${users.id})`
       })
       .from(users)
-      .leftJoin(referrals, eq(deals.referrerId, users.id))
+      .leftJoin(referrals, eq(referrals.referrerId, users.id))
       .where(eq(users.parentPartnerId, userId))
       .groupBy(users.id, users.firstName, users.lastName, users.email, users.createdAt, users.partnerId, users.referralCode);
     
@@ -2116,8 +2096,8 @@ export class DatabaseStorage implements IStorage {
         // Get deals submitted by this member
         const [dealsResult] = await db
           .select({ count: sql<number>`COUNT(*)` })
-          .from(deals)
-          .where(eq(deals.userId, member.id));
+          .from(referrals)
+          .where(eq(referrals.userId, member.id));
 
         // Get total revenue for this member
         const [revenueResult] = await db
@@ -2261,8 +2241,8 @@ export class DatabaseStorage implements IStorage {
         referral: referrals,
       })
       .from(quotes)
-      .innerJoin(referrals, eq(quotes.dealId, deals.id))
-      .where(eq(deals.referrerId, userId))
+      .innerJoin(referrals, eq(quotes.referralId, referrals.id))
+      .where(eq(referrals.referrerId, userId))
       .orderBy(desc(quotes.createdAt));
     
     return result.map(row => ({
@@ -2279,7 +2259,7 @@ export class DatabaseStorage implements IStorage {
         referral: referrals,
       })
       .from(quotes)
-      .innerJoin(referrals, eq(quotes.dealId, deals.id))
+      .innerJoin(referrals, eq(quotes.referralId, referrals.id))
       .where(eq(quotes.id, quoteId));
     
     if (result.length === 0) return undefined;
@@ -2354,10 +2334,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(quotes.id, quoteId));
   }
 
-  async saveQuoteSignupInfo(quoteId: string, dealId: string, signupData: any): Promise<void> {
+  async saveQuoteSignupInfo(quoteId: string, referralId: string, signupData: any): Promise<void> {
     // Save director/owner information
     await db.insert(businessOwners).values({
-      dealId: dealId,
+      referralId: referralId,
       firstName: signupData.firstName,
       lastName: signupData.lastName,
       homeAddress: signupData.homeAddress,
@@ -2367,7 +2347,7 @@ export class DatabaseStorage implements IStorage {
 
     // Save business details
     await db.insert(businessDetails).values({
-      dealId: dealId,
+      referralId: referralId,
       tradingName: signupData.tradingName,
       tradingAddress: signupData.tradingAddress,
       businessDescription: signupData.businessDescription,
@@ -2392,9 +2372,9 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .select({
         id: quotes.id,
-        dealId: quotes.dealId,
-        businessName: deals.businessName,
-        businessEmail: deals.businessEmail,
+        referralId: quotes.referralId,
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
         customerJourneyStatus: quotes.customerJourneyStatus,
         status: quotes.status,
         createdAt: quotes.createdAt,
@@ -2409,7 +2389,7 @@ export class DatabaseStorage implements IStorage {
         commissionPaid: quotes.commissionPaid,
       })
       .from(quotes)
-      .leftJoin(referrals, eq(quotes.dealId, deals.id))
+      .leftJoin(referrals, eq(quotes.referralId, referrals.id))
       .leftJoin(users, eq(quotes.createdBy, users.id))
       .orderBy(desc(quotes.createdAt));
 
@@ -2420,9 +2400,9 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .select({
         quoteId: quotes.id,
-        dealId: quotes.dealId,
-        businessName: deals.businessName,
-        businessEmail: deals.businessEmail,
+        referralId: quotes.referralId,
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
         customerJourneyStatus: quotes.customerJourneyStatus,
         createdAt: quotes.createdAt,
         docsOutDate: quotes.docsOutDate,
@@ -2450,10 +2430,10 @@ export class DatabaseStorage implements IStorage {
         commissionPaid: quotes.commissionPaid,
       })
       .from(quotes)
-      .leftJoin(referrals, eq(quotes.dealId, deals.id))
+      .leftJoin(referrals, eq(quotes.referralId, referrals.id))
       .leftJoin(users, eq(quotes.createdBy, users.id))
-      .leftJoin(businessOwners, eq(businessOwners.dealId, quotes.dealId))
-      .leftJoin(businessDetails, eq(businessDetails.dealId, quotes.dealId))
+      .leftJoin(businessOwners, eq(businessOwners.referralId, quotes.referralId))
+      .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
       .where(
         sql`${quotes.commissionPaid} = false OR ${quotes.commissionPaid} IS NULL`
       )
@@ -2466,9 +2446,9 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .select({
         quoteId: quotes.id,
-        dealId: quotes.dealId,
-        businessName: deals.businessName,
-        businessEmail: deals.businessEmail,
+        referralId: quotes.referralId,
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
         customerJourneyStatus: quotes.customerJourneyStatus,
         createdAt: quotes.createdAt,
         partnerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
@@ -2494,10 +2474,10 @@ export class DatabaseStorage implements IStorage {
         commissionPaid: quotes.commissionPaid,
       })
       .from(quotes)
-      .leftJoin(referrals, eq(quotes.dealId, deals.id))
+      .leftJoin(referrals, eq(quotes.referralId, referrals.id))
       .leftJoin(users, eq(quotes.createdBy, users.id))
-      .leftJoin(businessOwners, eq(businessOwners.dealId, quotes.dealId))
-      .leftJoin(businessDetails, eq(businessDetails.dealId, quotes.dealId))
+      .leftJoin(businessOwners, eq(businessOwners.referralId, quotes.referralId))
+      .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
       .where(and(
         sql`${businessOwners.id} IS NOT NULL`,
         sql`${quotes.commissionPaid} = true`
@@ -2511,9 +2491,9 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db
       .select({
         quoteId: quotes.id,
-        dealId: quotes.dealId,
-        businessName: deals.businessName,
-        businessEmail: deals.businessEmail,
+        referralId: quotes.referralId,
+        businessName: referrals.businessName,
+        businessEmail: referrals.businessEmail,
         customerJourneyStatus: quotes.customerJourneyStatus,
         createdAt: quotes.createdAt,
         partnerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
@@ -2532,10 +2512,10 @@ export class DatabaseStorage implements IStorage {
         bankAccountNumber: businessDetails.bankAccountNumber,
       })
       .from(quotes)
-      .leftJoin(referrals, eq(quotes.dealId, deals.id))
+      .leftJoin(referrals, eq(quotes.referralId, referrals.id))
       .leftJoin(users, eq(quotes.createdBy, users.id))
-      .leftJoin(businessOwners, eq(businessOwners.dealId, quotes.dealId))
-      .leftJoin(businessDetails, eq(businessDetails.dealId, quotes.dealId))
+      .leftJoin(businessOwners, eq(businessOwners.referralId, quotes.referralId))
+      .leftJoin(businessDetails, eq(businessDetails.referralId, quotes.referralId))
       .where(eq(quotes.id, quoteId));
 
     return result;
@@ -2627,7 +2607,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async createQuoteBillUpload(quoteId: string, dealId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string, fileData?: string): Promise<any> {
+  async createQuoteBillUpload(quoteId: string, referralId: string, fileName: string, fileSize: number, fileType: string, uploadedBy: string, documentType?: string, fileData?: string): Promise<any> {
     const { quoteBillUploads } = await import("@shared/schema");
     const [upload] = await db
       .insert(quoteBillUploads)
@@ -2664,7 +2644,7 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: quoteBillUploads.id,
         quoteId: quoteBillUploads.quoteId,
-        dealId: quoteBillUploads.dealId,
+        referralId: quoteBillUploads.referralId,
         fileName: quoteBillUploads.fileName,
         fileSize: quoteBillUploads.fileSize,
         fileType: quoteBillUploads.fileType,
@@ -2715,7 +2695,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Test data seeding function for demonstrating referral system functionality
-  async seedTestDeals(): Promise<void> {
+  async seedTestReferrals(): Promise<void> {
     try {
       // Get a test user (preferably admin) to assign referrals to
       const [testUser] = await db.select().from(users).where(eq(users.isAdmin, true)).limit(1);
@@ -2726,8 +2706,8 @@ export class DatabaseStorage implements IStorage {
 
       // Check if test referrals already exist
       const existingTestReferrals = await db.select()
-        .from(deals)
-        .where(eq(deals.referrerId, testUser.id))
+        .from(referrals)
+        .where(eq(referrals.referrerId, testUser.id))
         .limit(1);
       
       if (existingTestReferrals.length > 0) {
@@ -2896,16 +2876,16 @@ export class DatabaseStorage implements IStorage {
       ];
 
       // Insert test referrals
-      const insertedReferrals = await db.insert(deals).values(testReferrals).returning();
+      const insertedReferrals = await db.insert(referrals).values(testReferrals).returning();
       
       // Create commission approvals for completed referrals
       const commissionApprovalsData = insertedReferrals
         .filter(r => r.status === 'paid' && r.actualCommission)
         .map(referral => ({
-          dealId: deal.id,
+          referralId: referral.id,
           userId: testUser.id,
-          commissionAmount: deal.actualCommission!,
-          clientBusinessName: deal.businessName,
+          commissionAmount: referral.actualCommission!,
+          clientBusinessName: referral.businessName,
           approvalStatus: 'approved' as const,
           approvedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
           paymentStatus: 'completed' as const,
@@ -2913,7 +2893,7 @@ export class DatabaseStorage implements IStorage {
           paymentReference: `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
           adminNotes: 'Commission processed via automated system',
           ratesData: {
-            baseCommission: deal.actualCommission,
+            baseCommission: referral.actualCommission,
             commissionRate: '60%',
             level: 1
           }
@@ -2974,7 +2954,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCommissionPayment(paymentData: {
-    dealId: string;
+    referralId: string;
     recipientId: string;
     level: number;
     amount: string;
@@ -2989,7 +2969,7 @@ export class DatabaseStorage implements IStorage {
     notes?: string;
   }): Promise<any> {
     const [payment] = await db.insert(commissionPayments).values({
-      dealId: paymentData.referralId,
+      referralId: paymentData.referralId,
       recipientId: paymentData.recipientId,
       level: paymentData.level,
       amount: paymentData.amount,
@@ -3077,21 +3057,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async distributeUplineCommissions(
-    dealId: string, 
+    referralId: string, 
     totalCommission: number, 
     paymentReference: string, 
     paymentMethod: string
   ): Promise<CommissionApproval[]> {
     // Get the referral to find the submitter
-    const allDeals = await this.getAllReferrals();
-    const deal = allDeals.find((r: any) => r.id === referralId);
+    const allReferrals = await this.getAllReferrals();
+    const referral = allReferrals.find((r: any) => r.id === referralId);
     
     if (!referral) {
       throw new Error('Referral not found');
     }
 
-    const submitterId = deal.referrerId;
-    const businessName = deal.businessName;
+    const submitterId = referral.referrerId;
+    const businessName = referral.businessName;
     const createdApprovals: CommissionApproval[] = [];
 
     // Commission distribution:
@@ -3117,7 +3097,7 @@ export class DatabaseStorage implements IStorage {
 
       // Create commission approval for this person
       const approval = await this.createCommissionApproval({
-        dealId: dealId,
+        referralId: referralId,
         userId: currentUserId,
         commissionAmount: commissionAmount.toString(),
         clientBusinessName: businessName,
@@ -3315,18 +3295,18 @@ export class DatabaseStorage implements IStorage {
     return { children, parents, level };
   }
 
-  async getDealsByLevel(userId: string): Promise<{ [key: number]: Referral[] }> {
-    const allDeals = await db
+  async getReferralsByLevel(userId: string): Promise<{ [key: number]: Referral[] }> {
+    const allReferrals = await db
       .select()
-      .from(deals)
-      .where(eq(deals.referrerId, userId))
-      .orderBy(desc(deals.submittedAt));
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId))
+      .orderBy(desc(referrals.submittedAt));
     
     // Group referrals by level
     const referralsByLevel: { [key: number]: Referral[] } = { 1: [], 2: [], 3: [] };
     
-    allDeals.forEach(referral => {
-      const level = deal.referralLevel || 1;
+    allReferrals.forEach(referral => {
+      const level = referral.referralLevel || 1;
       if (referralsByLevel[level]) {
         referralsByLevel[level].push(referral);
       }
@@ -3335,7 +3315,7 @@ export class DatabaseStorage implements IStorage {
     return referralsByLevel;
   }
 
-  async createDealWithLevel(dealData: InsertDeal, referrerId: string): Promise<Deal> {
+  async createReferralWithLevel(referralData: InsertReferral, referrerId: string): Promise<Referral> {
     // Calculate the referral level based on MLM hierarchy
     const referralLevel = await this.calculateReferralLevel(referrerId);
     const commissionPercentage = this.getCommissionPercentage(referralLevel);
@@ -3350,7 +3330,7 @@ export class DatabaseStorage implements IStorage {
     
     // Create the referral with level information
     const referralWithLevel = {
-      ...dealData,
+      ...referralData,
       referralLevel,
       parentReferrerId,
       commissionPercentage: commissionPercentage.toString()

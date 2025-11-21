@@ -63,14 +63,14 @@ interface Device {
 }
 
 interface QuoteBuilderProps {
-  dealId: string;
+  referralId: string;
   businessName: string;
   onQuoteCreated: (quoteId: string) => void;
   onCancel: () => void;
   apiEndpoint?: string; // Optional custom endpoint for quote generation
 }
 
-export default function QuoteBuilder({ dealId, businessName, onQuoteCreated, onCancel, apiEndpoint }: QuoteBuilderProps) {
+export default function QuoteBuilder({ referralId, businessName, onQuoteCreated, onCancel, apiEndpoint }: QuoteBuilderProps) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [devicePaymentType, setDevicePaymentType] = useState<"pay_once" | "pay_monthly">("pay_monthly");
   
@@ -173,7 +173,7 @@ export default function QuoteBuilder({ dealId, businessName, onQuoteCreated, onC
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          dealId,
+          referralId,
           ...data,
           devices,
           devicePaymentType,

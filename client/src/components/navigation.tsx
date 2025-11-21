@@ -31,13 +31,7 @@ import {
 } from "lucide-react";
 
 export default function Navigation() {
-  let location = "/";
-  try {
-    [location] = useLocation();
-  } catch (error) {
-    console.warn("Navigation: useLocation failed, using fallback", error);
-  }
-  
+  const [location] = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -128,7 +122,7 @@ export default function Navigation() {
                                 </div>
                                 <div>
                                   <h4 className="font-medium text-gray-900">Lead Tracking</h4>
-                                  <p className="text-sm text-gray-600">Track your deals from submission to payout</p>
+                                  <p className="text-sm text-gray-600">Track your referrals from submission to payout</p>
                                 </div>
                               </div>
                             </Link>
@@ -356,7 +350,7 @@ export default function Navigation() {
                             <Home className="w-5 h-5" />
                             <div>
                               <h4 className="font-medium">Go to Dashboard</h4>
-                              <p className="text-xs text-blue-100">Manage your deals and earnings</p>
+                              <p className="text-xs text-blue-100">Manage your referrals and earnings</p>
                             </div>
                           </div>
                         </Link>
@@ -517,12 +511,12 @@ export default function Navigation() {
                       <span className="font-medium">Opportunities</span>
                     </div>
                   </Link>
-                  <Link href="/submit-deal" onClick={handleMobileMenuClose}>
+                  <Link href="/submit-referral" onClick={handleMobileMenuClose}>
                     <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                      isActive('/submit-deal') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-                    }`} data-testid="mobile-link-submit-deals">
+                      isActive('/submit-referral') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`} data-testid="mobile-link-submit-referral">
                       <UsersIcon className="w-5 h-5" />
-                      <span className="font-medium">Submit Deal</span>
+                      <span className="font-medium">Submit Referral</span>
                     </div>
                   </Link>
                   <Link href="/team-management" onClick={handleMobileMenuClose}>
@@ -641,7 +635,7 @@ export default function Navigation() {
                         <BarChart3Icon className="w-5 h-5 text-purple-600" />
                         <div>
                           <h4 className="font-medium text-gray-900">Lead Tracking</h4>
-                          <p className="text-xs text-gray-600">Track deals to payout</p>
+                          <p className="text-xs text-gray-600">Track referrals to payout</p>
                         </div>
                       </div>
                     </Link>
@@ -743,10 +737,10 @@ export default function Navigation() {
         />
       )}
 
-      {/* Floating Action Button for Mobile - Submit Deal */}
+      {/* Floating Action Button for Mobile - Submit Referral */}
       {isAuthenticated && (
         <div className="fixed bottom-6 right-6 sm:hidden z-50">
-          <Link href="/submit-deal">
+          <Link href="/submit-referral">
             <Button
               size="lg"
               className="h-14 w-14 rounded-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105"
