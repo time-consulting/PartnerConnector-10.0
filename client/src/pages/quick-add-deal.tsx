@@ -2,7 +2,9 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/offline-api"; // Use offline-aware API
+import { useOfflineSync } from "@/lib/offline-sync";
+import SyncStatus from "@/components/sync-status";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -107,6 +109,7 @@ const useVoiceRecognition = () => {
 export default function QuickAddReferral() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { isOnline, pendingCount } = useOfflineSync();
   const [, setLocation] = useLocation();
   const [showSuccess, setShowSuccess] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -173,7 +176,7 @@ export default function QuickAddReferral() {
         description: "This quick form is optimized for mobile. Redirecting to full form...",
       });
       setTimeout(() => {
-        setLocation("/submit-deal");
+        setLocation("/submit-deals?");
       }, 2000);
     }
   }, [isLoading, toast, setLocation]);
@@ -183,7 +186,7 @@ export default function QuickAddReferral() {
     if (!isLoading && !isAuthenticated) {
       toast({
         title: "Please login",
-        description: "You need to be logged in to submit deal.",
+        description: "You need to be logged in to submit deals?.",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -213,10 +216,18 @@ export default function QuickAddReferral() {
       
       setShowSuccess(true);
       
-      toast({
-        title: "🎉 Lead Captured!",
-        description: "Referral submitted successfully.",
-      });
+      // Different message for offline vs online submission
+      if (!isOnline) {
+        toast({
+          title: "📱 Lead Saved Offline!",
+          description: "Will sync automatically when connection is restored.",
+        });
+      } else {
+        toast({
+          title: "🎉 Lead Captured!",
+          description: "Referral submitted successfully.",
+        });
+      }
 
       // Redirect to dashboard after animation
       setTimeout(() => {
@@ -224,11 +235,25 @@ export default function QuickAddReferral() {
       }, 2500);
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to submit. Your draft is saved.",
-        variant: "destructive",
-      });
+      // Check if it was queued offline (which appears as success in our offline API)
+      if (!isOnline) {
+        // Clear saved draft since it was queued
+        localStorage.removeItem("quickReferralDraft");
+        setShowSuccess(true);
+        toast({
+          title: "📱 Saved for Later",
+          description: "Your lead will be submitted when you're back online.",
+        });
+        setTimeout(() => {
+          setLocation("/dashboard");
+        }, 2500);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to submit. Your draft is saved.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -350,6 +375,8 @@ export default function QuickAddReferral() {
             <ZapIcon className="w-5 h-5 text-teal-600" />
             <span className="font-semibold text-gray-900">Quick Add Lead</span>
           </div>
+          {/* Offline/Online Status Indicator */}
+          <SyncStatus compact />
         </div>
         {/* Progress Bar */}
         <div className="h-1 bg-gray-100">

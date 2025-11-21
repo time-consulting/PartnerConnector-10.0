@@ -174,7 +174,7 @@ export default function QuickDealForm({ onSubmit, isSubmitting }: QuickDealFormP
                 className="w-full h-11" 
                 size="lg"
                 disabled={isSubmitting}
-                data-testid="button-submit-quick-deal"
+                data-testid="button-submit-quick-deals?"
               >
                 {isSubmitting ? "Submitting..." : "Submit Quick Deal"}
               </Button>

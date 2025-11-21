@@ -39,7 +39,7 @@ const TOUR_STEPS: TourStep[] = [
     id: "pipeline",
     message: "Your pipeline at a glance. Update deals fast.",
     targetArea: "[data-testid='card-deals-submitted']",
-    element: "[data-testid='card-deals-submitted'], [data-testid='card-commission-pending'], [data-testid='card-deal-made'], [data-testid='card-monthly-earnings']",
+    element: "[data-testid='card-deals-submitted'], [data-testid='card-commission-pending'], [data-testid='card-deals?-made'], [data-testid='card-monthly-earnings']",
     pillPosition: { bottom: "24px", left: "24px" }
   },
   {

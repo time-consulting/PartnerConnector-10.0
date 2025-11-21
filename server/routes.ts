@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
 import { insertDealSchema, insertContactSchema, insertOpportunitySchema, insertWaitlistSchema, insertPushSubscriptionSchema, mapDealStageToCustomerJourney } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { emailService } from "./emailService";
 import { ghlEmailService } from "./ghlEmailService";
 import multer from "multer";
 import { z } from "zod";
@@ -17,46 +18,11 @@ import { pushNotificationService } from "./push-notifications";
 import Stripe from 'stripe';
 import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
-import { ghlSmsService } from "./ghlSmsService";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
-
-// Commission variance validation helper
-function validateCommissionVariance(
-  expectedCommission: number,
-  actualCommission: number,
-  dealType: string
-): {
-  isValid: boolean;
-  variancePercentage: number;
-  requires2FA: boolean;
-  message?: string;
-} {
-  const variance = Math.abs(actualCommission - expectedCommission);
-  const variancePercentage = expectedCommission > 0 ? (variance / expectedCommission) * 100 : 0;
-
-  // All payments >£1000 require 2FA
-  const requires2FA = actualCommission >= 1000;
-
-  // Variance tolerance based on deal type
-  const maxVariance = dealType === 'NTC' ? 20 : 100; // NTC: 20%, Switcher: 100%
-
-  const isValid = variancePercentage <= maxVariance;
-
-  if (!isValid) {
-    return {
-      isValid: false,
-      variancePercentage,
-      requires2FA,
-      message: `Commission variance ${variancePercentage.toFixed(1)}% exceeds ${maxVariance}% tolerance for ${dealType} deals`
-    };
-  }
-
-  return { isValid: true, variancePercentage, requires2FA };
-}
 
 // GHL Integration function
 async function submitToGHL(referral: any) {
@@ -2330,8 +2296,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a simple reset token (in production, use crypto.randomBytes)
       const resetToken = `rst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Send password reset email via GHL
-      const emailSent = await ghlEmailService.sendPasswordResetEmail(user.email, resetToken, user.firstName, user.lastName);
+      // Send password reset email
+      const emailSent = await emailService.sendPasswordResetEmail(user.email, resetToken);
       
       if (emailSent) {
         res.json({ 
@@ -3793,150 +3759,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Initiate payment process - Generate 2FA code and send via GHL SMS
-  app.post('/api/admin/deals/:dealId/initiate-payment', requireAuth, requireAdmin, async (req: any, res) => {
-    try {
-      const { dealId } = req.params;
-      const { actualCommission } = req.body;
-
-      if (!actualCommission || actualCommission <= 0) {
-        return res.status(400).json({ message: "Valid commission amount required" });
-      }
-
-      // Get deal details
-      const allDeals = await storage.getAllDeals();
-      const deal = allDeals.find((d: any) => d.id === dealId);
-      
-      if (!deal) {
-        return res.status(404).json({ message: "Deal not found" });
-      }
-
-      // Check if there's already an active verification code (payment in progress)
-      const hasLock = await storage.checkDealPaymentLock(dealId);
-      if (hasLock) {
-        return res.status(409).json({ 
-          message: "Payment verification already in progress for this deal. Please wait or use the existing code." 
-        });
-      }
-
-      // Generate 6-digit verification code
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      // Store verification code (expires in 10 minutes)
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-      await storage.createPaymentVerificationCode({
-        dealId,
-        code,
-        expiresAt,
-        isUsed: false,
-        createdBy: req.user.id
-      });
-
-      // Send SMS via GHL
-      const smsSent = await ghlSmsService.send2FACode(code, {
-        businessName: deal.businessName,
-        amount: parseFloat(actualCommission),
-        dealId
-      });
-
-      if (!smsSent && ghlSmsService.isServiceConfigured()) {
-        // If GHL is configured but SMS failed, return error
-        return res.status(500).json({ 
-          message: "Failed to send verification code. Please try again." 
-        });
-      }
-
-      res.json({ 
-        success: true,
-        message: smsSent 
-          ? `Verification code sent to ${ghlSmsService.getAdminPhone()}`
-          : `GHL SMS not configured. Code: ${code}`,
-        requires2FA: parseFloat(actualCommission) >= 1000,
-        expiresAt,
-        debugCode: !ghlSmsService.isServiceConfigured() ? code : undefined
-      });
-    } catch (error) {
-      console.error("Error initiating payment:", error);
-      res.status(500).json({ message: "Failed to initiate payment verification" });
-    }
-  });
-
-  // Confirm payment section for commission amounts with 2FA verification
+  // Confirm payment section for commission amounts
   app.post('/api/admin/referrals/:dealId/confirm-payment', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { dealId } = req.params;
-      const { actualCommission, paymentReference, paymentMethod, paymentNotes, verificationCode } = req.body;
-
-      if (!actualCommission || actualCommission <= 0) {
-        return res.status(400).json({ message: "Valid commission amount required" });
-      }
+      const { actualCommission, paymentReference, paymentMethod, paymentNotes } = req.body;
 
       // Get deal details
       const allDeals = await storage.getAllDeals();
       const deal = allDeals.find((r: any) => r.id === dealId);
       
-      if (!deal) {
+      if (!referral) {
         return res.status(404).json({ message: "Deal not found" });
       }
 
-      // Check if deal already has a payment
-      if (deal.actualCommission && parseFloat(deal.actualCommission) > 0) {
-        return res.status(409).json({ 
-          message: "Payment already processed for this deal",
-          existingAmount: deal.actualCommission
-        });
-      }
-
-      const commissionAmount = parseFloat(actualCommission);
-      const expectedCommission = deal.estimatedCommission ? parseFloat(deal.estimatedCommission) : 0;
-
-      // Validate commission variance
-      const validation = validateCommissionVariance(
-        expectedCommission,
-        commissionAmount,
-        deal.dealType || 'Switcher'
-      );
-
-      if (!validation.isValid) {
-        return res.status(400).json({ 
-          message: validation.message,
-          variancePercentage: validation.variancePercentage
-        });
-      }
-
-      // Verify 2FA code for ALL payments (as requested)
-      if (!verificationCode) {
-        return res.status(400).json({ 
-          message: "Verification code required for all commission payments",
-          requires2FA: true
-        });
-      }
-
-      const verificationRecord = await storage.getPaymentVerificationCode(dealId);
-      
-      if (!verificationRecord) {
-        return res.status(400).json({ 
-          message: "No valid verification code found. Please initiate payment first." 
-        });
-      }
-
-      if (verificationRecord.code !== verificationCode) {
-        return res.status(403).json({ 
-          message: "Invalid verification code" 
-        });
-      }
-
-      if (new Date() > new Date(verificationRecord.expiresAt)) {
-        return res.status(400).json({ 
-          message: "Verification code expired. Please request a new code." 
-        });
-      }
-
-      // Mark verification code as used
-      await storage.markVerificationCodeAsUsed(verificationRecord.id);
-
       // Update deal with payment confirmation
-      const paymentConfirmationNote = `\n[${new Date().toLocaleString()}] Payment confirmed by admin ${req.user.email}: £${actualCommission} via ${paymentMethod || 'Bank Transfer'}. Reference: ${paymentReference}. Variance: ${validation.variancePercentage.toFixed(1)}%. Notes: ${paymentNotes || 'No additional notes'}`;
+      const paymentConfirmationNote = `\n[${new Date().toLocaleString()}] Payment confirmed by admin ${req.user.email}: £${actualCommission} via ${paymentMethod || 'Bank Transfer'}. Reference: ${paymentReference}. Notes: ${paymentNotes || 'No additional notes'}`;
       
       const updateData = {
         actualCommission: actualCommission.toString(),
@@ -3946,12 +3784,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       };
 
-      const updatedDeal = await storage.updateDeal(dealId, updateData);
+      const updatedReferral = await storage.updateDeal(dealId, updateData);
 
       // Distribute commissions across the upline chain (60%, 20%, 10%)
       const approvals = await storage.distributeUplineCommissions(
         dealId,
-        commissionAmount,
+        parseFloat(actualCommission),
         paymentReference,
         paymentMethod || 'Bank Transfer'
       );
@@ -3960,17 +3798,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const approval of approvals) {
         const ratesData = approval.ratesData as any || {};
         const commissionPercentage = parseFloat(ratesData.commissionRate || '0%');
-        const commissionAmountForUser = parseFloat(approval.commissionAmount);
+        const commissionAmount = parseFloat(approval.commissionAmount);
         const commissionType = ratesData.commissionType || 'direct';
         
         await createNotificationForUser(approval.userId, {
           type: 'commission_paid',
           title: commissionType === 'direct' ? 'Commission Payment Confirmed' : 'Override Commission Paid',
-          message: `You earned £${commissionAmountForUser.toFixed(2)} (${commissionPercentage}% ${commissionType} commission) for ${deal.businessName}. Reference: ${approval.paymentReference}`,
+          message: `You earned £${commissionAmount.toFixed(2)} (${commissionPercentage}% ${commissionType} commission) for ${referral.businessName}. Reference: ${approval.paymentReference}`,
           dealId: dealId,
           businessName: deal.businessName,
           metadata: {
-            amount: commissionAmountForUser,
+            amount: commissionAmount,
             percentage: commissionPercentage,
             commissionType: commissionType,
             paymentReference: approval.paymentReference,
@@ -3984,7 +3822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           {
             dealId: dealId,
             businessName: deal.businessName,
-            amount: commissionAmountForUser,
+            amount: commissionAmount,
             level: ratesData.level || 1,
             percentage: commissionPercentage
           }
@@ -3994,11 +3832,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         message: `Payment confirmed and distributed to ${approvals.length} people in the commission chain`,
-        deal: updatedDeal,
+        referral: updatedReferral,
         approvals: approvals,
         paymentDetails: {
           totalAmount: actualCommission,
-          variance: `${validation.variancePercentage.toFixed(1)}%`,
           reference: paymentReference,
           method: paymentMethod || 'Bank Transfer',
           date: new Date(),
@@ -4963,6 +4800,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Leads routes
+  app.get('/api/leads', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const leads = await storage.getLeadsByUserId(userId);
+      res.json(leads);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      res.status(500).json({ message: "Failed to fetch leads" });
+    }
+  });
+
+  app.post('/api/leads', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const leadData = {
+        ...req.body,
+        partnerId: userId,
+      };
+      
+      const lead = await storage.createLead(leadData);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error creating lead:", error);
+      res.status(500).json({ message: "Failed to create lead" });
+    }
+  });
+
+  app.post('/api/leads/bulk', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { leads: leadsData } = req.body;
+      
+      const leadsWithPartnerId = leadsData.map((lead: any) => ({
+        ...lead,
+        partnerId: userId,
+      }));
+      
+      const result = await storage.createLeadsBulk(leadsWithPartnerId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating bulk leads:", error);
+      res.status(500).json({ message: "Failed to create leads" });
+    }
+  });
+
+  app.patch('/api/leads/:leadId', async (req: any, res) => {
+    try {
+      const { leadId } = req.params;
+      const { status } = req.body;
+      
+      const lead = await storage.updateLeadStatus(leadId, status);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      res.status(500).json({ message: "Failed to update lead status" });
+    }
+  });
+
+  app.put('/api/leads/:leadId', requireAuth, async (req: any, res) => {
+    try {
+      const { leadId } = req.params;
+      const updates = req.body;
+      
+      const lead = await storage.updateLead(leadId, updates);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      res.status(500).json({ message: "Failed to update lead" });
+    }
+  });
+
+  app.get('/api/leads/:leadId/interactions', requireAuth, async (req: any, res) => {
+    try {
+      const { leadId } = req.params;
+      const interactions = await storage.getLeadInteractions(leadId);
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error fetching lead interactions:", error);
+      res.status(500).json({ message: "Failed to fetch interactions" });
+    }
+  });
+
+  app.post('/api/leads/:leadId/interactions', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { leadId } = req.params;
+      const interactionData = {
+        ...req.body,
+        partnerId: userId,
+      };
+      
+      const interaction = await storage.addLeadInteraction(leadId, interactionData);
+      res.json(interaction);
+    } catch (error) {
+      console.error("Error adding interaction:", error);
+      res.status(500).json({ message: "Failed to add interaction" });
+    }
+  });
+
+  app.post('/api/leads/:leadId/send-info', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { leadId } = req.params;
+      const { productType, title, content } = req.body;
+      
+      // Create an interaction record for the info sharing
+      const interactionData = {
+        partnerId: userId,
+        interactionType: 'email',
+        subject: `Sent: ${title}`,
+        details: `Sent business information about ${productType}:\n\n${content}`,
+        outcome: 'follow_up_required',
+        nextAction: 'Follow up on information shared',
+      };
+      
+      const interaction = await storage.addLeadInteraction(leadId, interactionData);
+      res.json({ success: true, interaction });
+    } catch (error) {
+      console.error("Error sending info:", error);
+      res.status(500).json({ message: "Failed to send information" });
+    }
+  });
+
   // Partners routes
   app.get('/api/partners', async (req, res) => {
     try {
@@ -5686,6 +5647,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting payments:", error);
       res.status(500).json({ message: "Failed to export payments" });
+    }
+  });
+
+  // ================== PRODUCTION ADMIN INITIALIZATION ==================
+  
+  // Special endpoint to grant admin access in production
+  // Use this once to set up your admin account
+  app.post('/api/admin/initialize-production-admin', async (req: any, res) => {
+    try {
+      const { secretKey, email } = req.body;
+      
+      // Check secret key (you should set this as an environment variable)
+      const ADMIN_INIT_SECRET = process.env.ADMIN_INIT_SECRET || 'your-secret-key-2024';
+      
+      if (!secretKey || secretKey !== ADMIN_INIT_SECRET) {
+        return res.status(403).json({ message: "Invalid secret key" });
+      }
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      // Update the user to be an admin
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found. Please log in first to create your account." });
+      }
+      
+      // Grant admin access
+      await storage.updateUser(user.id, { isAdmin: true });
+      
+      // Log this important action
+      console.log(`[ADMIN INIT] Granted admin access to ${email} (user ID: ${user.id})`);
+      
+      res.json({ 
+        success: true, 
+        message: `Admin access granted to ${email}`,
+        userId: user.id 
+      });
+      
+    } catch (error) {
+      console.error("Error initializing production admin:", error);
+      res.status(500).json({ message: "Failed to initialize admin access" });
     }
   });
 

@@ -709,7 +709,7 @@ export default function OpportunitiesPage() {
     const opportunity = opportunities.find((opp: Opportunity) => opp.id === opportunityId);
     if (!opportunity || opportunity.status === newStatus) return;
     
-    // Special handling for "Submit Lead" stage - navigate to deal form but keep in pipeline
+    // Special handling for "Submit Lead" stage - navigate to deals? form but keep in pipeline
     if (newStatus === "submit_lead") {
       // First update the status to "submit_lead"
       updateOpportunityStatusMutation.mutate({ 
@@ -717,7 +717,7 @@ export default function OpportunitiesPage() {
         status: newStatus 
       });
       
-      // Then navigate to submit-deal page with pre-populated data
+      // Then navigate to submit-deals? page with pre-populated data
       const params = new URLSearchParams({
         opportunityId: opportunity.id,
         dealId: opportunity.dealId || "",
@@ -731,7 +731,7 @@ export default function OpportunitiesPage() {
         productInterest: JSON.stringify(opportunity.productInterest || []),
         notes: opportunity.notes || "",
       });
-      setLocation(`/submit-deal?${params.toString()}`);
+      setLocation(`/submit-deals??${params.toString()}`);
       return;
     }
     

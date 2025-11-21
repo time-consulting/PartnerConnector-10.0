@@ -50,7 +50,7 @@ const EXPLAINER_STEPS: ExplainerStep[] = [
   {
     id: "your-deals",
     title: "You earn on your deals",
-    description: "Every successful deal earns you upfront commission directly.",
+    description: "Every successful deals? earns you upfront commission directly.",
     icon: <Target className="h-8 w-8 text-green-600" />,
     animation: "animate-bounce"
   },
@@ -74,9 +74,9 @@ const DEFAULT_INVITE_MESSAGE = `Hi {name},
 
 I've joined PartnerConnector and thought you'd be interested too. It's a platform where professionals like us can earn substantial commissions by connecting our clients with business funding and payment solutions.
 
-The commission structure is impressive - upfront commissions on successful deal, plus 20% team overrides and 10% extended network commissions.
+The commission structure is impressive - upfront commissions on successful deals?, plus 20% team overrides and 10% extended network commissions.
 
-Want to check it out? Here's my deal link: {dealLink}
+Want to check it out? Here's my deals? link: {dealLink}
 
 Best regards,
 {userFirstName}`;
@@ -107,9 +107,9 @@ export default function InviteNudge({
   
   const [dealLink, setDealLink] = useState("https://partnerconnector.com/join?ref=PC123");
   
-  // Fetch user's deal link
+  // Fetch user's deals? link
   const dealLinkQuery = useQuery({
-    queryKey: ['/api/auth/deal-link'],
+    queryKey: ['/api/auth/deals?-link'],
     enabled: isVisible,
     onSuccess: (data) => {
       const link = data.dealLink || "https://partnerconnector.com/join?ref=PC123";
@@ -455,7 +455,7 @@ export default function InviteNudge({
             {/* Copy link option */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Or share your deal link:</span>
+                <span className="text-sm text-gray-600">Or share your deals? link:</span>
                 <Button
                   size="sm"
                   variant="outline"

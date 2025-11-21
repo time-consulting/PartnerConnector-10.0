@@ -69,10 +69,10 @@ export default function DealProgress({ dealId }: DealProgressProps) {
   };
 
   return (
-    <Card data-testid="card-deal-progress">
+    <Card data-testid="card-deals?-progress">
       <CardHeader>
         <CardTitle className="text-xl font-bold">Deal Progress Tracker</CardTitle>
-        <p className="text-sm text-muted-foreground">Track your deal from submission to completion</p>
+        <p className="text-sm text-muted-foreground">Track your deals? from submission to completion</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">

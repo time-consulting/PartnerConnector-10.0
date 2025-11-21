@@ -333,12 +333,12 @@ export function AdminPaymentsPortal() {
                   <div className="flex-1">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Building className="h-5 w-5 text-green-600" />
-                      {account.deal?.businessName || "Unknown Business"}
+                      {account.deals??.businessName || "Unknown Business"}
                     </CardTitle>
                     <div className="mt-2 space-y-1">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Mail className="h-4 w-4" />
-                        {account.deal?.businessEmail || "No email"}
+                        {account.deals??.businessEmail || "No email"}
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Badge variant="outline" className="text-xs">
@@ -438,7 +438,7 @@ export function AdminPaymentsPortal() {
               Process Commission Payment
             </DialogTitle>
             <DialogDescription>
-              {selectedQuote?.deal?.businessName} - {selectedQuote?.quoteId}
+              {selectedQuote?.deals??.businessName} - {selectedQuote?.quoteId}
             </DialogDescription>
           </DialogHeader>
 

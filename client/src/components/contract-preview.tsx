@@ -15,7 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 interface ContractPreviewProps {
-  deal: {
+  deals?: {
     businessName: string;
     businessEmail: string;
     contactName?: string;
@@ -27,7 +27,7 @@ interface ContractPreviewProps {
   onSendToClient: () => void;
 }
 
-export default function ContractPreview({ deal, onApprove, onReject, onSendToClient }: ContractPreviewProps) {
+export default function ContractPreview({ deals?, onApprove, onReject, onSendToClient }: ContractPreviewProps) {
   const { toast } = useToast();
   const [showFullContract, setShowFullContract] = useState(false);
   
@@ -40,28 +40,28 @@ export default function ContractPreview({ deal, onApprove, onReject, onSendToCli
       description: "Competitive card processing rates and modern payment terminals",
       monthlyFee: "£25.00",
       transactionRate: "1.45% + 5p per transaction",
-      included: deal.selectedProducts.includes("Card Machines")
+      included: deals?.selectedProducts.includes("Card Machines")
     },
     {
       service: "Business Funding Assessment", 
       description: "Access to merchant cash advances and business loans",
       monthlyFee: "No monthly fee",
       transactionRate: "3-8% of funded amount",
-      included: deal.selectedProducts.includes("Merchant Cash Advance")
+      included: deals?.selectedProducts.includes("Merchant Cash Advance")
     },
     {
       service: "Business Insurance",
       description: "Comprehensive business protection and liability coverage",
       monthlyFee: "From £45.00",
       transactionRate: "Based on coverage level",
-      included: deal.selectedProducts.includes("Business Insurance")
+      included: deals?.selectedProducts.includes("Business Insurance")
     },
     {
       service: "Utility Supply Management",
       description: "Competitive business gas and electricity rates",
       monthlyFee: "No monthly fee",
       transactionRate: "Competitive unit rates",
-      included: deal.selectedProducts.includes("Gas & Electric Supply")
+      included: deals?.selectedProducts.includes("Gas & Electric Supply")
     }
   ];
 
@@ -71,7 +71,7 @@ export default function ContractPreview({ deal, onApprove, onReject, onSendToCli
     onSendToClient();
     toast({
       title: "Contract Sent",
-      description: `Service agreement has been sent to ${deal.businessEmail} for review and signature.`,
+      description: `Service agreement has been sent to ${deals?.businessEmail} for review and signature.`,
     });
   };
 
@@ -100,7 +100,7 @@ export default function ContractPreview({ deal, onApprove, onReject, onSendToCli
           <div className="flex items-center gap-6 text-sm text-gray-600">
             <div className="flex items-center gap-1">
               <BuildingIcon className="w-4 h-4" />
-              <span>{deal.businessName}</span>
+              <span>{deals?.businessName}</span>
             </div>
             <div className="flex items-center gap-1">
               <CalendarIcon className="w-4 h-4" />
@@ -108,7 +108,7 @@ export default function ContractPreview({ deal, onApprove, onReject, onSendToCli
             </div>
             <div className="flex items-center gap-1">
               <PoundSterlingIcon className="w-4 h-4" />
-              <span>Est. Commission: {deal.estimatedCommission || "£300-£2,000"}</span>
+              <span>Est. Commission: {deals?.estimatedCommission || "£300-£2,000"}</span>
             </div>
           </div>
         </CardHeader>
@@ -124,9 +124,9 @@ export default function ContractPreview({ deal, onApprove, onReject, onSendToCli
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">Client Information</h4>
               <div className="space-y-1 text-sm text-gray-600">
-                <p><span className="font-medium">Business:</span> {deal.businessName}</p>
-                <p><span className="font-medium">Contact:</span> {deal.contactName || "Business Owner"}</p>
-                <p><span className="font-medium">Email:</span> {deal.businessEmail}</p>
+                <p><span className="font-medium">Business:</span> {deals?.businessName}</p>
+                <p><span className="font-medium">Contact:</span> {deals?.contactName || "Business Owner"}</p>
+                <p><span className="font-medium">Email:</span> {deals?.businessEmail}</p>
               </div>
             </div>
             <div>
@@ -181,7 +181,7 @@ export default function ContractPreview({ deal, onApprove, onReject, onSendToCli
                 BUSINESS SERVICES AGREEMENT
               </h4>
               <div className="text-xs text-gray-700 space-y-3 leading-relaxed">
-                <p>This Business Services Agreement ("Agreement") is entered into on {contractDate} between PartnerConnector Ltd ("Provider") and {deal.businessName} ("Client").</p>
+                <p>This Business Services Agreement ("Agreement") is entered into on {contractDate} between PartnerConnector Ltd ("Provider") and {deals?.businessName} ("Client").</p>
                 
                 <div>
                   <h5 className="font-semibold mb-1">1. SERVICES PROVIDED</h5>

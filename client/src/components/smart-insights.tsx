@@ -135,9 +135,9 @@ export default function SmartInsights({ userStats, userDeals, isLoading }: Smart
     let streak = 0;
     let currentDate = new Date();
     
-    for (const deal of sortedDeals) {
-      const dealDate = new Date(deal.submittedAt);
-      const diffDays = Math.floor((currentDate.getTime() - dealDate.getTime()) / (1000 * 60 * 60 * 24));
+    for (const deals? of sortedDeals) {
+      const deals?Date = new Date(deals?.submittedAt);
+      const diffDays = Math.floor((currentDate.getTime() - deals?Date.getTime()) / (1000 * 60 * 60 * 24));
       
       if (diffDays <= streak + 1) {
         streak = Math.max(streak, diffDays + 1);
@@ -154,13 +154,13 @@ export default function SmartInsights({ userStats, userDeals, isLoading }: Smart
     
     const typePerformance: { [key: string]: { total: number; successful: number } } = {};
     
-    userDeals.forEach(deal => {
-      const type = deal.businessType || 'Unknown';
+    userDeals.forEach(deals? => {
+      const type = deals?.businessType || 'Unknown';
       if (!typePerformance[type]) {
         typePerformance[type] = { total: 0, successful: 0 };
       }
       typePerformance[type].total++;
-      if (['approved', 'completed'].includes(deal.status)) {
+      if (['approved', 'completed'].includes(deals?.status)) {
         typePerformance[type].successful++;
       }
     });
@@ -169,7 +169,7 @@ export default function SmartInsights({ userStats, userDeals, isLoading }: Smart
     let bestRate = 0;
     
     Object.entries(typePerformance).forEach(([type, stats]) => {
-      if (stats.total >= 2) { // Only consider types with at least 2 deal
+      if (stats.total >= 2) { // Only consider types with at least 2 deals?
         const rate = (stats.successful / stats.total) * 100;
         if (rate > bestRate) {
           bestRate = rate;
@@ -244,7 +244,7 @@ export default function SmartInsights({ userStats, userDeals, isLoading }: Smart
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm">
-            Keep submitting deal to unlock personalized performance insights and trends.
+            Keep submitting deals? to unlock personalized performance insights and trends.
           </p>
         </CardContent>
       </Card>

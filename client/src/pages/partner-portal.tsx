@@ -63,7 +63,7 @@ export default function PartnerPortal() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Performance Dashboard</h3>
                 <p className="text-gray-600 mb-6">
-                  Monitor your deal performance, conversion rates, and revenue trends with interactive charts and analytics.
+                  Monitor your deals? performance, conversion rates, and revenue trends with interactive charts and analytics.
                 </p>
                 <ul className="text-left text-sm text-gray-600 space-y-2">
                   <li className="flex items-center gap-2">
@@ -141,12 +141,12 @@ export default function PartnerPortal() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Referral Management</h3>
                 <p className="text-gray-600 mb-6">
-                  Submit new deal, track existing ones, and manage client relationships all in one place.
+                  Submit new deals?, track existing ones, and manage client relationships all in one place.
                 </p>
                 <ul className="text-left text-sm text-gray-600 space-y-2">
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-green-600" />
-                    Quick deal submission
+                    Quick deals? submission
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 text-green-600" />
@@ -167,7 +167,7 @@ export default function PartnerPortal() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Smart Notifications</h3>
                 <p className="text-gray-600 mb-6">
-                  Stay informed with intelligent notifications about deal updates, commission payments, and opportunities.
+                  Stay informed with intelligent notifications about deals? updates, commission payments, and opportunities.
                 </p>
                 <ul className="text-left text-sm text-gray-600 space-y-2">
                   <li className="flex items-center gap-2">

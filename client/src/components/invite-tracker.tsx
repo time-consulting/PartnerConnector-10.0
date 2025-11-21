@@ -36,7 +36,7 @@ interface Invite {
   name?: string;
   status: 'registered' | 'active';
   joinedAt: Date;
-  dealCode: string;
+  deals?Code: string;
   hasSubmittedDeals?: number;
 }
 
@@ -331,11 +331,11 @@ export default function InviteTracker({
                   </div>
 
                   {/* Referral Code */}
-                  {invite.dealCode && (
+                  {invite.deals?Code && (
                     <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
                       <Activity className="w-4 h-4" />
                       <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                        {invite.dealCode}
+                        {invite.deals?Code}
                       </span>
                     </div>
                   )}

@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 // import { TooltipProvider } from "@/components/ui/tooltip"; // Temporarily disabled due to React hook violation
 import { useAuth } from "@/hooks/useAuth";
+import ConnectionStatusNotifier from "@/components/connection-status-notifier";
 // import ImpersonationBanner from "@/components/impersonation-banner"; - Temporarily disabled due to React hook violation
 // import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
@@ -81,33 +82,38 @@ function PrivateRoute({ children, bypassOnboarding = false }: { children: React.
   const [location, setLocation] = useLocation();
   
   useEffect(() => {
-    // If loading is finished AND user is not authenticated, redirect.
     if (!isLoading && !isAuthenticated) {
       setLocation('/login');
-    } 
-    // If loading is finished AND authenticated AND onboarding is incomplete, redirect to onboarding.
-    else if (!isLoading && isAuthenticated && !bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
+    } else if (!isLoading && isAuthenticated && !bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
       setLocation('/onboarding');
     }
-  }, [isAuthenticated, isLoading, user, bypassOnboarding, setLocation, location]);
+  }, [isAuthenticated, isLoading, user, bypassOnboarding, setLocation]);
 
-  // If loading, show loading fallback screen (Crucial to prevent flicker)
   if (isLoading) {
-    return <LoadingFallback />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
   }
 
-  // If NOT authenticated, return null. The useEffect above has already triggered the redirect.
-  // This prevents rendering a temporary message that causes the flicker.
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Redirecting to login...</div>
+      </div>
+    );
   }
 
-  // If onboarding redirect is pending, also return null while waiting.
+  // If user hasn't completed onboarding and we're not on the onboarding page, redirect
   if (!bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Redirecting to onboarding...</div>
+      </div>
+    );
   }
 
-  // Everything is authenticated and authorized, render content.
   return <>{children}</>;
 }
 
@@ -166,18 +172,12 @@ function AppRoutes() {
 }
 
 function App() {
-  // Set dark mode as default theme
-  useEffect(() => {
-    document.documentElement.classList.add('dark');
-    document.documentElement.style.backgroundColor = '#1A1A2E';
-    document.documentElement.style.color = '#F3F4F6';
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       {/* <TooltipProvider> - Temporarily disabled due to React hook violation */}
         <Router>
           {/* <ImpersonationBanner /> - Temporarily disabled due to React hook violation */}
+          <ConnectionStatusNotifier />
           <Suspense fallback={<LoadingFallback />}>
             <AppRoutes />
             {/* <PWAInstallPrompt /> */}

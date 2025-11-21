@@ -107,9 +107,9 @@ export default function InviteTeamMember({
     {
       value: "member",
       label: "Team Member",
-      description: "Can submit deal and view their own commissions",
+      description: "Can submit deals? and view their own commissions",
       icon: Users,
-      permissions: ["Submit deal", "View own commissions", "Access training"],
+      permissions: ["Submit deals?", "View own commissions", "Access training"],
     },
     {
       value: "manager",
@@ -445,15 +445,15 @@ export default function InviteTeamMember({
                               <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
-                                data-testid="checkbox-can-submit-deal"
+                                data-testid="checkbox-can-submit-deals?"
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-sm font-normal">
-                                Can submit deal
+                                Can submit deals?
                               </FormLabel>
                               <FormDescription className="text-xs">
-                                Allow this member to submit new deal
+                                Allow this member to submit new deals?
                               </FormDescription>
                             </div>
                           </FormItem>

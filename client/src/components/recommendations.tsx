@@ -60,13 +60,13 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
     // Performance-based recommendations
     if (stats.totalCommissions === 0) {
       recs.push({
-        id: 'first-deal',
+        id: 'first-deals?',
         type: 'action',
         priority: 'high',
         title: 'Submit Your First Deal',
-        description: 'Get started earning commissions by submitting your first business deal today.',
+        description: 'Get started earning commissions by submitting your first business deals? today.',
         action: 'Submit Deal',
-        actionUrl: '/submit-deal',
+        actionUrl: '/submit-deals?',
         icon: PlusCircleIcon,
         category: 'Getting Started',
         timeToComplete: '5 minutes',
@@ -74,7 +74,7 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
       });
     }
 
-    if (deal.length > 0 && stats.successRate < 60) {
+    if (deals?.length > 0 && stats.successRate < 60) {
       recs.push({
         id: 'improve-success',
         type: 'insight',
@@ -96,7 +96,7 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
         type: 'tip',
         priority: 'medium',
         title: 'Follow Up on Active Deals',
-        description: `You have ${stats.activeDeals} active deal. Consider following up with these businesses to maintain engagement.`,
+        description: `You have ${stats.activeDeals} active deals?. Consider following up with these businesses to maintain engagement.`,
         icon: MessageSquareIcon,
         category: 'Relationship Management',
         timeToComplete: '30 minutes',
@@ -118,21 +118,21 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
     }
 
     // Behavioral recommendations
-    const recentDeals = deal.filter(r => {
+    const recentDeals = deals?.filter(r => {
       const submittedDate = new Date(r.submittedAt);
       const daysAgo = (Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24);
       return daysAgo <= 7;
     });
 
-    if (recentDeals.length === 0 && deal.length > 0) {
+    if (recentDeals.length === 0 && deals?.length > 0) {
       recs.push({
         id: 'stay-active',
         type: 'action',
         priority: 'medium',
         title: 'Stay Active This Week',
-        description: 'You haven\'t submitted any deal this week. Consistent activity leads to better earnings.',
+        description: 'You haven\'t submitted any deals? this week. Consistent activity leads to better earnings.',
         action: 'Find Prospects',
-        actionUrl: '/submit-deal',
+        actionUrl: '/submit-deals?',
         icon: TargetIcon,
         category: 'Activity',
         timeToComplete: '1 hour',
@@ -141,7 +141,7 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
     }
 
     // Education recommendations
-    if (deal.length > 0 && !hasViewedLearningPortal()) {
+    if (deals?.length > 0 && !hasViewedLearningPortal()) {
       recs.push({
         id: 'learning-portal',
         type: 'tip',
@@ -164,7 +164,7 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
         type: 'goal',
         priority: 'medium',
         title: 'Reach £2,000 in Commissions',
-        description: `You're at £${stats.totalCommissions}. Just ${Math.ceil((2000 - stats.totalCommissions) / 300)} more successful deal to reach £2,000!`,
+        description: `You're at £${stats.totalCommissions}. Just ${Math.ceil((2000 - stats.totalCommissions) / 300)} more successful deals? to reach £2,000!`,
         icon: TargetIcon,
         category: 'Goals',
         potentialImpact: '£2,000 milestone'
@@ -172,8 +172,8 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
     }
 
     // Quality recommendations based on upload behavior
-    const dealWithBills = deal.filter(r => r.hasBillUploads);
-    if (deal.length > 0 && dealWithBills.length / deal.length < 0.5) {
+    const deals?WithBills = deals?.filter(r => r.hasBillUploads);
+    if (deals?.length > 0 && deals?WithBills.length / deals?.length < 0.5) {
       recs.push({
         id: 'upload-bills',
         type: 'tip',
@@ -197,9 +197,9 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
         type: 'tip',
         priority: 'medium',
         title: 'Perfect Time for Outreach',
-        description: 'It\'s business hours! This is the ideal time to contact prospects and submit deal.',
+        description: 'It\'s business hours! This is the ideal time to contact prospects and submit deals?.',
         action: 'Contact Prospects',
-        actionUrl: '/submit-deal',
+        actionUrl: '/submit-deals?',
         icon: ClockIcon,
         category: 'Timing',
         timeToComplete: '30 minutes',
@@ -208,7 +208,7 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
     }
 
     // Industry-specific recommendations
-    const industryInsight = getIndustryRecommendation(deal);
+    const industryInsight = getIndustryRecommendation(deals?);
     if (industryInsight) {
       recs.push(industryInsight);
     }
@@ -223,7 +223,7 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
         description: 'You\'re performing excellently! Consider sharing your approach with other partners to build your network.',
         icon: StarIcon,
         category: 'Networking',
-        potentialImpact: 'Increased deal'
+        potentialImpact: 'Increased deals?'
       });
     }
 
@@ -236,10 +236,10 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
   };
 
   const getIndustryRecommendation = (deals: any[]): Recommendation | null => {
-    if (deal.length < 3) return null;
+    if (deals?.length < 3) return null;
 
-    // Analyze business types in deal
-    const businessTypes = deal.map(r => r.businessType || 'Unknown').filter(t => t !== 'Unknown');
+    // Analyze business types in deals?
+    const businessTypes = deals?.map(r => r.businessType || 'Unknown').filter(t => t !== 'Unknown');
     const typeCount: { [key: string]: number } = {};
     
     businessTypes.forEach(type => {
@@ -329,7 +329,7 @@ export default function Recommendations({ userStats, userDeals, isLoading }: Rec
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Great job! You're staying on top of your deal activities. Keep up the excellent work!
+            Great job! You're staying on top of your deals? activities. Keep up the excellent work!
           </p>
         </CardContent>
       </Card>
