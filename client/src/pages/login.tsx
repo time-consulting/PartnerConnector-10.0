@@ -102,14 +102,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-slate-950">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-10 backdrop-blur-sm bg-background/50">
+      <header className="absolute top-0 left-0 right-0 z-10 backdrop-blur-sm bg-card/50 border-b border-border/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <Link href="/">
               <div className="flex items-center gap-3 cursor-pointer group">
-                <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-shadow">
+                <div className="w-11 h-11 bg-gradient-to-br from-primary via-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow">
                   <Zap className="w-6 h-6 text-white" fill="white" />
                 </div>
                 <span className="text-xl font-bold text-foreground">PartnerConnector</span>
@@ -129,11 +129,11 @@ export default function Login() {
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-24">
           <div className="max-w-md w-full">
             <div className="text-center mb-10">
-              <Badge className="mb-4 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20" data-testid="badge-secure">
+              <Badge className="mb-4 bg-success/10 text-success border-success/20 hover:bg-success/20" data-testid="badge-secure">
                 <Shield className="w-3 h-3 mr-1" />
                 Secure Login
               </Badge>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+              <h1 className="text-4xl font-bold text-foreground mb-3">
                 Welcome Back
               </h1>
               <p className="text-muted-foreground text-lg">
@@ -174,7 +174,7 @@ export default function Login() {
                       <Link href="/forgot-password">
                         <button
                           type="button"
-                          className="text-sm text-indigo-400 hover:text-indigo-300 underline transition-colors"
+                          className="text-sm text-primary hover:text-primary/80 underline transition-colors"
                           data-testid="link-forgot-password"
                         >
                           Forgot password?
@@ -208,7 +208,7 @@ export default function Login() {
                   {/* Submit Button */}
                   <Button 
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all font-semibold"
+                    className="w-full h-12 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all font-semibold"
                     disabled={isLoading}
                     data-testid="button-submit-login"
                   >
@@ -230,7 +230,7 @@ export default function Login() {
                   <p className="text-sm text-muted-foreground mb-3">Don't have an account?</p>
                   <Button 
                     variant="outline"
-                    className="w-full h-12 border-2 border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/10 hover:border-indigo-500 transition-all"
+                    className="w-full h-12 border-2 border-primary/50 text-primary hover:bg-primary/10 hover:border-primary transition-all"
                     asChild
                     data-testid="button-create-account"
                   >
@@ -245,7 +245,7 @@ export default function Login() {
                 {/* Security Notice */}
                 <div className="bg-accent/50 rounded-lg p-4 border border-border/50">
                   <div className="flex items-start gap-3">
-                    <Shield className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                    <Shield className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
                     <div className="text-xs text-muted-foreground">
                       <p className="font-semibold text-foreground mb-1">100% Secure & Private</p>
                       <p>Your data is protected with enterprise-grade encryption.</p>
@@ -261,7 +261,7 @@ export default function Login() {
                 Need help?{' '}
                 <a 
                   href="mailto:support@partnerconnector.co.uk"
-                  className="text-indigo-400 hover:text-indigo-300 underline transition-colors"
+                  className="text-primary hover:text-primary/80 underline transition-colors"
                   data-testid="link-support"
                 >
                   Contact Support
@@ -272,7 +272,7 @@ export default function Login() {
         </div>
 
         {/* Right Side - Benefits */}
-        <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-600 via-purple-600 to-cyan-600 items-center justify-center px-8 relative overflow-hidden">
+        <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary via-amber-500 to-orange-600 items-center justify-center px-8 relative overflow-hidden">
           {/* Gradient Overlay for depth */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
           
@@ -280,7 +280,7 @@ export default function Login() {
             <h2 className="text-4xl font-bold mb-4 leading-tight">
               Your Partner Dashboard Awaits
             </h2>
-            <p className="text-indigo-100 mb-10 text-lg">
+            <p className="text-white/90 mb-10 text-lg">
               Access your earnings, track deals, and manage your growing partner network.
             </p>
 
@@ -291,7 +291,7 @@ export default function Login() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1 text-lg">60% Commission Rate</h3>
-                  <p className="text-indigo-100 text-sm leading-relaxed">Earn industry-leading commissions on every successful deal</p>
+                  <p className="text-white/90 text-sm leading-relaxed">Earn industry-leading commissions on every successful deal</p>
                 </div>
               </div>
 
@@ -301,7 +301,7 @@ export default function Login() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1 text-lg">Build Your Team</h3>
-                  <p className="text-indigo-100 text-sm leading-relaxed">Earn additional income from your team's successful connections</p>
+                  <p className="text-white/90 text-sm leading-relaxed">Earn additional income from your team's successful connections</p>
                 </div>
               </div>
 
@@ -311,7 +311,7 @@ export default function Login() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1 text-lg">Track Your Success</h3>
-                  <p className="text-indigo-100 text-sm leading-relaxed">Real-time dashboard to monitor your earnings and performance</p>
+                  <p className="text-white/90 text-sm leading-relaxed">Real-time dashboard to monitor your earnings and performance</p>
                 </div>
               </div>
             </div>
@@ -322,15 +322,15 @@ export default function Login() {
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex -space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 border-2 border-white"></div>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-cyan-400 border-2 border-white"></div>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-indigo-400 border-2 border-white"></div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white to-white/80 border-2 border-white"></div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white to-white/80 border-2 border-white"></div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white to-white/80 border-2 border-white"></div>
                 </div>
                 <span className="text-sm font-semibold">1,000+ Active Partners</span>
               </div>
               <div className="flex items-center gap-2">
                 {[1,2,3,4,5].map((i) => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-300 text-yellow-300" />
+                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                 ))}
                 <span className="text-sm ml-2 font-medium">4.9/5 Partner Rating</span>
               </div>
