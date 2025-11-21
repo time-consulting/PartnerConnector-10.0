@@ -36,11 +36,11 @@ interface Recommendation {
 
 interface RecommendationsProps {
   userStats: any;
-  userReferrals: any[];
+  userDeals: any[];
   isLoading: boolean;
 }
 
-export default function Recommendations({ userStats, userReferrals, isLoading }: RecommendationsProps) {
+export default function Recommendations({ userStats, userDeals, isLoading }: RecommendationsProps) {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
     const stored = localStorage.getItem('dismissedRecommendations');
@@ -50,23 +50,23 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
   useEffect(() => {
     if (isLoading || !userStats) return;
     
-    const newRecommendations = generatePersonalizedRecommendations(userStats, userReferrals, dismissedIds);
+    const newRecommendations = generatePersonalizedRecommendations(userStats, userDeals, dismissedIds);
     setRecommendations(newRecommendations);
-  }, [userStats, userReferrals, isLoading, dismissedIds]);
+  }, [userStats, userDeals, isLoading, dismissedIds]);
 
-  const generatePersonalizedRecommendations = (stats: any, referrals: any[], dismissed: string[]): Recommendation[] => {
+  const generatePersonalizedRecommendations = (stats: any, deals: any[], dismissed: string[]): Recommendation[] => {
     const recs: Recommendation[] = [];
     
     // Performance-based recommendations
     if (stats.totalCommissions === 0) {
       recs.push({
-        id: 'first-referral',
+        id: 'first-deals',
         type: 'action',
         priority: 'high',
-        title: 'Submit Your First Referral',
-        description: 'Get started earning commissions by submitting your first business referral today.',
-        action: 'Submit Referral',
-        actionUrl: '/submit-referral',
+        title: 'Submit Your First Deal',
+        description: 'Get started earning commissions by submitting your first business deals today.',
+        action: 'Submit Deal',
+        actionUrl: '/submit-deal',
         icon: PlusCircleIcon,
         category: 'Getting Started',
         timeToComplete: '5 minutes',
@@ -74,7 +74,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
       });
     }
 
-    if (referrals.length > 0 && stats.successRate < 60) {
+    if (deals.length > 0 && stats.successRate < 60) {
       recs.push({
         id: 'improve-success',
         type: 'insight',
@@ -90,13 +90,13 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
       });
     }
 
-    if (stats.activeReferrals > 5) {
+    if (stats.activeDeals > 5) {
       recs.push({
         id: 'follow-up',
         type: 'tip',
         priority: 'medium',
-        title: 'Follow Up on Active Referrals',
-        description: `You have ${stats.activeReferrals} active referrals. Consider following up with these businesses to maintain engagement.`,
+        title: 'Follow Up on Active Deals',
+        description: `You have ${stats.activeDeals} active deals. Consider following up with these businesses to maintain engagement.`,
         icon: MessageSquareIcon,
         category: 'Relationship Management',
         timeToComplete: '30 minutes',
@@ -118,21 +118,21 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
     }
 
     // Behavioral recommendations
-    const recentReferrals = referrals.filter(r => {
+    const recentDeals = deals.filter(r => {
       const submittedDate = new Date(r.submittedAt);
       const daysAgo = (Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24);
       return daysAgo <= 7;
     });
 
-    if (recentReferrals.length === 0 && referrals.length > 0) {
+    if (recentDeals.length === 0 && deals.length > 0) {
       recs.push({
         id: 'stay-active',
         type: 'action',
         priority: 'medium',
         title: 'Stay Active This Week',
-        description: 'You haven\'t submitted any referrals this week. Consistent activity leads to better earnings.',
+        description: 'You haven\'t submitted any deals this week. Consistent activity leads to better earnings.',
         action: 'Find Prospects',
-        actionUrl: '/submit-referral',
+        actionUrl: '/submit-deal',
         icon: TargetIcon,
         category: 'Activity',
         timeToComplete: '1 hour',
@@ -141,7 +141,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
     }
 
     // Education recommendations
-    if (referrals.length > 0 && !hasViewedLearningPortal()) {
+    if (deals.length > 0 && !hasViewedLearningPortal()) {
       recs.push({
         id: 'learning-portal',
         type: 'tip',
@@ -164,7 +164,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
         type: 'goal',
         priority: 'medium',
         title: 'Reach £2,000 in Commissions',
-        description: `You're at £${stats.totalCommissions}. Just ${Math.ceil((2000 - stats.totalCommissions) / 300)} more successful referrals to reach £2,000!`,
+        description: `You're at £${stats.totalCommissions}. Just ${Math.ceil((2000 - stats.totalCommissions) / 300)} more successful deals to reach £2,000!`,
         icon: TargetIcon,
         category: 'Goals',
         potentialImpact: '£2,000 milestone'
@@ -172,8 +172,8 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
     }
 
     // Quality recommendations based on upload behavior
-    const referralsWithBills = referrals.filter(r => r.hasBillUploads);
-    if (referrals.length > 0 && referralsWithBills.length / referrals.length < 0.5) {
+    const dealsWithBills = deals.filter(r => r.hasBillUploads);
+    if (deals.length > 0 && dealsWithBills.length / deals.length < 0.5) {
       recs.push({
         id: 'upload-bills',
         type: 'tip',
@@ -191,15 +191,15 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
 
     // Time-based contextual recommendations
     const currentHour = new Date().getHours();
-    if (currentHour >= 9 && currentHour <= 17 && recentReferrals.length === 0) {
+    if (currentHour >= 9 && currentHour <= 17 && recentDeals.length === 0) {
       recs.push({
         id: 'business-hours-activity',
         type: 'tip',
         priority: 'medium',
         title: 'Perfect Time for Outreach',
-        description: 'It\'s business hours! This is the ideal time to contact prospects and submit referrals.',
+        description: 'It\'s business hours! This is the ideal time to contact prospects and submit deals.',
         action: 'Contact Prospects',
-        actionUrl: '/submit-referral',
+        actionUrl: '/submit-deal',
         icon: ClockIcon,
         category: 'Timing',
         timeToComplete: '30 minutes',
@@ -208,7 +208,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
     }
 
     // Industry-specific recommendations
-    const industryInsight = getIndustryRecommendation(referrals);
+    const industryInsight = getIndustryRecommendation(deals);
     if (industryInsight) {
       recs.push(industryInsight);
     }
@@ -223,7 +223,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
         description: 'You\'re performing excellently! Consider sharing your approach with other partners to build your network.',
         icon: StarIcon,
         category: 'Networking',
-        potentialImpact: 'Increased referrals'
+        potentialImpact: 'Increased deals'
       });
     }
 
@@ -235,11 +235,11 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
     return localStorage.getItem('hasViewedLearningPortal') === 'true';
   };
 
-  const getIndustryRecommendation = (referrals: any[]): Recommendation | null => {
-    if (referrals.length < 3) return null;
+  const getIndustryRecommendation = (deals: any[]): Recommendation | null => {
+    if (deals.length < 3) return null;
 
-    // Analyze business types in referrals
-    const businessTypes = referrals.map(r => r.businessType || 'Unknown').filter(t => t !== 'Unknown');
+    // Analyze business types in deals
+    const businessTypes = deals.map(r => r.businessType || 'Unknown').filter(t => t !== 'Unknown');
     const typeCount: { [key: string]: number } = {};
     
     businessTypes.forEach(type => {
@@ -329,7 +329,7 @@ export default function Recommendations({ userStats, userReferrals, isLoading }:
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Great job! You're staying on top of your referral activities. Keep up the excellent work!
+            Great job! You're staying on top of your deals activities. Keep up the excellent work!
           </p>
         </CardContent>
       </Card>

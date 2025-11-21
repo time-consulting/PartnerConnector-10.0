@@ -565,14 +565,14 @@ export default function Quotes() {
     enabled: isAuthenticated,
   });
 
-  // Auto-open quote if referralId is in URL
+  // Auto-open quote if dealId is in URL
   useEffect(() => {
     if (quotes.length > 0 && !selectedQuote) {
       const urlParams = new URLSearchParams(window.location.search);
-      const referralId = urlParams.get('referralId');
+      const dealId = urlParams.get('dealId');
       
-      if (referralId) {
-        const quoteToOpen = quotes.find((q: any) => q.referralId === referralId);
+      if (dealId) {
+        const quoteToOpen = quotes.find((q: any) => q.dealId === dealId);
         if (quoteToOpen) {
           setSelectedQuote(quoteToOpen);
           // Clear URL parameter after opening
@@ -718,7 +718,7 @@ export default function Quotes() {
             Your Quotes
           </h1>
           <p className="text-gray-600 mb-4" data-testid="text-quotes-description">
-            Review and manage quotes from Dojo for your client referrals
+            Review and manage quotes from Dojo for your client deals
           </p>
           
           {/* Search bar */}
@@ -744,7 +744,7 @@ export default function Quotes() {
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No quotes yet</h3>
               <p className="text-gray-600 max-w-md mx-auto">
-                When Dojo sends you a quote for your client referrals, they'll appear here for you to review and approve.
+                When Dojo sends you a quote for your client deals, they'll appear here for you to review and approve.
               </p>
             </CardContent>
           </Card>
@@ -1267,8 +1267,8 @@ export default function Quotes() {
               queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
             }}
             quoteId={selectedQuote.id}
-            referral={{
-              id: selectedQuote.referralId,
+            deal={{
+              id: selectedQuote.dealId,
               businessName: selectedQuote.businessName || "your business",
               businessEmail: selectedQuote.businessEmail,
             }}

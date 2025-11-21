@@ -9,7 +9,7 @@ import { FileTextIcon, CheckCircleIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface LOAFormProps {
-  referral: {
+  deals: {
     businessName: string;
     businessEmail: string;
     contactName?: string;
@@ -32,14 +32,14 @@ export interface LOAFormData {
   clientConfirmation: boolean;
 }
 
-export default function LOAForm({ referral, onSubmit, onCancel }: LOAFormProps) {
+export default function LOAForm({ deals, onSubmit, onCancel }: LOAFormProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState<LOAFormData>({
     partnerName: "Professional Partner", // Would come from user profile
     partnerTitle: "Business Development Specialist",
-    clientBusinessName: referral.businessName,
-    clientContactName: referral.contactName || "",
-    clientEmail: referral.businessEmail,
+    clientBusinessName: deals.businessName,
+    clientContactName: deals.contactName || "",
+    clientEmail: deals.businessEmail,
     servicesAuthorized: ["Payment Processing Solutions", "Business Funding Assessment"],
     specialInstructions: "",
     signatureDate: new Date().toISOString().split('T')[0],
@@ -101,7 +101,7 @@ export default function LOAForm({ referral, onSubmit, onCancel }: LOAFormProps) 
           Letter of Authority (LOA)
         </CardTitle>
         <p className="text-gray-600 text-sm">
-          Authorize services on behalf of {referral.businessName}
+          Authorize services on behalf of {deals.businessName}
         </p>
       </CardHeader>
       

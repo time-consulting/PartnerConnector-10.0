@@ -26,13 +26,13 @@ export default function LeadTracking() {
           <div className="text-center mb-16">
             <Badge className="mb-6 bg-purple-100 text-purple-700">LEAD TRACKING</Badge>
             <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Track every referral{" "}
+              Track every deals{" "}
               <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 from submission to payout
               </span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Get complete visibility into your referral pipeline with real-time tracking, 
+              Get complete visibility into your deals pipeline with real-time tracking, 
               automated updates, and detailed analytics to optimize your partnership success.
             </p>
             <Button 
@@ -52,7 +52,7 @@ export default function LeadTracking() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Referral Journey Tracking</h2>
-            <p className="text-xl text-gray-600">Follow your referrals through every stage of the process</p>
+            <p className="text-xl text-gray-600">Follow your deals through every stage of the process</p>
           </div>
 
           <div className="relative">
@@ -74,7 +74,7 @@ export default function LeadTracking() {
                       </div>
                     </div>
                     <p className="text-gray-600 mb-4">
-                      Your referral is submitted and enters our verification process. 
+                      Your deals is submitted and enters our verification process. 
                       Initial quality checks are performed automatically.
                     </p>
                     <ul className="text-sm text-gray-600 space-y-1">
@@ -106,7 +106,7 @@ export default function LeadTracking() {
                       </div>
                     </div>
                     <p className="text-gray-600 mb-4">
-                      Our team reviews the referral details and contacts the client 
+                      Our team reviews the deals details and contacts the client 
                       to understand their specific requirements.
                     </p>
                     <ul className="text-sm text-gray-600 space-y-1">
@@ -225,7 +225,7 @@ export default function LeadTracking() {
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Instant Notifications</h3>
                 <p className="text-sm text-gray-600">
-                  Get notified immediately when your referral status changes or action is required
+                  Get notified immediately when your deals status changes or action is required
                 </p>
               </CardContent>
             </Card>
@@ -237,7 +237,7 @@ export default function LeadTracking() {
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Performance Analytics</h3>
                 <p className="text-sm text-gray-600">
-                  Track conversion rates, commission trends, and identify your best-performing referral sources
+                  Track conversion rates, commission trends, and identify your best-performing deals sources
                 </p>
               </CardContent>
             </Card>
@@ -261,7 +261,7 @@ export default function LeadTracking() {
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Timeline View</h3>
                 <p className="text-sm text-gray-600">
-                  Visualize the complete journey of each referral with timestamps and milestones
+                  Visualize the complete journey of each deals with timestamps and milestones
                 </p>
               </CardContent>
             </Card>
@@ -283,7 +283,7 @@ export default function LeadTracking() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Real-time referral status updates</span>
+                  <span className="text-gray-700">Real-time deals status updates</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircleIcon className="w-5 h-5 text-green-600" />
@@ -351,7 +351,7 @@ export default function LeadTracking() {
             Take Control of Your Referral Pipeline
           </h2>
           <p className="text-xl text-purple-100 mb-8">
-            Start tracking your referrals with complete transparency and real-time updates
+            Start tracking your deals with complete transparency and real-time updates
           </p>
           <Button 
             size="lg"

@@ -12,7 +12,7 @@ import ConnectionStatusNotifier from "@/components/connection-status-notifier";
 // Lazy load all pages for optimal bundle splitting - Updated 2025-11-12
 const Landing = lazy(() => import("@/pages/landing"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
-const SubmitReferral = lazy(() => import("@/pages/submit-referral"));
+const SubmitDeal = lazy(() => import("@/pages/submit-deal"));
 const UploadBills = lazy(() => import("@/pages/upload-bills"));
 const AdminPortal = lazy(() => import("@/pages/admin"));
 const AdminDiagnostics = lazy(() => import("@/pages/admin-diagnostics"));
@@ -20,7 +20,7 @@ const AdminPayments = lazy(() => import("@/pages/admin-payments"));
 const AdminInvoices = lazy(() => import("@/pages/admin-invoices"));
 const AdminMessages = lazy(() => import("@/pages/admin-messages"));
 const AdminBackend = lazy(() => import("@/pages/admin-backend"));
-const TrackReferrals = lazy(() => import("@/pages/track-referrals"));
+const TrackDeals = lazy(() => import("@/pages/track-deals"));
 const TeamManagement = lazy(() => import("@/pages/team-management"));
 const Training = lazy(() => import("@/pages/training"));
 const Opportunities = lazy(() => import("@/pages/opportunities"));
@@ -39,7 +39,7 @@ const WaitlistPage = lazy(() => import("@/pages/waitlist"));
 const SignupPage = lazy(() => import("@/pages/signup"));
 const LoginPage = lazy(() => import("@/pages/login"));
 const OnboardingPage = lazy(() => import("@/pages/onboarding"));
-const QuickAddReferral = lazy(() => import("@/pages/quick-add-referral"));
+const QuickAddDeal = lazy(() => import("@/pages/quick-add-deal"));
 const OfflinePage = lazy(() => import("@/pages/offline"));
 const QuotesPage = lazy(() => import("@/pages/quotes"));
 const CommissionsPage = lazy(() => import("@/pages/commissions"));
@@ -147,11 +147,11 @@ function AppRoutes() {
       {/* Protected routes - always register but guard with PrivateRoute */}
       <Route path="/opportunities" component={() => <PrivateRoute><Opportunities /></PrivateRoute>} />
       <Route path="/contacts" component={() => <PrivateRoute><Contacts /></PrivateRoute>} />
-      <Route path="/submit-referral" component={() => <PrivateRoute><SubmitReferral /></PrivateRoute>} />
-      <Route path="/quick-add-referral" component={() => <PrivateRoute><QuickAddReferral /></PrivateRoute>} />
+      <Route path="/submit-deal" component={() => <PrivateRoute><SubmitDeal /></PrivateRoute>} />
+      <Route path="/quick-add-deal" component={() => <PrivateRoute><QuickAddDeal /></PrivateRoute>} />
       <Route path="/training" component={() => <PrivateRoute><Training /></PrivateRoute>} />
       <Route path="/upload-bills" component={() => <PrivateRoute><UploadBills /></PrivateRoute>} />
-      <Route path="/track-referrals" component={() => <PrivateRoute><TrackReferrals /></PrivateRoute>} />
+      <Route path="/track-deals" component={() => <PrivateRoute><TrackDeals /></PrivateRoute>} />
       <Route path="/quotes" component={() => <PrivateRoute><QuotesPage /></PrivateRoute>} />
       <Route path="/commissions" component={() => <PrivateRoute><CommissionsPage /></PrivateRoute>} />
       <Route path="/team-management" component={() => <PrivateRoute><TeamManagement /></PrivateRoute>} />

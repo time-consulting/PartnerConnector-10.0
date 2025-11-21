@@ -31,8 +31,8 @@ export default function UploadBills() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: referrals } = useQuery({
-    queryKey: ["/api/referrals"],
+  const { data: deals } = useQuery({
+    queryKey: ["/api/deals"],
     enabled: isAuthenticated,
   });
 
@@ -49,7 +49,7 @@ export default function UploadBills() {
     if (!selectedReferral || !uploadedFile) {
       toast({
         title: "Missing Information",
-        description: "Please select a referral and upload a bill file.",
+        description: "Please select a deal and upload a bill file.",
         variant: "destructive",
       });
       return;
@@ -59,7 +59,7 @@ export default function UploadBills() {
     formData.append('bills', uploadedFile);
 
     try {
-      const response = await fetch(`/api/referrals/${selectedReferral}/upload-bill`, {
+      const response = await fetch(`/api/deals/${selectedReferral}/upload-bill`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -104,17 +104,17 @@ export default function UploadBills() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="referral-select" className="text-base font-medium">
+                <Label htmlFor="deals-select" className="text-base font-medium">
                   Select Referral
                 </Label>
                 <Select value={selectedReferral} onValueChange={setSelectedReferral}>
-                  <SelectTrigger data-testid="select-referral">
-                    <SelectValue placeholder="Choose a referral to upload bills for" />
+                  <SelectTrigger data-testid="select-deals">
+                    <SelectValue placeholder="Choose a deals to upload bills for" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(referrals as any[])?.map((referral: any) => (
-                      <SelectItem key={referral.id} value={referral.id}>
-                        {referral.businessName} - {referral.status}
+                    {(deals as any[])?.map((deals: any) => (
+                      <SelectItem key={deals.id} value={deals.id}>
+                        {deals.businessName} - {deals.status}
                       </SelectItem>
                     ))}
                   </SelectContent>

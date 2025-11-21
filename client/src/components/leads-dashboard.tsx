@@ -64,7 +64,7 @@ export default function LeadsDashboard({ leads, onStatusUpdate, onAddInteraction
     { value: "contacted", label: "Contacted", color: "bg-blue-100 text-blue-800" },
     { value: "interested", label: "In Progress", color: "bg-yellow-100 text-yellow-800" },
     { value: "quoted", label: "Requested More Info", color: "bg-purple-100 text-purple-800" },
-    { value: "converted", label: "Converted to Referral", color: "bg-green-100 text-green-800" },
+    { value: "converted", label: "Converted to Deal", color: "bg-green-100 text-green-800" },
     { value: "not_interested", label: "Not Interested", color: "bg-red-100 text-red-800" },
   ];
 

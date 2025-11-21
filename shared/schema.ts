@@ -114,7 +114,7 @@ export const products = pgTable("products", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const referrals = pgTable("referrals", {
+export const deals = pgTable("deals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   dealId: varchar("deal_id"), // Deal ID from opportunity pipeline
   referrerId: varchar("referrer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -148,7 +148,7 @@ export const referrals = pgTable("referrals", {
   adminNotes: text("admin_notes"),
   gdprConsent: boolean("gdpr_consent").default(false),
   // Enhanced admin fields for deal management
-  dealStage: varchar("deal_stage").notNull().default("quote_request"), // quote_request, quote_sent, quote_approved, agreement_sent, signed_awaiting_docs, approved, live_confirm_ltr, invoice_received, live_paid, completed, declined
+  dealStage: varchar("deal_stage").notNull().default("quote_request_received"), // quote_request_received, quote_sent, quote_approved, agreement_sent, signed_awaiting_docs, approved, live_confirm_ltr, invoice_received, completed, declined
   quoteRates: jsonb("quote_rates"), // Store detailed rate information for quotes
   docsOutConfirmed: boolean("docs_out_confirmed").default(false),
   docsOutConfirmedAt: timestamp("docs_out_confirmed_at"),
@@ -157,15 +157,15 @@ export const referrals = pgTable("referrals", {
   submittedAt: timestamp("submitted_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
-  index("referrals_referrer_id_idx").on(table.referrerId),
-  index("referrals_business_type_id_idx").on(table.businessTypeId),
-  index("referrals_status_idx").on(table.status),
-  index("referrals_deal_stage_idx").on(table.dealStage),
-  index("referrals_submitted_at_idx").on(table.submittedAt),
-  index("referrals_referrer_status_idx").on(table.referrerId, table.status),
-  index("referrals_level_idx").on(table.referralLevel),
-  index("referrals_parent_referrer_id_idx").on(table.parentReferrerId),
-  index("referrals_product_type_idx").on(table.productType),
+  index("deals_referrer_id_idx").on(table.referrerId),
+  index("deals_business_type_id_idx").on(table.businessTypeId),
+  index("deals_status_idx").on(table.status),
+  index("deals_deal_stage_idx").on(table.dealStage),
+  index("deals_submitted_at_idx").on(table.submittedAt),
+  index("deals_referrer_status_idx").on(table.referrerId, table.status),
+  index("deals_level_idx").on(table.referralLevel),
+  index("deals_parent_referrer_id_idx").on(table.parentReferrerId),
+  index("deals_product_type_idx").on(table.productType),
 ]);
 
 export const billUploads = pgTable("bill_uploads", {
@@ -197,7 +197,7 @@ export const teams = pgTable("teams", {
 // Multi-level commission tracking
 export const commissionPayments = pgTable("commission_payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  referralId: varchar("referral_id").notNull(),
+  dealId: varchar("deal_id").notNull(),
   recipientId: varchar("recipient_id").notNull(), // User receiving commission
   level: integer("level").notNull(), // 1 = direct (60%), 2 = parent (20%), 3 = grandparent (10%)
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -216,7 +216,7 @@ export const commissionPayments = pgTable("commission_payments", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("commission_payments_recipient_idx").on(table.recipientId),
-  index("commission_payments_referral_idx").on(table.referralId),
+  index("commission_payments_deal_idx").on(table.dealId),
   index("commission_payments_status_idx").on(table.approvalStatus, table.paymentStatus),
 ]);
 
@@ -246,7 +246,7 @@ export const rates = pgTable("rates", {
 // Commission approvals - pending approvals for users to accept
 export const commissionApprovals = pgTable("commission_approvals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  referralId: varchar("referral_id").notNull(),
+  dealId: varchar("deal_id").notNull(),
   userId: varchar("user_id").notNull(),
   commissionAmount: decimal("commission_amount", { precision: 10, scale: 2 }).notNull(),
   clientBusinessName: varchar("client_business_name"),
@@ -260,6 +260,26 @@ export const commissionApprovals = pgTable("commission_approvals", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Payment verification codes for 2FA on commission payments
+export const paymentVerificationCodes = pgTable("payment_verification_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dealId: varchar("deal_id").notNull(),
+  adminId: varchar("admin_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  code: varchar("code", { length: 6 }).notNull(), // 6-digit verification code
+  actualCommission: decimal("actual_commission", { precision: 10, scale: 2 }).notNull(),
+  paymentReference: varchar("payment_reference"),
+  paymentMethod: varchar("payment_method"),
+  paymentNotes: text("payment_notes"),
+  isUsed: boolean("is_used").default(false),
+  usedAt: timestamp("used_at"),
+  expiresAt: timestamp("expires_at").notNull(), // 10 minute expiry
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("payment_verification_codes_deal_idx").on(table.dealId),
+  index("payment_verification_codes_admin_idx").on(table.adminId),
+  index("payment_verification_codes_expires_idx").on(table.expiresAt),
+]);
 
 // Partner invoices - for manual invoice-based commission payment workflow
 export const invoices = pgTable("invoices", {
@@ -301,7 +321,7 @@ export const teamInvitations = pgTable("team_invitations", {
 // Business owner details captured after client approves quote
 export const businessOwners = pgTable("business_owners", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  referralId: varchar("referral_id").notNull(),
+  dealId: varchar("deal_id").notNull(),
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
   dateOfBirth: varchar("date_of_birth"),
@@ -314,7 +334,7 @@ export const businessOwners = pgTable("business_owners", {
 // Business information captured after client approves quote
 export const businessDetails = pgTable("business_details", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  referralId: varchar("referral_id").notNull(),
+  dealId: varchar("deal_id").notNull(),
   tradingName: varchar("trading_name").notNull(),
   tradingAddress: text("trading_address").notNull(),
   businessDescription: text("business_description"),
@@ -728,7 +748,7 @@ export const notifications = pgTable("notifications", {
   title: varchar("title").notNull(),
   message: text("message").notNull(),
   read: boolean("read").default(false),
-  referralId: varchar("referral_id").references(() => referrals.id, { onDelete: "set null" }), // Optional - for referral-related notifications
+  dealId: varchar("deal_id").references(() => deals.id, { onDelete: "set null" }), // Optional - for deal-related notifications
   leadId: varchar("lead_id").references(() => leads.id, { onDelete: "set null" }), // Optional - for lead-related notifications
   contactId: varchar("contact_id").references(() => contacts.id, { onDelete: "set null" }), // Optional - for contact-related notifications
   opportunityId: varchar("opportunity_id").references(() => opportunities.id, { onDelete: "set null" }), // Optional - for opportunity-related notifications
@@ -762,7 +782,7 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
-  referrals: many(referrals),
+  deals: many(deals),
   leads: many(leads),
   opportunities: many(opportunities),
   contacts: many(contacts),
@@ -816,37 +836,37 @@ export const partnerHierarchyRelations = relations(partnerHierarchy, ({ one }) =
   }),
 }));
 
-export const referralsRelations = relations(referrals, ({ one, many }) => ({
+export const dealsRelations = relations(deals, ({ one, many }) => ({
   referrer: one(users, {
-    fields: [referrals.referrerId],
+    fields: [deals.referrerId],
     references: [users.id],
   }),
   parentReferrer: one(users, {
-    fields: [referrals.parentReferrerId],
+    fields: [deals.parentReferrerId],
     references: [users.id],
   }),
   businessType: one(businessTypes, {
-    fields: [referrals.businessTypeId],
+    fields: [deals.businessTypeId],
     references: [businessTypes.id],
   }),
   billUploads: many(billUploads),
   commissionPayments: many(commissionPayments),
   businessOwner: one(businessOwners, {
-    fields: [referrals.id],
-    references: [businessOwners.referralId],
+    fields: [deals.id],
+    references: [businessOwners.dealId],
   }),
   businessDetails: one(businessDetails, {
-    fields: [referrals.id],
-    references: [businessDetails.referralId],
+    fields: [deals.id],
+    references: [businessDetails.dealId],
   }),
 }));
 
 // billUploads now links to business name only, no direct relations
 
 export const commissionPaymentsRelations = relations(commissionPayments, ({ one }) => ({
-  referral: one(referrals, {
-    fields: [commissionPayments.referralId],
-    references: [referrals.id],
+  deal: one(deals, {
+    fields: [commissionPayments.dealId],
+    references: [deals.id],
   }),
   recipient: one(users, {
     fields: [commissionPayments.recipientId],
@@ -855,16 +875,16 @@ export const commissionPaymentsRelations = relations(commissionPayments, ({ one 
 }));
 
 export const businessOwnersRelations = relations(businessOwners, ({ one }) => ({
-  referral: one(referrals, {
-    fields: [businessOwners.referralId],
-    references: [referrals.id],
+  deal: one(deals, {
+    fields: [businessOwners.dealId],
+    references: [deals.id],
   }),
 }));
 
 export const businessDetailsRelations = relations(businessDetails, ({ one }) => ({
-  referral: one(referrals, {
-    fields: [businessDetails.referralId],
-    references: [referrals.id],
+  deal: one(deals, {
+    fields: [businessDetails.dealId],
+    references: [deals.id],
   }),
 }));
 
@@ -963,9 +983,9 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     fields: [notifications.userId],
     references: [users.id],
   }),
-  referral: one(referrals, {
-    fields: [notifications.referralId],
-    references: [referrals.id],
+  deal: one(deals, {
+    fields: [notifications.dealId],
+    references: [deals.id],
   }),
   lead: one(leads, {
     fields: [notifications.leadId],
@@ -988,7 +1008,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
-export const insertReferralSchema = createInsertSchema(referrals).omit({
+export const insertDealSchema = createInsertSchema(deals).omit({
   id: true,
   submittedAt: true,
   updatedAt: true,
@@ -1177,6 +1197,14 @@ export const insertCommissionApprovalSchema = createInsertSchema(commissionAppro
 export type InsertCommissionApproval = z.infer<typeof insertCommissionApprovalSchema>;
 export type CommissionApproval = typeof commissionApprovals.$inferSelect;
 
+// Payment verification code types and schemas
+export const insertPaymentVerificationCodeSchema = createInsertSchema(paymentVerificationCodes).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertPaymentVerificationCode = z.infer<typeof insertPaymentVerificationCodeSchema>;
+export type PaymentVerificationCode = typeof paymentVerificationCodes.$inferSelect;
+
 // Invoice types and schemas
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
@@ -1187,8 +1215,8 @@ export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Invoice = typeof invoices.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type InsertReferral = z.infer<typeof insertReferralSchema>;
-export type Referral = typeof referrals.$inferSelect;
+export type InsertDeal = z.infer<typeof insertDealSchema>;
+export type Deal = typeof deals.$inferSelect;
 export type BusinessType = typeof businessTypes.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type BillUpload = typeof billUploads.$inferSelect;
@@ -1246,7 +1274,7 @@ export const waitlist = pgTable("waitlist", {
 export const adminAuditLogs = pgTable("admin_audit_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   action: varchar("action").notNull(), // 'send_quote', 'update_stage', 'update_documents', etc.
-  entityType: varchar("entity_type").notNull(), // 'referral', 'user', etc.
+  entityType: varchar("entity_type").notNull(), // 'deal', 'user', etc.
   entityId: varchar("entity_id").notNull(),
   actorId: varchar("actor_id").notNull(), // The admin user who performed the action
   metadata: jsonb("metadata"), // Additional context about the action
@@ -1286,15 +1314,15 @@ export const selectQuoteBillUpload = quoteBillUploads.$inferSelect;
 export type InsertQuoteBillUpload = z.infer<typeof insertQuoteBillUpload>;
 export type QuoteBillUpload = typeof quoteBillUploads.$inferSelect;
 
-// Enhanced referral update schema for admin use
-export const adminReferralUpdateSchema = createInsertSchema(referrals).omit({
+// Enhanced deal update schema for admin use
+export const adminDealUpdateSchema = createInsertSchema(deals).omit({
   id: true,
   referrerId: true,
   submittedAt: true,
   updatedAt: true,
 }).partial();
 
-export type AdminReferralUpdate = z.infer<typeof adminReferralUpdateSchema>;
+export type AdminDealUpdate = z.infer<typeof adminDealUpdateSchema>;
 
 // Waitlist schemas
 export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
@@ -1318,3 +1346,22 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 });
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+// Utility function to map dealStage to customerJourneyStatus for quotes table sync
+// dealStage is the single source of truth, customerJourneyStatus mirrors it for backward compatibility
+export function mapDealStageToCustomerJourney(dealStage: string): string {
+  const mapping: Record<string, string> = {
+    'quote_request_received': 'review_quote',
+    'quote_sent': 'quote_sent',
+    'quote_approved': 'awaiting_signup',
+    'agreement_sent': 'agreement_sent',
+    'signed_awaiting_docs': 'awaiting_docs',
+    'approved': 'approved',
+    'live_confirm_ltr': 'live',
+    'invoice_received': 'live',
+    'completed': 'complete',
+    'declined': 'declined',
+  };
+  
+  return mapping[dealStage] || 'review_quote';
+}

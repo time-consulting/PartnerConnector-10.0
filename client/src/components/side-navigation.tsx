@@ -49,14 +49,14 @@ export default function SideNavigation() {
     },
     {
       icon: Plus,
-      label: "Submit Referral",
-      path: "/submit-referral", 
-      testId: "sidenav-submit-referral"
+      label: "Submit Deal",
+      path: "/submit-deal", 
+      testId: "sidenav-submit-deals"
     },
     {
       icon: ClipboardList,
       label: "Track Submissions",
-      path: "/track-referrals",
+      path: "/track-deals",
       testId: "sidenav-track-submissions"
     },
     {
