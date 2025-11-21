@@ -167,7 +167,7 @@ export function AdminDealsPipeline() {
   // Handle both formats: {deals: [...]} and direct array (for cached data)
   const deals = Array.isArray(data) 
     ? data 
-    : (data?.deals? || []);
+    : (data?.deals || []);
 
   // Move deal to next stage mutation
   const moveToStageMutation = useMutation({

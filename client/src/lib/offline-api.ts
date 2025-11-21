@@ -223,9 +223,9 @@ async function getFromCache(url: string): Promise<any> {
   
   // Check IndexedDB for specific endpoints
   if (url.includes('/api/deals')) {
-    const deals? = await offlineDB.getAllReferrals();
+    const deals = await offlineDB.getAllReferrals();
     if (deals?.length > 0) {
-      return deals?;
+      return deals;
     }
   } else if (url.includes('/api/notifications')) {
     const notifications = await offlineDB.getAllNotifications();

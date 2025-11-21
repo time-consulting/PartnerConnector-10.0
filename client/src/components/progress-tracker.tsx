@@ -55,7 +55,7 @@ interface ProgressTrackerProps {
   };
 }
 
-export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTrackerProps) {
+export default function ProgressTracker({ isOpen, onClose, deals }: ProgressTrackerProps) {
   const [showContractPreview, setShowContractPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -71,7 +71,7 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
     enabled: !!deals?.businessName,
   });
 
-  // Use billUploads from deals? if available (includes initial uploads), otherwise use fetched documents
+  // Use billUploads from deal if available (includes initial uploads), otherwise use fetched documents
   const documents = deals?.billUploads && deals?.billUploads.length > 0 ? deals?.billUploads : fetchedDocuments;
 
   // Handle file upload

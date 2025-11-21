@@ -31,7 +31,7 @@ export default function UploadBills() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: deals? } = useQuery({
+  const { data: deals } = useQuery({
     queryKey: ["/api/deals"],
     enabled: isAuthenticated,
   });
@@ -49,7 +49,7 @@ export default function UploadBills() {
     if (!selectedReferral || !uploadedFile) {
       toast({
         title: "Missing Information",
-        description: "Please select a deals? and upload a bill file.",
+        description: "Please select a deal and upload a bill file.",
         variant: "destructive",
       });
       return;

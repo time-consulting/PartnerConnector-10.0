@@ -35,7 +35,7 @@ interface User {
   email?: string;
   firstName?: string;
   lastName?: string;
-  deals?Code?: string;
+  dealCode?: string;
   partnerId?: string;
   partnerLevel?: number;
   teamRole?: string;

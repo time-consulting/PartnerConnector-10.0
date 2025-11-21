@@ -1267,7 +1267,7 @@ export default function Quotes() {
               queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
             }}
             quoteId={selectedQuote.id}
-            deals?={{
+            deal={{
               id: selectedQuote.dealId,
               businessName: selectedQuote.businessName || "your business",
               businessEmail: selectedQuote.businessEmail,

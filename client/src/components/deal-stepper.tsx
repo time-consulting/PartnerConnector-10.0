@@ -302,7 +302,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
                 setShowSearchResults(e.target.value.length > 0);
               }}
               className="pl-12 pr-10 h-14 text-base rounded-xl border-2 border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
-              data-testid="input-search-deals?"
+              data-testid="input-search-deals"
             />
             {searchTerm && (
               <button
@@ -320,16 +320,16 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
           {/* Search Results */}
           {showSearchResults && filteredReferrals.length > 0 && (
             <Card className="mt-2 p-2 max-h-64 overflow-y-auto border-2 border-teal-200 rounded-xl shadow-lg">
-              {filteredReferrals.map((deals?: any) => (
+              {filteredReferrals.map((deal: any) => (
                 <button
-                  key={deals?.id}
-                  onClick={() => handleSelectReferral(deals?)}
+                  key={deal?.id}
+                  onClick={() => handleSelectReferral(deal)}
                   className="w-full text-left p-3 hover:bg-teal-50 rounded-lg transition-colors"
-                  data-testid={`button-select-deals?-${deals?.id}`}
+                  data-testid={`button-select-deal-${deal?.id}`}
                 >
-                  <div className="font-semibold text-gray-900">{deals?.businessName}</div>
-                  <div className="text-sm text-gray-600">{deals?.contactName}</div>
-                  <div className="text-sm text-gray-500">{deals?.businessEmail}</div>
+                  <div className="font-semibold text-gray-900">{deal?.businessName}</div>
+                  <div className="text-sm text-gray-600">{deal?.contactName}</div>
+                  <div className="text-sm text-gray-500">{deal?.businessEmail}</div>
                 </button>
               ))}
             </Card>
