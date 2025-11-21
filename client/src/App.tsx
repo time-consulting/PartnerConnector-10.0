@@ -166,12 +166,11 @@ function AppRoutes() {
 }
 
 function App() {
-  // Set light mode as default theme
+  // Set light mode as default theme with white background
   useEffect(() => {
     document.documentElement.classList.remove('dark');
-    document.documentElement.classList.add('light');
-    document.documentElement.style.backgroundColor = '#fafbfc';
-    document.documentElement.style.color = '#000000';
+    document.documentElement.style.backgroundColor = '#ffffff';
+    document.documentElement.style.color = '#1a1a1a';
   }, []);
 
   return (
