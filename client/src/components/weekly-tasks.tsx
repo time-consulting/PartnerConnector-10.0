@@ -24,7 +24,7 @@ interface WeeklyTask {
   priority: 'high' | 'medium' | 'low';
   completed: boolean;
   dueDate: string;
-  category: 'leads' | 'deals?' | 'training' | 'follow-up' | 'custom';
+  category: 'leads' | 'deals' | 'training' | 'follow-up' | 'custom';
   reminderSet: boolean;
 }
 
@@ -75,12 +75,12 @@ export default function WeeklyTasks() {
       },
       {
         id: '3',
-        title: 'Submit 2 deals? applications',
-        description: 'Convert qualified leads into active deals?',
+        title: 'Submit 2 deals applications',
+        description: 'Convert qualified leads into active deals',
         priority: 'high',
         completed: false,
         dueDate: getWeekEndDate(),
-        category: 'deals?',
+        category: 'deals',
         reminderSet: false
       },
       {
@@ -109,7 +109,7 @@ export default function WeeklyTasks() {
         title: 'Referrals Submitted',
         target: 3,
         current: 1,
-        unit: 'deals?',
+        unit: 'deals',
         category: 'conversion'
       },
       {
@@ -213,7 +213,7 @@ export default function WeeklyTasks() {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'leads': return <TargetIcon className="w-4 h-4" />;
-      case 'deals?': return <TrendingUpIcon className="w-4 h-4" />;
+      case 'deals': return <TrendingUpIcon className="w-4 h-4" />;
       case 'training': return <ClockIcon className="w-4 h-4" />;
       case 'follow-up': return <CalendarIcon className="w-4 h-4" />;
       default: return <CheckCircleIcon className="w-4 h-4" />;
@@ -283,7 +283,7 @@ export default function WeeklyTasks() {
                         data-testid="select-task-category"
                       >
                         <option value="leads">Leads</option>
-                        <option value="deals?">Referrals</option>
+                        <option value="deals">Referrals</option>
                         <option value="training">Training</option>
                         <option value="follow-up">Follow-up</option>
                         <option value="custom">Custom</option>

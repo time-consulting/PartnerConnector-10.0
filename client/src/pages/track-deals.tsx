@@ -310,7 +310,7 @@ export default function TrackReferrals() {
                   }
                 </p>
                 {!searchTerm && (
-                  <Link href="/submit-deals">
+                  <Link href="/submit-deal">
                     <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold rounded-xl shadow-lg">
                       Submit Your First Deal
                     </Button>

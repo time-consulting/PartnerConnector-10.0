@@ -104,17 +104,17 @@ export default function UploadBills() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="deals?-select" className="text-base font-medium">
+                <Label htmlFor="deals-select" className="text-base font-medium">
                   Select Referral
                 </Label>
                 <Select value={selectedReferral} onValueChange={setSelectedReferral}>
-                  <SelectTrigger data-testid="select-deals?">
-                    <SelectValue placeholder="Choose a deals? to upload bills for" />
+                  <SelectTrigger data-testid="select-deals">
+                    <SelectValue placeholder="Choose a deals to upload bills for" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(deals? as any[])?.map((deals?: any) => (
-                      <SelectItem key={deals?.id} value={deals?.id}>
-                        {deals?.businessName} - {deals?.status}
+                    {(deals as any[])?.map((deals: any) => (
+                      <SelectItem key={deals.id} value={deals.id}>
+                        {deals.businessName} - {deals.status}
                       </SelectItem>
                     ))}
                   </SelectContent>

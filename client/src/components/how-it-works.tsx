@@ -53,7 +53,7 @@ export default function HowItWorks() {
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-4">Earn Commission</h3>
             <p className="text-muted-foreground mb-6">
-              Once your client switches, earn 70% of the deal value as upfront commission plus ongoing bonuses for successful deals?.
+              Once your client switches, earn 70% of the deal value as upfront commission plus ongoing bonuses for successful deals.
             </p>
             <img 
               src="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" 

@@ -46,7 +46,7 @@ export default function CommissionCalculator({ type = "payment", className = "" 
     return {
       baseCommission: Math.round(baseCommission * locationMultiplier),
       yourCommission: totalCommission,
-      monthlyPotential: Math.round(totalCommission * 4), // Assuming 4 deals? per month
+      monthlyPotential: Math.round(totalCommission * 4), // Assuming 4 deals per month
     };
   };
 

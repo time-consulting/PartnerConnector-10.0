@@ -12,7 +12,7 @@ export default function CommissionTiers() {
             <span className="font-semibold text-primary">Primary Focus:</span> Card Machines & Merchant Cash Advances - Help your clients get the funding they need while earning substantial commissions.
           </p>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Plus additional commissions available for utilities (gas & electric) and insurance deals?.
+            Plus additional commissions available for utilities (gas & electric) and insurance deals.
           </p>
         </div>
         

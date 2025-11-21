@@ -122,7 +122,7 @@ export default function HelpCenter() {
               <CardContent>
                 <div className="space-y-3">
                   <a href="#" className="block p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                    <h4 className="font-medium text-gray-900">How to submit your first deals?</h4>
+                    <h4 className="font-medium text-gray-900">How to submit your first deals</h4>
                     <p className="text-sm text-gray-600">Step-by-step guide to getting started</p>
                   </a>
                   <a href="#" className="block p-3 hover:bg-gray-50 rounded-lg transition-colors">
@@ -172,11 +172,11 @@ export default function HelpCenter() {
               <CardContent>
                 <div className="space-y-3">
                   <a href="#" className="block p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                    <h4 className="font-medium text-gray-900">Tracking deals? status</h4>
-                    <p className="text-sm text-gray-600">Monitor your deals? in real-time</p>
+                    <h4 className="font-medium text-gray-900">Tracking deals status</h4>
+                    <p className="text-sm text-gray-600">Monitor your deals in real-time</p>
                   </a>
                   <a href="#" className="block p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                    <h4 className="font-medium text-gray-900">What makes a good deals??</h4>
+                    <h4 className="font-medium text-gray-900">What makes a good deals?</h4>
                     <p className="text-sm text-gray-600">Tips for high-quality submissions</p>
                   </a>
                   <a href="#" className="block p-3 hover:bg-gray-50 rounded-lg transition-colors">

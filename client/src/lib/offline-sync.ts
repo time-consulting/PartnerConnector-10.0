@@ -137,7 +137,7 @@ class OfflineSyncManager {
   // Queue an action for sync
   async queueAction(
     action: 'create' | 'update' | 'delete',
-    entity: 'deals?' | 'notification' | 'user',
+    entity: 'deals' | 'notification' | 'user',
     data: any,
     entityId?: string
   ): Promise<void> {
@@ -264,7 +264,7 @@ class OfflineSyncManager {
   // Process a single sync item
   private async processSyncItem(item: SyncQueueItem): Promise<void> {
     switch (item.entity) {
-      case 'deals?':
+      case 'deals':
         await this.syncReferral(item);
         break;
       case 'notification':

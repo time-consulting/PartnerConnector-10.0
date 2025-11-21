@@ -78,7 +78,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [dealId, setDealId] = useState<string | null>(null);
 
-  // Fetch existing deals? for search
+  // Fetch existing deals for search
   const { data: existingReferrals = [] } = useQuery<any[]>({
     queryKey: ['/api/deals'],
   });
@@ -188,7 +188,7 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
     }
   }, [businessTypes]);
 
-  // Filter deals? based on search term
+  // Filter deals based on search term
   const filteredReferrals = existingReferrals.filter((ref: any) => {
     if (!searchTerm) return false;
     const searchLower = searchTerm.toLowerCase();
@@ -199,23 +199,23 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
     );
   });
 
-  // Auto-populate form with selected deals? data
-  const handleSelectReferral = (deals?: any) => {
-    form.setValue('businessName', deals?.businessName || '');
-    form.setValue('contactName', deals?.contactName || '');
-    form.setValue('businessEmail', deals?.businessEmail || '');
-    form.setValue('businessPhone', deals?.businessPhone || '');
-    form.setValue('businessAddress', deals?.businessAddress || '');
-    form.setValue('businessTypeId', deals?.businessTypeId || '');
-    form.setValue('currentProcessor', deals?.currentProcessor || '');
-    form.setValue('monthlyVolume', deals?.monthlyVolume || '50000');
-    form.setValue('currentRate', deals?.currentRate || '');
-    form.setValue('cardMachineQuantity', deals?.cardMachineQuantity || 1);
-    form.setValue('cardMachineProvider', deals?.cardMachineProvider || '');
+  // Auto-populate form with selected deals data
+  const handleSelectReferral = (deals: any) => {
+    form.setValue('businessName', deals.businessName || '');
+    form.setValue('contactName', deals.contactName || '');
+    form.setValue('businessEmail', deals.businessEmail || '');
+    form.setValue('businessPhone', deals.businessPhone || '');
+    form.setValue('businessAddress', deals.businessAddress || '');
+    form.setValue('businessTypeId', deals.businessTypeId || '');
+    form.setValue('currentProcessor', deals.currentProcessor || '');
+    form.setValue('monthlyVolume', deals.monthlyVolume || '50000');
+    form.setValue('currentRate', deals.currentRate || '');
+    form.setValue('cardMachineQuantity', deals.cardMachineQuantity || 1);
+    form.setValue('cardMachineProvider', deals.cardMachineProvider || '');
     
     // Update monthly volume slider
-    if (deals?.monthlyVolume) {
-      setMonthlyVolume([parseInt(deals?.monthlyVolume)]);
+    if (deals.monthlyVolume) {
+      setMonthlyVolume([parseInt(deals.monthlyVolume)]);
     }
 
     // Close search results
