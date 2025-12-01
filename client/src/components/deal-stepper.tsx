@@ -323,9 +323,9 @@ export default function DealStepper({ businessTypes, onSubmit, isSubmitting }: D
               {filteredReferrals.map((deals?: any) => (
                 <button
                   key={deals?.id}
-                  onClick={() => handleSelectReferral(deals?)}
+                  onClick={() => handleSelectReferral(deals)}
                   className="w-full text-left p-3 hover:bg-teal-50 rounded-lg transition-colors"
-                  data-testid={`button-select-deals?-${deals?.id}`}
+                  data-testid={`button-select-deals-${deals?.id}`}
                 >
                   <div className="font-semibold text-gray-900">{deals?.businessName}</div>
                   <div className="text-sm text-gray-600">{deals?.contactName}</div>
