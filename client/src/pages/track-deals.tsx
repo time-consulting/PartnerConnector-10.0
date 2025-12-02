@@ -436,7 +436,7 @@ export default function TrackReferrals() {
             setShowProgressTracker(false);
             setSelectedReferral(null);
           }}
-          deal={selectedReferral}
+          deals={selectedReferral}
         />
       )}
     </div>
