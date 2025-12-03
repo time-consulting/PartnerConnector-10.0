@@ -68,7 +68,7 @@ export default function ReferralLinkManager({ userReferralCode }: ReferralLinkMa
   ];
 
   const handleShare = (action: string, url: string) => {
-    const message = `Join our partner network and start earning commissions! Use my deals? link: ${url}`;
+    const message = `Join our partner network and start earning commissions! Use my referral link: ${url}`;
     
     switch (action) {
       case 'email':
@@ -90,7 +90,7 @@ export default function ReferralLinkManager({ userReferralCode }: ReferralLinkMa
     
     toast({
       title: "Shared!",
-      description: `Opened ${action} to share your deals? link`,
+      description: `Opened ${action} to share your referral link`,
     });
   };
 

@@ -161,13 +161,13 @@ export function AdminDealsPipeline() {
 
   // Fetch all deals
   const { data, isLoading } = useQuery<{ deals: Deal[] } | Deal[]>({
-    queryKey: ["/api/admin/deals?"],
+    queryKey: ["/api/admin/referrals"],
   });
   
   // Handle both formats: {deals: [...]} and direct array (for cached data)
   const deals = Array.isArray(data) 
     ? data 
-    : (data?.deals? || []);
+    : (data?.deals || []);
 
   // Move deal to next stage mutation
   const moveToStageMutation = useMutation({
@@ -177,14 +177,14 @@ export function AdminDealsPipeline() {
       productType?: string;
       quoteDeliveryMethod?: string;
     }) => {
-      return await apiRequest("PATCH", `/api/admin/deals?/${dealId}/stage`, {
+      return await apiRequest("PATCH", `/api/admin/referrals/${dealId}`, {
         dealStage: stage,
         productType,
         quoteDeliveryMethod,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/deals?"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/referrals"] });
       toast({
         title: "Success",
         description: "Deal moved to new stage",
@@ -209,7 +209,7 @@ export function AdminDealsPipeline() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/deals?"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/referrals"] });
       toast({
         title: "Success",
         description: "Query sent to partner",

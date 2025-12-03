@@ -57,7 +57,7 @@ interface ShareOption {
 interface MobileShareSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  deals?Url: string;
+  referralUrl: string;
   userStats: {
     level: string;
     earnings: number;
@@ -69,7 +69,7 @@ interface MobileShareSheetProps {
 export default function MobileShareSheet({ 
   isOpen, 
   onOpenChange, 
-  deals?Url, 
+  referralUrl, 
   userStats,
   onShare 
 }: MobileShareSheetProps) {
@@ -84,7 +84,7 @@ export default function MobileShareSheet({
       id: 'professional',
       name: 'Professional Invitation',
       platform: 'linkedin',
-      message: `Hi! I've been growing my business with this amazing partner program. As a ${userStats.level}, I've earned £${userStats.earnings} so far. Would you like to join my team? ${deals?Url}`,
+      message: `Hi! I've been growing my business with this amazing partner program. As a ${userStats.level}, I've earned £${userStats.earnings} so far. Would you like to join my team? ${referralUrl}`,
       personalizable: true,
       successRate: 78,
       category: 'professional'
@@ -93,7 +93,7 @@ export default function MobileShareSheet({
       id: 'casual',
       name: 'Casual Friend Invite',
       platform: 'whatsapp',
-      message: `Hey! 👋 Found this cool way to earn extra income. I'm already at ${userStats.level} level and loving it! Check it out: ${deals?Url}`,
+      message: `Hey! 👋 Found this cool way to earn extra income. I'm already at ${userStats.level} level and loving it! Check it out: ${referralUrl}`,
       personalizable: true,
       successRate: 85,
       category: 'messaging'
@@ -102,7 +102,7 @@ export default function MobileShareSheet({
       id: 'email',
       name: 'Email Introduction',
       platform: 'email',
-      message: `Subject: Exciting Business Opportunity\n\nHi there!\n\nI wanted to share an exciting opportunity I've been part of. I'm currently a ${userStats.level} with a team of ${userStats.teamSize} members, and it's been incredibly rewarding.\n\nWould you be interested in learning more? You can get started here: ${deals?Url}\n\nBest regards!`,
+      message: `Subject: Exciting Business Opportunity\n\nHi there!\n\nI wanted to share an exciting opportunity I've been part of. I'm currently a ${userStats.level} with a team of ${userStats.teamSize} members, and it's been incredibly rewarding.\n\nWould you be interested in learning more? You can get started here: ${referralUrl}\n\nBest regards!`,
       personalizable: true,
       successRate: 72,
       category: 'email'
@@ -111,7 +111,7 @@ export default function MobileShareSheet({
       id: 'social',
       name: 'Social Media Post',
       platform: 'twitter',
-      message: `🚀 Just reached ${userStats.level} status! Building an amazing team and earning great commissions. Join me on this journey! #PartnerProgram #BusinessOpportunity ${deals?Url}`,
+      message: `🚀 Just reached ${userStats.level} status! Building an amazing team and earning great commissions. Join me on this journey! #PartnerProgram #BusinessOpportunity ${referralUrl}`,
       personalizable: false,
       successRate: 45,
       category: 'social'
@@ -209,7 +209,7 @@ export default function MobileShareSheet({
   ];
 
   const handleQuickShare = async (optionId: string, template?: ShareTemplate) => {
-    const message = template?.message || customMessage || `Join me in this amazing partner program! ${deals?Url}`;
+    const message = template?.message || customMessage || `Join me in this amazing partner program! ${referralUrl}`;
     
     try {
       switch (optionId) {
@@ -223,19 +223,19 @@ export default function MobileShareSheet({
           window.open(`mailto:?subject=Join My Partner Network&body=${encodeURIComponent(message)}`);
           break;
         case 'linkedin':
-          window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(deals?Url)}`);
+          window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(referralUrl)}`);
           break;
         case 'twitter':
           window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`);
           break;
         case 'telegram':
-          window.open(`https://t.me/share/url?url=${encodeURIComponent(deals?Url)}&text=${encodeURIComponent(message)}`);
+          window.open(`https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${encodeURIComponent(message)}`);
           break;
         case 'facebook':
-          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(deals?Url)}`);
+          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralUrl)}`);
           break;
         case 'copy-link':
-          navigator.clipboard.writeText(deals?Url);
+          navigator.clipboard.writeText(referralUrl);
           toast({
             title: "Link Copied!",
             description: "Referral link copied to clipboard",
