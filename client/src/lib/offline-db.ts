@@ -7,7 +7,7 @@ const DB_VERSION = 1;
 
 // Store names
 export const STORES = {
-  REFERRALS: 'deals?',
+  REFERRALS: 'deals',
   NOTIFICATIONS: 'notifications',
   SYNC_QUEUE: 'syncQueue',
   METADATA: 'metadata'
@@ -20,7 +20,7 @@ export type SyncAction = 'create' | 'update' | 'delete';
 export const SyncQueueItemSchema = z.object({
   id: z.string(),
   action: z.enum(['create', 'update', 'delete']),
-  entity: z.enum(['deals?', 'notification', 'user']),
+  entity: z.enum(['deal', 'notification', 'user']),
   entityId: z.string().optional(),
   data: z.any(),
   timestamp: z.number(),
@@ -107,13 +107,13 @@ class OfflineDB {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
 
-        // Create deals? store
+        // Create deals store
         if (!db.objectStoreNames.contains(STORES.REFERRALS)) {
-          const deals?Store = db.createObjectStore(STORES.REFERRALS, { keyPath: 'id' });
-          deals?Store.createIndex('synced', 'synced', { unique: false });
-          deals?Store.createIndex('status', 'status', { unique: false });
-          deals?Store.createIndex('createdAt', 'createdAt', { unique: false });
-          deals?Store.createIndex('serverId', 'serverId', { unique: false });
+          const dealsStore = db.createObjectStore(STORES.REFERRALS, { keyPath: 'id' });
+          dealsStore.createIndex('synced', 'synced', { unique: false });
+          dealsStore.createIndex('status', 'status', { unique: false });
+          dealsStore.createIndex('createdAt', 'createdAt', { unique: false });
+          dealsStore.createIndex('serverId', 'serverId', { unique: false });
         }
 
         // Create notifications store
@@ -249,8 +249,8 @@ class OfflineDB {
   }
 
   // Referral-specific operations
-  async saveReferral(deals?: OfflineReferral): Promise<void> {
-    await this.put(STORES.REFERRALS, deals?);
+  async saveReferral(deal: OfflineReferral): Promise<void> {
+    await this.put(STORES.REFERRALS, deal);
   }
 
   async getReferral(id: string): Promise<OfflineReferral | undefined> {
@@ -266,14 +266,14 @@ class OfflineDB {
   }
 
   async markReferralSynced(id: string, serverId?: string): Promise<void> {
-    const deals? = await this.getReferral(id);
-    if (deals?) {
-      deals?.synced = true;
-      deals?.lastSyncAt = Date.now();
+    const deal = await this.getReferral(id);
+    if (deal) {
+      deal.synced = true;
+      deal.lastSyncAt = Date.now();
       if (serverId) {
-        deals?.serverId = serverId;
+        deal.serverId = serverId;
       }
-      await this.saveReferral(deals?);
+      await this.saveReferral(deal);
     }
   }
 
@@ -352,8 +352,8 @@ class OfflineDB {
     const transaction = db.transaction([STORES.REFERRALS], 'readwrite');
     const store = transaction.objectStore(STORES.REFERRALS);
 
-    for (const deals? of deals?) {
-      store.put(deals?);
+    for (const deal of deals) {
+      store.put(deal);
     }
 
     return new Promise((resolve, reject) => {

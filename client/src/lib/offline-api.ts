@@ -223,9 +223,9 @@ async function getFromCache(url: string): Promise<any> {
   
   // Check IndexedDB for specific endpoints
   if (url.includes('/api/deals')) {
-    const deals? = await offlineDB.getAllReferrals();
+    const deals = await offlineDB.getAllReferrals();
     if (deals?.length > 0) {
-      return deals?;
+      return deals;
     }
   } else if (url.includes('/api/notifications')) {
     const notifications = await offlineDB.getAllNotifications();
@@ -256,7 +256,7 @@ async function getFromCache(url: string): Promise<any> {
 async function updateOfflineCache(url: string, data: any): Promise<void> {
   try {
     if (url.includes('/api/deals') && Array.isArray(data)) {
-      // Convert and save deals?
+      // Convert and save deals
       const offlineReferrals: OfflineReferral[] = data.map(ref => ({
         ...ref,
         id: ref.id || uuidv4(),

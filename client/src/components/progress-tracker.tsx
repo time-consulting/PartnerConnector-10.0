@@ -37,7 +37,7 @@ interface ProgressStep {
 interface ProgressTrackerProps {
   isOpen: boolean;
   onClose: () => void;
-  deals?: {
+  deal?: {
     id: string;
     businessName: string;
     businessEmail: string;
@@ -55,24 +55,24 @@ interface ProgressTrackerProps {
   };
 }
 
-export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTrackerProps) {
+export default function ProgressTracker({ isOpen, onClose, deal }: ProgressTrackerProps) {
   const [showContractPreview, setShowContractPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
   // Fetch latest documents for this business from the API
   const { data: fetchedDocuments = [], refetch: refetchDocuments } = useQuery({
-    queryKey: ['/api/bills', deals?.businessName],
+    queryKey: ['/api/bills', deal?.businessName],
     queryFn: async () => {
-      const response = await fetch(`/api/bills?businessName=${encodeURIComponent(deals?.businessName)}`);
+      const response = await fetch(`/api/bills?businessName=${encodeURIComponent(deal?.businessName)}`);
       if (!response.ok) throw new Error('Failed to fetch documents');
       return response.json();
     },
-    enabled: !!deals?.businessName,
+    enabled: !!deal?.businessName,
   });
 
-  // Use billUploads from deals? if available (includes initial uploads), otherwise use fetched documents
-  const documents = deals?.billUploads && deals?.billUploads.length > 0 ? deals?.billUploads : fetchedDocuments;
+  // Use billUploads from deal if available (includes initial uploads), otherwise use fetched documents
+  const documents = deal?.billUploads && deal?.billUploads.length > 0 ? deal?.billUploads : fetchedDocuments;
 
   // Handle file upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +86,7 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
     Array.from(files).forEach(file => {
       formData.append('bills', file);
     });
-    formData.append('businessName', deals?.businessName);
+    formData.append('businessName', deal?.businessName);
 
     try {
       const response = await fetch('/api/bills/upload', {
@@ -122,66 +122,66 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
       {
         id: "submitted",
         title: "Referral Submitted",
-        description: "Your deals? has been successfully submitted",
+        description: "Your deal has been successfully submitted",
         status: "completed",
-        completedAt: typeof deals?.submittedAt === 'string' 
-          ? new Date(deals?.submittedAt).toLocaleDateString() 
-          : deals?.submittedAt.toLocaleDateString()
+        completedAt: typeof deal?.submittedAt === 'string' 
+          ? new Date(deal?.submittedAt).toLocaleDateString() 
+          : deal?.submittedAt.toLocaleDateString()
       },
       {
         id: "review",
         title: "Under Review",
         description: "Our team is reviewing the business details and requirements",
-        status: deals?.status === "submitted" ? "current" : "completed",
-        completedAt: deals?.status !== "submitted" ? "1-2 days" : undefined
+        status: deal?.status === "submitted" ? "current" : "completed",
+        completedAt: deal?.status !== "submitted" ? "1-2 days" : undefined
       },
       {
         id: "quote",
         title: "Quote Preparation",
         description: "Creating a competitive quote tailored to the business needs",
-        status: ["quote_sent", "quote_approved", "processing", "approved", "paid"].includes(deals?.status) ? "completed" : 
-                deals?.status === "in_review" ? "current" : "pending",
-        completedAt: ["quote_sent", "quote_approved", "processing", "approved", "paid"].includes(deals?.status) ? "Ready" : undefined
+        status: ["quote_sent", "quote_approved", "processing", "approved", "paid"].includes(deal?.status) ? "completed" : 
+                deal?.status === "in_review" ? "current" : "pending",
+        completedAt: ["quote_sent", "quote_approved", "processing", "approved", "paid"].includes(deal?.status) ? "Ready" : undefined
       },
       {
         id: "quote_sent",
         title: "Quote Sent",
         description: "Custom quote has been sent to the business for review",
-        status: ["quote_approved", "processing", "approved", "paid"].includes(deals?.status) ? "completed" :
-                deals?.status === "quote_sent" ? "current" : "pending",
-        completedAt: ["quote_approved", "processing", "approved", "paid"].includes(deals?.status) ? "Sent" : undefined
+        status: ["quote_approved", "processing", "approved", "paid"].includes(deal?.status) ? "completed" :
+                deal?.status === "quote_sent" ? "current" : "pending",
+        completedAt: ["quote_approved", "processing", "approved", "paid"].includes(deal?.status) ? "Sent" : undefined
       },
       {
         id: "approval",
         title: "Quote Approval",
         description: "Waiting for business to approve the payment processing quote",
-        status: ["contract_review", "processing", "approved", "paid"].includes(deals?.status) ? "completed" :
-                deals?.status === "quote_approved" ? "current" : "pending",
-        completedAt: ["contract_review", "processing", "approved", "paid"].includes(deals?.status) ? "Approved" : undefined
+        status: ["contract_review", "processing", "approved", "paid"].includes(deal?.status) ? "completed" :
+                deal?.status === "quote_approved" ? "current" : "pending",
+        completedAt: ["contract_review", "processing", "approved", "paid"].includes(deal?.status) ? "Approved" : undefined
       },
       {
         id: "contract_generation",
         title: "Contract Generation",
         description: "Review and approve the generated service agreement",
-        status: ["processing", "approved", "paid"].includes(deals?.status) ? "completed" :
-                deals?.status === "contract_review" ? "current" : "pending",
-        completedAt: ["processing", "approved", "paid"].includes(deals?.status) ? "Generated" : undefined
+        status: ["processing", "approved", "paid"].includes(deal?.status) ? "completed" :
+                deal?.status === "contract_review" ? "current" : "pending",
+        completedAt: ["processing", "approved", "paid"].includes(deal?.status) ? "Generated" : undefined
       },
       {
         id: "processing",
         title: "Client Signature & Setup",
         description: "Client signs agreement and service setup begins",
-        status: ["approved", "paid"].includes(deals?.status) ? "completed" :
-                deals?.status === "processing" ? "current" : "pending",
-        completedAt: ["approved", "paid"].includes(deals?.status) ? "Complete" : undefined
+        status: ["approved", "paid"].includes(deal?.status) ? "completed" :
+                deal?.status === "processing" ? "current" : "pending",
+        completedAt: ["approved", "paid"].includes(deal?.status) ? "Complete" : undefined
       },
       {
         id: "commission",
         title: "Commission Payment",
         description: "Your commission has been calculated and processed",
-        status: deals?.status === "paid" ? "completed" :
-                deals?.status === "approved" ? "current" : "pending",
-        completedAt: deals?.status === "paid" ? "Paid" : undefined
+        status: deal?.status === "paid" ? "completed" :
+                deal?.status === "approved" ? "current" : "pending",
+        completedAt: deal?.status === "paid" ? "Paid" : undefined
       }
     ];
 
@@ -218,7 +218,7 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="w-5 h-5 text-primary" />
-            Progress Tracker: {deals?.businessName}
+            Progress Tracker: {deal?.businessName}
           </DialogTitle>
         </DialogHeader>
 
@@ -230,15 +230,15 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Business:</span>
-                  <span>{deals?.businessName}</span>
+                  <span>{deal?.businessName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Submitted:</span>
                   <span>
-                    {typeof deals?.submittedAt === 'string' 
-                      ? new Date(deals?.submittedAt).toLocaleDateString() 
-                      : deals?.submittedAt?.toLocaleDateString?.() || 'Unknown date'
+                    {typeof deal?.submittedAt === 'string' 
+                      ? new Date(deal?.submittedAt).toLocaleDateString() 
+                      : deal?.submittedAt?.toLocaleDateString?.() || 'Unknown date'
                     }
                   </span>
                 </div>
@@ -246,14 +246,14 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
                   <CreditCard className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Services:</span>
                   <div className="flex flex-wrap gap-1">
-                    {deals?.selectedProducts.slice(0, 2).map((product, idx) => (
+                    {deal?.selectedProducts.slice(0, 2).map((product, idx) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
                         {product}
                       </Badge>
                     ))}
-                    {deals?.selectedProducts.length > 2 && (
+                    {deal?.selectedProducts.length > 2 && (
                       <Badge variant="secondary" className="text-xs">
-                        +{deals?.selectedProducts.length - 2}
+                        +{deal?.selectedProducts.length - 2}
                       </Badge>
                     )}
                   </div>
@@ -261,17 +261,17 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Current Status:</span>
-                  <Badge variant={deals?.status === "paid" ? "default" : "secondary"}>
-                    {deals?.status.replace("_", " ").toUpperCase()}
+                  <Badge variant={deal?.status === "paid" ? "default" : "secondary"}>
+                    {deal?.status.replace("_", " ").toUpperCase()}
                   </Badge>
                 </div>
               </div>
-              {deals?.estimatedCommission && (
+              {deal?.estimatedCommission && (
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">Estimated Commission:</span>
                     <span className="text-lg font-bold text-green-600">
-                      £{deals?.estimatedCommission}
+                      £{deal?.estimatedCommission}
                     </span>
                   </div>
                 </div>
@@ -312,7 +312,7 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
                 <div className="space-y-2">
                   {documents.map((doc: any, index: number) => (
                     <div
-                      key={`${deals?.id}-${doc.id}-${index}`}
+                      key={`${deal?.id}-${doc.id}-${index}`}
                       className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg hover:shadow-md transition-all"
                       data-testid={`document-${doc.id}`}
                     >
@@ -418,19 +418,19 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
                 What happens next?
               </h4>
               <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                {deals?.status === "submitted" && (
-                  <p>Our team will review the deals? within 24 hours and prepare a competitive quote.</p>
+                {deal?.status === "submitted" && (
+                  <p>Our team will review the deal within 24 hours and prepare a competitive quote.</p>
                 )}
-                {deals?.status === "in_review" && (
+                {deal?.status === "in_review" && (
                   <p>We're creating a custom quote based on the business requirements. You'll be notified when it's ready.</p>
                 )}
-                {deals?.status === "quote_sent" && (
+                {deal?.status === "quote_sent" && (
                   <p>The business has received their quote. We'll notify you once they respond.</p>
                 )}
-                {deals?.status === "quote_approved" && (
+                {deal?.status === "quote_approved" && (
                   <p>Great! The quote has been approved. We'll now generate the service agreement for client signature.</p>
                 )}
-                {deals?.status === "contract_review" && (
+                {deal?.status === "contract_review" && (
                   <div className="space-y-3">
                     <p>Review the generated service agreement and approve to send to client for signature.</p>
                     <Button
@@ -443,14 +443,14 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
                     </Button>
                   </div>
                 )}
-                {deals?.status === "processing" && (
+                {deal?.status === "processing" && (
                   <p>The application is being processed. Once approved, your commission will be calculated and paid.</p>
                 )}
-                {deals?.status === "approved" && (
+                {deal?.status === "approved" && (
                   <p>The application has been approved! Your commission is being processed and will be paid shortly.</p>
                 )}
-                {deals?.status === "paid" && (
-                  <p>Congratulations! Your commission has been paid. Thank you for this successful deals?.</p>
+                {deal?.status === "paid" && (
+                  <p>Congratulations! Your commission has been paid. Thank you for this successful deal.</p>
                 )}
               </div>
             </CardContent>
@@ -470,12 +470,12 @@ export default function ProgressTracker({ isOpen, onClose, deals? }: ProgressTra
         <Dialog open={showContractPreview} onOpenChange={setShowContractPreview}>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto p-6">
             <ContractPreview
-              deals?={{
-                businessName: deals?.businessName,
-                businessEmail: deals?.businessEmail,
-                contactName: deals?.businessName.split(' ')[0],
-                estimatedCommission: deals?.estimatedCommission,
-                selectedProducts: deals?.selectedProducts
+              deal={{
+                businessName: deal?.businessName,
+                businessEmail: deal?.businessEmail,
+                contactName: deal?.businessName.split(' ')[0],
+                estimatedCommission: deal?.estimatedCommission,
+                selectedProducts: deal?.selectedProducts
               }}
               onApprove={() => {
                 console.log('Contract approved');

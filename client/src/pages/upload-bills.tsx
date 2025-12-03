@@ -31,7 +31,7 @@ export default function UploadBills() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: deals? } = useQuery({
+  const { data: deals } = useQuery({
     queryKey: ["/api/deals"],
     enabled: isAuthenticated,
   });
@@ -49,7 +49,7 @@ export default function UploadBills() {
     if (!selectedReferral || !uploadedFile) {
       toast({
         title: "Missing Information",
-        description: "Please select a deals? and upload a bill file.",
+        description: "Please select a deal and upload a bill file.",
         variant: "destructive",
       });
       return;
@@ -104,17 +104,17 @@ export default function UploadBills() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="deals?-select" className="text-base font-medium">
+                <Label htmlFor="deal-select" className="text-base font-medium">
                   Select Referral
                 </Label>
                 <Select value={selectedReferral} onValueChange={setSelectedReferral}>
-                  <SelectTrigger data-testid="select-deals?">
-                    <SelectValue placeholder="Choose a deals? to upload bills for" />
+                  <SelectTrigger data-testid="select-deal">
+                    <SelectValue placeholder="Choose a deal to upload bills for" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(deals? as any[])?.map((deals?: any) => (
-                      <SelectItem key={deals?.id} value={deals?.id}>
-                        {deals?.businessName} - {deals?.status}
+                    {(deals as any[])?.map((deal: any) => (
+                      <SelectItem key={deal?.id} value={deal?.id}>
+                        {deal?.businessName} - {deal?.status}
                       </SelectItem>
                     ))}
                   </SelectContent>

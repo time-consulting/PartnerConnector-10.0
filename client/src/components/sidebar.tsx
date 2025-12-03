@@ -9,7 +9,10 @@ import {
   LogOut,
   ChevronRight,
   Zap,
-  Target
+  Target,
+  MessageSquare,
+  Contact,
+  Lightbulb
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
@@ -55,8 +58,11 @@ export default function Sidebar({ onExpandChange }: SidebarProps = {}) {
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: FileText, label: "Submit Deal", path: "/submit-deal" },
     { icon: Target, label: "Track Deals", path: "/track-deals" },
+    { icon: MessageSquare, label: "Quotes", path: "/quotes" },
     { icon: Users, label: "Team", path: "/team-management" },
     { icon: DollarSign, label: "Commissions", path: "/commissions" },
+    { icon: Contact, label: "Contacts", path: "/contacts" },
+    { icon: Lightbulb, label: "Opportunities", path: "/opportunities" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
