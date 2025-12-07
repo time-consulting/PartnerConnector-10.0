@@ -49,6 +49,23 @@ app.use(compression({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// --- ADD THIS BLOCK HERE ---
+import session from "express-session";
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "fallback-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,          // behind Railway HTTPS
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+    }
+  })
+);
+// --- END OF BLOCK ---
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
