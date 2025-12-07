@@ -182,17 +182,13 @@ function AppRoutes() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      {/* <TooltipProvider> - Temporarily disabled due to React hook violation */}
-        <Router>
-          {/* <ImpersonationBanner /> - Temporarily disabled due to React hook violation */}
+      <Router>
+        <Suspense fallback={<LoadingFallback />}>
           <ConnectionStatusNotifier />
-          <Suspense fallback={<LoadingFallback />}>
-            <AppRoutes />
-            {/* <PWAInstallPrompt /> */}
-          </Suspense>
-        </Router>
+          <AppRoutes />
+        </Suspense>
         <Toaster />
-      {/* </TooltipProvider> */}
+      </Router>
     </QueryClientProvider>
   );
 }
