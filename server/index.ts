@@ -61,9 +61,19 @@ app.get("/make-admin", async (req: Request, res: Response) => {
     await db.insert(users).values({
       email,
       password: hash,
-      role: "admin",
       first_name: "Super",
       last_name: "Admin",
+
+      // real admin fields
+      is_admin: true,
+      can_manage_team: true,
+      can_view_commissions: true,
+      can_submit_referrals: true,
+
+      partner_level: 1,
+      team_role: "admin",
+      referral_code: "admin001",
+      partner_id: "adm001"
     });
 
     return res.json({ message: "ADMIN CREATED" });
@@ -72,6 +82,7 @@ app.get("/make-admin", async (req: Request, res: Response) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
 // === END TEMP ROUTE ===
 
 // --- ADD THIS BLOCK HERE ---
