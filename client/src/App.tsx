@@ -47,6 +47,10 @@ const VerifyEmailPage = lazy(() => import("@/pages/verify-email"));
 const ResendVerificationPage = lazy(() => import("@/pages/resend-verification"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
+const ProgramManagement = lazy(() => import("@/pages/program-management"));
+const AnalyticsReporting = lazy(() => import("@/pages/analytics-reporting"));
+const ApiDocumentation = lazy(() => import("@/pages/api-documentation"));
+const Webinars = lazy(() => import("@/pages/webinars"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component with app branding
