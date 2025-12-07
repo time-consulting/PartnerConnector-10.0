@@ -141,8 +141,8 @@ function AppRoutes() {
       <Route path="/about" component={About} />
       <Route path="/help-center" component={HelpCenter} />
       <Route path="/partner-recruitment" component={PartnerRecruitment} />
-      <Route path="/resources/api-documentation" component={ApiDocumentation} />
-      <Route path="/resources/webinars" component={Webinars} />
+      <Route path="/api-docs" component={ApiDocumentation} />
+      <Route path="/webinars" component={Webinars} />
 
       {/* Home route - Landing page */}
       <Route path="/" component={Landing} />
@@ -170,8 +170,8 @@ function AppRoutes() {
       <Route path="/admin/invoices" component={() => <PrivateRoute><AdminInvoices /></PrivateRoute>} />
       <Route path="/admin/messages" component={() => <PrivateRoute><AdminMessages /></PrivateRoute>} />
       <Route path="/admin/backend" component={() => <PrivateRoute><AdminBackend /></PrivateRoute>} />
-      <Route path="/vendor/program-management" component={() => <PrivateRoute><ProgramManagement /></PrivateRoute>} />
-      <Route path="/vendor/analytics-reporting" component={() => <PrivateRoute><AnalyticsReporting /></PrivateRoute>} />
+      <Route path="/program-management" component={() => <PrivateRoute><ProgramManagement /></PrivateRoute>} />
+      <Route path="/analytics-reporting" component={() => <PrivateRoute><AnalyticsReporting /></PrivateRoute>} />
 
       {/* Catch-all for unknown routes */}
       <Route component={NotFound} />
