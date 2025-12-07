@@ -51,39 +51,6 @@ app.use(compression({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-// === TEMPORARY ADMIN CREATION ROUTE ===
-app.get("/make-admin", async (req: Request, res: Response) => {
-  try {
-    const email = "admin@partnerconnector.co.uk";
-    const password = "Admin123!";
-    const hash = bcrypt.hashSync(password, 10);
-
-    await db.insert(users).values({
-      email,
-      password: hash,
-      first_name: "Super",
-      last_name: "Admin",
-
-      // real admin fields
-      is_admin: true,
-      can_manage_team: true,
-      can_view_commissions: true,
-      can_submit_referrals: true,
-
-      partner_level: 1,
-      team_role: "admin",
-      referral_code: "admin001",
-      partner_id: "adm001"
-    });
-
-    return res.json({ message: "ADMIN CREATED" });
-  } catch (err: any) {
-    console.error("Admin creation failed:", err);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// === END TEMP ROUTE ===
 
 // --- ADD THIS BLOCK HERE ---
 import session from "express-session";
