@@ -4,6 +4,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initSentry, getSentryHandlers } from "./sentry";
 import { wsManager } from "./websocket";
+import bcrypt from "bcryptjs";
+import { db } from "./db";
+import { users } from "./db/schema";
 
 // Initialize Sentry before everything else
 initSentry();
@@ -48,6 +51,28 @@ app.use(compression({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+// === TEMPORARY ADMIN CREATION ROUTE ===
+app.get("/make-admin", async (req: Request, res: Response) => {
+  try {
+    const email = "admin@partnerconnector.co.uk";
+    const password = "Admin123!";
+    const hash = bcrypt.hashSync(password, 10);
+
+    await db.insert(users).values({
+      email,
+      password: hash,
+      role: "admin",
+      first_name: "Super",
+      last_name: "Admin",
+    });
+
+    return res.json({ message: "ADMIN CREATED" });
+  } catch (err: any) {
+    console.error("Admin creation failed:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+// === END TEMP ROUTE ===
 
 // --- ADD THIS BLOCK HERE ---
 import session from "express-session";
