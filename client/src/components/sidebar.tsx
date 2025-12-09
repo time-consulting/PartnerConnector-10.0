@@ -70,7 +70,7 @@ export default function Sidebar({ onExpandChange }: SidebarProps = {}) {
 
   return (
     <div
-      className={`fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 z-40 ${
+      className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-40 shadow-xl shadow-black/5 ${
         isExpanded ? "w-64" : "w-20"
       }`}
       onMouseEnter={handleMouseEnter}
@@ -78,13 +78,13 @@ export default function Sidebar({ onExpandChange }: SidebarProps = {}) {
     >
       <div className="flex flex-col h-full">
         {/* Logo */}
-        <div className="p-6 border-b border-border">
+        <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary via-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
               <Zap className="w-5 h-5 text-white" fill="white" />
             </div>
             {isExpanded && (
-              <span className="text-lg font-bold text-foreground whitespace-nowrap">
+              <span className="text-lg font-bold text-gray-900 whitespace-nowrap">
                 PartnerConnector
               </span>
             )}
@@ -98,8 +98,8 @@ export default function Sidebar({ onExpandChange }: SidebarProps = {}) {
               <button
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                   isActive(item.path)
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
               >
@@ -118,10 +118,10 @@ export default function Sidebar({ onExpandChange }: SidebarProps = {}) {
         </nav>
 
         {/* Logout */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-gray-100">
           <Button
             variant="ghost"
-            className="w-full flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             onClick={handleLogout}
             data-testid="button-logout"
           >

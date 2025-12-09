@@ -104,20 +104,20 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-3xl font-bold text-white mb-2">
               Dashboard
             </h1>
-            <p className="text-muted-foreground">Analytics Overview</p>
+            <p className="text-gray-400">Analytics Overview</p>
           </div>
 
           {/* Select Product Section */}
           <div className="mb-10">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Select Product</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Select Product</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {products.map((product) => (
                 <Card 
                   key={product.id}
-                  className="bg-card border-border hover:border-primary/50 transition-all cursor-pointer group"
+                  className="tech-card cursor-pointer group"
                   data-testid={`card-product-${product.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <CardContent className="p-6">
@@ -126,8 +126,8 @@ export default function Dashboard() {
                         <product.icon className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground mb-1">{product.name}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{product.description}</p>
+                        <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
+                        <p className="text-xs text-gray-600 line-clamp-2">{product.description}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -138,43 +138,43 @@ export default function Dashboard() {
 
           {/* Deals Overview Section */}
           <div className="mb-10">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Deals Overview</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Deals Overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-card border-border" data-testid="card-deals-submitted">
+              <Card className="tech-card" data-testid="card-deals-submitted">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Deals Submitted</CardTitle>
-                  <FileText className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-sm font-medium text-gray-500">Deals Submitted</CardTitle>
+                  <FileText className="w-5 h-5 text-blue-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-foreground" data-testid="text-deals-count">0</div>
-                  <p className="text-xs text-success flex items-center gap-1 mt-1">
+                  <div className="text-3xl font-bold text-gray-900" data-testid="text-deals-count">0</div>
+                  <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
                     <TrendingUp className="w-3 h-3" />
                     This month
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border" data-testid="card-team-members">
+              <Card className="tech-card" data-testid="card-team-members">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Team Members</CardTitle>
-                  <Users className="w-5 h-5 text-success" />
+                  <CardTitle className="text-sm font-medium text-gray-500">Team Members</CardTitle>
+                  <Users className="w-5 h-5 text-emerald-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-foreground" data-testid="text-team-count">0</div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="text-3xl font-bold text-gray-900" data-testid="text-team-count">0</div>
+                  <p className="text-xs text-gray-500 mt-1">
                     Active partners
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border" data-testid="card-commission">
+              <Card className="tech-card" data-testid="card-commission">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Commission This Month</CardTitle>
-                  <DollarSign className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-sm font-medium text-gray-500">Commission This Month</CardTitle>
+                  <DollarSign className="w-5 h-5 text-blue-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-foreground" data-testid="text-commission-amount">£0.00</div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="text-3xl font-bold text-gray-900" data-testid="text-commission-amount">£0.00</div>
+                  <p className="text-xs text-gray-500 mt-1">
                     Current month earnings
                   </p>
                 </CardContent>
@@ -184,9 +184,9 @@ export default function Dashboard() {
 
           {/* Quick Actions Section */}
           <div className="mb-10">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-gradient-to-br from-primary via-amber-500 to-orange-600 border-0 hover:shadow-lg hover:shadow-primary/30 transition-all">
+              <Card className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 border-0 hover:shadow-xl hover:shadow-blue-500/30 transition-all">
                 <CardHeader>
                   <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
                     <UserPlus className="w-6 h-6 text-white" />
@@ -198,7 +198,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <Link href="/team-management">
-                    <Button className="w-full bg-white text-primary hover:bg-white/90" data-testid="button-add-team">
+                    <Button className="w-full bg-white text-blue-600 hover:bg-white/90" data-testid="button-add-team">
                       Add Team Member
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -206,7 +206,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-success to-emerald-600 border-0 hover:shadow-lg hover:shadow-success/30 transition-all">
+              <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 border-0 hover:shadow-xl hover:shadow-emerald-500/30 transition-all">
                 <CardHeader>
                   <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
                     <FileText className="w-6 h-6 text-white" />
@@ -218,7 +218,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <Link href="/submit-deal">
-                    <Button className="w-full bg-white text-success hover:bg-white/90" data-testid="button-submit-deal">
+                    <Button className="w-full bg-white text-emerald-600 hover:bg-white/90" data-testid="button-submit-deal">
                       Submit Deal
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -226,7 +226,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-500 to-pink-600 border-0 hover:shadow-lg hover:shadow-purple-500/30 transition-all">
+              <Card className="bg-gradient-to-br from-purple-500 to-pink-600 border-0 hover:shadow-xl hover:shadow-purple-500/30 transition-all">
                 <CardHeader>
                   <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
                     <Target className="w-6 h-6 text-white" />
