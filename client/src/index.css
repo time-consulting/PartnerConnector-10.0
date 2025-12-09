@@ -37,51 +37,51 @@
 }
 
 :root {
-  --background: hsl(220, 65%, 97%);
-  --foreground: hsl(220, 30%, 6%);
+  --background: hsl(222, 47%, 11%);
+  --foreground: hsl(210, 40%, 98%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(220, 30%, 6%);
+  --card-foreground: hsl(222, 47%, 11%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(220, 30%, 6%);
-  --primary: hsl(220, 75%, 56%);
+  --popover-foreground: hsl(222, 47%, 11%);
+  --primary: hsl(217, 91%, 60%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(220, 30%, 95%);
-  --secondary-foreground: hsl(220, 30%, 6%);
-  --muted: hsl(220, 30%, 96%);
-  --muted-foreground: hsl(220, 30%, 45%);
-  --accent: hsl(220, 30%, 95%);
-  --accent-foreground: hsl(220, 30%, 6%);
+  --secondary: hsl(215, 20%, 25%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --muted: hsl(215, 25%, 20%);
+  --muted-foreground: hsl(215, 20%, 65%);
+  --accent: hsl(217, 91%, 60%);
+  --accent-foreground: hsl(0, 0%, 100%);
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(220, 30%, 88%);
-  --input: hsl(220, 30%, 96%);
-  --ring: hsl(220, 75%, 56%);
-  --chart-1: hsl(220, 75%, 56%);
-  --chart-2: hsl(160, 75%, 48%);
-  --chart-3: hsl(30, 75%, 55%);
+  --border: hsl(215, 20%, 25%);
+  --input: hsl(215, 25%, 20%);
+  --ring: hsl(217, 91%, 60%);
+  --chart-1: hsl(217, 91%, 60%);
+  --chart-2: hsl(160, 84%, 39%);
+  --chart-3: hsl(38, 92%, 50%);
   --chart-4: hsl(280, 75%, 60%);
   --chart-5: hsl(340, 75%, 55%);
-  --sidebar: hsl(45, 25%, 97%);
-  --sidebar-foreground: hsl(20, 14%, 17%);
-  --sidebar-primary: hsl(9, 75%, 61%);
+  --sidebar: hsl(222, 47%, 8%);
+  --sidebar-foreground: hsl(210, 40%, 98%);
+  --sidebar-primary: hsl(217, 91%, 60%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(25, 45%, 80%);
-  --sidebar-accent-foreground: hsl(20, 14%, 17%);
-  --sidebar-border: hsl(45, 15%, 80%);
-  --sidebar-ring: hsl(9, 75%, 61%);
-  --font-sans: 'Poppins', sans-serif;
-  --font-serif: 'Poppins', sans-serif;
+  --sidebar-accent: hsl(215, 25%, 20%);
+  --sidebar-accent-foreground: hsl(210, 40%, 98%);
+  --sidebar-border: hsl(215, 20%, 20%);
+  --sidebar-ring: hsl(217, 91%, 60%);
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Inter', sans-serif;
   --font-mono: Menlo, monospace;
-  --radius: 0.8rem;
-  --shadow: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 1px 2px -1px hsl(9, 75%, 61% / 0.00);
+  --radius: 0.75rem;
+  --shadow: 0px 2px 4px 0px hsl(0, 0%, 0% / 0.1);
   --spacing: 0.25rem;
-  --shadow-lg: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 4px 6px -1px hsl(9, 75%, 61% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 2px 4px -1px hsl(9, 75%, 61% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 1px 2px -1px hsl(9, 75%, 61% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00), 0px 8px 10px -1px hsl(9, 75%, 61% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
-  --shadow-2xs: 0px 2px 0px 0px hsl(9, 75%, 61% / 0.00);
+  --shadow-lg: 0px 10px 15px -3px hsl(0, 0%, 0% / 0.1), 0px 4px 6px -2px hsl(0, 0%, 0% / 0.05);
+  --shadow-md: 0px 4px 6px -1px hsl(0, 0%, 0% / 0.1), 0px 2px 4px -1px hsl(0, 0%, 0% / 0.06);
+  --shadow-sm: 0px 1px 2px 0px hsl(0, 0%, 0% / 0.05);
+  --shadow-xl: 0px 20px 25px -5px hsl(0, 0%, 0% / 0.1), 0px 10px 10px -5px hsl(0, 0%, 0% / 0.04);
+  --shadow-xs: 0px 1px 2px 0px hsl(0, 0%, 0% / 0.05);
+  --shadow-2xl: 0px 25px 50px -12px hsl(0, 0%, 0% / 0.25);
+  --shadow-2xs: 0px 1px 2px 0px hsl(0, 0%, 0% / 0.05);
   --tracking-normal: 0em;
 }
 
@@ -121,33 +121,54 @@
 }
 
 .hero-gradient {
-  background: linear-gradient(135deg, hsl(220, 75%, 56%) 0%, hsl(220, 75%, 70%) 50%, hsl(220, 75%, 90%) 100%);
+  background: linear-gradient(135deg, hsl(222, 47%, 8%) 0%, hsl(222, 47%, 14%) 50%, hsl(222, 47%, 11%) 100%);
 }
 
 .stats-gradient {
-  background: linear-gradient(135deg, hsl(0, 0%, 98%) 0%, hsl(220, 30%, 96%) 100%);
+  background: linear-gradient(135deg, hsl(222, 47%, 8%) 0%, hsl(222, 47%, 13%) 100%);
 }
 
 .card-gradient {
-  background: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(220, 30%, 99%) 100%);
+  background: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(0, 0%, 99%) 100%);
 }
 
 .card-hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(220, 30%, 99%) 100%);
-  border: 1px solid hsl(220, 30%, 92%);
+  background: hsl(0, 0%, 100%);
+  border: 1px solid hsl(0, 0%, 92%);
+  box-shadow: 0 0 20px 0 rgba(255, 255, 255, 0.05), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .card-hover:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 25px 50px -12px hsl(220, 75%, 56% / 0.25), 0 0 0 1px hsl(220, 75%, 56% / 0.05);
-  border-color: hsl(220, 75%, 70%);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 0 40px 0 rgba(99, 155, 255, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-color: rgba(99, 155, 255, 0.3);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 30px 0 rgba(255, 255, 255, 0.1), 0 8px 32px -8px rgba(0, 0, 0, 0.3);
+}
+
+.tech-card {
+  background: hsl(0, 0%, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 30px 0 rgba(99, 155, 255, 0.08),
+    0 20px 40px -15px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tech-card:hover {
+  box-shadow: 
+    0 0 0 1px rgba(99, 155, 255, 0.2),
+    0 0 50px 0 rgba(99, 155, 255, 0.15),
+    0 30px 60px -15px rgba(0, 0, 0, 0.4);
+  transform: translateY(-4px);
 }
 
 .shimmer {
@@ -210,7 +231,11 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    background-image: radial-gradient(circle at 50% 50%, hsl(220, 75%, 96%) 0%, hsl(220, 65%, 97%) 100%);
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 155, 255, 0.15), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 155, 255, 0.08), transparent),
+      linear-gradient(180deg, hsl(222, 47%, 8%) 0%, hsl(222, 47%, 11%) 50%, hsl(222, 47%, 14%) 100%);
+    min-height: 100vh;
   }
 
   html {
