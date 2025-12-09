@@ -12,7 +12,7 @@ import { CheckCircleIcon, Sparkles } from "lucide-react";
 
 export default function SubmitDeal() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [submittedDealId, setSubmittedReferralId] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -93,6 +93,10 @@ export default function SubmitDeal() {
   });
 
   const handleDealSubmit = (data: any, files: File[]) => {
+    const payload = {
+    ...data,
+    referrerId: user?.id,   // <<< REQUIRED FIX
+  };
     submitDealMutation.mutate({ dealData: data, files });
   };
 
