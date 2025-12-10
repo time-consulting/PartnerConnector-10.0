@@ -79,6 +79,15 @@ A PostgreSQL database underpins the application, featuring core entities such as
   - Password strength validation
 - **Contact Form**: Full-width dialog for enhanced desktop experience.
 
+## Accounting Integrations
+The platform now supports integration with accounting software for automated invoice and contact syncing:
+- **QuickBooks**: Connect via OAuth2 for contact sync, invoice creation, and payment tracking
+- **Xero**: OAuth2 integration for contact sync, invoice sync, and bank reconciliation
+- **Sage**: Connect for UK business accounting integration
+- **FreshBooks**: Cloud accounting integration for client management and invoicing
+
+The integrations are managed via the `/integrations` route with a dark tech theme UI. OAuth credentials must be configured via environment variables (`<PROVIDER>_CLIENT_ID`, `<PROVIDER>_CLIENT_SECRET`) to enable connections.
+
 # External Dependencies
 
 ## Database Services

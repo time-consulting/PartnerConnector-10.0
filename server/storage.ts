@@ -64,6 +64,9 @@ import {
   type PushSubscription,
   type InsertPushSubscription,
   mapDealStageToCustomerJourney,
+  accountingIntegrations,
+  type AccountingIntegration,
+  type InsertAccountingIntegration,
 } from "@shared/schema";
 import { googleSheetsService, type DealSheetData } from "./googleSheets";
 import { db } from "./db";
@@ -302,6 +305,14 @@ export interface IStorage {
 
   // Test data seeding
   seedTestDeals(): Promise<void>;
+
+  // Accounting integrations operations
+  getAccountingIntegrations(userId: string): Promise<any[]>;
+  getAccountingIntegrationByProvider(userId: string, provider: string): Promise<any | undefined>;
+  createAccountingIntegration(integrationData: any): Promise<any>;
+  updateAccountingIntegration(integrationId: string, updates: any): Promise<any>;
+  deleteAccountingIntegration(integrationId: string): Promise<void>;
+  findIntegrationByState(state: string): Promise<any | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3519,6 +3530,81 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(invoices.id, invoiceId));
+  }
+
+  // Accounting Integrations
+  async getAccountingIntegrations(userId: string): Promise<AccountingIntegration[]> {
+    return await db
+      .select()
+      .from(accountingIntegrations)
+      .where(eq(accountingIntegrations.userId, userId));
+  }
+
+  async getAccountingIntegrationByProvider(userId: string, provider: string): Promise<AccountingIntegration | undefined> {
+    const [integration] = await db
+      .select()
+      .from(accountingIntegrations)
+      .where(and(
+        eq(accountingIntegrations.userId, userId),
+        eq(accountingIntegrations.provider, provider)
+      ));
+    return integration;
+  }
+
+  async createAccountingIntegration(integrationData: InsertAccountingIntegration): Promise<AccountingIntegration> {
+    // Check if integration already exists for this user and provider
+    const existing = await this.getAccountingIntegrationByProvider(
+      integrationData.userId,
+      integrationData.provider
+    );
+    
+    if (existing) {
+      // Update existing integration - preserve existing values if not provided
+      const updates = {
+        ...integrationData,
+        settings: integrationData.settings ?? existing.settings,
+        accessToken: integrationData.accessToken ?? existing.accessToken,
+        refreshToken: integrationData.refreshToken ?? existing.refreshToken,
+      };
+      const [updated] = await db
+        .update(accountingIntegrations)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(accountingIntegrations.id, existing.id))
+        .returning();
+      return updated;
+    }
+    
+    const [integration] = await db
+      .insert(accountingIntegrations)
+      .values(integrationData)
+      .returning();
+    return integration;
+  }
+
+  async updateAccountingIntegration(integrationId: string, updates: Partial<AccountingIntegration>): Promise<AccountingIntegration> {
+    const [integration] = await db
+      .update(accountingIntegrations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(accountingIntegrations.id, integrationId))
+      .returning();
+    return integration;
+  }
+
+  async deleteAccountingIntegration(integrationId: string): Promise<void> {
+    await db
+      .delete(accountingIntegrations)
+      .where(eq(accountingIntegrations.id, integrationId));
+  }
+
+  async findIntegrationByState(state: string): Promise<AccountingIntegration | undefined> {
+    // Query for integration with matching state using SQL JSON operator
+    const integrations = await db
+      .select()
+      .from(accountingIntegrations)
+      .where(sql`${accountingIntegrations.settings}->>'oauthState' = ${state}`)
+      .limit(1);
+    
+    return integrations[0];
   }
 }
 

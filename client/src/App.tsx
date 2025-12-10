@@ -48,6 +48,7 @@ const ResendVerificationPage = lazy(() => import("@/pages/resend-verification"))
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const BookDemo = lazy(() => import("@/pages/book-demo"));
+const Integrations = lazy(() => import("@/pages/integrations"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component with app branding
@@ -163,6 +164,7 @@ function AppRoutes() {
       <Route path="/admin/invoices" component={() => <PrivateRoute><AdminInvoices /></PrivateRoute>} />
       <Route path="/admin/messages" component={() => <PrivateRoute><AdminMessages /></PrivateRoute>} />
       <Route path="/admin/backend" component={() => <PrivateRoute><AdminBackend /></PrivateRoute>} />
+      <Route path="/integrations" component={() => <PrivateRoute><Integrations /></PrivateRoute>} />
       
       {/* Home route - Landing page (must be after all specific routes) */}
       <Route path="/" component={Landing} />

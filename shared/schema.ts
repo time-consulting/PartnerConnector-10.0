@@ -615,7 +615,7 @@ export const dealStages = pgTable("deal_stages", {
 // Document requirements tracking
 export const documentRequirements = pgTable("document_requirements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
+  referralId: varchar("referral_id").notNull().references(() => deals.id, { onDelete: "cascade" }),
   documentType: varchar("document_type").notNull(), // identification, proof_of_bank, business_registration, etc.
   isRequired: boolean("is_required").default(true),
   isReceived: boolean("is_received").default(false),
@@ -631,7 +631,7 @@ export const documentRequirements = pgTable("document_requirements", {
 export const quotes = pgTable("quotes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   quoteId: varchar("quote_id").unique(), // Quote ID in format QUOTE-XXXXX (linked to dealId)
-  referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
+  referralId: varchar("referral_id").notNull().references(() => deals.id, { onDelete: "cascade" }),
   version: integer("version").notNull().default(1), // For quote versioning
   
   // Transaction Rates
@@ -724,7 +724,7 @@ export const quoteQA = pgTable("quote_qa", {
 export const quoteBillUploads = pgTable("quote_bill_uploads", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   quoteId: varchar("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
-  referralId: varchar("referral_id").notNull().references(() => referrals.id, { onDelete: "cascade" }),
+  referralId: varchar("referral_id").notNull().references(() => deals.id, { onDelete: "cascade" }),
   fileName: varchar("file_name").notNull(),
   fileSize: integer("file_size"),
   fileType: varchar("file_type"),
@@ -1346,6 +1346,37 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 });
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+// Accounting Integrations table for QuickBooks, Xero, etc.
+export const accountingIntegrations = pgTable("accounting_integrations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  provider: varchar("provider").notNull(), // 'quickbooks', 'xero', 'sage', 'freshbooks'
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  tokenExpiresAt: timestamp("token_expires_at"),
+  realmId: varchar("realm_id"), // QuickBooks company ID
+  tenantId: varchar("tenant_id"), // Xero organization ID
+  companyName: varchar("company_name"),
+  isConnected: boolean("is_connected").default(false),
+  lastSyncAt: timestamp("last_sync_at"),
+  syncStatus: varchar("sync_status").default("idle"), // 'idle', 'syncing', 'success', 'error'
+  syncError: text("sync_error"),
+  settings: jsonb("settings"), // Provider-specific settings
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("accounting_integrations_user_id_idx").on(table.userId),
+  index("accounting_integrations_provider_idx").on(table.provider),
+]);
+
+export const insertAccountingIntegration = createInsertSchema(accountingIntegrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertAccountingIntegration = z.infer<typeof insertAccountingIntegration>;
+export type AccountingIntegration = typeof accountingIntegrations.$inferSelect;
 
 // Utility function to map dealStage to customerJourneyStatus for quotes table sync
 // dealStage is the single source of truth, customerJourneyStatus mirrors it for backward compatibility

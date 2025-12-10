@@ -12,7 +12,8 @@ import {
   Target,
   MessageSquare,
   Contact,
-  Lightbulb
+  Lightbulb,
+  Link2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
@@ -63,7 +64,8 @@ export default function Sidebar({ onExpandChange }: SidebarProps = {}) {
     { icon: DollarSign, label: "Commissions", path: "/commissions" },
     { icon: Contact, label: "Contacts", path: "/contacts" },
     { icon: Lightbulb, label: "Opportunities", path: "/opportunities" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: Link2, label: "Integrations", path: "/integrations" },
+    { icon: Settings, label: "Settings", path: "/account/profile" },
   ];
 
   const isActive = (path: string) => location === path;
