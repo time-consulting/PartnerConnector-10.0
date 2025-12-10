@@ -1065,7 +1065,7 @@ export class DatabaseStorage implements IStorage {
         const uploads = await db
           .select()
           .from(billUploads)
-          .where(eq(billUploads.businessName, deal.businessName));
+          .where(eq(billUploads.businessName, referral.businessName));
         
         return {
           ...referral,
