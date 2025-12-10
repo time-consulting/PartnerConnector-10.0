@@ -140,9 +140,6 @@ function AppRoutes() {
       <Route path="/partner-recruitment" component={PartnerRecruitment} />
       <Route path="/book-demo" component={BookDemo} />
       
-      {/* Home route - Landing page */}
-      <Route path="/" component={Landing} />
-      
       {/* Dashboard route - Protected dashboard for authenticated users */}
       <Route path="/dashboard" component={() => <PrivateRoute><Dashboard /></PrivateRoute>} />
       
@@ -166,6 +163,9 @@ function AppRoutes() {
       <Route path="/admin/invoices" component={() => <PrivateRoute><AdminInvoices /></PrivateRoute>} />
       <Route path="/admin/messages" component={() => <PrivateRoute><AdminMessages /></PrivateRoute>} />
       <Route path="/admin/backend" component={() => <PrivateRoute><AdminBackend /></PrivateRoute>} />
+      
+      {/* Home route - Landing page (must be after all specific routes) */}
+      <Route path="/" component={Landing} />
       
       {/* Catch-all for unknown routes */}
       <Route component={NotFound} />

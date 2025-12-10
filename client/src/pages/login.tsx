@@ -20,7 +20,7 @@ import {
   Loader2
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -55,6 +55,9 @@ export default function Login() {
           title: "Welcome back!",
           description: "Logging you in...",
         });
+
+        // Invalidate auth cache to refresh user data
+        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
 
         // Check if user has completed onboarding
         if (result.user.hasCompletedOnboarding) {
