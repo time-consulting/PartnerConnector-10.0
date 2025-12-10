@@ -47,6 +47,7 @@ const VerifyEmailPage = lazy(() => import("@/pages/verify-email"));
 const ResendVerificationPage = lazy(() => import("@/pages/resend-verification"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
+const BookDemo = lazy(() => import("@/pages/book-demo"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component with app branding
@@ -137,6 +138,7 @@ function AppRoutes() {
       <Route path="/about" component={About} />
       <Route path="/help-center" component={HelpCenter} />
       <Route path="/partner-recruitment" component={PartnerRecruitment} />
+      <Route path="/book-demo" component={BookDemo} />
       
       {/* Home route - Landing page */}
       <Route path="/" component={Landing} />

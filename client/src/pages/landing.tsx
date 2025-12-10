@@ -146,15 +146,16 @@ export default function Landing() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <Button 
-                  size="lg" 
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg font-semibold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300"
-                  onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/81iXxx9KCxtnaSgEEiim', '_blank')}
-                  data-testid="button-book-demo"
-                >
-                  Book a demo
-                  <ArrowRightIcon className="ml-2 w-5 h-5" />
-                </Button>
+                <Link href="/book-demo">
+                  <Button 
+                    size="lg" 
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg font-semibold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300"
+                    data-testid="button-book-demo"
+                  >
+                    Book a demo
+                    <ArrowRightIcon className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
                 <Button 
                   variant="outline" 
                   size="lg"
@@ -330,14 +331,15 @@ export default function Landing() {
           </div>
 
           <div className="text-center mt-12">
-            <Button 
-              size="lg"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 shadow-lg shadow-blue-500/25"
-              onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/81iXxx9KCxtnaSgEEiim', '_blank')}
-            >
-              Book a demo
-              <ArrowRightIcon className="ml-2 w-5 h-5" />
-            </Button>
+            <Link href="/book-demo">
+              <Button 
+                size="lg"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 shadow-lg shadow-blue-500/25"
+              >
+                Book a demo
+                <ArrowRightIcon className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
             <Button 
               variant="outline"
               size="lg"
@@ -448,15 +450,16 @@ export default function Landing() {
               Join free today
               <ArrowRightIcon className="ml-2 w-5 h-5" />
             </Button>
-            <Button 
-              variant="outline"
-              size="lg"
-              className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg font-semibold"
-              onClick={() => window.open('https://api.leadconnectorhq.com/widget/booking/81iXxx9KCxtnaSgEEiim', '_blank')}
-            >
-              Schedule a demo
-              <ArrowRightIcon className="ml-2 w-5 h-5" />
-            </Button>
+            <Link href="/book-demo">
+              <Button 
+                variant="outline"
+                size="lg"
+                className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg font-semibold"
+              >
+                Schedule a demo
+                <ArrowRightIcon className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
