@@ -30,7 +30,11 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
   // Track response completion
   res.on('finish', () => {
     const duration = Date.now() - startTime;
-    const isError = res.statusCode >= 400;
+    
+    // 401 on auth check endpoint is expected behavior, not an error
+    const isAuthCheck = req.path === '/api/auth/user' && req.method === 'GET';
+    const isExpected401 = res.statusCode === 401 && isAuthCheck;
+    const isError = res.statusCode >= 400 && !isExpected401;
     
     // Add to metrics
     metrics.addRequest(duration, isError);
