@@ -1,5 +1,5 @@
 import { Router, Switch, Route, useLocation } from "wouter";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -82,38 +82,33 @@ function LoadingFallback() {
 function PrivateRoute({ children, bypassOnboarding = false }: { children: React.ReactNode; bypassOnboarding?: boolean }) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
+  const [hasRedirected, setHasRedirected] = useState(false);
   
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setLocation('/login');
-    } else if (!isLoading && isAuthenticated && !bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
-      setLocation('/onboarding');
+    if (!isLoading && !hasRedirected) {
+      if (!isAuthenticated) {
+        setHasRedirected(true);
+        setLocation('/login');
+      } else if (!bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
+        setHasRedirected(true);
+        setLocation('/onboarding');
+      }
     }
-  }, [isAuthenticated, isLoading, user, bypassOnboarding, setLocation]);
+  }, [isAuthenticated, isLoading, user, bypassOnboarding, setLocation, hasRedirected, location]);
 
+  // Show nothing during initial load to prevent flicker - Suspense handles the loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
+    return null;
   }
 
+  // If not authenticated, return null (redirect is happening via useEffect)
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Redirecting to login...</div>
-      </div>
-    );
+    return null;
   }
 
-  // If user hasn't completed onboarding and we're not on the onboarding page, redirect
+  // If user hasn't completed onboarding, return null (redirect is happening via useEffect)
   if (!bypassOnboarding && user && !user.hasCompletedOnboarding && location !== '/onboarding') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Redirecting to onboarding...</div>
-      </div>
-    );
+    return null;
   }
 
   return <>{children}</>;
