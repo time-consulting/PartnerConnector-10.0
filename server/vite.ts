@@ -21,9 +21,17 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  // CRITICAL FIX: Explicitly get the internal port from the environment.
+  // This tells Vite's HMR client where to connect, resolving the 'localhost:undefined' error.
+  const internalPort = parseInt(process.env.PORT || '5000', 10); 
+
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    hmr: { 
+      server,
+      clientPort: internalPort, // Fixes wss://localhost:undefined issue
+      protocol: 'wss' as const, // Uses secure protocol required by Replit for public connections
+    },
     allowedHosts: true as const,
   };
 
@@ -34,28 +42,29 @@ export async function setupVite(app: Express, server: Server) {
       ...viteLogger,
       error: (msg, options) => {
         viteLogger.error(msg, options);
-
       },
     },
     server: serverOptions,
     appType: "custom",
   });
 
+  // PERFORMANCE FIX: Read the template once at startup, instead of on every request.
+  const clientTemplatePath = path.resolve(
+    import.meta.dirname,
+    "..",
+    "client",
+    "index.html",
+  );
+  let template = await fs.promises.readFile(clientTemplatePath, "utf-8");
+
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
-
-      // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-
+      // Use the cached template content. This fixes the performance issue
+      // caused by reading the file system on every incoming request.
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -66,7 +75,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const distPath = path.resolve(import.meta.dirname, "..", "client", "dist");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(

@@ -461,6 +461,23 @@ export const leads = pgTable("leads", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Referrals table (REQUIRED for foreign keys)
+export const referrals = pgTable("referrals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+
+  partnerId: varchar("partner_id").references(() => users.id, { onDelete: "set null" }),
+  
+  businessName: varchar("business_name"),
+  contactName: varchar("contact_name"),
+  contactEmail: varchar("contact_email"),
+  contactPhone: varchar("contact_phone"),
+  
+  status: varchar("status").default("pending"),
+
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Contact interactions/activity log
 export const contactInteractions = pgTable("contact_interactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

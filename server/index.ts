@@ -4,6 +4,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initSentry, getSentryHandlers } from "./sentry";
 import { wsManager } from "./websocket";
+import bcrypt from "bcryptjs";
+import { db } from "./db";
+import { users } from "./db/schema";
 
 // Initialize Sentry before everything else
 initSentry();
@@ -48,6 +51,23 @@ app.use(compression({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// --- ADD THIS BLOCK HERE ---
+import session from "express-session";
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "fallback-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,          // behind Railway HTTPS
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+    }
+  })
+);
+// --- END OF BLOCK ---
 
 app.use((req, res, next) => {
   const start = Date.now();

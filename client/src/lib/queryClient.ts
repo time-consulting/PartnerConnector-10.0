@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -17,7 +18,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+ const API_BASE = import.meta.env.VITE_API_URL;
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -36,7 +37,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // First element is the URL path, second element (if exists) contains query params
     const [path, params] = queryKey;
-    let url = path as string;
+    let url = API_BASE + (path as string);
     
     // If there are query parameters, append them to the URL
     if (params && typeof params === 'object') {
